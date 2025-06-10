@@ -117,7 +117,7 @@ class JumpingDotGame {
         return {
             platforms: [
                 // Ground sections with proper clearable gaps
-                { x1: -200, y1: 500, x2: 350, y2: 500 },
+                { x1: -500, y1: 500, x2: 350, y2: 500 },
                 { x1: 450, y1: 500, x2: 750, y2: 500 },
                 { x1: 850, y1: 500, x2: 1150, y2: 500 },
                 { x1: 1250, y1: 480, x2: 1550, y2: 480 },
@@ -292,11 +292,7 @@ class JumpingDotGame {
         // Camera follows player
         this.camera.x = this.player.x - this.canvas.width / 2;
         
-        // Prevent player from going off left edge
-        if (this.player.x < this.player.radius) {
-            this.player.x = this.player.radius;
-            this.player.vx = 0;
-        }
+        // Allow player to move freely to the left (no invisible wall)
         
         // Game over if player falls too far
         if (this.player.y > this.canvas.height + 100) {
