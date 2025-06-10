@@ -6,6 +6,13 @@ export class JumpingDotGame {
         this.timerDisplay = document.getElementById('timer');
         this.scoreDisplay = document.getElementById('score');
         
+        // Mobile UI elements
+        this.leftBtn = document.getElementById('leftBtn');
+        this.rightBtn = document.getElementById('rightBtn');
+        this.startBtn = document.getElementById('startBtn');
+        this.restartBtn = document.getElementById('restartBtn');
+        this.tiltBtn = document.getElementById('tiltBtn');
+        
         // Game state
         this.gameRunning = false;
         this.gameOver = false;
@@ -24,7 +31,7 @@ export class JumpingDotGame {
         this.hasMovedOnce = false;
         
         // Timer and score system
-        this.timeLimit = 60; // 60 seconds
+        this.timeLimit = 20; // 20 seconds - very challenging!
         this.timeRemaining = this.timeLimit;
         this.gameStartTime = null;
         this.finalScore = 0;
@@ -71,6 +78,11 @@ export class JumpingDotGame {
         
         // Input handling
         this.keys = {};
+        this.tiltControl = {
+            enabled: false,
+            sensitivity: 0.3, // Sensitivity for tilt control
+            gamma: 0 // Device orientation gamma value
+        };
         this.setupInput();
         
         // Game loop
@@ -181,9 +193,30 @@ export class JumpingDotGame {
             
             goal: {
                 x: 2400,
-                y: 390,
+                y: 340,
                 width: 40,
                 height: 50
+            },
+            
+            // Goal area terrain (common across all stages)
+            goalTerrain: {
+                // Mountain-like elevation leading to goal
+                platforms: [
+                    { x1: 2200, y1: 480, x2: 2300, y2: 460 }, // Rising slope start
+                    { x1: 2300, y1: 460, x2: 2400, y2: 390 }, // Main slope to goal
+                    { x1: 2400, y1: 390, x2: 2500, y2: 390 }, // Goal platform
+                ],
+                
+                // Sneaky traps near goal (first-time killer!)
+                hiddenSpikes: [
+                    { x: 2350, y: 440, width: 10, height: 10 }, // Hidden in slope
+                    { x: 2420, y: 370, width: 10, height: 10 }, // Just before goal!
+                ],
+                
+                // Fake safe spots (evil!)
+                fakeSpikes: [
+                    { x: 2250, y: 440, width: 10, height: 10 }, // Looks dangerous but safe
+                ]
             },
             
             startText: {
@@ -230,6 +263,12 @@ export class JumpingDotGame {
                 e.preventDefault();
             }
             
+            // Toggle tilt control with 'T' key
+            if (e.code === 'KeyT' && !this.keys['KeyT']) {
+                this.toggleTiltControl();
+                e.preventDefault();
+            }
+            
             // Prevent arrow key scrolling
             if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
                 e.preventDefault();
@@ -242,6 +281,157 @@ export class JumpingDotGame {
                 this.keys[e.code] = false;
             }
         });
+        
+        // Setup device orientation listening
+        this.setupDeviceOrientation();
+        
+        // Setup mobile controls
+        this.setupMobileControls();
+    }
+    
+    setupDeviceOrientation() {
+        // Check if DeviceOrientationEvent is supported
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            // Request permission for iOS 13+
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // This is iOS 13+ - we'll handle permission request when tilt is enabled
+            } else {
+                // This is not iOS 13+ or permission is not required
+                window.addEventListener('deviceorientation', (e) => {
+                    this.handleDeviceOrientation(e);
+                });
+            }
+        }
+    }
+    
+    async toggleTiltControl() {
+        if (!this.tiltControl.enabled) {
+            // Enable tilt control
+            if (typeof DeviceOrientationEvent !== 'undefined') {
+                // Check if permission is required (iOS 13+)
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission === 'granted') {
+                            window.addEventListener('deviceorientation', (e) => {
+                                this.handleDeviceOrientation(e);
+                            });
+                            this.tiltControl.enabled = true;
+                            console.log('Tilt control enabled!');
+                            this.updateTiltButtonDisplay();
+                        } else {
+                            console.log('Permission denied for device orientation');
+                        }
+                    } catch (error) {
+                        console.error('Error requesting permission:', error);
+                    }
+                } else {
+                    // Permission not required
+                    this.tiltControl.enabled = true;
+                    console.log('Tilt control enabled!');
+                    this.updateTiltButtonDisplay();
+                }
+            } else {
+                console.log('Device orientation not supported');
+            }
+        } else {
+            // Disable tilt control
+            this.tiltControl.enabled = false;
+            this.tiltControl.gamma = 0;
+            console.log('Tilt control disabled!');
+            this.updateTiltButtonDisplay();
+        }
+    }
+    
+    handleDeviceOrientation(event) {
+        if (this.tiltControl.enabled && !this.gameOver) {
+            // gamma is the left-to-right tilt (in degrees, -90 to 90)
+            // negative = tilted left, positive = tilted right
+            this.tiltControl.gamma = event.gamma || 0;
+        }
+    }
+    
+    setupMobileControls() {
+        if (!this.leftBtn || !this.rightBtn || !this.startBtn || !this.restartBtn || !this.tiltBtn) {
+            return; // Mobile elements not found, probably on desktop
+        }
+        
+        // Touch controls for movement
+        this.leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!this.gameOver) this.keys['ArrowLeft'] = true;
+        });
+        
+        this.leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys['ArrowLeft'] = false;
+        });
+        
+        this.rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!this.gameOver) this.keys['ArrowRight'] = true;
+        });
+        
+        this.rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys['ArrowRight'] = false;
+        });
+        
+        // Mouse support for desktop testing
+        this.leftBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if (!this.gameOver) this.keys['ArrowLeft'] = true;
+        });
+        
+        this.leftBtn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            this.keys['ArrowLeft'] = false;
+        });
+        
+        this.rightBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if (!this.gameOver) this.keys['ArrowRight'] = true;
+        });
+        
+        this.rightBtn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            this.keys['ArrowRight'] = false;
+        });
+        
+        // Start button
+        this.startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!this.gameRunning && !this.gameOver) {
+                this.startGame();
+            }
+        });
+        
+        // Restart button
+        this.restartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.gameOver) {
+                this.init();
+            }
+        });
+        
+        // Tilt toggle button
+        this.tiltBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await this.toggleTiltControl();
+            this.updateTiltButtonDisplay();
+        });
+    }
+    
+    updateTiltButtonDisplay() {
+        if (this.tiltBtn) {
+            if (this.tiltControl.enabled) {
+                this.tiltBtn.textContent = 'TILT: ON';
+                this.tiltBtn.classList.add('active');
+            } else {
+                this.tiltBtn.textContent = 'TILT: OFF';
+                this.tiltBtn.classList.remove('active');
+            }
+        }
     }
     
     startGame() {
@@ -263,9 +453,7 @@ export class JumpingDotGame {
             
             // Check for time out
             if (this.timeRemaining <= 0) {
-                this.gameOver = true;
-                this.finalScore = 0;
-                this.gameStatus.textContent = 'Time Up! Press R to restart';
+                this.handlePlayerDeath('Time Up! Press R to restart');
                 return;
             }
             
@@ -274,10 +462,25 @@ export class JumpingDotGame {
         }
         
         // Handle input (left/right movement with no friction - unforgiving game)
-        if (this.keys['ArrowLeft']) {
+        let leftInput = this.keys['ArrowLeft'];
+        let rightInput = this.keys['ArrowRight'];
+        
+        // Add tilt control input if enabled
+        if (this.tiltControl.enabled) {
+            const tiltThreshold = 5; // degrees
+            const normalizedTilt = this.tiltControl.gamma / 45; // normalize to -1 to 1 range
+            
+            if (this.tiltControl.gamma < -tiltThreshold) {
+                leftInput = true;
+            } else if (this.tiltControl.gamma > tiltThreshold) {
+                rightInput = true;
+            }
+        }
+        
+        if (leftInput) {
             this.player.vx -= 0.5;
             this.hasMovedOnce = true;
-        } else if (this.keys['ArrowRight']) {
+        } else if (rightInput) {
             this.player.vx += 0.5;
             this.hasMovedOnce = true;
         }
@@ -339,33 +542,45 @@ export class JumpingDotGame {
         
         // Game over if player falls too far
         if (this.player.y > this.canvas.height + 100) {
-            this.handlePlayerDeath('Game Over - Press R to restart');
+            this.handlePlayerDeath('Game Over - Press R to restart', 'fall');
         }
     }
     
     handlePlatformCollisions() {
         this.player.grounded = false;
         
+        // Check regular platforms
         for (const platform of this.stage.platforms) {
-            // Check if player is above the platform and falling down
-            if (this.player.x + this.player.radius > platform.x1 && 
-                this.player.x - this.player.radius < platform.x2 &&
-                this.player.y + this.player.radius >= platform.y1 - 5 &&
-                this.player.y + this.player.radius <= platform.y1 + 10 &&
-                this.player.vy >= 0) {
-                
-                this.player.y = platform.y1 - this.player.radius;
-                this.player.vy = 0;
-                this.player.grounded = true;
-                
-                // Reset jump timer for immediate maximum jump
-                this.lastJumpTime = performance.now() - this.autoJumpInterval;
-                break;
-            }
+            if (this.checkPlatformCollision(platform)) break;
+        }
+        
+        // Check goal terrain platforms
+        for (const platform of this.stage.goalTerrain.platforms) {
+            if (this.checkPlatformCollision(platform)) break;
         }
     }
     
+    checkPlatformCollision(platform) {
+        // Check if player is above the platform and falling down
+        if (this.player.x + this.player.radius > platform.x1 && 
+            this.player.x - this.player.radius < platform.x2 &&
+            this.player.y + this.player.radius >= platform.y1 - 5 &&
+            this.player.y + this.player.radius <= platform.y1 + 10 &&
+            this.player.vy >= 0) {
+            
+            this.player.y = platform.y1 - this.player.radius;
+            this.player.vy = 0;
+            this.player.grounded = true;
+            
+            // Reset jump timer for immediate maximum jump
+            this.lastJumpTime = performance.now() - this.autoJumpInterval;
+            return true;
+        }
+        return false;
+    }
+    
     checkSpikeCollisions() {
+        // Check regular spikes
         for (const spike of this.stage.spikes) {
             if (this.player.x + this.player.radius > spike.x &&
                 this.player.x - this.player.radius < spike.x + spike.width &&
@@ -376,12 +591,24 @@ export class JumpingDotGame {
                 return;
             }
         }
+        
+        // Check goal terrain hidden spikes (sneaky death traps!)
+        for (const spike of this.stage.goalTerrain.hiddenSpikes) {
+            if (this.player.x + this.player.radius > spike.x &&
+                this.player.x - this.player.radius < spike.x + spike.width &&
+                this.player.y + this.player.radius > spike.y &&
+                this.player.y - this.player.radius < spike.y + spike.height) {
+                
+                this.handlePlayerDeath('Goal trap! Press R to restart');
+                return;
+            }
+        }
     }
     
     checkHoleCollisions() {
         // Check if player fell into a hole
         if (this.player.y > 600) {
-            this.handlePlayerDeath('Fell into hole! Press R to restart');
+            this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
         }
     }
     
@@ -473,14 +700,24 @@ export class JumpingDotGame {
         }
     }
     
-    handlePlayerDeath(message) {
+    handlePlayerDeath(message, deathType = 'normal') {
         this.gameOver = true;
         this.gameStatus.textContent = message;
         
-        // Add death mark at current position
+        // Determine death mark position based on death type
+        let deathMarkX = this.player.x;
+        let deathMarkY = this.player.y;
+        
+        // For falling deaths, adjust Y position to be visible on screen
+        if (deathType === 'fall') {
+            // Place the X mark near the bottom edge of the visible area
+            deathMarkY = this.camera.y + this.canvas.height - 20;
+        }
+        
+        // Add death mark at adjusted position
         this.deathMarks.push({
-            x: this.player.x,
-            y: this.player.y,
+            x: deathMarkX,
+            y: deathMarkY,
             timestamp: performance.now()
         });
         
@@ -628,6 +865,31 @@ export class JumpingDotGame {
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Game Over - Press R to restart', this.canvas.width / 2, this.canvas.height / 2);
         }
+        
+        // Draw tilt control status
+        if (this.tiltControl.enabled) {
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            this.ctx.font = '14px monospace';
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText('TILT: ON', this.canvas.width - 10, 25);
+            
+            // Draw tilt indicator
+            const tiltBarWidth = 100;
+            const tiltBarHeight = 6;
+            const tiltBarX = this.canvas.width - 120;
+            const tiltBarY = 35;
+            
+            // Background bar
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            this.ctx.fillRect(tiltBarX, tiltBarY, tiltBarWidth, tiltBarHeight);
+            
+            // Tilt indicator
+            const tiltPosition = Math.max(-45, Math.min(45, this.tiltControl.gamma));
+            const indicatorX = tiltBarX + (tiltPosition + 45) / 90 * tiltBarWidth;
+            
+            this.ctx.fillStyle = 'white';
+            this.ctx.fillRect(indicatorX - 2, tiltBarY - 2, 4, tiltBarHeight + 4);
+        }
     }
     
     gameLoop(currentTime) {
@@ -654,7 +916,7 @@ export class JumpingDotGame {
     }
     
     drawStage() {
-        // Draw platforms
+        // Draw regular platforms
         this.ctx.strokeStyle = 'white';
         this.ctx.lineWidth = 2;
         
@@ -665,21 +927,49 @@ export class JumpingDotGame {
             this.ctx.stroke();
         }
         
-        // Draw spikes (triangular shapes)
-        this.ctx.fillStyle = 'white';
-        for (const spike of this.stage.spikes) {
+        // Draw goal terrain platforms (mountain-like)
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 3; // Slightly thicker for prominence
+        
+        for (const platform of this.stage.goalTerrain.platforms) {
             this.ctx.beginPath();
-            this.ctx.moveTo(spike.x, spike.y + spike.height);
-            this.ctx.lineTo(spike.x + spike.width / 2, spike.y);
-            this.ctx.lineTo(spike.x + spike.width, spike.y + spike.height);
-            this.ctx.closePath();
-            this.ctx.fill();
-            
-            // Draw spike outline
-            this.ctx.strokeStyle = 'white';
-            this.ctx.lineWidth = 1;
+            this.ctx.moveTo(platform.x1, platform.y1);
+            this.ctx.lineTo(platform.x2, platform.y2);
             this.ctx.stroke();
         }
+        
+        // Draw regular spikes (triangular shapes)
+        this.ctx.fillStyle = 'white';
+        for (const spike of this.stage.spikes) {
+            this.drawSpike(spike);
+        }
+        
+        // Draw goal terrain hidden spikes (deadly!)
+        this.ctx.fillStyle = 'white';
+        for (const spike of this.stage.goalTerrain.hiddenSpikes) {
+            this.drawSpike(spike);
+        }
+        
+        // Draw fake spikes (look dangerous but harmless)
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; // Semi-transparent
+        for (const spike of this.stage.goalTerrain.fakeSpikes) {
+            this.drawSpike(spike);
+        }
+    }
+    
+    drawSpike(spike) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(spike.x, spike.y + spike.height);
+        this.ctx.lineTo(spike.x + spike.width / 2, spike.y);
+        this.ctx.lineTo(spike.x + spike.width, spike.y + spike.height);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Draw spike outline
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+    }
         
         // Draw goal (rectangular flag)
         const goal = this.stage.goal;
