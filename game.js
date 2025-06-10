@@ -85,6 +85,9 @@ class JumpingDotGame {
         this.lastJumpTime = null;
         this.lastTime = null;
         
+        // Clear all key states to prevent momentum carryover
+        this.keys = {};
+        
         // Stop any existing game loop before starting new one
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
