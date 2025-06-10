@@ -29,6 +29,14 @@ class JumpingDotGame {
         this.gameStartTime = null;
         this.finalScore = 0;
         
+        // Clear animation system
+        this.clearAnimation = {
+            active: false,
+            startTime: null,
+            duration: 3000, // 3 seconds
+            particles: []
+        };
+        
         // Trail effect for smooth animation
         this.trail = [];
         this.maxTrailLength = 8;
@@ -79,6 +87,11 @@ class JumpingDotGame {
         this.timeRemaining = this.timeLimit;
         this.gameStartTime = null;
         this.finalScore = 0;
+        
+        // Reset clear animation
+        this.clearAnimation.active = false;
+        this.clearAnimation.startTime = null;
+        this.clearAnimation.particles = [];
         
         // Update UI
         this.timerDisplay.textContent = `Time: ${this.timeLimit}`;
@@ -374,6 +387,80 @@ class JumpingDotGame {
             this.finalScore = Math.ceil(this.timeRemaining);
             this.gameStatus.textContent = `Goal reached! Score: ${this.finalScore} - Press R to restart`;
             this.scoreDisplay.textContent = `Score: ${this.finalScore}`;
+            
+            // Start clear animation
+            this.startClearAnimation();
+        }
+    }
+    
+    startClearAnimation() {
+        this.clearAnimation.active = true;
+        this.clearAnimation.startTime = performance.now();
+        this.clearAnimation.particles = [];
+        
+        // Create celebration particles around player
+        for (let i = 0; i < 20; i++) {
+            this.clearAnimation.particles.push({
+                x: this.player.x + (Math.random() - 0.5) * 100,
+                y: this.player.y + (Math.random() - 0.5) * 100,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8 - 2,
+                life: 1.0,
+                decay: 0.02 + Math.random() * 0.02
+            });
+        }
+    }
+    
+    updateClearAnimation() {
+        if (!this.clearAnimation.active) return;
+        
+        const currentTime = performance.now();
+        const elapsed = currentTime - this.clearAnimation.startTime;
+        
+        // Update particles
+        for (let i = this.clearAnimation.particles.length - 1; i >= 0; i--) {
+            const particle = this.clearAnimation.particles[i];
+            
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vy += 0.1; // gravity
+            particle.life -= particle.decay;
+            
+            if (particle.life <= 0) {
+                this.clearAnimation.particles.splice(i, 1);
+            }
+        }
+        
+        // End animation after duration
+        if (elapsed > this.clearAnimation.duration) {
+            this.clearAnimation.active = false;
+        }
+    }
+    
+    renderClearAnimation() {
+        if (!this.clearAnimation.active) return;
+        
+        const currentTime = performance.now();
+        const elapsed = currentTime - this.clearAnimation.startTime;
+        const progress = elapsed / this.clearAnimation.duration;
+        
+        // Draw celebration particles
+        for (const particle of this.clearAnimation.particles) {
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${particle.life})`;
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+        
+        // Draw pulsing "CLEAR!" text
+        if (progress < 0.8) {
+            const pulse = Math.sin(elapsed * 0.01) * 0.3 + 1;
+            const alpha = Math.max(0, 1 - progress / 0.8);
+            
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            this.ctx.font = `${Math.floor(32 * pulse)}px monospace`;
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('CLEAR!', this.player.x, this.player.y - 50);
         }
     }
     
@@ -405,6 +492,9 @@ class JumpingDotGame {
             this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
             this.ctx.fill();
         }
+        
+        // Draw clear animation (affects by camera)
+        this.renderClearAnimation();
         
         // Restore context
         this.ctx.restore();
@@ -442,6 +532,7 @@ class JumpingDotGame {
         const clampedDelta = Math.min(deltaTime, 16.67); // Max 60fps equivalent
         
         this.update(clampedDelta);
+        this.updateClearAnimation();
         this.render();
         
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
