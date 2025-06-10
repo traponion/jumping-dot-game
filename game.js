@@ -3,6 +3,8 @@ class JumpingDotGame {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.gameStatus = document.getElementById('gameStatus');
+        this.timerDisplay = document.getElementById('timer');
+        this.scoreDisplay = document.getElementById('score');
         
         // Game state
         this.gameRunning = false;
@@ -20,6 +22,12 @@ class JumpingDotGame {
         
         // Movement state tracking
         this.hasMovedOnce = false;
+        
+        // Timer and score system
+        this.timeLimit = 60; // 60 seconds
+        this.timeRemaining = this.timeLimit;
+        this.gameStartTime = null;
+        this.finalScore = 0;
         
         // Trail effect for smooth animation
         this.trail = [];
@@ -41,9 +49,6 @@ class JumpingDotGame {
         
         // Stage elements
         this.stage = this.createStage();
-        
-        // Background elements for parallax
-        this.backgroundElements = this.createBackgroundElements();
         
         // Input handling
         this.keys = {};
@@ -69,6 +74,15 @@ class JumpingDotGame {
         
         // Reset movement tracking
         this.hasMovedOnce = false;
+        
+        // Reset timer
+        this.timeRemaining = this.timeLimit;
+        this.gameStartTime = null;
+        this.finalScore = 0;
+        
+        // Update UI
+        this.timerDisplay.textContent = `Time: ${this.timeLimit}`;
+        this.scoreDisplay.textContent = 'Score: 0';
         
         // Reset camera
         this.camera.x = 0;
@@ -155,35 +169,6 @@ class JumpingDotGame {
         };
     }
     
-    createBackgroundElements() {
-        return {
-            // Far background elements (slowest parallax)
-            mountains: [
-                { x: 200, y: 300, width: 150, height: 100 },
-                { x: 500, y: 250, width: 200, height: 150 },
-                { x: 1000, y: 280, width: 180, height: 120 },
-                { x: 1500, y: 260, width: 220, height: 140 },
-                { x: 2000, y: 290, width: 160, height: 110 },
-            ],
-            
-            // Mid background elements (medium parallax)
-            clouds: [
-                { x: 300, y: 150, width: 80, height: 30 },
-                { x: 700, y: 100, width: 100, height: 40 },
-                { x: 1200, y: 120, width: 90, height: 35 },
-                { x: 1800, y: 80, width: 110, height: 45 },
-                { x: 2300, y: 140, width: 85, height: 32 },
-            ],
-            
-            // Near background elements (fast parallax)
-            trees: [
-                { x: 400, y: 400, width: 20, height: 80 },
-                { x: 800, y: 420, width: 25, height: 70 },
-                { x: 1300, y: 410, width: 22, height: 75 },
-                { x: 1900, y: 430, width: 28, height: 65 },
-            ]
-        };
-    }
     
     setupInput() {
         document.addEventListener('keydown', (e) => {
@@ -221,10 +206,29 @@ class JumpingDotGame {
         this.gameStatus.textContent = 'Playing';
         // Initialize lastJumpTime relative to current game time for consistency
         this.lastJumpTime = performance.now();
+        this.gameStartTime = performance.now();
     }
     
     update(deltaTime) {
         if (!this.gameRunning || this.gameOver) return;
+        
+        // Update timer
+        if (this.gameStartTime) {
+            const currentTime = performance.now();
+            const elapsedSeconds = (currentTime - this.gameStartTime) / 1000;
+            this.timeRemaining = Math.max(0, this.timeLimit - elapsedSeconds);
+            
+            // Check for time out
+            if (this.timeRemaining <= 0) {
+                this.gameOver = true;
+                this.finalScore = 0;
+                this.gameStatus.textContent = 'Time Up! Press R to restart';
+                return;
+            }
+            
+            // Update timer display
+            this.timerDisplay.textContent = `Time: ${Math.ceil(this.timeRemaining)}`;
+        }
         
         // Handle input (left/right movement with no friction - unforgiving game)
         if (this.keys['ArrowLeft']) {
@@ -359,7 +363,9 @@ class JumpingDotGame {
             this.player.y - this.player.radius < goal.y + goal.height) {
             
             this.gameOver = true;
-            this.gameStatus.textContent = 'Goal reached! Press R to restart';
+            this.finalScore = Math.ceil(this.timeRemaining);
+            this.gameStatus.textContent = `Goal reached! Score: ${this.finalScore} - Press R to restart`;
+            this.scoreDisplay.textContent = `Score: ${this.finalScore}`;
         }
     }
     
@@ -376,9 +382,6 @@ class JumpingDotGame {
         // Save context for camera transform
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);
-        
-        // Draw background with parallax effect
-        this.drawBackground();
         
         // Draw stage elements
         this.drawStage();
@@ -493,59 +496,6 @@ class JumpingDotGame {
         this.ctx.fillText(goalText.text, goalText.x, goalText.y);
     }
     
-    drawBackground() {
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        this.ctx.lineWidth = 1;
-        
-        // Draw far background elements (mountains) - slowest parallax (0.2x speed)
-        const mountainParallax = this.camera.x * 0.2;
-        for (const mountain of this.backgroundElements.mountains) {
-            this.ctx.strokeRect(
-                mountain.x - mountainParallax, 
-                mountain.y, 
-                mountain.width, 
-                mountain.height
-            );
-        }
-        
-        // Draw mid background elements (clouds) - medium parallax (0.5x speed)
-        const cloudParallax = this.camera.x * 0.5;
-        for (const cloud of this.backgroundElements.clouds) {
-            // Draw simple cloud shape
-            this.ctx.beginPath();
-            this.ctx.ellipse(
-                cloud.x - cloudParallax + cloud.width/2, 
-                cloud.y + cloud.height/2, 
-                cloud.width/2, 
-                cloud.height/2, 
-                0, 0, Math.PI * 2
-            );
-            this.ctx.stroke();
-        }
-        
-        // Draw near background elements (trees) - fast parallax (0.8x speed)
-        const treeParallax = this.camera.x * 0.8;
-        for (const tree of this.backgroundElements.trees) {
-            // Draw simple tree shape
-            this.ctx.strokeRect(
-                tree.x - treeParallax, 
-                tree.y, 
-                tree.width, 
-                tree.height
-            );
-            // Draw tree crown
-            this.ctx.beginPath();
-            this.ctx.ellipse(
-                tree.x - treeParallax + tree.width/2, 
-                tree.y, 
-                tree.width, 
-                tree.width, 
-                0, 0, Math.PI * 2
-            );
-            this.ctx.stroke();
-        }
-    }
     
     drawTrail() {
         // Draw trail with fading effect
