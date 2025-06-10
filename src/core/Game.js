@@ -193,30 +193,9 @@ export class JumpingDotGame {
             
             goal: {
                 x: 2400,
-                y: 340,
+                y: 390,
                 width: 40,
                 height: 50
-            },
-            
-            // Goal area terrain (common across all stages)
-            goalTerrain: {
-                // Mountain-like elevation leading to goal
-                platforms: [
-                    { x1: 2200, y1: 480, x2: 2300, y2: 460 }, // Rising slope start
-                    { x1: 2300, y1: 460, x2: 2400, y2: 390 }, // Main slope to goal
-                    { x1: 2400, y1: 390, x2: 2500, y2: 390 }, // Goal platform
-                ],
-                
-                // Sneaky traps near goal (first-time killer!)
-                hiddenSpikes: [
-                    { x: 2350, y: 440, width: 10, height: 10 }, // Hidden in slope
-                    { x: 2420, y: 370, width: 10, height: 10 }, // Just before goal!
-                ],
-                
-                // Fake safe spots (evil!)
-                fakeSpikes: [
-                    { x: 2250, y: 440, width: 10, height: 10 }, // Looks dangerous but safe
-                ]
             },
             
             startText: {
@@ -553,11 +532,6 @@ export class JumpingDotGame {
         for (const platform of this.stage.platforms) {
             if (this.checkPlatformCollision(platform)) break;
         }
-        
-        // Check goal terrain platforms
-        for (const platform of this.stage.goalTerrain.platforms) {
-            if (this.checkPlatformCollision(platform)) break;
-        }
     }
     
     checkPlatformCollision(platform) {
@@ -588,18 +562,6 @@ export class JumpingDotGame {
                 this.player.y - this.player.radius < spike.y + spike.height) {
                 
                 this.handlePlayerDeath('Hit by spike! Press R to restart');
-                return;
-            }
-        }
-        
-        // Check goal terrain hidden spikes (sneaky death traps!)
-        for (const spike of this.stage.goalTerrain.hiddenSpikes) {
-            if (this.player.x + this.player.radius > spike.x &&
-                this.player.x - this.player.radius < spike.x + spike.width &&
-                this.player.y + this.player.radius > spike.y &&
-                this.player.y - this.player.radius < spike.y + spike.height) {
-                
-                this.handlePlayerDeath('Goal trap! Press R to restart');
                 return;
             }
         }
@@ -928,32 +890,9 @@ export class JumpingDotGame {
             this.ctx.stroke();
         }
         
-        // Draw goal terrain platforms (mountain-like)
-        this.ctx.strokeStyle = 'white';
-        this.ctx.lineWidth = 3; // Slightly thicker for prominence
-        
-        for (const platform of this.stage.goalTerrain.platforms) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(platform.x1, platform.y1);
-            this.ctx.lineTo(platform.x2, platform.y2);
-            this.ctx.stroke();
-        }
-        
-        // Draw regular spikes (triangular shapes)
+        // Draw spikes (triangular shapes)
         this.ctx.fillStyle = 'white';
         for (const spike of this.stage.spikes) {
-            this.drawSpike(spike);
-        }
-        
-        // Draw goal terrain hidden spikes (deadly!)
-        this.ctx.fillStyle = 'white';
-        for (const spike of this.stage.goalTerrain.hiddenSpikes) {
-            this.drawSpike(spike);
-        }
-        
-        // Draw fake spikes (look dangerous but harmless)
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; // Semi-transparent
-        for (const spike of this.stage.goalTerrain.fakeSpikes) {
             this.drawSpike(spike);
         }
     }
