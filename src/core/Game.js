@@ -825,6 +825,7 @@ export class JumpingDotGame {
         
         // Draw stage elements
         this.drawStage();
+        this.drawGoalAndTexts();
         
         // Draw death marks (always visible)
         this.renderDeathMarks();
@@ -970,7 +971,8 @@ export class JumpingDotGame {
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
     }
-        
+    
+    drawGoalAndTexts() {
         // Draw goal (rectangular flag)
         const goal = this.stage.goal;
         this.ctx.strokeStyle = 'white';
