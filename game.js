@@ -165,6 +165,18 @@ class JumpingDotGame {
                 x: 2420,
                 y: 370,
                 text: "GOAL"
+            },
+            
+            leftEdgeMessage: {
+                x: -400,
+                y: 450,
+                text: "NOTHING HERE"
+            },
+            
+            leftEdgeSubMessage: {
+                x: -400,
+                y: 470,
+                text: "GO RIGHT →"
             }
         };
     }
@@ -490,6 +502,20 @@ class JumpingDotGame {
         this.ctx.font = '16px monospace';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(goalText.text, goalText.x, goalText.y);
+        
+        // Draw left edge sarcastic message
+        const leftMsg = this.stage.leftEdgeMessage;
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '14px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(leftMsg.text, leftMsg.x, leftMsg.y);
+        
+        // Draw left edge sub message
+        const leftSubMsg = this.stage.leftEdgeSubMessage;
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '12px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(leftSubMsg.text, leftSubMsg.x, leftSubMsg.y);
     }
     
     
