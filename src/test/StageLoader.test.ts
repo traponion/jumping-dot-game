@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StageLoader } from '../core/StageLoader.js';
+import { StageLoader } from '../core/StageLoader.ts';
+
+// Global type declarations for test environment
+declare var global: {
+  fetch: any;
+};
 
 describe('StageLoader', () => {
-  let stageLoader;
+  let stageLoader: StageLoader;
 
   beforeEach(() => {
     stageLoader = new StageLoader();

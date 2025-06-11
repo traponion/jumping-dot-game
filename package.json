@@ -12,6 +12,7 @@
   "devDependencies": {
     "@vitest/ui": "^3.2.3",
     "jsdom": "^23.0.0",
+    "typescript": "^5.7.2",
     "vite": "^6.3.5",
     "vitest": "^3.2.3"
   }

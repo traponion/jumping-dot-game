@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { JumpingDotGame } from '../core/Game.js';
+import { JumpingDotGame } from '../core/Game.ts';
+
+// Global type declarations for test environment
+declare var global: {
+  document: any;
+  window: any;
+  fetch: any;
+  performance: any;
+};
 
 // Mock DOM elements
 const mockCanvas = {
@@ -32,7 +40,7 @@ const mockCanvas = {
 const mockElement = { textContent: '' };
 
 describe('JumpingDotGame', () => {
-  let game;
+  let game: JumpingDotGame;
 
   beforeEach(async () => {
     // Mock DOM elements
@@ -98,30 +106,30 @@ describe('JumpingDotGame', () => {
   describe('stage loading', () => {
     it('should load stage with platforms', () => {
       expect(game.stage).toBeDefined();
-      expect(game.stage.platforms).toBeDefined();
-      expect(game.stage.platforms.length).toBeGreaterThan(0);
+      expect(game.stage!.platforms).toBeDefined();
+      expect(game.stage!.platforms.length).toBeGreaterThan(0);
     });
 
     it('should load stage with spikes', () => {
-      expect(game.stage.spikes).toBeDefined();
-      expect(game.stage.spikes.length).toBeGreaterThan(0);
+      expect(game.stage!.spikes).toBeDefined();
+      expect(game.stage!.spikes.length).toBeGreaterThan(0);
     });
 
     it('should load stage with goal', () => {
-      expect(game.stage.goal).toBeDefined();
-      expect(game.stage.goal.x).toBe(2400);
-      expect(game.stage.goal.y).toBe(390);
+      expect(game.stage!.goal).toBeDefined();
+      expect(game.stage!.goal.x).toBe(2400);
+      expect(game.stage!.goal.y).toBe(390);
     });
 
     it('should load stage with text elements', () => {
-      expect(game.stage.startText).toBeDefined();
-      expect(game.stage.goalText).toBeDefined();
-      expect(game.stage.leftEdgeMessage).toBeDefined();
+      expect(game.stage!.startText).toBeDefined();
+      expect(game.stage!.goalText).toBeDefined();
+      expect(game.stage!.leftEdgeMessage).toBeDefined();
     });
 
     it('should use StageLoader for loading stages', () => {
       expect(game.stageLoader).toBeDefined();
-      expect(game.stage.id).toBe(1); // Should load stage 1 by default
+      expect(game.stage!.id).toBe(1); // Should load stage 1 by default
     });
   });
 
@@ -230,8 +238,8 @@ describe('JumpingDotGame', () => {
 
   describe('collision detection', () => {
     it('should detect goal collision', () => {
-      game.player.x = game.stage.goal.x + 1;
-      game.player.y = game.stage.goal.y + 1;
+      game.player.x = game.stage!.goal.x + 1;
+      game.player.y = game.stage!.goal.y + 1;
       game.timeRemaining = 8;
       
       game.checkGoalCollision();
@@ -241,7 +249,7 @@ describe('JumpingDotGame', () => {
     });
 
     it('should detect spike collision', () => {
-      const firstSpike = game.stage.spikes[0];
+      const firstSpike = game.stage!.spikes[0];
       game.player.x = firstSpike.x + firstSpike.width / 2;
       game.player.y = firstSpike.y + firstSpike.height / 2;
       
@@ -252,7 +260,7 @@ describe('JumpingDotGame', () => {
 
     it('should detect platform collision even with high velocity (anti-tunneling)', () => {
       game.startGame();
-      const platform = game.stage.platforms[0]; // The first platform is at y=500
+      const platform = game.stage!.platforms[0]; // The first platform is at y=500
       
       // Position player just above the platform
       game.player.x = platform.x1 + 10;
@@ -270,8 +278,8 @@ describe('JumpingDotGame', () => {
 
   describe('clear animation', () => {
     it('should start clear animation on goal reach', () => {
-      game.player.x = game.stage.goal.x + 1;
-      game.player.y = game.stage.goal.y + 1;
+      game.player.x = game.stage!.goal.x + 1;
+      game.player.y = game.stage!.goal.y + 1;
       
       game.checkGoalCollision();
       
@@ -293,17 +301,6 @@ describe('JumpingDotGame', () => {
 
   // This suite confirms no legacy mobile code remains.
   describe('mobile features removal', () => {
-    it('should not have tilt control functionality', () => {
-      expect(game.tiltControlEnabled).toBeUndefined();
-      expect(game.toggleTiltControl).toBeUndefined();
-      expect(game.handleDeviceOrientation).toBeUndefined();
-    });
-
-    it('should not have mobile setup methods', () => {
-      expect(game.setupMobileControls).toBeUndefined();
-      expect(game.setupDeviceOrientation).toBeUndefined();
-    });
-
     it('should not try to access mobile UI elements', () => {
       expect(() => game.init()).not.toThrow();
     });

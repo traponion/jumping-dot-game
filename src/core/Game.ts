@@ -1,23 +1,122 @@
-import { StageLoader } from './StageLoader.js';
+import { StageLoader, StageData, Platform, Spike } from './StageLoader.js';
+
+// Type definitions for game components
+interface Player {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    grounded: boolean;
+}
+
+interface Camera {
+    x: number;
+    y: number;
+}
+
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    decay: number;
+    size?: number;
+}
+
+interface AnimationSystem {
+    active: boolean;
+    startTime: number | null;
+    duration: number;
+    particles: Particle[];
+}
+
+interface DeathMark {
+    x: number;
+    y: number;
+    timestamp: number;
+}
+
+interface TrailPoint {
+    x: number;
+    y: number;
+}
+
+interface KeyState {
+    [key: string]: boolean;
+}
 
 export class JumpingDotGame {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.gameStatus = document.getElementById('gameStatus');
-        this.timerDisplay = document.getElementById('timer');
-        this.scoreDisplay = document.getElementById('score');
-        
-        
-        // Game state
-        this.gameRunning = false;
-        this.gameOver = false;
-        this.currentStage = 1;
-        this.debugMode = false;
-        
-        // Factor to control overall game speed (2.0 for 120Hz feel)
-        this.gameSpeed = 2.0;
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    public gameStatus: HTMLElement;
+    private timerDisplay: HTMLElement;
+    private scoreDisplay: HTMLElement;
+    
+    // Game state
+    public gameRunning: boolean = false;
+    public gameOver: boolean = false;
+    private currentStage: number = 1;
+    
+    // Factor to control overall game speed (2.0 for 120Hz feel)
+    public gameSpeed: number = 2.0;
 
+    // Player (jumping dot)
+    public player: Player;
+    
+    // Movement state tracking
+    public hasMovedOnce: boolean = false;
+    
+    // Timer and score system
+    public timeLimit: number = 10; // 10 seconds - extremely challenging!
+    public timeRemaining: number;
+    public gameStartTime: number | null = null;
+    public finalScore: number = 0;
+    
+    // Clear animation system
+    public clearAnimation: AnimationSystem;
+    
+    // Death animation system
+    private deathAnimation: AnimationSystem;
+    
+    // Death marks (persist until page reload)
+    private deathMarks: DeathMark[] = [];
+    
+    // Trail effect for smooth animation
+    private trail: TrailPoint[] = [];
+    private maxTrailLength: number = 8;
+    
+    // Physics constants
+    public gravity: number = 0.6;
+    public jumpForce: number = -12;
+    public autoJumpInterval: number = 150; // milliseconds - Adjusted for faster game speed
+    private lastJumpTime: number | null = null;
+    public moveSpeed: number = 4;
+    
+    // Camera
+    private camera: Camera;
+    
+    // Stage loader
+    public stageLoader: StageLoader;
+    
+    // Stage elements
+    public stage: StageData | null = null; // Will be loaded asynchronously
+    
+    // Input handling
+    public keys: KeyState = {};
+    
+    // Game loop
+    private lastTime: number | null = null;
+    private animationId: number | null = null;
+
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d')!;
+        this.gameStatus = document.getElementById('gameStatus')!;
+        this.timerDisplay = document.getElementById('timer')!;
+        this.scoreDisplay = document.getElementById('score')!;
+        
         // Player (jumping dot)
         this.player = {
             x: 100,
@@ -28,14 +127,8 @@ export class JumpingDotGame {
             grounded: false
         };
         
-        // Movement state tracking
-        this.hasMovedOnce = false;
-        
         // Timer and score system
-        this.timeLimit = 10; // 10 seconds - extremely challenging!
         this.timeRemaining = this.timeLimit;
-        this.gameStartTime = null;
-        this.finalScore = 0;
         
         // Clear animation system
         this.clearAnimation = {
@@ -53,21 +146,6 @@ export class JumpingDotGame {
             particles: []
         };
         
-        // Death marks (persist until page reload)
-        this.deathMarks = [];
-        
-        // Trail effect for smooth animation
-        this.trail = [];
-        this.maxTrailLength = 8;
-        
-        // Physics constants
-        this.gravity = 0.6;
-        this.jumpForce = -12;
-        this.autoJumpInterval = 150; // milliseconds - Adjusted for faster game speed
-        this.lastJumpTime = null;
-        this.moveSpeed = 4;
-        this.friction = 0.95; // Inertia system
-        
         // Camera
         this.camera = {
             x: 0,
@@ -77,20 +155,11 @@ export class JumpingDotGame {
         // Stage loader
         this.stageLoader = new StageLoader();
         
-        // Stage elements
-        this.stage = null; // Will be loaded asynchronously
-        
-        // Input handling
-        this.keys = {};
         this.setupInput();
-        
-        // Game loop
-        this.lastTime = null;
-        this.animationId = null;
         this.init();
     }
     
-    async init() {
+    async init(): Promise<void> {
         this.gameStatus.textContent = 'Loading stage...';
         
         // Load initial stage
@@ -143,7 +212,6 @@ export class JumpingDotGame {
         this.jumpForce = -12;
         this.autoJumpInterval = 150;
         this.moveSpeed = 4;
-        this.friction = 0.95;
         
         // Reset timing variables to null for proper initialization
         this.lastJumpTime = null;
@@ -161,7 +229,7 @@ export class JumpingDotGame {
     }
 
     // Cleanup method for testing
-    cleanup() {
+    cleanup(): void {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
@@ -170,7 +238,7 @@ export class JumpingDotGame {
         this.gameOver = true;
     }
     
-    async loadStage(stageNumber) {
+    private async loadStage(stageNumber: number): Promise<void> {
         try {
             this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
         } catch (error) {
@@ -180,7 +248,7 @@ export class JumpingDotGame {
         }
     }
     
-    setupInput() {
+    private setupInput(): void {
         document.addEventListener('keydown', (e) => {
             // Only process arrow key inputs if game is running and not over
             if (!this.gameOver) {
@@ -197,7 +265,6 @@ export class JumpingDotGame {
                 e.preventDefault();
             }
             
-            
             // Prevent arrow key scrolling
             if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
                 e.preventDefault();
@@ -210,10 +277,9 @@ export class JumpingDotGame {
                 this.keys[e.code] = false;
             }
         });
-        
     }
 
-    startGame() {
+    public startGame(): void {
         this.gameRunning = true;
         this.gameStatus.textContent = 'Playing';
         // Initialize lastJumpTime relative to current game time for consistency
@@ -221,7 +287,7 @@ export class JumpingDotGame {
         this.gameStartTime = performance.now();
     }
     
-    update(deltaTime) {
+    public update(deltaTime: number): void {
         if (!this.gameRunning || this.gameOver) return;
 
         // Calculate delta time factor for frame-rate independent physics
@@ -244,8 +310,8 @@ export class JumpingDotGame {
         }
         
         // Handle input
-        let leftInput = this.keys['ArrowLeft'];
-        let rightInput = this.keys['ArrowRight'];
+        const leftInput = this.keys['ArrowLeft'];
+        const rightInput = this.keys['ArrowRight'];
         
         const acceleration = 0.5;
         if (leftInput) {
@@ -317,7 +383,9 @@ export class JumpingDotGame {
         }
     }
     
-    handlePlatformCollisions(prevPlayerFootY) {
+    private handlePlatformCollisions(prevPlayerFootY: number): void {
+        if (!this.stage) return;
+        
         this.player.grounded = false;
         
         // Check regular platforms
@@ -326,7 +394,7 @@ export class JumpingDotGame {
         }
     }
     
-    checkPlatformCollision(platform, prevPlayerFootY) {
+    private checkPlatformCollision(platform: Platform, prevPlayerFootY: number): boolean {
         const currentPlayerFootY = this.player.y + this.player.radius;
 
         // Check if player passed through the platform from above
@@ -348,7 +416,9 @@ export class JumpingDotGame {
         return false;
     }
     
-    checkSpikeCollisions() {
+    public checkSpikeCollisions(): void {
+        if (!this.stage) return;
+        
         // Check regular spikes
         for (const spike of this.stage.spikes) {
             if (this.player.x + this.player.radius > spike.x &&
@@ -362,14 +432,16 @@ export class JumpingDotGame {
         }
     }
     
-    checkHoleCollisions() {
+    private checkHoleCollisions(): void {
         // Check if player fell into a hole
         if (this.player.y > 600) {
             this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
         }
     }
     
-    checkGoalCollision() {
+    public checkGoalCollision(): void {
+        if (!this.stage) return;
+        
         const goal = this.stage.goal;
         if (this.player.x + this.player.radius > goal.x &&
             this.player.x - this.player.radius < goal.x + goal.width &&
@@ -386,7 +458,7 @@ export class JumpingDotGame {
         }
     }
     
-    startClearAnimation() {
+    public startClearAnimation(): void {
         this.clearAnimation.active = true;
         this.clearAnimation.startTime = performance.now();
         this.clearAnimation.particles = [];
@@ -404,11 +476,11 @@ export class JumpingDotGame {
         }
     }
     
-    updateClearAnimation() {
+    public updateClearAnimation(): void {
         if (!this.clearAnimation.active) return;
         
         const currentTime = performance.now();
-        const elapsed = currentTime - this.clearAnimation.startTime;
+        const elapsed = currentTime - this.clearAnimation.startTime!;
         
         // Update particles
         for (let i = this.clearAnimation.particles.length - 1; i >= 0; i--) {
@@ -430,8 +502,8 @@ export class JumpingDotGame {
         }
     }
     
-    renderClearAnimation() {
-        if (!this.clearAnimation.active) return;
+    private renderClearAnimation(): void {
+        if (!this.clearAnimation.active || !this.clearAnimation.startTime) return;
         
         const currentTime = performance.now();
         const elapsed = currentTime - this.clearAnimation.startTime;
@@ -457,7 +529,7 @@ export class JumpingDotGame {
         }
     }
     
-    handlePlayerDeath(message, deathType = 'normal') {
+    private handlePlayerDeath(message: string, deathType: string = 'normal'): void {
         this.gameOver = true;
         this.gameStatus.textContent = message;
         
@@ -485,7 +557,7 @@ export class JumpingDotGame {
         this.trail = [];
     }
     
-    startDeathAnimation() {
+    private startDeathAnimation(): void {
         this.deathAnimation.active = true;
         this.deathAnimation.startTime = performance.now();
         this.deathAnimation.particles = [];
@@ -507,11 +579,11 @@ export class JumpingDotGame {
         }
     }
     
-    updateDeathAnimation() {
+    private updateDeathAnimation(): void {
         if (!this.deathAnimation.active) return;
         
         const currentTime = performance.now();
-        const elapsed = currentTime - this.deathAnimation.startTime;
+        const elapsed = currentTime - this.deathAnimation.startTime!;
         
         // Update particles
         for (let i = this.deathAnimation.particles.length - 1; i >= 0; i--) {
@@ -533,19 +605,19 @@ export class JumpingDotGame {
         }
     }
     
-    renderDeathAnimation() {
+    private renderDeathAnimation(): void {
         if (!this.deathAnimation.active) return;
         
         // Draw explosion particles
         for (const particle of this.deathAnimation.particles) {
             this.ctx.fillStyle = `rgba(255, 0, 0, ${particle.life})`;
             this.ctx.beginPath();
-            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            this.ctx.arc(particle.x, particle.y, particle.size || 2, 0, Math.PI * 2);
             this.ctx.fill();
         }
     }
     
-    renderDeathMarks() {
+    private renderDeathMarks(): void {
         // Draw X marks at death locations
         this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
         this.ctx.lineWidth = 3;
@@ -566,7 +638,7 @@ export class JumpingDotGame {
         this.ctx.lineWidth = 2;
     }
     
-    render() {
+    private render(): void {
         // Clear canvas
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -630,10 +702,9 @@ export class JumpingDotGame {
         this.ctx.textAlign = 'center';
         this.ctx.fillText('Made by traponion', this.canvas.width / 2, this.canvas.height - 30);
         this.ctx.fillText('github.com/traponion/jumping-dot-game', this.canvas.width / 2, this.canvas.height - 15);
-        
     }
     
-    gameLoop(currentTime) {
+    private gameLoop(currentTime: number): void {
         // Handle first frame or reset cases
         if (this.lastTime === null) {
             this.lastTime = currentTime;
@@ -656,7 +727,9 @@ export class JumpingDotGame {
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
     }
     
-    drawStage() {
+    private drawStage(): void {
+        if (!this.stage) return;
+        
         // Draw regular platforms
         this.ctx.strokeStyle = 'white';
         this.ctx.lineWidth = 2;
@@ -675,7 +748,7 @@ export class JumpingDotGame {
         }
     }
     
-    drawSpike(spike) {
+    private drawSpike(spike: Spike): void {
         this.ctx.beginPath();
         this.ctx.moveTo(spike.x, spike.y + spike.height);
         this.ctx.lineTo(spike.x + spike.width / 2, spike.y);
@@ -689,7 +762,9 @@ export class JumpingDotGame {
         this.ctx.stroke();
     }
     
-    drawGoalAndTexts() {
+    private drawGoalAndTexts(): void {
+        if (!this.stage) return;
+        
         // Draw goal (rectangular flag)
         const goal = this.stage.goal;
         this.ctx.strokeStyle = 'white';
@@ -719,22 +794,25 @@ export class JumpingDotGame {
         this.ctx.fillText(goalText.text, goalText.x, goalText.y);
         
         // Draw left edge sarcastic message
-        const leftMsg = this.stage.leftEdgeMessage;
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '14px monospace';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(leftMsg.text, leftMsg.x, leftMsg.y);
+        if (this.stage.leftEdgeMessage) {
+            const leftMsg = this.stage.leftEdgeMessage;
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = '14px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(leftMsg.text, leftMsg.x, leftMsg.y);
+        }
         
         // Draw left edge sub message
-        const leftSubMsg = this.stage.leftEdgeSubMessage;
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '12px monospace';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(leftSubMsg.text, leftSubMsg.x, leftSubMsg.y);
+        if (this.stage.leftEdgeSubMessage) {
+            const leftSubMsg = this.stage.leftEdgeSubMessage;
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = '12px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(leftSubMsg.text, leftSubMsg.x, leftSubMsg.y);
+        }
     }
     
-    
-    drawTrail() {
+    private drawTrail(): void {
         // Draw trail with fading effect
         for (let i = 0; i < this.trail.length; i++) {
             const point = this.trail[i];

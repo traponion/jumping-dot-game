@@ -1,17 +1,74 @@
+// Type definitions for stage system
+export interface Platform {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+}
+
+export interface MovingPlatform extends Platform {
+    startX: number;
+    endX: number;
+    speed: number;
+    direction: number;
+}
+
+export interface Spike {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface Hole {
+    x1: number;
+    x2: number;
+}
+
+export interface Goal {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface TextElement {
+    x: number;
+    y: number;
+    text: string;
+}
+
+export interface StageData {
+    id: number;
+    name: string;
+    platforms: Platform[];
+    movingPlatforms?: MovingPlatform[];
+    holes?: Hole[];
+    spikes: Spike[];
+    movingSpikes?: Spike[];
+    goal: Goal;
+    startText: TextElement;
+    goalText: TextElement;
+    leftEdgeMessage?: TextElement;
+    leftEdgeSubMessage?: TextElement;
+}
+
 export class StageLoader {
+    private cache: Map<number, StageData>;
+
     constructor() {
         this.cache = new Map();
     }
 
     /**
      * Load stage data from JSON file
-     * @param {number} stageId - Stage ID to load
-     * @returns {Promise<Object>} Stage data
+     * @param stageId - Stage ID to load
+     * @returns Stage data
      */
-    async loadStage(stageId) {
+    async loadStage(stageId: number): Promise<StageData> {
         // Check cache first
         if (this.cache.has(stageId)) {
-            return this.cache.get(stageId);
+            return this.cache.get(stageId)!;
         }
 
         try {
@@ -21,7 +78,7 @@ export class StageLoader {
                 throw new Error(`HTTP ${response.status}`);
             }
 
-            const stageData = await response.json();
+            const stageData: StageData = await response.json();
             this.validateStage(stageData);
             
             // Cache the validated stage data
@@ -29,30 +86,30 @@ export class StageLoader {
             
             return stageData;
         } catch (error) {
-            throw new Error(`Failed to load stage ${stageId}: ${error.message}`);
+            throw new Error(`Failed to load stage ${stageId}: ${(error as Error).message}`);
         }
     }
 
     /**
      * Load stage with fallback to hardcoded data
-     * @param {number} stageId - Stage ID to load
-     * @returns {Promise<Object>} Stage data
+     * @param stageId - Stage ID to load
+     * @returns Stage data
      */
-    async loadStageWithFallback(stageId) {
+    async loadStageWithFallback(stageId: number): Promise<StageData> {
         try {
             return await this.loadStage(stageId);
         } catch (error) {
-            console.warn(`Failed to load stage ${stageId} from JSON, falling back to hardcoded data:`, error.message);
+            console.warn(`Failed to load stage ${stageId} from JSON, falling back to hardcoded data:`, (error as Error).message);
             return this.getHardcodedStage(stageId);
         }
     }
 
     /**
      * Validate stage data structure
-     * @param {Object} stageData - Stage data to validate
-     * @throws {Error} If stage data is invalid
+     * @param stageData - Stage data to validate
+     * @throws If stage data is invalid
      */
-    validateStage(stageData) {
+    validateStage(stageData: any): asserts stageData is StageData {
         const requiredFields = ['id', 'name', 'platforms', 'spikes', 'goal', 'startText', 'goalText'];
         
         for (const field of requiredFields) {
@@ -112,10 +169,10 @@ export class StageLoader {
 
     /**
      * Get hardcoded stage data as fallback
-     * @param {number} stageId - Stage ID
-     * @returns {Object} Hardcoded stage data
+     * @param stageId - Stage ID
+     * @returns Hardcoded stage data
      */
-    getHardcodedStage(stageId) {
+    getHardcodedStage(stageId: number): StageData {
         switch (stageId) {
             case 1:
                 return this.createHardcodedStage1();
@@ -126,7 +183,7 @@ export class StageLoader {
         }
     }
 
-    createHardcodedStage1() {
+    private createHardcodedStage1(): StageData {
         return {
             id: 1,
             name: "Stage 1",
@@ -200,7 +257,7 @@ export class StageLoader {
         };
     }
 
-    createHardcodedStage2() {
+    private createHardcodedStage2(): StageData {
         return {
             id: 2,
             name: "Stage 2",
