@@ -15,6 +15,9 @@ export class JumpingDotGame {
         this.currentStage = 1;
         this.debugMode = false;
         
+        // Factor to control overall game speed (2.0 for 120Hz feel)
+        this.gameSpeed = 2.0;
+
         // Player (jumping dot)
         this.player = {
             x: 100,
@@ -60,7 +63,7 @@ export class JumpingDotGame {
         // Physics constants
         this.gravity = 0.6;
         this.jumpForce = -12;
-        this.autoJumpInterval = 300; // milliseconds - slightly longer for better rhythm
+        this.autoJumpInterval = 150; // milliseconds - Adjusted for faster game speed
         this.lastJumpTime = null;
         this.moveSpeed = 4;
         this.friction = 0.95; // Inertia system
@@ -138,7 +141,7 @@ export class JumpingDotGame {
         // Reset physics constants to ensure consistency
         this.gravity = 0.6;
         this.jumpForce = -12;
-        this.autoJumpInterval = 300;
+        this.autoJumpInterval = 150;
         this.moveSpeed = 4;
         this.friction = 0.95;
         
@@ -177,9 +180,6 @@ export class JumpingDotGame {
         }
     }
     
-    
-    
-    
     setupInput() {
         document.addEventListener('keydown', (e) => {
             // Only process arrow key inputs if game is running and not over
@@ -212,12 +212,7 @@ export class JumpingDotGame {
         });
         
     }
-    
-    
-    
-    
-    
-    
+
     startGame() {
         this.gameRunning = true;
         this.gameStatus.textContent = 'Playing';
@@ -228,6 +223,9 @@ export class JumpingDotGame {
     
     update(deltaTime) {
         if (!this.gameRunning || this.gameOver) return;
+
+        // Calculate delta time factor for frame-rate independent physics
+        const dtFactor = (deltaTime / (1000 / 60)) * this.gameSpeed;
         
         // Update timer
         if (this.gameStartTime) {
@@ -245,16 +243,16 @@ export class JumpingDotGame {
             this.timerDisplay.textContent = `Time: ${Math.ceil(this.timeRemaining)}`;
         }
         
-        // Handle input (left/right movement with no friction - unforgiving game)
+        // Handle input
         let leftInput = this.keys['ArrowLeft'];
         let rightInput = this.keys['ArrowRight'];
         
-        
+        const acceleration = 0.5;
         if (leftInput) {
-            this.player.vx -= 0.5;
+            this.player.vx -= acceleration * dtFactor;
             this.hasMovedOnce = true;
         } else if (rightInput) {
-            this.player.vx += 0.5;
+            this.player.vx += acceleration * dtFactor;
             this.hasMovedOnce = true;
         }
         
@@ -270,7 +268,6 @@ export class JumpingDotGame {
         
         // Auto jump when grounded and enough time has passed
         const currentTime = performance.now();
-        // Initialize lastJumpTime if it's null (first time or after reset)
         if (this.lastJumpTime === null) {
             this.lastJumpTime = currentTime - this.autoJumpInterval; // Allow immediate jump
         }
@@ -281,14 +278,17 @@ export class JumpingDotGame {
             this.lastJumpTime = currentTime;
         }
         
+        // Store previous position to prevent tunneling
+        const prevPlayerFootY = this.player.y + this.player.radius;
+
         // Apply gravity
         if (!this.player.grounded) {
-            this.player.vy += this.gravity;
+            this.player.vy += this.gravity * dtFactor;
         }
         
         // Update position
-        this.player.x += this.player.vx;
-        this.player.y += this.player.vy;
+        this.player.x += this.player.vx * dtFactor;
+        this.player.y += this.player.vy * dtFactor;
         
         // Update trail
         this.trail.push({ x: this.player.x, y: this.player.y });
@@ -297,7 +297,7 @@ export class JumpingDotGame {
         }
         
         // Platform collision detection
-        this.handlePlatformCollisions();
+        this.handlePlatformCollisions(prevPlayerFootY);
         
         // Check for spikes collision
         this.checkSpikeCollisions();
@@ -311,31 +311,32 @@ export class JumpingDotGame {
         // Camera follows player
         this.camera.x = this.player.x - this.canvas.width / 2;
         
-        // Allow player to move freely to the left (no invisible wall)
-        
         // Game over if player falls too far
         if (this.player.y > this.canvas.height + 100) {
             this.handlePlayerDeath('Game Over - Press R to restart', 'fall');
         }
     }
     
-    handlePlatformCollisions() {
+    handlePlatformCollisions(prevPlayerFootY) {
         this.player.grounded = false;
         
         // Check regular platforms
         for (const platform of this.stage.platforms) {
-            if (this.checkPlatformCollision(platform)) break;
+            if (this.checkPlatformCollision(platform, prevPlayerFootY)) break;
         }
     }
     
-    checkPlatformCollision(platform) {
-        // Check if player is above the platform and falling down
+    checkPlatformCollision(platform, prevPlayerFootY) {
+        const currentPlayerFootY = this.player.y + this.player.radius;
+
+        // Check if player passed through the platform from above
         if (this.player.x + this.player.radius > platform.x1 && 
             this.player.x - this.player.radius < platform.x2 &&
-            this.player.y + this.player.radius >= platform.y1 - 5 &&
-            this.player.y + this.player.radius <= platform.y1 + 10 &&
-            this.player.vy >= 0) {
+            this.player.vy >= 0 &&
+            prevPlayerFootY <= platform.y1 &&
+            currentPlayerFootY >= platform.y1) {
             
+            // Correct player position to be on top of the platform
             this.player.y = platform.y1 - this.player.radius;
             this.player.vy = 0;
             this.player.grounded = true;
@@ -645,7 +646,7 @@ export class JumpingDotGame {
         this.lastTime = currentTime;
         
         // Prevent huge delta times (e.g. from tab switching or reload)
-        const clampedDelta = Math.min(deltaTime, 16.67); // Max 60fps equivalent
+        const clampedDelta = Math.min(deltaTime, 16.67 * 2); // Allow up to 30fps equivalent to handle lag spikes with high gameSpeed
         
         this.update(clampedDelta);
         this.updateClearAnimation();
@@ -747,4 +748,3 @@ export class JumpingDotGame {
         }
     }
 }
-
