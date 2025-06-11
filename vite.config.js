@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  base: process.env.NODE_ENV === 'production' ? '/jumping-dot-game/' : '/',
   test: {
     environment: 'jsdom',
     globals: true,
