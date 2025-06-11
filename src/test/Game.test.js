@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.js';
 
 // Mock DOM elements
@@ -49,6 +49,13 @@ describe('JumpingDotGame', () => {
     };
 
     game = new JumpingDotGame();
+  });
+
+  afterEach(() => {
+    // Clean up game instance to prevent requestAnimationFrame leaks
+    if (game && game.cleanup) {
+      game.cleanup();
+    }
   });
 
   describe('initialization', () => {

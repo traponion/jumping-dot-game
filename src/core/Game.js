@@ -146,6 +146,16 @@ export class JumpingDotGame {
         
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
     }
+
+    // Cleanup method for testing
+    cleanup() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        this.gameRunning = false;
+        this.gameOver = true;
+    }
     
     createStage(stageNumber) {
         switch (stageNumber) {
