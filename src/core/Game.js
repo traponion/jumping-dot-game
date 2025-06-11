@@ -6,16 +6,12 @@ export class JumpingDotGame {
         this.timerDisplay = document.getElementById('timer');
         this.scoreDisplay = document.getElementById('score');
         
-        // Mobile UI elements
-        this.leftBtn = document.getElementById('leftBtn');
-        this.rightBtn = document.getElementById('rightBtn');
-        this.startBtn = document.getElementById('startBtn');
-        this.restartBtn = document.getElementById('restartBtn');
-        this.tiltBtn = document.getElementById('tiltBtn');
         
         // Game state
         this.gameRunning = false;
         this.gameOver = false;
+        this.currentStage = 1;
+        this.debugMode = false;
         
         // Player (jumping dot)
         this.player = {
@@ -74,15 +70,10 @@ export class JumpingDotGame {
         };
         
         // Stage elements
-        this.stage = this.createStage();
+        this.stage = this.createStage(this.currentStage);
         
         // Input handling
         this.keys = {};
-        this.tiltControl = {
-            enabled: false,
-            sensitivity: 0.3, // Sensitivity for tilt control
-            gamma: 0 // Device orientation gamma value
-        };
         this.setupInput();
         
         // Game loop
@@ -156,7 +147,18 @@ export class JumpingDotGame {
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
     }
     
-    createStage() {
+    createStage(stageNumber) {
+        switch (stageNumber) {
+            case 1:
+                return this.createStage1();
+            case 2:
+                return this.createStage2();
+            default:
+                return this.createStage1();
+        }
+    }
+    
+    createStage1() {
         return {
             platforms: [
                 // Ground sections with proper clearable gaps
@@ -175,6 +177,8 @@ export class JumpingDotGame {
                 { x1: 1975, y1: 360, x2: 2025, y2: 360 },
             ],
             
+            movingPlatforms: [], // No moving platforms in stage 1
+            
             holes: [
                 // Smaller, jumpable gaps
                 { x1: 350, x2: 450 },
@@ -191,6 +195,8 @@ export class JumpingDotGame {
                 { x: 1700, y: 440, width: 15, height: 15 },
             ],
             
+            movingSpikes: [], // No moving spikes in stage 1
+            
             goal: {
                 x: 2400,
                 y: 390,
@@ -201,7 +207,100 @@ export class JumpingDotGame {
             startText: {
                 x: 50,
                 y: 450,
-                text: "START"
+                text: "STAGE 1"
+            },
+            
+            goalText: {
+                x: 2420,
+                y: 370,
+                text: "GOAL"
+            },
+            
+            leftEdgeMessage: {
+                x: -400,
+                y: 450,
+                text: "NOTHING HERE"
+            },
+            
+            leftEdgeSubMessage: {
+                x: -400,
+                y: 470,
+                text: "GO RIGHT →"
+            }
+        };
+    }
+    
+    createStage2() {
+        return {
+            platforms: [
+                // Ground sections with bigger gaps for moving platforms
+                { x1: -500, y1: 500, x2: 300, y2: 500 },
+                { x1: 500, y1: 500, x2: 700, y2: 500 },
+                { x1: 900, y1: 500, x2: 1100, y2: 500 },
+                { x1: 1300, y1: 480, x2: 1500, y2: 480 },
+                { x1: 1700, y1: 460, x2: 1900, y2: 460 },
+                { x1: 2100, y1: 440, x2: 2350, y2: 440 },
+                
+                // Some fixed floating platforms
+                { x1: 1150, y1: 400, x2: 1250, y2: 400 },
+                { x1: 1950, y1: 360, x2: 2050, y2: 360 },
+            ],
+            
+            // Moving platforms (new!)
+            movingPlatforms: [
+                {
+                    x1: 350, y1: 420, x2: 450, y2: 420,
+                    startX: 350, endX: 450,
+                    currentX: 350,
+                    speed: 1.5,
+                    direction: 1
+                },
+                {
+                    x1: 750, y1: 400, x2: 850, y2: 400,
+                    startX: 750, endX: 850,
+                    currentX: 750,
+                    speed: 2,
+                    direction: 1
+                },
+                {
+                    x1: 1550, y1: 380, x2: 1650, y2: 380,
+                    startX: 1550, endX: 1650,
+                    currentX: 1550,
+                    speed: 1,
+                    direction: 1
+                }
+            ],
+            
+            holes: [
+                // Bigger gaps requiring moving platforms
+                { x1: 300, x2: 500 },
+                { x1: 700, x2: 900 },
+                { x1: 1100, x2: 1300 },
+                { x1: 1500, x2: 1700 },
+                { x1: 1900, x2: 2100 },
+            ],
+            
+            spikes: [
+                // More spikes for increased difficulty
+                { x: 550, y: 480, width: 15, height: 15 },
+                { x: 800, y: 480, width: 15, height: 15 },
+                { x: 1200, y: 380, width: 15, height: 15 },
+                { x: 1750, y: 440, width: 15, height: 15 },
+            ],
+            
+            movingSpikes: [], // No moving spikes yet in stage 2
+            
+            goal: {
+                x: 2400,
+                y: 390,
+                width: 40,
+                height: 50
+            },
+            
+            startText: {
+                x: 50,
+                y: 450,
+                text: "STAGE 2"
             },
             
             goalText: {
@@ -242,11 +341,6 @@ export class JumpingDotGame {
                 e.preventDefault();
             }
             
-            // Toggle tilt control with 'T' key
-            if (e.code === 'KeyT' && !this.keys['KeyT']) {
-                this.toggleTiltControl();
-                e.preventDefault();
-            }
             
             // Prevent arrow key scrolling
             if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
@@ -261,157 +355,12 @@ export class JumpingDotGame {
             }
         });
         
-        // Setup device orientation listening
-        this.setupDeviceOrientation();
-        
-        // Setup mobile controls
-        this.setupMobileControls();
     }
     
-    setupDeviceOrientation() {
-        // Check if DeviceOrientationEvent is supported
-        if (typeof DeviceOrientationEvent !== 'undefined') {
-            // Request permission for iOS 13+
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // This is iOS 13+ - we'll handle permission request when tilt is enabled
-            } else {
-                // This is not iOS 13+ or permission is not required
-                window.addEventListener('deviceorientation', (e) => {
-                    this.handleDeviceOrientation(e);
-                });
-            }
-        }
-    }
     
-    async toggleTiltControl() {
-        if (!this.tiltControl.enabled) {
-            // Enable tilt control
-            if (typeof DeviceOrientationEvent !== 'undefined') {
-                // Check if permission is required (iOS 13+)
-                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    try {
-                        const permission = await DeviceOrientationEvent.requestPermission();
-                        if (permission === 'granted') {
-                            window.addEventListener('deviceorientation', (e) => {
-                                this.handleDeviceOrientation(e);
-                            });
-                            this.tiltControl.enabled = true;
-                            console.log('Tilt control enabled!');
-                            this.updateTiltButtonDisplay();
-                        } else {
-                            console.log('Permission denied for device orientation');
-                        }
-                    } catch (error) {
-                        console.error('Error requesting permission:', error);
-                    }
-                } else {
-                    // Permission not required
-                    this.tiltControl.enabled = true;
-                    console.log('Tilt control enabled!');
-                    this.updateTiltButtonDisplay();
-                }
-            } else {
-                console.log('Device orientation not supported');
-            }
-        } else {
-            // Disable tilt control
-            this.tiltControl.enabled = false;
-            this.tiltControl.gamma = 0;
-            console.log('Tilt control disabled!');
-            this.updateTiltButtonDisplay();
-        }
-    }
     
-    handleDeviceOrientation(event) {
-        if (this.tiltControl.enabled && !this.gameOver) {
-            // gamma is the left-to-right tilt (in degrees, -90 to 90)
-            // negative = tilted left, positive = tilted right
-            this.tiltControl.gamma = event.gamma || 0;
-        }
-    }
     
-    setupMobileControls() {
-        if (!this.leftBtn || !this.rightBtn || !this.startBtn || !this.restartBtn || !this.tiltBtn) {
-            return; // Mobile elements not found, probably on desktop
-        }
-        
-        // Touch controls for movement
-        this.leftBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!this.gameOver) this.keys['ArrowLeft'] = true;
-        });
-        
-        this.leftBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.keys['ArrowLeft'] = false;
-        });
-        
-        this.rightBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!this.gameOver) this.keys['ArrowRight'] = true;
-        });
-        
-        this.rightBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.keys['ArrowRight'] = false;
-        });
-        
-        // Mouse support for desktop testing
-        this.leftBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            if (!this.gameOver) this.keys['ArrowLeft'] = true;
-        });
-        
-        this.leftBtn.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            this.keys['ArrowLeft'] = false;
-        });
-        
-        this.rightBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            if (!this.gameOver) this.keys['ArrowRight'] = true;
-        });
-        
-        this.rightBtn.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            this.keys['ArrowRight'] = false;
-        });
-        
-        // Start button
-        this.startBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!this.gameRunning && !this.gameOver) {
-                this.startGame();
-            }
-        });
-        
-        // Restart button
-        this.restartBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (this.gameOver) {
-                this.init();
-            }
-        });
-        
-        // Tilt toggle button
-        this.tiltBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await this.toggleTiltControl();
-            this.updateTiltButtonDisplay();
-        });
-    }
     
-    updateTiltButtonDisplay() {
-        if (this.tiltBtn) {
-            if (this.tiltControl.enabled) {
-                this.tiltBtn.textContent = 'TILT: ON';
-                this.tiltBtn.classList.add('active');
-            } else {
-                this.tiltBtn.textContent = 'TILT: OFF';
-                this.tiltBtn.classList.remove('active');
-            }
-        }
-    }
     
     startGame() {
         this.gameRunning = true;
@@ -444,17 +393,6 @@ export class JumpingDotGame {
         let leftInput = this.keys['ArrowLeft'];
         let rightInput = this.keys['ArrowRight'];
         
-        // Add tilt control input if enabled
-        if (this.tiltControl.enabled) {
-            const tiltThreshold = 5; // degrees
-            const normalizedTilt = this.tiltControl.gamma / 45; // normalize to -1 to 1 range
-            
-            if (this.tiltControl.gamma < -tiltThreshold) {
-                leftInput = true;
-            } else if (this.tiltControl.gamma > tiltThreshold) {
-                rightInput = true;
-            }
-        }
         
         if (leftInput) {
             this.player.vx -= 0.5;
@@ -829,30 +767,6 @@ export class JumpingDotGame {
             this.ctx.fillText('Game Over - Press R to restart', this.canvas.width / 2, this.canvas.height / 2);
         }
         
-        // Draw tilt control status
-        if (this.tiltControl.enabled) {
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            this.ctx.font = '14px monospace';
-            this.ctx.textAlign = 'right';
-            this.ctx.fillText('TILT: ON', this.canvas.width - 10, 25);
-            
-            // Draw tilt indicator
-            const tiltBarWidth = 100;
-            const tiltBarHeight = 6;
-            const tiltBarX = this.canvas.width - 120;
-            const tiltBarY = 35;
-            
-            // Background bar
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            this.ctx.fillRect(tiltBarX, tiltBarY, tiltBarWidth, tiltBarHeight);
-            
-            // Tilt indicator
-            const tiltPosition = Math.max(-45, Math.min(45, this.tiltControl.gamma));
-            const indicatorX = tiltBarX + (tiltPosition + 45) / 90 * tiltBarWidth;
-            
-            this.ctx.fillStyle = 'white';
-            this.ctx.fillRect(indicatorX - 2, tiltBarY - 2, 4, tiltBarHeight + 4);
-        }
     }
     
     gameLoop(currentTime) {

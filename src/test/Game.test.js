@@ -70,8 +70,8 @@ describe('JumpingDotGame', () => {
     });
 
     it('should initialize timer system', () => {
-      expect(game.timeLimit).toBe(60);
-      expect(game.timeRemaining).toBe(60);
+      expect(game.timeLimit).toBe(20);
+      expect(game.timeRemaining).toBe(20);
       expect(game.finalScore).toBe(0);
     });
 
@@ -255,6 +255,33 @@ describe('JumpingDotGame', () => {
       game.updateClearAnimation();
       
       expect(game.clearAnimation.particles.length).toBeLessThan(initialParticleCount);
+    });
+  });
+
+  describe('mobile features removal', () => {
+    it('should not have tilt control functionality', () => {
+      expect(game.tiltControlEnabled).toBeUndefined();
+      expect(game.toggleTiltControl).toBeUndefined();
+      expect(game.handleDeviceOrientation).toBeUndefined();
+    });
+
+    it('should not have mobile setup methods', () => {
+      expect(game.setupMobileControls).toBeUndefined();
+      expect(game.setupDeviceOrientation).toBeUndefined();
+    });
+
+    it('should not try to access mobile UI elements', () => {
+      // Test that game doesn't crash when mobile elements don't exist
+      expect(() => game.init()).not.toThrow();
+    });
+
+    it('should only handle keyboard input', () => {
+      // After mobile removal, only keyboard events should be supported
+      game.keys = { ArrowLeft: true };
+      expect(() => game.update(16.67)).not.toThrow();
+      
+      game.keys = { ArrowRight: true };
+      expect(() => game.update(16.67)).not.toThrow();
     });
   });
 });
