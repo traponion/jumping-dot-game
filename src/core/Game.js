@@ -1,3 +1,5 @@
+import { StageLoader } from './StageLoader.js';
+
 export class JumpingDotGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -69,8 +71,11 @@ export class JumpingDotGame {
             y: 0
         };
         
+        // Stage loader
+        this.stageLoader = new StageLoader();
+        
         // Stage elements
-        this.stage = this.createStage(this.currentStage);
+        this.stage = null; // Will be loaded asynchronously
         
         // Input handling
         this.keys = {};
@@ -82,7 +87,12 @@ export class JumpingDotGame {
         this.init();
     }
     
-    init() {
+    async init() {
+        this.gameStatus.textContent = 'Loading stage...';
+        
+        // Load initial stage
+        await this.loadStage(this.currentStage);
+        
         this.gameStatus.textContent = 'Press SPACE to start';
         this.gameRunning = false;
         this.gameOver = false;
@@ -157,181 +167,17 @@ export class JumpingDotGame {
         this.gameOver = true;
     }
     
-    createStage(stageNumber) {
-        switch (stageNumber) {
-            case 1:
-                return this.createStage1();
-            case 2:
-                return this.createStage2();
-            default:
-                return this.createStage1();
+    async loadStage(stageNumber) {
+        try {
+            this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
+        } catch (error) {
+            console.error('Failed to load stage:', error);
+            // Fallback to hardcoded stage 1
+            this.stage = this.stageLoader.getHardcodedStage(1);
         }
     }
     
-    createStage1() {
-        return {
-            platforms: [
-                // Ground sections with proper clearable gaps
-                { x1: -500, y1: 500, x2: 350, y2: 500 },
-                { x1: 450, y1: 500, x2: 750, y2: 500 },
-                { x1: 850, y1: 500, x2: 1150, y2: 500 },
-                { x1: 1250, y1: 480, x2: 1550, y2: 480 },
-                { x1: 1650, y1: 460, x2: 1950, y2: 460 },
-                { x1: 2050, y1: 440, x2: 2350, y2: 440 },
-                
-                // Floating platforms for safe landing
-                { x1: 375, y1: 420, x2: 425, y2: 420 },
-                { x1: 775, y1: 400, x2: 825, y2: 400 },
-                { x1: 1175, y1: 400, x2: 1225, y2: 400 },
-                { x1: 1575, y1: 380, x2: 1625, y2: 380 },
-                { x1: 1975, y1: 360, x2: 2025, y2: 360 },
-            ],
-            
-            movingPlatforms: [], // No moving platforms in stage 1
-            
-            holes: [
-                // Smaller, jumpable gaps
-                { x1: 350, x2: 450 },
-                { x1: 750, x2: 850 },
-                { x1: 1150, x2: 1250 },
-                { x1: 1550, x2: 1650 },
-                { x1: 1950, x2: 2050 },
-            ],
-            
-            spikes: [
-                // Fewer, more strategic spikes
-                { x: 500, y: 480, width: 15, height: 15 },
-                { x: 900, y: 480, width: 15, height: 15 },
-                { x: 1700, y: 440, width: 15, height: 15 },
-            ],
-            
-            movingSpikes: [], // No moving spikes in stage 1
-            
-            goal: {
-                x: 2400,
-                y: 390,
-                width: 40,
-                height: 50
-            },
-            
-            startText: {
-                x: 50,
-                y: 450,
-                text: "STAGE 1"
-            },
-            
-            goalText: {
-                x: 2420,
-                y: 370,
-                text: "GOAL"
-            },
-            
-            leftEdgeMessage: {
-                x: -400,
-                y: 450,
-                text: "NOTHING HERE"
-            },
-            
-            leftEdgeSubMessage: {
-                x: -400,
-                y: 470,
-                text: "GO RIGHT →"
-            }
-        };
-    }
     
-    createStage2() {
-        return {
-            platforms: [
-                // Ground sections with bigger gaps for moving platforms
-                { x1: -500, y1: 500, x2: 300, y2: 500 },
-                { x1: 500, y1: 500, x2: 700, y2: 500 },
-                { x1: 900, y1: 500, x2: 1100, y2: 500 },
-                { x1: 1300, y1: 480, x2: 1500, y2: 480 },
-                { x1: 1700, y1: 460, x2: 1900, y2: 460 },
-                { x1: 2100, y1: 440, x2: 2350, y2: 440 },
-                
-                // Some fixed floating platforms
-                { x1: 1150, y1: 400, x2: 1250, y2: 400 },
-                { x1: 1950, y1: 360, x2: 2050, y2: 360 },
-            ],
-            
-            // Moving platforms (new!)
-            movingPlatforms: [
-                {
-                    x1: 350, y1: 420, x2: 450, y2: 420,
-                    startX: 350, endX: 450,
-                    currentX: 350,
-                    speed: 1.5,
-                    direction: 1
-                },
-                {
-                    x1: 750, y1: 400, x2: 850, y2: 400,
-                    startX: 750, endX: 850,
-                    currentX: 750,
-                    speed: 2,
-                    direction: 1
-                },
-                {
-                    x1: 1550, y1: 380, x2: 1650, y2: 380,
-                    startX: 1550, endX: 1650,
-                    currentX: 1550,
-                    speed: 1,
-                    direction: 1
-                }
-            ],
-            
-            holes: [
-                // Bigger gaps requiring moving platforms
-                { x1: 300, x2: 500 },
-                { x1: 700, x2: 900 },
-                { x1: 1100, x2: 1300 },
-                { x1: 1500, x2: 1700 },
-                { x1: 1900, x2: 2100 },
-            ],
-            
-            spikes: [
-                // More spikes for increased difficulty
-                { x: 550, y: 480, width: 15, height: 15 },
-                { x: 800, y: 480, width: 15, height: 15 },
-                { x: 1200, y: 380, width: 15, height: 15 },
-                { x: 1750, y: 440, width: 15, height: 15 },
-            ],
-            
-            movingSpikes: [], // No moving spikes yet in stage 2
-            
-            goal: {
-                x: 2400,
-                y: 390,
-                width: 40,
-                height: 50
-            },
-            
-            startText: {
-                x: 50,
-                y: 450,
-                text: "STAGE 2"
-            },
-            
-            goalText: {
-                x: 2420,
-                y: 370,
-                text: "GOAL"
-            },
-            
-            leftEdgeMessage: {
-                x: -400,
-                y: 450,
-                text: "NOTHING HERE"
-            },
-            
-            leftEdgeSubMessage: {
-                x: -400,
-                y: 470,
-                text: "GO RIGHT →"
-            }
-        };
-    }
     
     
     setupInput() {

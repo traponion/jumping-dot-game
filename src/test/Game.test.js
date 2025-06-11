@@ -34,7 +34,7 @@ const mockElement = { textContent: '' };
 describe('JumpingDotGame', () => {
   let game;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Mock DOM elements
     global.document = {
       getElementById: vi.fn((id) => {
@@ -48,7 +48,12 @@ describe('JumpingDotGame', () => {
       addEventListener: vi.fn()
     };
 
+    // Mock fetch for stage loading
+    global.fetch = vi.fn().mockRejectedValue(new Error('No JSON file'));
+
     game = new JumpingDotGame();
+    // Wait for async initialization to complete
+    await new Promise(resolve => setTimeout(resolve, 10));
   });
 
   afterEach(() => {
@@ -88,31 +93,33 @@ describe('JumpingDotGame', () => {
     });
   });
 
-  describe('stage creation', () => {
-    it('should create stage with platforms', () => {
-      const stage = game.createStage();
-      expect(stage.platforms).toBeDefined();
-      expect(stage.platforms.length).toBeGreaterThan(0);
+  describe('stage loading', () => {
+    it('should load stage with platforms', () => {
+      expect(game.stage).toBeDefined();
+      expect(game.stage.platforms).toBeDefined();
+      expect(game.stage.platforms.length).toBeGreaterThan(0);
     });
 
-    it('should create stage with spikes', () => {
-      const stage = game.createStage();
-      expect(stage.spikes).toBeDefined();
-      expect(stage.spikes.length).toBeGreaterThan(0);
+    it('should load stage with spikes', () => {
+      expect(game.stage.spikes).toBeDefined();
+      expect(game.stage.spikes.length).toBeGreaterThan(0);
     });
 
-    it('should create stage with goal', () => {
-      const stage = game.createStage();
-      expect(stage.goal).toBeDefined();
-      expect(stage.goal.x).toBe(2400);
-      expect(stage.goal.y).toBe(390);
+    it('should load stage with goal', () => {
+      expect(game.stage.goal).toBeDefined();
+      expect(game.stage.goal.x).toBe(2400);
+      expect(game.stage.goal.y).toBe(390);
     });
 
-    it('should create stage with text elements', () => {
-      const stage = game.createStage();
-      expect(stage.startText).toBeDefined();
-      expect(stage.goalText).toBeDefined();
-      expect(stage.leftEdgeMessage).toBeDefined();
+    it('should load stage with text elements', () => {
+      expect(game.stage.startText).toBeDefined();
+      expect(game.stage.goalText).toBeDefined();
+      expect(game.stage.leftEdgeMessage).toBeDefined();
+    });
+
+    it('should use StageLoader for loading stages', () => {
+      expect(game.stageLoader).toBeDefined();
+      expect(game.stage.id).toBe(1); // Should load stage 1 by default
     });
   });
 
@@ -123,12 +130,12 @@ describe('JumpingDotGame', () => {
       expect(game.gameStartTime).toBeDefined();
     });
 
-    it('should reset game state on init', () => {
+    it('should reset game state on init', async () => {
       game.player.x = 500;
       game.gameRunning = true;
       game.hasMovedOnce = true;
       
-      game.init();
+      await game.init();
       
       expect(game.player.x).toBe(100);
       expect(game.gameRunning).toBe(false);
