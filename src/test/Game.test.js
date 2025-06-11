@@ -61,6 +61,7 @@ describe('JumpingDotGame', () => {
     if (game && game.cleanup) {
       game.cleanup();
     }
+    vi.restoreAllMocks();
   });
 
   describe('initialization', () => {
@@ -74,11 +75,12 @@ describe('JumpingDotGame', () => {
       expect(game.player.radius).toBe(3);
     });
 
-    it('should initialize physics constants', () => {
+    it('should initialize physics and game speed constants', () => {
       expect(game.gravity).toBe(0.6);
       expect(game.jumpForce).toBe(-12);
       expect(game.moveSpeed).toBe(4);
-      expect(game.autoJumpInterval).toBe(300);
+      expect(game.autoJumpInterval).toBe(150);
+      expect(game.gameSpeed).toBe(2.0);
     });
 
     it('should initialize timer system', () => {
@@ -196,17 +198,14 @@ describe('JumpingDotGame', () => {
   });
 
   describe('timer system', () => {
-    beforeEach(() => {
-      // Set up consistent time mocking
+    it('should decrease time remaining during gameplay', () => {
       const baseTime = 10000;
       vi.spyOn(performance, 'now')
-        .mockReturnValueOnce(baseTime) // startGame call
-        .mockReturnValueOnce(baseTime + 1000); // update call
-      
-      game.startGame();
-    });
+        .mockReturnValueOnce(baseTime) // 1st call in startGame (for lastJumpTime)
+        .mockReturnValueOnce(baseTime) // 2nd call in startGame (for gameStartTime)
+        .mockReturnValueOnce(baseTime + 1000); // 3rd call in update
 
-    it('should decrease time remaining during gameplay', () => {
+      game.startGame();
       const initialTime = game.timeRemaining;
       
       game.update(16.67);
@@ -215,30 +214,33 @@ describe('JumpingDotGame', () => {
     });
 
     it('should end game when time runs out', () => {
-      // Set time to exceed limit
-      vi.spyOn(performance, 'now').mockReturnValue(70000); // 70 seconds
+      const startTime = 10000;
+      vi.spyOn(performance, 'now')
+        .mockReturnValueOnce(startTime) // 1st call in startGame
+        .mockReturnValueOnce(startTime) // 2nd call in startGame
+        .mockReturnValue(startTime + (game.timeLimit + 1) * 1000); // All subsequent calls
       
+      game.startGame();
       game.update(16.67);
       
       expect(game.gameOver).toBe(true);
-      expect(game.finalScore).toBe(0);
+      expect(game.gameStatus.textContent).toContain('Time Up!');
     });
   });
 
   describe('collision detection', () => {
     it('should detect goal collision', () => {
-      game.player.x = 2420;
-      game.player.y = 415;
-      game.timeRemaining = 30;
+      game.player.x = game.stage.goal.x + 1;
+      game.player.y = game.stage.goal.y + 1;
+      game.timeRemaining = 8;
       
       game.checkGoalCollision();
       
       expect(game.gameOver).toBe(true);
-      expect(game.finalScore).toBe(30);
+      expect(game.finalScore).toBe(8);
     });
 
     it('should detect spike collision', () => {
-      // Position player on first spike
       const firstSpike = game.stage.spikes[0];
       game.player.x = firstSpike.x + firstSpike.width / 2;
       game.player.y = firstSpike.y + firstSpike.height / 2;
@@ -247,12 +249,29 @@ describe('JumpingDotGame', () => {
       
       expect(game.gameOver).toBe(true);
     });
+
+    it('should detect platform collision even with high velocity (anti-tunneling)', () => {
+      game.startGame();
+      const platform = game.stage.platforms[0]; // The first platform is at y=500
+      
+      // Position player just above the platform
+      game.player.x = platform.x1 + 10;
+      game.player.y = platform.y1 - 20; // y=480
+      game.player.vy = 50; // High vertical velocity to cause tunneling
+
+      // A single update should move the player far past the platform without the fix
+      game.update(16.67);
+
+      expect(game.player.grounded).toBe(true);
+      // Check if the player position was corrected to be on top of the platform
+      expect(game.player.y).toBeCloseTo(platform.y1 - game.player.radius);
+    });
   });
 
   describe('clear animation', () => {
     it('should start clear animation on goal reach', () => {
-      game.player.x = 2420;
-      game.player.y = 415;
+      game.player.x = game.stage.goal.x + 1;
+      game.player.y = game.stage.goal.y + 1;
       
       game.checkGoalCollision();
       
@@ -272,6 +291,7 @@ describe('JumpingDotGame', () => {
     });
   });
 
+  // This suite confirms no legacy mobile code remains.
   describe('mobile features removal', () => {
     it('should not have tilt control functionality', () => {
       expect(game.tiltControlEnabled).toBeUndefined();
@@ -285,12 +305,10 @@ describe('JumpingDotGame', () => {
     });
 
     it('should not try to access mobile UI elements', () => {
-      // Test that game doesn't crash when mobile elements don't exist
       expect(() => game.init()).not.toThrow();
     });
 
     it('should only handle keyboard input', () => {
-      // After mobile removal, only keyboard events should be supported
       game.keys = { ArrowLeft: true };
       expect(() => game.update(16.67)).not.toThrow();
       
