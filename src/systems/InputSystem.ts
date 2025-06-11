@@ -1,4 +1,4 @@
-import { KeyState } from '../types/GameTypes.js';
+import type { KeyState } from '../types/GameTypes.js';
 
 interface GameController {
     startGame(): void;
@@ -8,17 +8,17 @@ interface GameController {
 export class InputSystem {
     private keys: KeyState = {};
     private gameController: GameController;
-    private gameRunning: boolean = false;
-    private gameOver: boolean = false;
+    private gameRunning = false;
+    private gameOver = false;
     private handleKeyDown: (e: KeyboardEvent) => void;
     private handleKeyUp: (e: KeyboardEvent) => void;
 
     constructor(gameController: GameController) {
         this.gameController = gameController;
-        
+
         this.handleKeyDown = this.onKeyDown.bind(this);
         this.handleKeyUp = this.onKeyUp.bind(this);
-        
+
         this.setupEventListeners();
     }
 
@@ -36,17 +36,17 @@ export class InputSystem {
         if (!this.gameOver) {
             this.keys[e.code] = true;
         }
-        
+
         if (e.code === 'Space' && !this.gameRunning && !this.gameOver) {
             this.gameController.startGame();
             e.preventDefault();
         }
-        
-        if (e.code === 'KeyR' && this.gameOver && !this.keys['KeyR']) {
+
+        if (e.code === 'KeyR' && this.gameOver && !this.keys.KeyR) {
             this.gameController.init();
             e.preventDefault();
         }
-        
+
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
             e.preventDefault();
         }

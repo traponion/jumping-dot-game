@@ -1,25 +1,25 @@
-import { Player, Camera, GameState, PhysicsConstants } from '../types/GameTypes.js';
-import { StageLoader, StageData } from './StageLoader.js';
-import { PlayerSystem } from '../systems/PlayerSystem.js';
-import { PhysicsSystem } from '../systems/PhysicsSystem.js';
-import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import { RenderSystem } from '../systems/RenderSystem.js';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { InputSystem } from '../systems/InputSystem.js';
+import { PhysicsSystem } from '../systems/PhysicsSystem.js';
+import { PlayerSystem } from '../systems/PlayerSystem.js';
+import { RenderSystem } from '../systems/RenderSystem.js';
+import type { Camera, GameState, PhysicsConstants, Player } from '../types/GameTypes.js';
+import { type StageData, StageLoader } from './StageLoader.js';
 
 export class JumpingDotGame {
     private canvas: HTMLCanvasElement;
     private gameStatus: HTMLElement;
     private timerDisplay: HTMLElement;
     private scoreDisplay: HTMLElement;
-    
+
     // Game state
     private gameState!: GameState;
-    
+
     // Game entities
     private player!: Player;
     private camera!: Camera;
-    
+
     // Systems
     private playerSystem!: PlayerSystem;
     private physicsSystem!: PhysicsSystem;
@@ -27,11 +27,11 @@ export class JumpingDotGame {
     private animationSystem!: AnimationSystem;
     private renderSystem!: RenderSystem;
     private inputSystem!: InputSystem;
-    
+
     // Stage
     private stageLoader!: StageLoader;
     private stage: StageData | null = null;
-    
+
     // Game loop
     private lastTime: number | null = null;
     private animationId: number | null = null;
@@ -41,7 +41,7 @@ export class JumpingDotGame {
         this.gameStatus = document.getElementById('gameStatus')!;
         this.timerDisplay = document.getElementById('timer')!;
         this.scoreDisplay = document.getElementById('score')!;
-        
+
         this.initializeEntities();
         this.initializeSystems();
         this.init();
@@ -56,9 +56,9 @@ export class JumpingDotGame {
             radius: 3,
             grounded: false
         };
-        
+
         this.camera = { x: 0, y: 0 };
-        
+
         this.gameState = {
             gameRunning: false,
             gameOver: false,
@@ -69,7 +69,7 @@ export class JumpingDotGame {
             finalScore: 0,
             hasMovedOnce: false
         };
-        
+
         this.stageLoader = new StageLoader();
     }
 
@@ -81,10 +81,10 @@ export class JumpingDotGame {
             moveSpeed: 4,
             gameSpeed: 2.0
         };
-        
+
         // Create placeholder for input system keys
         const keys = {};
-        
+
         this.playerSystem = new PlayerSystem(this.player, keys);
         this.physicsSystem = new PhysicsSystem(physicsConstants);
         this.collisionSystem = new CollisionSystem();
@@ -95,13 +95,13 @@ export class JumpingDotGame {
 
     async init(): Promise<void> {
         this.gameStatus.textContent = 'Loading stage...';
-        
+
         await this.loadStage(this.gameState.currentStage);
-        
+
         this.gameStatus.textContent = 'Press SPACE to start';
         this.resetGameState();
         this.updateUI();
-        
+
         this.startGameLoop();
     }
 
@@ -121,18 +121,18 @@ export class JumpingDotGame {
         this.gameState.gameStartTime = null;
         this.gameState.finalScore = 0;
         this.gameState.hasMovedOnce = false;
-        
+
         this.playerSystem.reset(100, 400);
         this.animationSystem.reset();
-        
+
         this.camera.x = 0;
         this.camera.y = 0;
-        
+
         this.inputSystem.setGameState(false, false);
         this.inputSystem.clearKeys();
-        
+
         this.lastTime = null;
-        
+
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
@@ -163,15 +163,15 @@ export class JumpingDotGame {
             this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
             return;
         }
-        
+
         const deltaTime = currentTime - this.lastTime;
         this.lastTime = currentTime;
-        
+
         const clampedDelta = Math.min(deltaTime, 16.67 * 2);
-        
+
         this.update(clampedDelta);
         this.render();
-        
+
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
     }
 
@@ -194,50 +194,50 @@ export class JumpingDotGame {
             const currentTime = performance.now();
             const elapsedSeconds = (currentTime - this.gameState.gameStartTime) / 1000;
             this.gameState.timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
-            
+
             if (this.gameState.timeRemaining <= 0) {
                 this.handlePlayerDeath('Time Up! Press R to restart');
                 return;
             }
-            
+
             this.timerDisplay.textContent = `Time: ${Math.ceil(this.gameState.timeRemaining)}`;
         }
     }
 
     private updateSystems(deltaTime: number): void {
         const keys = this.inputSystem.getKeys();
-        Object.assign(this.playerSystem['keys'], keys);
-        
+        Object.assign(this.playerSystem.keys, keys);
+
         const physicsConstants = this.physicsSystem.getPhysicsConstants();
         this.playerSystem.update(deltaTime, physicsConstants);
         this.playerSystem.clampSpeed(physicsConstants.moveSpeed);
-        
+
         this.physicsSystem.update(this.player, deltaTime);
-        
+
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
     }
 
     private handleCollisions(): void {
         if (!this.stage) return;
-        
+
         const prevPlayerFootY = this.player.y + this.player.radius - this.player.vy;
-        
+
         const platformCollision = this.collisionSystem.handlePlatformCollisions(
-            this.player, 
-            this.stage.platforms, 
+            this.player,
+            this.stage.platforms,
             prevPlayerFootY
         );
-        
+
         if (platformCollision) {
             this.playerSystem.resetJumpTimer();
         }
-        
+
         if (this.collisionSystem.checkSpikeCollisions(this.player, this.stage.spikes)) {
             this.handlePlayerDeath('Hit by spike! Press R to restart');
             return;
         }
-        
+
         if (this.collisionSystem.checkGoalCollision(this.player, this.stage.goal)) {
             this.handleGoalReached();
             return;
@@ -256,16 +256,16 @@ export class JumpingDotGame {
         }
     }
 
-    private handlePlayerDeath(message: string, deathType: string = 'normal'): void {
+    private handlePlayerDeath(message: string, deathType = 'normal'): void {
         this.gameState.gameOver = true;
         this.gameStatus.textContent = message;
         this.inputSystem.setGameState(false, true);
-        
+
         let deathMarkY = this.player.y;
         if (deathType === 'fall') {
             deathMarkY = this.camera.y + this.canvas.height - 20;
         }
-        
+
         this.animationSystem.addDeathMark(this.player.x, deathMarkY);
         this.animationSystem.startDeathAnimation(this.player);
         this.playerSystem.clearTrail();
@@ -277,49 +277,54 @@ export class JumpingDotGame {
         this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press R to restart`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
         this.inputSystem.setGameState(false, true);
-        
+
         this.animationSystem.startClearAnimation(this.player);
     }
 
     private render(): void {
         this.renderSystem.clearCanvas();
         this.renderSystem.setDrawingStyle();
-        
+
         this.renderSystem.applyCameraTransform(this.camera);
-        
+
         if (this.stage) {
             this.renderSystem.renderStage(this.stage);
         }
-        
+
         this.renderSystem.renderDeathMarks(this.animationSystem.getDeathMarks());
-        
+
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.renderSystem.renderTrail(this.playerSystem.getTrail(), this.player.radius);
             this.renderSystem.renderPlayer(this.player);
         }
-        
+
         const deathAnim = this.animationSystem.getDeathAnimation();
         if (deathAnim.active) {
             this.renderSystem.renderDeathAnimation(deathAnim.particles);
         }
-        
+
         const clearAnim = this.animationSystem.getClearAnimation();
         if (clearAnim.active && clearAnim.startTime) {
             const elapsed = performance.now() - clearAnim.startTime;
             const progress = elapsed / clearAnim.duration;
-            this.renderSystem.renderClearAnimation(clearAnim.particles, progress, this.player.x, this.player.y);
+            this.renderSystem.renderClearAnimation(
+                clearAnim.particles,
+                progress,
+                this.player.x,
+                this.player.y
+            );
         }
-        
+
         this.renderSystem.restoreCameraTransform();
-        
+
         if (!this.gameState.gameRunning && !this.gameState.gameOver) {
             this.renderSystem.renderStartInstruction();
         }
-        
+
         if (this.gameState.gameOver) {
             this.renderSystem.renderGameOver();
         }
-        
+
         this.renderSystem.renderCredits();
     }
 

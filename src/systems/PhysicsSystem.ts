@@ -1,4 +1,4 @@
-import { Player, PhysicsConstants } from '../types/GameTypes.js';
+import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 
 export class PhysicsSystem {
     private constants: PhysicsConstants;
@@ -9,7 +9,7 @@ export class PhysicsSystem {
 
     update(player: Player, deltaTime: number): void {
         const dtFactor = (deltaTime / (1000 / 60)) * this.constants.gameSpeed;
-        
+
         this.applyGravity(player, dtFactor);
         this.updatePosition(player, dtFactor);
     }
