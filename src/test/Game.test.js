@@ -70,8 +70,8 @@ describe('JumpingDotGame', () => {
     });
 
     it('should initialize timer system', () => {
-      expect(game.timeLimit).toBe(20);
-      expect(game.timeRemaining).toBe(20);
+      expect(game.timeLimit).toBe(10);
+      expect(game.timeRemaining).toBe(10);
       expect(game.finalScore).toBe(0);
     });
 

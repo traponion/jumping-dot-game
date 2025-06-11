@@ -27,7 +27,7 @@ export class JumpingDotGame {
         this.hasMovedOnce = false;
         
         // Timer and score system
-        this.timeLimit = 20; // 20 seconds - very challenging!
+        this.timeLimit = 10; // 10 seconds - extremely challenging!
         this.timeRemaining = this.timeLimit;
         this.gameStartTime = null;
         this.finalScore = 0;
@@ -766,6 +766,13 @@ export class JumpingDotGame {
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Game Over - Press R to restart', this.canvas.width / 2, this.canvas.height / 2);
         }
+        
+        // Draw credits at bottom center
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        this.ctx.font = '12px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Made by traponion', this.canvas.width / 2, this.canvas.height - 30);
+        this.ctx.fillText('github.com/traponion/jumping-dot-game', this.canvas.width / 2, this.canvas.height - 15);
         
     }
     

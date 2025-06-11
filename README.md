@@ -1,137 +1,124 @@
-# Jumping Dot Game 🎮
+# Jumping Dot Game
 
-Vib-Ribbon風のシンプルな横スクロールアクションゲーム
+A minimalist side-scrolling action game inspired by Vib-Ribbon, featuring unforgiving gameplay mechanics and monochrome aesthetics.
 
-## 概要
+## Overview
 
-モノクロ線画で描かれた、主人公が常にぴょんぴょん跳ね続けるシンプルなアクションゲーム。
-一度動き始めたら止まれない「容赦ない」ゲーム性が特徴。
+Navigate a constantly jumping dot through challenging obstacle courses within a strict time limit. Once you start moving, there's no stopping—momentum is everything in this "unforgiving" platformer.
 
-## ゲームの特徴
+## Key Features
 
-- 🟢 **自動ジャンプ**: 主人公は常に300ms間隔で自動ジャンプ
-- ⬅️➡️ **左右操作のみ**: 十字キーの左右でのみ移動制御
-- 🚫 **慣性システム**: 一度動いたら止まれない（最小移動0.2で継続）
-- 💀 **即死要素**: スパイクに触れるか穴に落ちると即死
-- ⏰ **制限時間**: 20秒以内にゴールに到達する必要がある
-- 🏆 **スコアシステム**: 残り時間がスコアになる
-- 💥 **死亡エフェクト**: 爆発エフェクトと永続的な死亡マーク（X印）
-- 📱 **傾きコントロール**: スマホ・タブレットでデバイスの傾きによる操作
-- 🎨 **ミニマル**: モノクロ線画のシンプルなビジュアル
-- ✨ **軌跡エフェクト**: 主人公の軌跡が残像として表示
+- **Automatic Jumping**: Character jumps every 300ms automatically
+- **Momentum-Based Movement**: Once you move, you can't stop (minimum velocity 0.2)
+- **Binary Controls**: Left and right arrow keys only
+- **Instant Death**: Spikes and falls result in immediate restart
+- **Time Pressure**: Complete levels within 10 seconds
+- **Death Markers**: Failed attempts leave permanent X marks
+- **Score System**: Remaining time becomes your score
+- **Minimalist Graphics**: Monochrome line art aesthetic
+- **Trail Effects**: Visual feedback through player trail
 
-## 操作方法
+## Controls
 
-### キーボード
-| キー | 動作 |
-|------|------|
-| **SPACE** | ゲーム開始 |
-| **←** | 左方向に加速 |
-| **→** | 右方向に加速 |
-| **R** | リスタート（ゲームオーバー時） |
-| **T** | 傾きコントロールON/OFF（モバイル用） |
+| Key | Action |
+|-----|--------|
+| **SPACE** | Start game |
+| **←** | Accelerate left |
+| **→** | Accelerate right |
+| **R** | Restart (when game over) |
 
-### 傾きコントロール（モバイル）
-1. **T**キーを押して傾きコントロールを有効化
-2. デバイスを左右に傾けてキャラクターを操作
-3. 画面右上に傾き状況が表示される
+## Gameplay Mechanics
 
-## ゲームの流れ
+1. Press **SPACE** to begin (10-second countdown starts)
+2. Character automatically jumps every 300ms
+3. Use arrow keys to control horizontal movement
+4. Avoid spikes and gaps to reach the goal
+5. Death marks persist to help identify dangerous areas
 
-1. **SPACE**キーでゲーム開始（20秒カウントダウン開始）
-2. 主人公は自動で300ms間隔でジャンプ
-3. 左右キーまたは傾きで移動制御（一度動いたら止まれない）
-4. 障害物（スパイク）を避け、穴を跳び越えてゴールを目指す
-5. 死亡時は**R**キーでリスタート（死亡地点にX印が残る）
+## Technical Specifications
 
-## 技術仕様
+### Core Technologies
+- **Engine**: Vanilla JavaScript with HTML5 Canvas
+- **Build Tool**: Vite 6.x
+- **Testing**: Vitest with TDD methodology
+- **Deployment**: Optimized for static hosting
 
-### プロジェクト構成
+### Physics Parameters
+- Gravity: 0.6
+- Jump Force: -12
+- Jump Interval: 300ms
+- Maximum Speed: 4
+- Minimum Speed: 0.2 (momentum preservation)
+- Time Limit: 10 seconds
+
+## Development
+
+### Project Structure
 ```
-test_game/
+jumping-dot-game/
 ├── src/
 │   ├── core/
-│   │   └── Game.js          # ゲームロジック
+│   │   └── Game.js          # Main game engine
 │   ├── test/
-│   │   ├── Game.test.js     # テストコード
-│   │   └── setup.js         # テスト設定
-│   └── main.js              # エントリーポイント
-├── index.html               # ゲームHTML
-├── package.json             # 依存関係
-├── vite.config.js           # Vite設定
-└── README.md                # このファイル
+│   │   ├── Game.test.js     # Unit tests
+│   │   └── setup.js         # Test configuration
+│   └── main.js              # Application entry point
+├── dist/                    # Build output
+├── index.html               # Main HTML file
+├── package.json             # Dependencies
+├── vite.config.js           # Build configuration
+└── LICENSE                  # MIT License
 ```
 
-### 開発環境
-- **ビルドツール**: Vite
-- **テストフレームワーク**: Vitest
-- **開発手法**: TDD（テスト駆動開発）
-- **レンダリング**: HTML5 Canvas 2D
-- **モバイル対応**: DeviceOrientation API
-
-### 物理パラメータ
-- **重力**: 0.6
-- **ジャンプ力**: -12
-- **ジャンプ間隔**: 300ms
-- **最大移動速度**: 4
-- **最小移動速度**: 0.2（慣性維持）
-- **制限時間**: 20秒
-
-## 開発・テスト
+### Getting Started
 
 ```bash
-# 開発サーバー起動
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 
-# テスト実行
+# Run tests
 npm test
 
-# ビルド
+# Build for production
 npm run build
 ```
 
-## プレイのコツ
+## Strategy Tips
 
-1. **最初の移動は慎重に**: 一度動いたら止まれないため
-2. **ジャンプのタイミングを読む**: 300ms間隔のリズムを覚える
-3. **段差活用**: 段差着地で即座に最大ジャンプが可能
-4. **制限時間を意識**: 20秒という短時間でクリアする必要がある
-5. **死亡マークを活用**: X印で危険な場所を把握
+1. **Plan your first move carefully** - Once you start moving, there's no stopping
+2. **Learn the jump rhythm** - 300ms intervals create predictable timing
+3. **Use platforms strategically** - Landing resets jump timing
+4. **Time management is crucial** - 10 seconds demands efficient pathfinding
+5. **Learn from death markers** - X marks indicate dangerous areas
 
-## 今後の追加予定機能
+## Roadmap
 
-### 動的ギミック
-- [ ] **動く床**: 左右に移動するプラットフォーム
-- [ ] **動くスパイク**: 上下に移動する危険な障害物  
-- [ ] **落下する天井**: 上から落ちてくる障害物
-- [ ] **回転ギミック**: 回転する障害物や足場
-- [ ] **消える床**: 時間で消失するプラットフォーム
+### Core Features
+- [ ] Moving platforms
+- [ ] Multiple stages
+- [ ] Stage selection system
+- [ ] Improved visual effects
+- [ ] Sound design
 
-### ステージシステム
-- [ ] **マルチステージ**: 複数のステージを用意
-- [ ] **難易度調整**: ステージごとの制限時間・ギミック配置
-- [ ] **ステージ選択**: クリア済みステージの選択機能
-- [ ] **ステージエディター**: カスタムステージ作成機能
+### Technical Improvements
+- [ ] Performance optimizations
+- [ ] Mobile responsiveness
+- [ ] Accessibility features
+- [ ] Progressive Web App support
 
-### ゲームプレイ強化
-- [ ] **チェックポイント**: 長いステージでの中間地点
-- [ ] **パワーアップ**: 一時的な能力向上アイテム
-- [ ] **ランキング**: ベストタイム記録システム
-- [ ] **リプレイ機能**: プレイ動画の保存・再生
-- [ ] **難易度選択**: 制限時間やギミック密度の調整
+## License
 
-### UI・UX改善
-- [ ] **サウンド**: BGM・効果音の追加
-- [ ] **パーティクル強化**: より豊かな視覚エフェクト
-- [ ] **アニメーション**: キャラクターやギミックのアニメーション
-- [ ] **設定画面**: 音量・操作感度などの調整
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Credits
+
+Created by [traponion](https://github.com/traponion)
+
+Developed with [Claude Code](https://claude.ai/code)
 
 ---
 
-**注意**: このゲームは「容赦ない」難易度設計です。何度も失敗しながら覚えていくタイプのゲームです！
-
-**🦊 妖狐の女の子「ねつき」によって愛情を込めて作られました**
-
-**🤖 Generated with [Claude Code](https://claude.ai/code)**
-
-**Co-Authored-By: Claude <noreply@anthropic.com>**
+**Note**: This game features intentionally challenging difficulty designed around trial-and-error learning.
