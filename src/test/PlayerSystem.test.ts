@@ -1,0 +1,151 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { PlayerSystem } from '../systems/PlayerSystem.js';
+import { Player, KeyState, PhysicsConstants } from '../types/GameTypes.js';
+
+describe('PlayerSystem', () => {
+    let player: Player;
+    let keys: KeyState;
+    let playerSystem: PlayerSystem;
+    let physics: PhysicsConstants;
+
+    beforeEach(() => {
+        player = {
+            x: 100,
+            y: 400,
+            vx: 0,
+            vy: 0,
+            radius: 3,
+            grounded: false
+        };
+        
+        keys = {};
+        
+        physics = {
+            gravity: 0.6,
+            jumpForce: -12,
+            autoJumpInterval: 150,
+            moveSpeed: 4,
+            gameSpeed: 2.0
+        };
+        
+        playerSystem = new PlayerSystem(player, keys);
+    });
+
+    describe('input handling', () => {
+        it('should move player left when ArrowLeft is pressed', () => {
+            keys['ArrowLeft'] = true;
+            const initialVx = player.vx;
+            
+            playerSystem.update(16.67, physics); // 60fps frame
+            
+            expect(player.vx).toBeLessThan(initialVx);
+            expect(playerSystem.getHasMovedOnce()).toBe(true);
+        });
+
+        it('should move player right when ArrowRight is pressed', () => {
+            keys['ArrowRight'] = true;
+            const initialVx = player.vx;
+            
+            playerSystem.update(16.67, physics);
+            
+            expect(player.vx).toBeGreaterThan(initialVx);
+            expect(playerSystem.getHasMovedOnce()).toBe(true);
+        });
+
+        it('should maintain minimal movement once started', () => {
+            keys['ArrowRight'] = true;
+            playerSystem.update(16.67, physics);
+            keys['ArrowRight'] = false;
+            
+            // Simulate multiple frames to let velocity decay
+            for (let i = 0; i < 10; i++) {
+                playerSystem.update(16.67, physics);
+            }
+            
+            expect(Math.abs(player.vx)).toBeGreaterThanOrEqual(0.2);
+        });
+    });
+
+    describe('auto jump system', () => {
+        it('should auto jump when grounded and interval passed', () => {
+            player.grounded = true;
+            const initialVy = player.vy;
+            
+            // Mock performance.now to simulate time passage
+            const originalNow = global.performance.now;
+            let mockTime = 0;
+            global.performance.now = () => mockTime;
+            
+            // First update to set lastJumpTime
+            playerSystem.update(16.67, physics);
+            
+            // Advance time beyond auto jump interval
+            mockTime += physics.autoJumpInterval + 10;
+            playerSystem.update(16.67, physics);
+            
+            expect(player.vy).toBe(physics.jumpForce);
+            expect(player.grounded).toBe(false);
+            
+            global.performance.now = originalNow;
+        });
+    });
+
+    describe('trail system', () => {
+        it('should update trail with player position', () => {
+            const initialTrailLength = playerSystem.getTrail().length;
+            
+            playerSystem.update(16.67, physics);
+            
+            const trail = playerSystem.getTrail();
+            expect(trail.length).toBe(initialTrailLength + 1);
+            expect(trail[trail.length - 1]).toEqual({ x: player.x, y: player.y });
+        });
+
+        it('should limit trail length to maximum', () => {
+            // Update many times to exceed max trail length
+            for (let i = 0; i < 20; i++) {
+                player.x = i; // Change position each time
+                playerSystem.update(16.67, physics);
+            }
+            
+            expect(playerSystem.getTrail().length).toBeLessThanOrEqual(8);
+        });
+    });
+
+    describe('speed clamping', () => {
+        it('should clamp velocity to max speed', () => {
+            player.vx = 10; // Exceed max speed
+            
+            playerSystem.clampSpeed(physics.moveSpeed);
+            
+            expect(player.vx).toBe(physics.moveSpeed);
+        });
+
+        it('should clamp negative velocity to negative max speed', () => {
+            player.vx = -10; // Exceed negative max speed
+            
+            playerSystem.clampSpeed(physics.moveSpeed);
+            
+            expect(player.vx).toBe(-physics.moveSpeed);
+        });
+    });
+
+    describe('reset functionality', () => {
+        it('should reset player to specified position', () => {
+            player.vx = 5;
+            player.vy = -3;
+            keys['ArrowRight'] = true;
+            playerSystem.update(16.67, physics); // Make some changes
+            
+            playerSystem.reset(200, 300);
+            
+            expect(player.x).toBe(200);
+            expect(player.y).toBe(300);
+            expect(player.vx).toBe(0);
+            expect(player.vy).toBe(0);
+            expect(player.grounded).toBe(false);
+            expect(playerSystem.getHasMovedOnce()).toBe(false);
+            expect(playerSystem.getTrail().length).toBe(0);
+        });
+    });
+});
