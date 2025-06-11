@@ -1,6 +1,6 @@
 # Jumping Dot Game
 
-A minimalist side-scrolling action game inspired by Vib-Ribbon, featuring unforgiving gameplay mechanics and monochrome aesthetics.
+A minimalist side-scrolling action game featuring unforgiving gameplay mechanics and monochrome aesthetics.
 
 ## Overview
 
