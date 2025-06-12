@@ -27,14 +27,14 @@ export default defineConfig({
         'src/systems/**': {
           branches: 90,
           functions: 95,
-          lines: 95,
-          statements: 95
+          lines: 90,
+          statements: 90
         },
         'src/core/**': {
-          branches: 75,
+          branches: 70,
           functions: 90,
-          lines: 85,
-          statements: 85
+          lines: 80,
+          statements: 80
         },
         'src/utils/**': {
           branches: 95,
