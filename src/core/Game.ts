@@ -40,6 +40,8 @@ export class JumpingDotGame {
     private lastTime: number | null = null;
     private animationId: number | null = null;
 
+    private prevPlayerY: number = 0;
+
     constructor() {
         this.canvas = this.getRequiredElement('gameCanvas') as HTMLCanvasElement;
         this.gameStatus = this.getRequiredElement('gameStatus');
@@ -179,6 +181,8 @@ export class JumpingDotGame {
         this.update(clampedDelta);
         this.render();
 
+        this.prevPlayerY = this.player.y;
+
         this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
     }
 
@@ -292,7 +296,7 @@ export class JumpingDotGame {
     private handleCollisions(): void {
         if (!this.stage) return;
 
-        const prevPlayerFootY = this.player.y + this.player.radius - this.player.vy;
+        const prevPlayerFootY = this.prevPlayerY + this.player.radius;
 
         const platformCollision = this.collisionSystem.handlePlatformCollisions(
             this.player,
