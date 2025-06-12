@@ -218,38 +218,25 @@ export class RenderSystem {
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
             
-            // Use different colors and opacity based on confidence and jump number
-            const baseAlpha = prediction.confidence * 0.8;
-            const alpha = Math.max(0.2, baseAlpha - (i * 0.2)); // Fade with distance
+            // Subtle white-based opacity that fades with distance and confidence
+            const baseAlpha = prediction.confidence * 0.3; // Much more subtle
+            const alpha = Math.max(0.05, baseAlpha - (i * 0.08)); // Fade with distance
             
-            // Color progression: bright -> dim for future predictions
-            const colors = ['rgba(0, 255, 255, ', 'rgba(0, 200, 255, ', 'rgba(0, 150, 255, '];
-            const color = (colors[i] || 'rgba(0, 100, 255, ') + alpha + ')';
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            this.ctx.lineWidth = 1;
             
-            this.ctx.fillStyle = color;
-            this.ctx.strokeStyle = color;
-            this.ctx.lineWidth = 2;
-            
-            // Draw landing spot as a circle
+            // Draw subtle landing spot as a small circle outline
             this.ctx.beginPath();
-            this.ctx.arc(prediction.x, prediction.y, 6, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.ctx.arc(prediction.x, prediction.y, 4, 0, Math.PI * 2);
+            this.ctx.stroke();
             
-            // Draw confidence indicator (smaller circle inside)
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
-            this.ctx.beginPath();
-            this.ctx.arc(prediction.x, prediction.y, 3 * prediction.confidence, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Draw jump number
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.font = '12px monospace';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(
-                prediction.jumpNumber.toString(),
-                prediction.x,
-                prediction.y - 10
-            );
+            // Draw tiny center dot for high confidence predictions
+            if (prediction.confidence > 0.7) {
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.5})`;
+                this.ctx.beginPath();
+                this.ctx.arc(prediction.x, prediction.y, 1, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
         }
     }
 }

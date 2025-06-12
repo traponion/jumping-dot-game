@@ -93,23 +93,23 @@ export class LandingPredictionSystem {
     }
 
     /**
-     * Simulate physics for one time step
+     * Simulate physics for one time step (matches PhysicsSystem exactly)
      */
     private simulatePhysics(sim: any, physics: PhysicsConstants, deltaTime: number): void {
         const dtFactor = (deltaTime / (1000 / 60)) * physics.gameSpeed;
         
-        // Apply gravity
+        // Apply gravity (matches PhysicsSystem.applyGravity)
         if (!sim.grounded) {
             sim.vy += physics.gravity * dtFactor;
         }
         
-        // Update position
+        // Update position (matches PhysicsSystem.updatePosition)
         sim.x += sim.vx * dtFactor;
         sim.y += sim.vy * dtFactor;
     }
 
     /**
-     * Check collision with platforms using crossing detection (like CollisionSystem)
+     * Check collision with platforms using exact CollisionSystem logic
      */
     private checkPlatformCollisionWithCrossing(
         sim: any, 
@@ -121,11 +121,20 @@ export class LandingPredictionSystem {
         if (sim.vy < 0 || sim.grounded) return null; // Not falling or already grounded
         
         for (const platform of platforms) {
-            const horizontalOverlap = sim.x + sim.radius > platform.x1 && sim.x - sim.radius < platform.x2;
-            const verticalCrossing = prevPlayerFootY < platform.y1 && currentPlayerFootY >= platform.y1;
+            // Match CollisionSystem.checkPlatformCollision exactly
+            if (
+                sim.x + sim.radius <= platform.x1 ||
+                sim.x - sim.radius >= platform.x2 ||
+                sim.vy < 0  // Don't collide when moving upward
+            ) {
+                continue;
+            }
+
+            // Enhanced collision detection (matches CollisionSystem)
+            const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
+            const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
             
-            
-            if (horizontalOverlap && verticalCrossing && wasAirborne) {
+            if (wasPreviouslyAbove && isCurrentlyBelowOrOn && wasAirborne) {
                 return platform;
             }
         }
