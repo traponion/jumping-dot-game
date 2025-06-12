@@ -222,16 +222,16 @@ export class JumpingDotGame {
     }
 
     private calculateFutureMovement(keys: any): number {
-        // Estimate future movement based on current input and velocity
-        const jumpDuration = 1000; // Rough jump duration in ms
+        // Estimate future movement for one jump (more realistic timing)
+        const jumpDuration = 400; // Shorter, more realistic jump duration
         const baseMovement = this.player.vx * (jumpDuration / 16.67); // Movement during jump
         
-        // Add input-based movement
+        // Add smaller input-based movement
         let inputMovement = 0;
         if (keys.ArrowLeft) {
-            inputMovement = -80; // Moving left
+            inputMovement = -30; // Smaller left movement
         } else if (keys.ArrowRight) {
-            inputMovement = 80; // Moving right
+            inputMovement = 30; // Smaller right movement
         }
         
         return baseMovement + inputMovement;
@@ -250,8 +250,8 @@ export class JumpingDotGame {
             const distance = Math.abs(targetX - platformCenterX);
             
             if (distance < bestDistance && 
-                targetX >= platform.x1 - 50 && 
-                targetX <= platform.x2 + 50) {
+                targetX >= platform.x1 - 30 && 
+                targetX <= platform.x2 + 30) {
                 bestDistance = distance;
                 bestPlatform = platform;
             }
