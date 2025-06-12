@@ -10,7 +10,7 @@ export interface LandingPrediction {
 
 export class LandingPredictionSystem {
     private readonly MAX_SIMULATION_TIME = 5000; // 5 seconds max simulation
-    private readonly TIME_STEP = 16.67; // Simulate at 60fps equivalent
+    private readonly TIME_STEP = 8.33; // Simulate at 120fps equivalent for better accuracy
 
     /**
      * Predict landing points for the next few jumps
@@ -28,13 +28,9 @@ export class LandingPredictionSystem {
         
         let jumpCount = 0;
         let timeElapsed = 0;
-        let timeSinceLastJump = sim.grounded ? physics.autoJumpInterval + 1 : 0; // Force immediate jump if grounded
+        // If airborne, predict current trajectory landing first. If grounded, force immediate jump.
+        let timeSinceLastJump = sim.grounded ? physics.autoJumpInterval + 1 : -physics.autoJumpInterval;
         let wasAirborne = !sim.grounded; // Track if we've been airborne since last landing
-        
-        // For airborne players, we want to predict where they'll land first
-        if (!sim.grounded) {
-            wasAirborne = true;
-        }
 
         while (jumpCount < maxPredictions && timeElapsed < this.MAX_SIMULATION_TIME) {
             // Store previous position
