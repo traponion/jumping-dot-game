@@ -200,12 +200,12 @@ export class JumpingDotGame {
     private updateLandingPredictions(): void {
         if (!this.stage) return;
         
-        // Calculate landing predictions for the next 3 jumps
+        // Calculate landing prediction for the next jump only
         const predictions = this.landingPredictionSystem.predictLandings(
             this.player,
             this.stage.platforms,
             { ...DEFAULT_PHYSICS_CONSTANTS },
-            3
+            1
         );
         
         // Store predictions for rendering
@@ -318,8 +318,8 @@ export class JumpingDotGame {
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.renderSystem.renderTrail(this.playerSystem.getTrail(), this.player.radius);
-            this.renderSystem.renderPlayer(this.player);
             this.renderSystem.renderLandingPredictions();
+            this.renderSystem.renderPlayer(this.player);
         }
 
         const deathAnim = this.animationSystem.getDeathAnimation();

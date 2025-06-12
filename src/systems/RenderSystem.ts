@@ -6,6 +6,8 @@ export class RenderSystem {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private landingPredictions: LandingPrediction[] = [];
+    private animatedPredictions: { x: number; y: number; targetX: number; targetY: number; confidence: number; jumpNumber: number }[] = [];
+    private readonly LERP_SPEED = 0.1; // Animation speed (0.1 = 10% per frame)
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -212,14 +214,57 @@ export class RenderSystem {
 
     setLandingPredictions(predictions: LandingPrediction[]): void {
         this.landingPredictions = predictions;
+        this.updateAnimatedPredictions();
+    }
+
+    private updateAnimatedPredictions(): void {
+        // Update or create animated predictions
+        for (let i = 0; i < this.landingPredictions.length; i++) {
+            const prediction = this.landingPredictions[i];
+            // Offset landing spot slightly ahead (in direction of movement)
+            const offsetX = -10; // 10 pixels to the left/ahead for visual clarity
+            const targetX = prediction.x + offsetX;
+            const targetY = prediction.y;
+
+            if (i < this.animatedPredictions.length) {
+                // Update existing animated prediction
+                this.animatedPredictions[i].targetX = targetX;
+                this.animatedPredictions[i].targetY = targetY;
+                this.animatedPredictions[i].confidence = prediction.confidence;
+                this.animatedPredictions[i].jumpNumber = prediction.jumpNumber;
+            } else {
+                // Create new animated prediction (start at target for immediate appearance)
+                this.animatedPredictions.push({
+                    x: targetX,
+                    y: targetY,
+                    targetX: targetX,
+                    targetY: targetY,
+                    confidence: prediction.confidence,
+                    jumpNumber: prediction.jumpNumber
+                });
+            }
+        }
+
+        // Remove excess animated predictions
+        if (this.animatedPredictions.length > this.landingPredictions.length) {
+            this.animatedPredictions.splice(this.landingPredictions.length);
+        }
     }
 
     renderLandingPredictions(): void {
-        for (let i = 0; i < this.landingPredictions.length; i++) {
-            const prediction = this.landingPredictions[i];
+        // Update animation positions
+        for (const animPred of this.animatedPredictions) {
+            // Smooth interpolation towards target position
+            animPred.x += (animPred.targetX - animPred.x) * this.LERP_SPEED;
+            animPred.y += (animPred.targetY - animPred.y) * this.LERP_SPEED;
+        }
+
+        // Render animated predictions
+        for (let i = 0; i < this.animatedPredictions.length; i++) {
+            const animPred = this.animatedPredictions[i];
             
             // More visible white that fades with distance and confidence
-            const baseAlpha = prediction.confidence * 0.8;
+            const baseAlpha = animPred.confidence * 0.8;
             const alpha = Math.max(0.4, baseAlpha - (i * 0.2)); // Fade with distance
             
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
@@ -228,14 +273,14 @@ export class RenderSystem {
             // Draw vertical line to indicate landing spot
             const lineHeight = 20; // Height of the prediction line
             this.ctx.beginPath();
-            this.ctx.moveTo(prediction.x, prediction.y - lineHeight / 2);
-            this.ctx.lineTo(prediction.x, prediction.y + lineHeight / 2);
+            this.ctx.moveTo(animPred.x, animPred.y - lineHeight / 2);
+            this.ctx.lineTo(animPred.x, animPred.y + lineHeight / 2);
             this.ctx.stroke();
             
             // Add small horizontal line at the bottom for platform indication
             this.ctx.beginPath();
-            this.ctx.moveTo(prediction.x - 4, prediction.y);
-            this.ctx.lineTo(prediction.x + 4, prediction.y);
+            this.ctx.moveTo(animPred.x - 4, animPred.y);
+            this.ctx.lineTo(animPred.x + 4, animPred.y);
             this.ctx.stroke();
         }
     }

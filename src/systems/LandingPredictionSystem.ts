@@ -30,6 +30,11 @@ export class LandingPredictionSystem {
         let timeElapsed = 0;
         let timeSinceLastJump = sim.grounded ? physics.autoJumpInterval + 1 : 0; // Force immediate jump if grounded
         let wasAirborne = !sim.grounded; // Track if we've been airborne since last landing
+        
+        // For airborne players, we want to predict where they'll land first
+        if (!sim.grounded) {
+            wasAirborne = true;
+        }
 
         while (jumpCount < maxPredictions && timeElapsed < this.MAX_SIMULATION_TIME) {
             // Store previous position
