@@ -7,10 +7,9 @@ export class RenderSystem {
     private ctx: CanvasRenderingContext2D;
     private landingPredictions: LandingPrediction[] = [];
     private animatedPredictions: { x: number; y: number; targetX: number; targetY: number; confidence: number; jumpNumber: number }[] = [];
-    private lockedPredictions: LandingPrediction[] = []; // Precise physics-based predictions
-    private lockTimestamps: number[] = []; // When each lock was created
+    private landingHistory: { x: number; y: number; timestamp: number }[] = [];
     private readonly LERP_SPEED = 0.1; // Animation speed (0.1 = 10% per frame)
-    private readonly LOCK_FADE_TIME = 2000; // Lock markers fade over 2 seconds
+    private readonly HISTORY_FADE_TIME = 3000; // Landing history fades over 3 seconds
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -220,25 +219,17 @@ export class RenderSystem {
         this.updateAnimatedPredictions();
     }
 
-    addLockedPrediction(prediction: LandingPrediction): void {
-        this.lockedPredictions.push(prediction);
-        this.lockTimestamps.push(Date.now());
+    addLandingHistory(x: number, y: number): void {
+        this.landingHistory.push({ x, y, timestamp: Date.now() });
+        // Keep only recent landings
+        this.cleanupLandingHistory();
     }
 
-    clearOldLocks(): void {
+    private cleanupLandingHistory(): void {
         const now = Date.now();
-        const validLocks = [];
-        const validTimestamps = [];
-        
-        for (let i = 0; i < this.lockedPredictions.length; i++) {
-            if (now - this.lockTimestamps[i] < this.LOCK_FADE_TIME) {
-                validLocks.push(this.lockedPredictions[i]);
-                validTimestamps.push(this.lockTimestamps[i]);
-            }
-        }
-        
-        this.lockedPredictions = validLocks;
-        this.lockTimestamps = validTimestamps;
+        this.landingHistory = this.landingHistory.filter(
+            landing => now - landing.timestamp < this.HISTORY_FADE_TIME
+        );
     }
 
     private updateAnimatedPredictions(): void {
@@ -277,11 +268,11 @@ export class RenderSystem {
     }
 
     renderLandingPredictions(): void {
-        // Clean up old locks first
-        this.clearOldLocks();
+        // Clean up old history first
+        this.cleanupLandingHistory();
         
-        // Render locked predictions (afterimages)
-        this.renderLockedPredictions();
+        // Render landing history (where player actually landed)
+        this.renderLandingHistory();
         
         // Update animation positions for real-time crosshair
         for (const animPred of this.animatedPredictions) {
@@ -305,22 +296,26 @@ export class RenderSystem {
         }
     }
 
-    private renderLockedPredictions(): void {
+    private renderLandingHistory(): void {
         const now = Date.now();
         
-        for (let i = 0; i < this.lockedPredictions.length; i++) {
-            const lock = this.lockedPredictions[i];
-            const age = now - this.lockTimestamps[i];
-            const fadeProgress = age / this.LOCK_FADE_TIME;
-            const alpha = Math.max(0.2, 0.9 * (1 - fadeProgress)); // Fade from 0.9 to 0.2 (more visible)
+        for (const landing of this.landingHistory) {
+            const age = now - landing.timestamp;
+            const fadeProgress = age / this.HISTORY_FADE_TIME;
+            const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
             
-            // Render locked prediction with thicker lines and larger crosshair
+            // Draw small vertical line growing from landing spot
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.lineWidth = 2; // Thicker lines for visibility
+            this.ctx.lineWidth = 1;
             
-            this.drawCrosshair(lock.x, lock.y, 10); // Larger crosshair for locks
+            const lineHeight = 8; // Small line that "grows" from landing spot
+            this.ctx.beginPath();
+            this.ctx.moveTo(landing.x, landing.y);
+            this.ctx.lineTo(landing.x, landing.y - lineHeight);
+            this.ctx.stroke();
         }
     }
+
 
     private drawCrosshair(x: number, y: number, size: number): void {
         // Vertical line

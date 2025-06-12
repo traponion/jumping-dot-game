@@ -200,7 +200,7 @@ export class JumpingDotGame {
     private updateLandingPredictions(): void {
         if (!this.stage) return;
         
-        // Real-time input-based prediction (smooth crosshair)
+        // Simple input-based prediction that grows from landing spot
         const inputKeys = this.inputSystem.getKeys();
         const futureDistance = this.calculateFutureMovement(inputKeys);
         const predictedX = this.player.x + futureDistance;
@@ -218,33 +218,6 @@ export class JumpingDotGame {
             this.renderSystem.setLandingPredictions(simplePrediction);
         } else {
             this.renderSystem.setLandingPredictions([]);
-        }
-        
-        // Precise physics prediction (lock-on every few frames)
-        if (this.shouldCalculatePrecisePrediction()) {
-            this.calculatePrecisePrediction();
-        }
-    }
-
-    private shouldCalculatePrecisePrediction(): boolean {
-        // Calculate precise prediction every 30 frames (0.5 seconds at 60fps)
-        return (Date.now() % 500) < 16;
-    }
-
-    private calculatePrecisePrediction(): void {
-        if (!this.stage) return;
-        
-        // Use the precise physics-based prediction
-        const precisePredictions = this.landingPredictionSystem.predictLandings(
-            this.player,
-            this.stage.platforms,
-            { ...DEFAULT_PHYSICS_CONSTANTS },
-            1
-        );
-        
-        // Add precise prediction as lock-on
-        if (precisePredictions.length > 0) {
-            this.renderSystem.addLockedPrediction(precisePredictions[0]);
         }
     }
 
@@ -329,6 +302,8 @@ export class JumpingDotGame {
 
         if (platformCollision) {
             this.playerSystem.resetJumpTimer();
+            // Add landing history marker
+            this.renderSystem.addLandingHistory(this.player.x, this.player.y + this.player.radius);
         }
 
         if (this.collisionSystem.checkSpikeCollisions(this.player, this.stage.spikes)) {
