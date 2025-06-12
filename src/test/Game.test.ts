@@ -3,10 +3,10 @@ import { JumpingDotGame } from '../core/Game.ts';
 
 // Global type declarations for test environment
 declare let global: {
-    document: any;
-    window: any;
-    fetch: any;
-    performance: any;
+    document: typeof document;
+    window: typeof window;
+    fetch: typeof fetch;
+    performance: typeof performance;
 };
 
 // Mock DOM elements

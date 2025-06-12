@@ -1,3 +1,4 @@
+import { DEFAULT_PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
 import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 
 export class PhysicsSystem {
@@ -34,12 +35,6 @@ export class PhysicsSystem {
     }
 
     resetConstants(): void {
-        this.constants = {
-            gravity: 0.6,
-            jumpForce: -12,
-            autoJumpInterval: 150,
-            moveSpeed: 4,
-            gameSpeed: 2.0
-        };
+        this.constants = { ...DEFAULT_PHYSICS_CONSTANTS };
     }
 }

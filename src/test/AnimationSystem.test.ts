@@ -47,9 +47,9 @@ describe('AnimationSystem', () => {
             expect(clearAnim.active).toBe(true);
 
             // Particles should have updated positions and life
-            clearAnim.particles.forEach((particle) => {
+            for (const particle of clearAnim.particles) {
                 expect(particle.life).toBeLessThan(1.0);
-            });
+            }
         });
 
         it('should end clear animation after duration', () => {
@@ -68,9 +68,9 @@ describe('AnimationSystem', () => {
 
             // Manually set all particles to have zero life
             const clearAnim = animationSystem.getClearAnimation();
-            clearAnim.particles.forEach((particle) => {
+            for (const particle of clearAnim.particles) {
                 particle.life = 0;
-            });
+            }
 
             animationSystem.updateClearAnimation();
 

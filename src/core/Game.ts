@@ -1,3 +1,4 @@
+import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { InputSystem } from '../systems/InputSystem.js';
@@ -5,6 +6,7 @@ import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
 import type { Camera, GameState, PhysicsConstants, Player } from '../types/GameTypes.js';
+import { getCurrentTime } from '../utils/GameUtils.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
 export class JumpingDotGame {
@@ -37,14 +39,22 @@ export class JumpingDotGame {
     private animationId: number | null = null;
 
     constructor() {
-        this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-        this.gameStatus = document.getElementById('gameStatus')!;
-        this.timerDisplay = document.getElementById('timer')!;
-        this.scoreDisplay = document.getElementById('score')!;
+        this.canvas = this.getRequiredElement('gameCanvas') as HTMLCanvasElement;
+        this.gameStatus = this.getRequiredElement('gameStatus');
+        this.timerDisplay = this.getRequiredElement('timer');
+        this.scoreDisplay = this.getRequiredElement('score');
 
         this.initializeEntities();
         this.initializeSystems();
         this.init();
+    }
+
+    private getRequiredElement(id: string): HTMLElement {
+        const element = document.getElementById(id);
+        if (!element) {
+            throw new Error(`Required DOM element with id "${id}" not found`);
+        }
+        return element;
     }
 
     private initializeEntities(): void {
@@ -53,7 +63,7 @@ export class JumpingDotGame {
             y: 400,
             vx: 0,
             vy: 0,
-            radius: 3,
+            radius: GAME_CONFIG.player.defaultRadius,
             grounded: false
         };
 
@@ -74,13 +84,7 @@ export class JumpingDotGame {
     }
 
     private initializeSystems(): void {
-        const physicsConstants: PhysicsConstants = {
-            gravity: 0.6,
-            jumpForce: -12,
-            autoJumpInterval: 150,
-            moveSpeed: 4,
-            gameSpeed: 2.0
-        };
+        const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         // Create placeholder for input system keys
         const keys = {};
@@ -145,7 +149,7 @@ export class JumpingDotGame {
 
     public startGame(): void {
         this.gameState.gameRunning = true;
-        this.gameState.gameStartTime = performance.now();
+        this.gameState.gameStartTime = getCurrentTime();
         this.gameStatus.textContent = 'Playing';
         this.inputSystem.setGameState(true, false);
     }
@@ -191,7 +195,7 @@ export class JumpingDotGame {
 
     private updateTimer(): void {
         if (this.gameState.gameStartTime) {
-            const currentTime = performance.now();
+            const currentTime = getCurrentTime();
             const elapsedSeconds = (currentTime - this.gameState.gameStartTime) / 1000;
             this.gameState.timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
 
@@ -305,7 +309,7 @@ export class JumpingDotGame {
 
         const clearAnim = this.animationSystem.getClearAnimation();
         if (clearAnim.active && clearAnim.startTime) {
-            const elapsed = performance.now() - clearAnim.startTime;
+            const elapsed = getCurrentTime() - clearAnim.startTime;
             const progress = elapsed / clearAnim.duration;
             this.renderSystem.renderClearAnimation(
                 clearAnim.particles,

@@ -2,9 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InputSystem } from '../systems/InputSystem.js';
 import { KeyState } from '../types/GameTypes.js';
 
+interface MockGame {
+    startGame(): void;
+    init(): void;
+}
+
 describe('InputSystem', () => {
     let inputSystem: InputSystem;
-    let mockGame: any;
+    let mockGame: MockGame;
 
     beforeEach(() => {
         mockGame = {
@@ -15,8 +20,8 @@ describe('InputSystem', () => {
         inputSystem = new InputSystem(mockGame);
 
         // Clear any existing event listeners
-        document.removeEventListener('keydown', inputSystem.handleKeyDown as any);
-        document.removeEventListener('keyup', inputSystem.handleKeyUp as any);
+        document.removeEventListener('keydown', inputSystem.handleKeyDown as EventListener);
+        document.removeEventListener('keyup', inputSystem.handleKeyUp as EventListener);
     });
 
     describe('key state management', () => {
@@ -120,14 +125,14 @@ describe('InputSystem', () => {
         it('should prevent default for all arrow keys', () => {
             const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
 
-            arrowKeys.forEach((key) => {
+            for (const key of arrowKeys) {
                 const event = new KeyboardEvent('keydown', { code: key });
                 const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
                 inputSystem.simulateKeyDown(event);
 
                 expect(preventDefaultSpy).toHaveBeenCalled();
-            });
+            }
         });
 
         it('should not prevent default for non-arrow keys', () => {

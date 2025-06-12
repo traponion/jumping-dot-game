@@ -67,8 +67,9 @@ export class StageLoader {
      */
     async loadStage(stageId: number): Promise<StageData> {
         // Check cache first
-        if (this.cache.has(stageId)) {
-            return this.cache.get(stageId)!;
+        const cachedStage = this.cache.get(stageId);
+        if (cachedStage) {
+            return cachedStage;
         }
 
         try {
@@ -112,7 +113,7 @@ export class StageLoader {
      * @param stageData - Stage data to validate
      * @throws If stage data is invalid
      */
-    validateStage(stageData: any): asserts stageData is StageData {
+    validateStage(stageData: unknown): asserts stageData is StageData {
         const requiredFields = [
             'id',
             'name',

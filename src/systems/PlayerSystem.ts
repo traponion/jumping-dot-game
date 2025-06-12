@@ -1,4 +1,6 @@
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { KeyState, PhysicsConstants, Player, TrailPoint } from '../types/GameTypes.js';
+import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 
 export class PlayerSystem {
     private player: Player;
@@ -6,7 +8,7 @@ export class PlayerSystem {
     private hasMovedOnce = false;
     private lastJumpTime: number | null = null;
     private trail: TrailPoint[] = [];
-    private maxTrailLength = 8;
+    private maxTrailLength = GAME_CONFIG.player.maxTrailLength;
 
     constructor(player: Player, keys: KeyState) {
         this.player = player;
@@ -14,7 +16,7 @@ export class PlayerSystem {
     }
 
     update(deltaTime: number, physics: PhysicsConstants): void {
-        const dtFactor = (deltaTime / (1000 / 60)) * physics.gameSpeed;
+        const dtFactor = calculateDeltaFactor(deltaTime, physics.gameSpeed);
 
         this.handleInput(dtFactor);
         this.handleAutoJump(physics);
@@ -25,7 +27,7 @@ export class PlayerSystem {
         const leftInput = this.keys.ArrowLeft;
         const rightInput = this.keys.ArrowRight;
 
-        const acceleration = 0.5;
+        const acceleration = GAME_CONFIG.player.acceleration;
         if (leftInput) {
             this.player.vx -= acceleration * dtFactor;
             this.hasMovedOnce = true;
@@ -34,13 +36,16 @@ export class PlayerSystem {
             this.hasMovedOnce = true;
         }
 
-        if (this.hasMovedOnce && Math.abs(this.player.vx) < 0.2) {
-            this.player.vx = this.player.vx >= 0 ? 0.2 : -0.2;
+        if (this.hasMovedOnce && Math.abs(this.player.vx) < GAME_CONFIG.player.minVelocity) {
+            this.player.vx =
+                this.player.vx >= 0
+                    ? GAME_CONFIG.player.minVelocity
+                    : -GAME_CONFIG.player.minVelocity;
         }
     }
 
     private handleAutoJump(physics: PhysicsConstants): void {
-        const currentTime = performance.now();
+        const currentTime = getCurrentTime();
         if (this.lastJumpTime === null) {
             this.lastJumpTime = currentTime - physics.autoJumpInterval;
         }
@@ -65,7 +70,7 @@ export class PlayerSystem {
     }
 
     resetJumpTimer(): void {
-        this.lastJumpTime = performance.now() - 150;
+        this.lastJumpTime = getCurrentTime() - 150;
     }
 
     clearTrail(): void {

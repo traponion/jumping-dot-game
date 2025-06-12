@@ -16,14 +16,14 @@ describe('RenderSystem', () => {
             width: 800,
             height: 600,
             getContext: vi.fn()
-        } as any;
+        } as Partial<HTMLCanvasElement> as HTMLCanvasElement;
 
         mockCtx = {
             fillStyle: '',
             strokeStyle: '',
             lineWidth: 0,
             font: '',
-            textAlign: '',
+            textAlign: 'start',
             fillRect: vi.fn(),
             strokeRect: vi.fn(),
             beginPath: vi.fn(),
@@ -37,7 +37,7 @@ describe('RenderSystem', () => {
             save: vi.fn(),
             restore: vi.fn(),
             translate: vi.fn()
-        } as any;
+        } as Partial<CanvasRenderingContext2D> as CanvasRenderingContext2D;
 
         mockCanvas.getContext = vi.fn().mockReturnValue(mockCtx);
 

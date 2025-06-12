@@ -1,4 +1,6 @@
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { AnimationSystem as AnimationData, DeathMark, Player } from '../types/GameTypes.js';
+import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
 
 export class AnimationSystem {
     private clearAnimation: AnimationData;
@@ -23,26 +25,26 @@ export class AnimationSystem {
 
     startClearAnimation(player: Player): void {
         this.clearAnimation.active = true;
-        this.clearAnimation.startTime = performance.now();
+        this.clearAnimation.startTime = getCurrentTime();
         this.clearAnimation.particles = [];
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
             this.clearAnimation.particles.push({
-                x: player.x + (Math.random() - 0.5) * 100,
-                y: player.y + (Math.random() - 0.5) * 100,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8 - 2,
+                x: player.x + randomRange(-50, 50),
+                y: player.y + randomRange(-50, 50),
+                vx: randomRange(-4, 4),
+                vy: randomRange(-6, 2),
                 life: 1.0,
-                decay: 0.02 + Math.random() * 0.02
+                decay: randomRange(0.02, 0.04)
             });
         }
     }
 
     updateClearAnimation(): void {
-        if (!this.clearAnimation.active) return;
+        if (!this.clearAnimation.active || this.clearAnimation.startTime === null) return;
 
-        const currentTime = performance.now();
-        const elapsed = currentTime - this.clearAnimation.startTime!;
+        const currentTime = getCurrentTime();
+        const elapsed = currentTime - this.clearAnimation.startTime;
 
         for (let i = this.clearAnimation.particles.length - 1; i >= 0; i--) {
             const particle = this.clearAnimation.particles[i];
@@ -64,12 +66,12 @@ export class AnimationSystem {
 
     startDeathAnimation(player: Player): void {
         this.deathAnimation.active = true;
-        this.deathAnimation.startTime = performance.now();
+        this.deathAnimation.startTime = getCurrentTime();
         this.deathAnimation.particles = [];
 
-        for (let i = 0; i < 15; i++) {
-            const angle = (Math.PI * 2 * i) / 15;
-            const speed = 3 + Math.random() * 4;
+        for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / GAME_CONFIG.animation.particleCount;
+            const speed = randomRange(3, 7);
 
             this.deathAnimation.particles.push({
                 x: player.x,
@@ -77,17 +79,17 @@ export class AnimationSystem {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - 1,
                 life: 1.0,
-                decay: 0.01 + Math.random() * 0.02,
-                size: 2 + Math.random() * 2
+                decay: randomRange(0.01, 0.03),
+                size: randomRange(2, 4)
             });
         }
     }
 
     updateDeathAnimation(): void {
-        if (!this.deathAnimation.active) return;
+        if (!this.deathAnimation.active || this.deathAnimation.startTime === null) return;
 
-        const currentTime = performance.now();
-        const elapsed = currentTime - this.deathAnimation.startTime!;
+        const currentTime = getCurrentTime();
+        const elapsed = currentTime - this.deathAnimation.startTime;
 
         for (let i = this.deathAnimation.particles.length - 1; i >= 0; i--) {
             const particle = this.deathAnimation.particles[i];
@@ -111,7 +113,7 @@ export class AnimationSystem {
         this.deathMarks.push({
             x,
             y,
-            timestamp: performance.now()
+            timestamp: getCurrentTime()
         });
     }
 

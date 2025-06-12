@@ -3,7 +3,7 @@ import { StageLoader } from '../core/StageLoader.ts';
 
 // Global type declarations for test environment
 declare let global: {
-    fetch: any;
+    fetch: typeof fetch;
 };
 
 describe('StageLoader', () => {

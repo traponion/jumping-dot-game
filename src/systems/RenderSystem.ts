@@ -7,7 +7,11 @@ export class RenderSystem {
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d')!;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2D rendering context from canvas');
+        }
+        this.ctx = context;
     }
 
     clearCanvas(): void {

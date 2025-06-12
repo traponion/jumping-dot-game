@@ -1,5 +1,6 @@
 import type { Goal, Platform, Spike } from '../core/StageLoader.js';
 import type { Player } from '../types/GameTypes.js';
+import { isCircleRectCollision } from '../utils/GameUtils.js';
 
 export class CollisionSystem {
     checkPlatformCollision(player: Player, platform: Platform, prevPlayerFootY: number): boolean {
@@ -36,11 +37,14 @@ export class CollisionSystem {
     }
 
     checkSpikeCollision(player: Player, spike: Spike): boolean {
-        return (
-            player.x + player.radius > spike.x &&
-            player.x - player.radius < spike.x + spike.width &&
-            player.y + player.radius > spike.y &&
-            player.y - player.radius < spike.y + spike.height
+        return isCircleRectCollision(
+            player.x,
+            player.y,
+            player.radius,
+            spike.x,
+            spike.y,
+            spike.width,
+            spike.height
         );
     }
 
@@ -54,11 +58,14 @@ export class CollisionSystem {
     }
 
     checkGoalCollision(player: Player, goal: Goal): boolean {
-        return (
-            player.x + player.radius > goal.x &&
-            player.x - player.radius < goal.x + goal.width &&
-            player.y + player.radius > goal.y &&
-            player.y - player.radius < goal.y + goal.height
+        return isCircleRectCollision(
+            player.x,
+            player.y,
+            player.radius,
+            goal.x,
+            goal.y,
+            goal.width,
+            goal.height
         );
     }
 
