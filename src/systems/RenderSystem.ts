@@ -312,13 +312,13 @@ export class RenderSystem {
             const lock = this.lockedPredictions[i];
             const age = now - this.lockTimestamps[i];
             const fadeProgress = age / this.LOCK_FADE_TIME;
-            const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress)); // Fade from 0.6 to 0.1
+            const alpha = Math.max(0.2, 0.9 * (1 - fadeProgress)); // Fade from 0.9 to 0.2 (more visible)
             
-            // Render locked prediction at actual landing spot
+            // Render locked prediction with thicker lines and larger crosshair
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 2; // Thicker lines for visibility
             
-            this.drawCrosshair(lock.x, lock.y, 6); // Slightly smaller for locks
+            this.drawCrosshair(lock.x, lock.y, 10); // Larger crosshair for locks
         }
     }
 
