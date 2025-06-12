@@ -82,15 +82,15 @@ describe('LandingPredictionSystem', () => {
         });
 
         it('should predict landing on specific platform', () => {
-            // Set player to land on second platform (since vx=1 is slow)
+            // Set player to land on second platform with reasonable velocity
             player.x = 100;
-            player.vx = 1;
+            player.vx = 3;
 
             const predictions = predictionSystem.predictLandings(player, platforms, physics, 1);
             
 
             expect(predictions).toHaveLength(1);
-            // With vx=1, should reach around x=180+ (second platform)
+            // With vx=3, should reach around x=180+ (second platform)
             expect(predictions[0].x).toBeGreaterThan(150);
             expect(predictions[0].y).toBe(450);
         });
