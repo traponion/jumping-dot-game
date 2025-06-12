@@ -222,7 +222,7 @@ export class RenderSystem {
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
             // Offset landing spot slightly ahead (in direction of movement)
-            const offsetX = -10; // 10 pixels to the left/ahead for visual clarity
+            const offsetX = -15; // 15 pixels to the left/ahead for visual clarity
             const targetX = prediction.x + offsetX;
             const targetY = prediction.y;
 
