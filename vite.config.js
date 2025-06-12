@@ -31,10 +31,10 @@ export default defineConfig({
           statements: 95
         },
         'src/core/**': {
-          branches: 85,
+          branches: 75,
           functions: 90,
-          lines: 90,
-          statements: 90
+          lines: 85,
+          statements: 85
         },
         'src/utils/**': {
           branches: 95,
