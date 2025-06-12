@@ -318,8 +318,8 @@ export class JumpingDotGame {
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.renderSystem.renderTrail(this.playerSystem.getTrail(), this.player.radius);
-            this.renderSystem.renderLandingPredictions();
             this.renderSystem.renderPlayer(this.player);
+            this.renderSystem.renderLandingPredictions();
         }
 
         const deathAnim = this.animationSystem.getDeathAnimation();

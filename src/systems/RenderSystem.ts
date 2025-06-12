@@ -218,9 +218,9 @@ export class RenderSystem {
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
             
-            // Semi-transparent white that fades with distance and confidence
-            const baseAlpha = prediction.confidence * 0.6;
-            const alpha = Math.max(0.2, baseAlpha - (i * 0.15)); // Fade with distance
+            // More visible white that fades with distance and confidence
+            const baseAlpha = prediction.confidence * 0.8;
+            const alpha = Math.max(0.4, baseAlpha - (i * 0.2)); // Fade with distance
             
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
             this.ctx.lineWidth = 2;
