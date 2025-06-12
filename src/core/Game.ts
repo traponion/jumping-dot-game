@@ -341,4 +341,14 @@ export class JumpingDotGame {
         this.gameState.gameRunning = false;
         this.gameState.gameOver = true;
     }
+
+    // Public methods for testing
+    setGameOver(): void {
+        this.gameState.gameRunning = false;
+        this.gameState.gameOver = true;
+    }
+
+    setAnimationId(id: number): void {
+        this.animationId = id;
+    }
 }

@@ -64,6 +64,34 @@ describe('PlayerSystem', () => {
 
             expect(Math.abs(player.vx)).toBeGreaterThanOrEqual(0.2);
         });
+
+        it('should apply minimum velocity when hasMovedOnce and velocity is low', () => {
+            // First move to trigger hasMovedOnce
+            keys.ArrowRight = true;
+            playerSystem.update(16.67, physics);
+            keys.ArrowRight = false;
+
+            // Set a very small velocity
+            player.vx = 0.1;
+            
+            playerSystem.update(16.67, physics);
+
+            expect(player.vx).toBe(0.2); // minVelocity from config
+        });
+
+        it('should apply negative minimum velocity for negative velocities', () => {
+            // First move to trigger hasMovedOnce
+            keys.ArrowLeft = true;
+            playerSystem.update(16.67, physics);
+            keys.ArrowLeft = false;
+
+            // Set a very small negative velocity
+            player.vx = -0.1;
+            
+            playerSystem.update(16.67, physics);
+
+            expect(player.vx).toBe(-0.2); // -minVelocity from config
+        });
     });
 
     describe('auto jump system', () => {
@@ -145,6 +173,44 @@ describe('PlayerSystem', () => {
             expect(player.vy).toBe(0);
             expect(player.grounded).toBe(false);
             expect(playerSystem.getHasMovedOnce()).toBe(false);
+            expect(playerSystem.getTrail().length).toBe(0);
+        });
+
+        it('should reset jump timer', () => {
+            const originalNow = global.performance.now;
+            let mockTime = 1000;
+            global.performance.now = () => mockTime;
+
+            // First establish a baseline - do an initial update to set lastJumpTime
+            player.grounded = true;
+            playerSystem.update(16.67, physics);
+            const initialVy = player.vy;
+
+            // Reset the player state for the actual test
+            player.vy = 0;
+            player.grounded = true;
+
+            // Now call resetJumpTimer
+            playerSystem.resetJumpTimer();
+
+            // Advance time slightly to ensure we're past the interval
+            mockTime += 10;
+            playerSystem.update(16.67, physics);
+
+            expect(player.vy).toBe(physics.jumpForce);
+            expect(player.grounded).toBe(false);
+
+            global.performance.now = originalNow;
+        });
+
+        it('should clear trail', () => {
+            // Add some trail points
+            playerSystem.update(16.67, physics);
+            playerSystem.update(16.67, physics);
+            expect(playerSystem.getTrail().length).toBeGreaterThan(0);
+
+            playerSystem.clearTrail();
+
             expect(playerSystem.getTrail().length).toBe(0);
         });
     });

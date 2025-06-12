@@ -8,12 +8,15 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:coverage:open": "vitest --coverage && open coverage/index.html",
     "lint": "biome check src",
     "lint:fix": "biome check src --write",
     "format": "biome format src --write"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@vitest/coverage-v8": "^3.2.3",
     "@vitest/ui": "^3.2.3",
     "jsdom": "^23.0.0",
     "typescript": "^5.7.2",

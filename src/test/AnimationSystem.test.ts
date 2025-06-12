@@ -122,6 +122,20 @@ describe('AnimationSystem', () => {
             const deathAnim = animationSystem.getDeathAnimation();
             expect(deathAnim.active).toBe(false);
         });
+
+        it('should remove particles with zero life', () => {
+            animationSystem.startDeathAnimation(mockPlayer);
+
+            // Manually set all particles to have zero life
+            const deathAnim = animationSystem.getDeathAnimation();
+            for (const particle of deathAnim.particles) {
+                particle.life = 0;
+            }
+
+            animationSystem.updateDeathAnimation();
+
+            expect(deathAnim.particles.length).toBe(0);
+        });
     });
 
     describe('death marks', () => {

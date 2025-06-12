@@ -250,4 +250,67 @@ describe('RenderSystem', () => {
             expect(mockCtx.lineWidth).toBe(2);
         });
     });
+
+    describe('animation rendering', () => {
+        it('should render clear animation with particles and text', () => {
+            const particles = [
+                { x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2 },
+                { x: 110, y: 210, vx: -1, vy: 1, life: 0.5, size: 2 }
+            ];
+
+            // Mock Date.now for pulsing text
+            const originalDateNow = Date.now;
+            Date.now = vi.fn().mockReturnValue(1000);
+
+            renderSystem.renderClearAnimation(particles, 0.3, 100, 400);
+
+            // Check particle rendering
+            expect(mockCtx.beginPath).toHaveBeenCalledTimes(2);
+            expect(mockCtx.arc).toHaveBeenCalledWith(100, 200, 2, 0, Math.PI * 2);
+            expect(mockCtx.arc).toHaveBeenCalledWith(110, 210, 2, 0, Math.PI * 2);
+            expect(mockCtx.fill).toHaveBeenCalledTimes(2);
+
+            // Check "CLEAR!" text rendering (progress < 0.8)
+            expect(mockCtx.textAlign).toBe('center');
+            expect(mockCtx.fillText).toHaveBeenCalledWith('CLEAR!', 100, 350);
+
+            Date.now = originalDateNow;
+        });
+
+        it('should not render CLEAR text when progress >= 0.8', () => {
+            const particles = [{ x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2 }];
+
+            renderSystem.renderClearAnimation(particles, 0.9, 100, 400);
+
+            // Should render particles but not text
+            expect(mockCtx.arc).toHaveBeenCalledWith(100, 200, 2, 0, Math.PI * 2);
+            expect(mockCtx.fillText).not.toHaveBeenCalledWith('CLEAR!', 100, 350);
+        });
+
+        it('should render death animation with red particles', () => {
+            const particles = [
+                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6, size: 3 },
+                { x: 160, y: 310, vx: -2, vy: 2, life: 0.4, size: 1 }
+            ];
+
+            renderSystem.renderDeathAnimation(particles);
+
+            // Check red particle rendering
+            expect(mockCtx.beginPath).toHaveBeenCalledTimes(2);
+            expect(mockCtx.arc).toHaveBeenCalledWith(150, 300, 3, 0, Math.PI * 2);
+            expect(mockCtx.arc).toHaveBeenCalledWith(160, 310, 1, 0, Math.PI * 2);
+            expect(mockCtx.fill).toHaveBeenCalledTimes(2);
+        });
+
+        it('should render death animation with default size when size is undefined', () => {
+            const particles = [
+                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6 } // No size property
+            ];
+
+            renderSystem.renderDeathAnimation(particles);
+
+            // Should use default size of 2
+            expect(mockCtx.arc).toHaveBeenCalledWith(150, 300, 2, 0, Math.PI * 2);
+        });
+    });
 });
