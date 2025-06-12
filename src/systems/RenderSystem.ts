@@ -218,25 +218,25 @@ export class RenderSystem {
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
             
-            // Subtle white-based opacity that fades with distance and confidence
-            const baseAlpha = prediction.confidence * 0.3; // Much more subtle
-            const alpha = Math.max(0.05, baseAlpha - (i * 0.08)); // Fade with distance
+            // Semi-transparent white that fades with distance and confidence
+            const baseAlpha = prediction.confidence * 0.6;
+            const alpha = Math.max(0.2, baseAlpha - (i * 0.15)); // Fade with distance
             
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 2;
             
-            // Draw subtle landing spot as a small circle outline
+            // Draw vertical line to indicate landing spot
+            const lineHeight = 20; // Height of the prediction line
             this.ctx.beginPath();
-            this.ctx.arc(prediction.x, prediction.y, 4, 0, Math.PI * 2);
+            this.ctx.moveTo(prediction.x, prediction.y - lineHeight / 2);
+            this.ctx.lineTo(prediction.x, prediction.y + lineHeight / 2);
             this.ctx.stroke();
             
-            // Draw tiny center dot for high confidence predictions
-            if (prediction.confidence > 0.7) {
-                this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.5})`;
-                this.ctx.beginPath();
-                this.ctx.arc(prediction.x, prediction.y, 1, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
+            // Add small horizontal line at the bottom for platform indication
+            this.ctx.beginPath();
+            this.ctx.moveTo(prediction.x - 4, prediction.y);
+            this.ctx.lineTo(prediction.x + 4, prediction.y);
+            this.ctx.stroke();
         }
     }
 }
