@@ -6,18 +6,28 @@ export class CollisionSystem {
     checkPlatformCollision(player: Player, platform: Platform, prevPlayerFootY: number): boolean {
         const currentPlayerFootY = player.y + player.radius;
 
+        // Basic horizontal overlap check
         if (
-            player.x + player.radius > platform.x1 &&
-            player.x - player.radius < platform.x2 &&
-            player.vy >= 0 &&
-            prevPlayerFootY <= platform.y1 &&
-            currentPlayerFootY >= platform.y1
+            player.x + player.radius <= platform.x1 ||
+            player.x - player.radius >= platform.x2 ||
+            player.vy < 0  // Don't collide when moving upward
         ) {
+            return false;
+        }
+
+        // Enhanced collision detection for high-speed movement
+        // Check if player crossed the platform during this frame
+        const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
+        const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
+        
+        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
+            // Player crossed the platform - snap to surface
             player.y = platform.y1 - player.radius;
             player.vy = 0;
             player.grounded = true;
             return true;
         }
+
         return false;
     }
 

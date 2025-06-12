@@ -87,6 +87,42 @@ describe('CollisionSystem', () => {
             expect(result).toBe(true);
             expect(player.y).toBe(407); // Should land on first platform
         });
+
+        it('should prevent clipping through platform with high speed movement', () => {
+            const platform: Platform = { x1: 90, y1: 410, x2: 110, y2: 410 };
+            // Simulate high-speed movement that could clip through platform
+            player.y = 430; // Player foot at 430 + 3 = 433, already below platform
+            player.vy = 20; // Very high downward velocity
+            const prevPlayerFootY = 405; // Player was above platform in previous frame
+
+            const result = collisionSystem.checkPlatformCollision(
+                player,
+                platform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBe(true); // Should still detect collision
+            expect(player.y).toBe(407); // Should be corrected to platform surface
+            expect(player.vy).toBe(0);
+            expect(player.grounded).toBe(true);
+        });
+
+        it('should not falsely detect collision when teleporting far below platform', () => {
+            const platform: Platform = { x1: 90, y1: 410, x2: 110, y2: 410 };
+            // Simulate case where player has teleported far below without crossing
+            player.y = 500; // Far below platform
+            player.vy = 5;
+            const prevPlayerFootY = 495; // Was also below platform
+
+            const result = collisionSystem.checkPlatformCollision(
+                player,
+                platform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBe(false); // Should not detect collision
+            expect(player.grounded).toBe(false);
+        });
     });
 
     describe('spike collision', () => {
