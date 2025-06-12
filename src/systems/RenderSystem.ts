@@ -221,10 +221,11 @@ export class RenderSystem {
         // Update or create animated predictions
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
-            // Offset landing spot slightly ahead (in direction of movement)
-            const offsetX = -15; // 15 pixels to the left/ahead for visual clarity
-            const targetX = prediction.x + offsetX;
-            const targetY = prediction.y;
+            // Show trajectory marker in mid-air rather than at landing point
+            const trajectoryOffsetX = -30; // Further ahead for trajectory visualization
+            const trajectoryOffsetY = -40; // Show in air above landing point
+            const targetX = prediction.x + trajectoryOffsetX;
+            const targetY = prediction.y + trajectoryOffsetY;
 
             if (i < this.animatedPredictions.length) {
                 // Update existing animated prediction
