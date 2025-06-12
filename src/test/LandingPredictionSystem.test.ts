@@ -88,7 +88,6 @@ describe('LandingPredictionSystem', () => {
 
             const predictions = predictionSystem.predictLandings(player, platforms, physics, 1);
             
-            console.log('Test debug: predictions =', predictions);
 
             expect(predictions).toHaveLength(1);
             // With vx=1, should reach around x=180+ (second platform)

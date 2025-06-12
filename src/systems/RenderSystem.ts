@@ -1,9 +1,11 @@
 import type { Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { LandingPrediction } from './LandingPredictionSystem.js';
 
 export class RenderSystem {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
+    private landingPredictions: LandingPrediction[] = [];
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -206,5 +208,48 @@ export class RenderSystem {
             this.canvas.width / 2,
             this.canvas.height - 15
         );
+    }
+
+    setLandingPredictions(predictions: LandingPrediction[]): void {
+        this.landingPredictions = predictions;
+    }
+
+    renderLandingPredictions(): void {
+        for (let i = 0; i < this.landingPredictions.length; i++) {
+            const prediction = this.landingPredictions[i];
+            
+            // Use different colors and opacity based on confidence and jump number
+            const baseAlpha = prediction.confidence * 0.8;
+            const alpha = Math.max(0.2, baseAlpha - (i * 0.2)); // Fade with distance
+            
+            // Color progression: bright -> dim for future predictions
+            const colors = ['rgba(0, 255, 255, ', 'rgba(0, 200, 255, ', 'rgba(0, 150, 255, '];
+            const color = (colors[i] || 'rgba(0, 100, 255, ') + alpha + ')';
+            
+            this.ctx.fillStyle = color;
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 2;
+            
+            // Draw landing spot as a circle
+            this.ctx.beginPath();
+            this.ctx.arc(prediction.x, prediction.y, 6, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Draw confidence indicator (smaller circle inside)
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            this.ctx.beginPath();
+            this.ctx.arc(prediction.x, prediction.y, 3 * prediction.confidence, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Draw jump number
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            this.ctx.font = '12px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(
+                prediction.jumpNumber.toString(),
+                prediction.x,
+                prediction.y - 10
+            );
+        }
     }
 }

@@ -2,6 +2,7 @@ import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstan
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { InputSystem } from '../systems/InputSystem.js';
+import { LandingPredictionSystem } from '../systems/LandingPredictionSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
@@ -29,6 +30,7 @@ export class JumpingDotGame {
     private animationSystem!: AnimationSystem;
     private renderSystem!: RenderSystem;
     private inputSystem!: InputSystem;
+    private landingPredictionSystem!: LandingPredictionSystem;
 
     // Stage
     private stageLoader!: StageLoader;
@@ -95,6 +97,7 @@ export class JumpingDotGame {
         this.animationSystem = new AnimationSystem();
         this.renderSystem = new RenderSystem(this.canvas);
         this.inputSystem = new InputSystem(this);
+        this.landingPredictionSystem = new LandingPredictionSystem();
     }
 
     async init(): Promise<void> {
@@ -191,6 +194,22 @@ export class JumpingDotGame {
         this.handleCollisions();
         this.updateCamera();
         this.checkBoundaries();
+        this.updateLandingPredictions();
+    }
+
+    private updateLandingPredictions(): void {
+        if (!this.stage) return;
+        
+        // Calculate landing predictions for the next 3 jumps
+        const predictions = this.landingPredictionSystem.predictLandings(
+            this.player,
+            this.stage.platforms,
+            { ...DEFAULT_PHYSICS_CONSTANTS },
+            3
+        );
+        
+        // Store predictions for rendering
+        this.renderSystem.setLandingPredictions(predictions);
     }
 
     private updateTimer(): void {
@@ -299,6 +318,7 @@ export class JumpingDotGame {
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.renderSystem.renderTrail(this.playerSystem.getTrail(), this.player.radius);
+            this.renderSystem.renderLandingPredictions();
             this.renderSystem.renderPlayer(this.player);
         }
 

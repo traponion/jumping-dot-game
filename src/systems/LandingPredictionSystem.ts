@@ -45,7 +45,6 @@ export class LandingPredictionSystem {
                 sim.grounded = false;
                 timeSinceLastJump = 0;
                 wasAirborne = true; // Set airborne flag immediately on jump
-                console.log(`DEBUG: Jump executed at time ${timeElapsed}, vy=${sim.vy}, pos: ${sim.x}, ${sim.y}`);
             }
             
             // Apply physics
