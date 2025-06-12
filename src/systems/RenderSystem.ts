@@ -270,17 +270,19 @@ export class RenderSystem {
             this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
             this.ctx.lineWidth = 2;
             
-            // Draw vertical line to indicate landing spot
-            const lineHeight = 20; // Height of the prediction line
+            // Draw crosshair-style landing marker (+ shape)
+            const crossSize = 8; // Size of the crosshair arms
+            
+            // Vertical line
             this.ctx.beginPath();
-            this.ctx.moveTo(animPred.x, animPred.y - lineHeight / 2);
-            this.ctx.lineTo(animPred.x, animPred.y + lineHeight / 2);
+            this.ctx.moveTo(animPred.x, animPred.y - crossSize);
+            this.ctx.lineTo(animPred.x, animPred.y + crossSize);
             this.ctx.stroke();
             
-            // Add small horizontal line at the bottom for platform indication
+            // Horizontal line  
             this.ctx.beginPath();
-            this.ctx.moveTo(animPred.x - 4, animPred.y);
-            this.ctx.lineTo(animPred.x + 4, animPred.y);
+            this.ctx.moveTo(animPred.x - crossSize, animPred.y);
+            this.ctx.lineTo(animPred.x + crossSize, animPred.y);
             this.ctx.stroke();
         }
     }
