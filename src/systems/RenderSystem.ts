@@ -221,9 +221,9 @@ export class RenderSystem {
         // Update or create animated predictions
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
-            // Show trajectory marker in mid-air rather than at landing point
+            // Show trajectory marker closer to ground level
             const trajectoryOffsetX = -30; // Further ahead for trajectory visualization
-            const trajectoryOffsetY = -40; // Show in air above landing point
+            const trajectoryOffsetY = -20; // Show closer to ground level
             const targetX = prediction.x + trajectoryOffsetX;
             const targetY = prediction.y + trajectoryOffsetY;
 

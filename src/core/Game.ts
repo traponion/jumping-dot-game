@@ -200,16 +200,64 @@ export class JumpingDotGame {
     private updateLandingPredictions(): void {
         if (!this.stage) return;
         
-        // Calculate landing prediction for the next jump only
-        const predictions = this.landingPredictionSystem.predictLandings(
-            this.player,
-            this.stage.platforms,
-            { ...DEFAULT_PHYSICS_CONSTANTS },
-            1
-        );
+        // Simple input-based prediction instead of complex physics simulation
+        const inputKeys = this.inputSystem.getKeys();
+        const futureDistance = this.calculateFutureMovement(inputKeys);
+        const predictedX = this.player.x + futureDistance;
         
-        // Store predictions for rendering
-        this.renderSystem.setLandingPredictions(predictions);
+        // Find the platform closest to predicted position
+        const targetPlatform = this.findNearestPlatform(predictedX);
+        
+        if (targetPlatform) {
+            const simplePrediction = [{
+                x: predictedX,
+                y: targetPlatform.y1,
+                confidence: 0.8,
+                jumpNumber: 1
+            }];
+            this.renderSystem.setLandingPredictions(simplePrediction);
+        } else {
+            this.renderSystem.setLandingPredictions([]);
+        }
+    }
+
+    private calculateFutureMovement(keys: any): number {
+        // Estimate future movement based on current input and velocity
+        const jumpDuration = 1000; // Rough jump duration in ms
+        const baseMovement = this.player.vx * (jumpDuration / 16.67); // Movement during jump
+        
+        // Add input-based movement
+        let inputMovement = 0;
+        if (keys.ArrowLeft) {
+            inputMovement = -80; // Moving left
+        } else if (keys.ArrowRight) {
+            inputMovement = 80; // Moving right
+        }
+        
+        return baseMovement + inputMovement;
+    }
+
+    private findNearestPlatform(targetX: number): any {
+        if (!this.stage) return null;
+        
+        // Find platform that the player would likely land on
+        let bestPlatform = null;
+        let bestDistance = Infinity;
+        
+        for (const platform of this.stage.platforms) {
+            // Check if target X is within platform bounds or nearby
+            const platformCenterX = (platform.x1 + platform.x2) / 2;
+            const distance = Math.abs(targetX - platformCenterX);
+            
+            if (distance < bestDistance && 
+                targetX >= platform.x1 - 50 && 
+                targetX <= platform.x2 + 50) {
+                bestDistance = distance;
+                bestPlatform = platform;
+            }
+        }
+        
+        return bestPlatform;
     }
 
     private updateTimer(): void {
