@@ -131,6 +131,23 @@ export class StageLoader {
         return requiredFields.every(field => field in data);
     }
 
+    private isValidGoal(goal: unknown): goal is { x: number; y: number; width: number; height: number } {
+        return typeof goal === 'object' && 
+               goal !== null &&
+               typeof (goal as any).x === 'number' &&
+               typeof (goal as any).y === 'number' &&
+               typeof (goal as any).width === 'number' &&
+               typeof (goal as any).height === 'number';
+    }
+
+    private isValidTextElement(textObj: unknown): textObj is { x: number; y: number; text: string } {
+        return typeof textObj === 'object' && 
+               textObj !== null &&
+               typeof (textObj as any).x === 'number' &&
+               typeof (textObj as any).y === 'number' &&
+               typeof (textObj as any).text === 'string';
+    }
+
     validateStage(stageData: unknown): asserts stageData is StageData {
         if (!this.isValidStageData(stageData)) {
             throw new Error('Invalid stage data: must be an object');
@@ -173,25 +190,14 @@ export class StageLoader {
         }
 
         // Validate goal
-        const goal = stageData.goal;
-        if (
-            typeof goal.x !== 'number' ||
-            typeof goal.y !== 'number' ||
-            typeof goal.width !== 'number' ||
-            typeof goal.height !== 'number'
-        ) {
+        if (!this.isValidGoal(stageData.goal)) {
             throw new Error('Invalid stage data: goal missing properties');
         }
 
         // Validate text elements
         const textFields = ['startText', 'goalText'] as const;
         for (const field of textFields) {
-            const textObj = stageData[field];
-            if (
-                typeof textObj.x !== 'number' ||
-                typeof textObj.y !== 'number' ||
-                typeof textObj.text !== 'string'
-            ) {
+            if (!this.isValidTextElement(stageData[field])) {
                 throw new Error(`Invalid stage data: ${field} missing properties`);
             }
         }

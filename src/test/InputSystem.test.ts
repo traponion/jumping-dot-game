@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InputSystem } from '../systems/InputSystem.js';
-import { KeyState } from '../types/GameTypes.js';
 
 interface MockGame {
     startGame(): void;

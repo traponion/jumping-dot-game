@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import {
-    AnimationSystem as AnimationData,
-    DeathMark,
-    Particle,
-    type Player
-} from '../types/GameTypes.js';
+import type { Player } from '../types/GameTypes.js';
 
 describe('AnimationSystem', () => {
     let animationSystem: AnimationSystem;
@@ -23,7 +18,7 @@ describe('AnimationSystem', () => {
         };
 
         // Mock performance.now
-        vi.spyOn(global.performance, 'now').mockReturnValue(1000);
+        vi.spyOn(globalThis.performance, 'now').mockReturnValue(1000);
     });
 
     describe('clear animation', () => {
@@ -40,7 +35,7 @@ describe('AnimationSystem', () => {
             animationSystem.startClearAnimation(mockPlayer);
 
             // Advance time
-            vi.spyOn(global.performance, 'now').mockReturnValue(1100);
+            vi.spyOn(globalThis.performance, 'now').mockReturnValue(1100);
             animationSystem.updateClearAnimation();
 
             const clearAnim = animationSystem.getClearAnimation();
@@ -56,7 +51,7 @@ describe('AnimationSystem', () => {
             animationSystem.startClearAnimation(mockPlayer);
 
             // Advance time beyond duration (3000ms)
-            vi.spyOn(global.performance, 'now').mockReturnValue(4100);
+            vi.spyOn(globalThis.performance, 'now').mockReturnValue(4100);
             animationSystem.updateClearAnimation();
 
             const clearAnim = animationSystem.getClearAnimation();
@@ -116,7 +111,7 @@ describe('AnimationSystem', () => {
             animationSystem.startDeathAnimation(mockPlayer);
 
             // Advance time beyond duration (2000ms)
-            vi.spyOn(global.performance, 'now').mockReturnValue(3100);
+            vi.spyOn(globalThis.performance, 'now').mockReturnValue(3100);
             animationSystem.updateDeathAnimation();
 
             const deathAnim = animationSystem.getDeathAnimation();

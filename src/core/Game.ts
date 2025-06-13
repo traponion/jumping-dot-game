@@ -2,7 +2,6 @@ import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstan
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { InputSystem } from '../systems/InputSystem.js';
-import { LandingPredictionSystem } from '../systems/LandingPredictionSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';

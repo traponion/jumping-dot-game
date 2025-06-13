@@ -97,12 +97,11 @@ describe('PlayerSystem', () => {
     describe('auto jump system', () => {
         it('should auto jump when grounded and interval passed', () => {
             player.grounded = true;
-            const initialVy = player.vy;
 
             // Mock performance.now to simulate time passage
-            const originalNow = global.performance.now;
+            const originalNow = globalThis.performance.now;
             let mockTime = 0;
-            global.performance.now = () => mockTime;
+            globalThis.performance.now = () => mockTime;
 
             // First update to set lastJumpTime
             playerSystem.update(16.67, physics);
@@ -114,7 +113,7 @@ describe('PlayerSystem', () => {
             expect(player.vy).toBe(physics.jumpForce);
             expect(player.grounded).toBe(false);
 
-            global.performance.now = originalNow;
+            globalThis.performance.now = originalNow;
         });
     });
 
@@ -177,14 +176,13 @@ describe('PlayerSystem', () => {
         });
 
         it('should reset jump timer', () => {
-            const originalNow = global.performance.now;
+            const originalNow = globalThis.performance.now;
             let mockTime = 1000;
-            global.performance.now = () => mockTime;
+            globalThis.performance.now = () => mockTime;
 
             // First establish a baseline - do an initial update to set lastJumpTime
             player.grounded = true;
             playerSystem.update(16.67, physics);
-            const initialVy = player.vy;
 
             // Reset the player state for the actual test
             player.vy = 0;
@@ -200,7 +198,7 @@ describe('PlayerSystem', () => {
             expect(player.vy).toBe(physics.jumpForce);
             expect(player.grounded).toBe(false);
 
-            global.performance.now = originalNow;
+            globalThis.performance.now = originalNow;
         });
 
         it('should clear trail', () => {
