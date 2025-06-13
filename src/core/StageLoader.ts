@@ -113,7 +113,11 @@ export class StageLoader {
      * @param stageData - Stage data to validate
      * @throws If stage data is invalid
      */
-    validateStage(stageData: unknown): asserts stageData is StageData {
+    private isValidStageData(data: unknown): data is Record<string, unknown> {
+        return typeof data === 'object' && data !== null;
+    }
+
+    private hasRequiredFields(data: Record<string, unknown>): boolean {
         const requiredFields = [
             'id',
             'name',
@@ -124,10 +128,16 @@ export class StageLoader {
             'goalText'
         ];
 
-        for (const field of requiredFields) {
-            if (!(field in stageData)) {
-                throw new Error(`Invalid stage data: missing ${field}`);
-            }
+        return requiredFields.every(field => field in data);
+    }
+
+    validateStage(stageData: unknown): asserts stageData is StageData {
+        if (!this.isValidStageData(stageData)) {
+            throw new Error('Invalid stage data: must be an object');
+        }
+
+        if (!this.hasRequiredFields(stageData)) {
+            throw new Error('Invalid stage data: missing required fields');
         }
 
         // Validate platforms
@@ -174,7 +184,7 @@ export class StageLoader {
         }
 
         // Validate text elements
-        const textFields = ['startText', 'goalText'];
+        const textFields = ['startText', 'goalText'] as const;
         for (const field of textFields) {
             const textObj = stageData[field];
             if (

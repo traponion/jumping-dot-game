@@ -15,6 +15,10 @@ export class PlayerSystem {
         this.keys = keys;
     }
 
+    setKeys(keys: KeyState): void {
+        Object.assign(this.keys, keys);
+    }
+
     update(deltaTime: number, physics: PhysicsConstants): void {
         const dtFactor = calculateDeltaFactor(deltaTime, physics.gameSpeed);
 

@@ -30,7 +30,6 @@ export class JumpingDotGame {
     private animationSystem!: AnimationSystem;
     private renderSystem!: RenderSystem;
     private inputSystem!: InputSystem;
-    private landingPredictionSystem!: LandingPredictionSystem;
 
     // Stage
     private stageLoader!: StageLoader;
@@ -99,7 +98,6 @@ export class JumpingDotGame {
         this.animationSystem = new AnimationSystem();
         this.renderSystem = new RenderSystem(this.canvas);
         this.inputSystem = new InputSystem(this);
-        this.landingPredictionSystem = new LandingPredictionSystem();
     }
 
     async init(): Promise<void> {
@@ -281,7 +279,7 @@ export class JumpingDotGame {
 
     private updateSystems(deltaTime: number): void {
         const keys = this.inputSystem.getKeys();
-        Object.assign(this.playerSystem.keys, keys);
+        this.playerSystem.setKeys(keys);
 
         const physicsConstants = this.physicsSystem.getPhysicsConstants();
         this.playerSystem.update(deltaTime, physicsConstants);

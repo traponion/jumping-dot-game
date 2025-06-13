@@ -24,7 +24,7 @@ export class LandingPredictionSystem {
         const predictions: LandingPrediction[] = [];
         
         // Create simulation state
-        const sim = this.createSimulationState(player, physics);
+        const sim = this.createSimulationState(player);
         
         let jumpCount = 0;
         let timeElapsed = 0;
@@ -82,7 +82,7 @@ export class LandingPredictionSystem {
     /**
      * Create simulation state from current player
      */
-    private createSimulationState(player: Player, physics: PhysicsConstants) {
+    private createSimulationState(player: Player) {
         return {
             x: player.x,
             y: player.y,
