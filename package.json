@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -12,7 +12,8 @@
     "test:coverage:open": "vitest --coverage && open coverage/index.html",
     "lint": "biome check src",
     "lint:fix": "biome check src --write",
-    "format": "biome format src --write"
+    "format": "biome format src --write",
+    "typecheck": "npx tsc --noEmit"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
