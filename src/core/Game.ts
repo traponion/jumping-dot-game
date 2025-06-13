@@ -5,6 +5,7 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
+import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import type { Camera, GameState, PhysicsConstants, Player } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import { type StageData, StageLoader } from './StageLoader.js';
@@ -28,7 +29,11 @@ export class JumpingDotGame {
     private collisionSystem!: CollisionSystem;
     private animationSystem!: AnimationSystem;
     private renderSystem!: RenderSystem;
+    private fabricRenderSystem!: FabricRenderSystem;
     private inputSystem!: InputSystem;
+    
+    // Rendering mode flag (テスト環境では無効化)
+    private useFabricRenderer: boolean = false;
 
     // Stage
     private stageLoader!: StageLoader;
@@ -46,9 +51,26 @@ export class JumpingDotGame {
         this.timerDisplay = this.getRequiredElement('timer');
         this.scoreDisplay = this.getRequiredElement('score');
 
+        // Fabric.jsが使える環境かチェック
+        this.checkFabricCompatibility();
+
         this.initializeEntities();
         this.initializeSystems();
         this.init();
+    }
+
+    private checkFabricCompatibility(): void {
+        // Fabric.jsが使える環境かチェック
+        try {
+            const isValidCanvas = this.canvas && 
+                                  typeof this.canvas.hasAttribute === 'function' &&
+                                  typeof window !== 'undefined' && 
+                                  typeof document !== 'undefined';
+            
+            this.useFabricRenderer = isValidCanvas;
+        } catch (error) {
+            this.useFabricRenderer = false;
+        }
     }
 
     private getRequiredElement(id: string): HTMLElement {
@@ -96,6 +118,12 @@ export class JumpingDotGame {
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
         this.renderSystem = new RenderSystem(this.canvas);
+        
+        // Fabric.jsはブラウザ環境でのみ初期化
+        if (this.useFabricRenderer) {
+            this.fabricRenderSystem = new FabricRenderSystem(this.canvas);
+        }
+        
         this.inputSystem = new InputSystem(this);
     }
 
@@ -216,9 +244,11 @@ export class JumpingDotGame {
                 confidence: 0.8,
                 jumpNumber: 1
             }];
-            this.renderSystem.setLandingPredictions(simplePrediction);
+            const renderer = (this.useFabricRenderer && this.fabricRenderSystem) ? this.fabricRenderSystem : this.renderSystem;
+            renderer.setLandingPredictions(simplePrediction);
         } else {
-            this.renderSystem.setLandingPredictions([]);
+            const renderer = (this.useFabricRenderer && this.fabricRenderSystem) ? this.fabricRenderSystem : this.renderSystem;
+            renderer.setLandingPredictions([]);
         }
     }
 
@@ -304,7 +334,8 @@ export class JumpingDotGame {
         if (platformCollision) {
             this.playerSystem.resetJumpTimer();
             // Add landing history marker
-            this.renderSystem.addLandingHistory(this.player.x, this.player.y + this.player.radius);
+            const renderer = (this.useFabricRenderer && this.fabricRenderSystem) ? this.fabricRenderSystem : this.renderSystem;
+            renderer.addLandingHistory(this.player.x, this.player.y + this.player.radius);
         }
 
         if (this.collisionSystem.checkSpikeCollisions(this.player, this.stage.spikes)) {
@@ -356,33 +387,34 @@ export class JumpingDotGame {
     }
 
     private render(): void {
-        this.renderSystem.clearCanvas();
-        this.renderSystem.setDrawingStyle();
+        const renderer = (this.useFabricRenderer && this.fabricRenderSystem) ? this.fabricRenderSystem : this.renderSystem;
 
-        this.renderSystem.applyCameraTransform(this.camera);
+        renderer.clearCanvas();
+        renderer.setDrawingStyle();
+        renderer.applyCameraTransform(this.camera);
 
         if (this.stage) {
-            this.renderSystem.renderStage(this.stage);
+            renderer.renderStage(this.stage);
         }
 
-        this.renderSystem.renderDeathMarks(this.animationSystem.getDeathMarks());
+        renderer.renderDeathMarks(this.animationSystem.getDeathMarks());
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
-            this.renderSystem.renderTrail(this.playerSystem.getTrail(), this.player.radius);
-            this.renderSystem.renderLandingPredictions();
-            this.renderSystem.renderPlayer(this.player);
+            renderer.renderTrail(this.playerSystem.getTrail(), this.player.radius);
+            renderer.renderLandingPredictions();
+            renderer.renderPlayer(this.player);
         }
 
         const deathAnim = this.animationSystem.getDeathAnimation();
         if (deathAnim.active) {
-            this.renderSystem.renderDeathAnimation(deathAnim.particles);
+            renderer.renderDeathAnimation(deathAnim.particles);
         }
 
         const clearAnim = this.animationSystem.getClearAnimation();
         if (clearAnim.active && clearAnim.startTime) {
             const elapsed = getCurrentTime() - clearAnim.startTime;
             const progress = elapsed / clearAnim.duration;
-            this.renderSystem.renderClearAnimation(
+            renderer.renderClearAnimation(
                 clearAnim.particles,
                 progress,
                 this.player.x,
@@ -390,17 +422,22 @@ export class JumpingDotGame {
             );
         }
 
-        this.renderSystem.restoreCameraTransform();
+        renderer.restoreCameraTransform();
 
         if (!this.gameState.gameRunning && !this.gameState.gameOver) {
-            this.renderSystem.renderStartInstruction();
+            renderer.renderStartInstruction();
         }
 
         if (this.gameState.gameOver) {
-            this.renderSystem.renderGameOver();
+            renderer.renderGameOver();
         }
 
-        this.renderSystem.renderCredits();
+        renderer.renderCredits();
+
+        // Fabric.js専用の更新
+        if (this.useFabricRenderer && this.fabricRenderSystem) {
+            this.fabricRenderSystem.renderAll();
+        }
     }
 
     cleanup(): void {
@@ -409,6 +446,9 @@ export class JumpingDotGame {
             this.animationId = null;
         }
         this.inputSystem.cleanup();
+        if (this.fabricRenderSystem) {
+            this.fabricRenderSystem.dispose();
+        }
         this.gameState.gameRunning = false;
         this.gameState.gameOver = true;
     }
@@ -433,5 +473,37 @@ export class JumpingDotGame {
 
     async testLoadStage(stageNumber: number): Promise<void> {
         await this.loadStage(stageNumber);
+    }
+
+    // レンダリングモード切り替え
+    enableFabricRenderer(): void {
+        if (!this.fabricRenderSystem) {
+            try {
+                this.fabricRenderSystem = new FabricRenderSystem(this.canvas);
+                this.useFabricRenderer = true;
+            } catch (error) {
+                console.warn('Fabric.js初期化に失敗しました:', error);
+                this.useFabricRenderer = false;
+            }
+        } else {
+            this.useFabricRenderer = true;
+        }
+    }
+
+    enableLegacyRenderer(): void {
+        this.useFabricRenderer = false;
+    }
+
+    // エディタモード切り替え
+    enableEditorMode(): void {
+        if (this.fabricRenderSystem) {
+            this.fabricRenderSystem.enableEditorMode();
+        }
+    }
+
+    disableEditorMode(): void {
+        if (this.fabricRenderSystem) {
+            this.fabricRenderSystem.disableEditorMode();
+        }
     }
 }

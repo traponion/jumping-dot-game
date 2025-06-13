@@ -23,5 +23,13 @@
     "typescript": "^5.7.2",
     "vite": "^6.3.5",
     "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "@types/fabric": "^5.3.10",
+    "@types/matter-js": "^0.19.8",
+    "detect-collisions": "^9.27.6",
+    "fabric": "^6.7.0",
+    "matter-js": "^0.20.0",
+    "tsparticles": "^3.8.1"
   }
 }
