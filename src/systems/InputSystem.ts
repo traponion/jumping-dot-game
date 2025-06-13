@@ -79,4 +79,12 @@ export class InputSystem {
     simulateKeyUp(event: KeyboardEvent): void {
         this.onKeyUp(event);
     }
+
+    testHandleKeyDown(event: KeyboardEvent): void {
+        this.onKeyDown(event);
+    }
+
+    testHandleKeyUp(event: KeyboardEvent): void {
+        this.onKeyUp(event);
+    }
 }

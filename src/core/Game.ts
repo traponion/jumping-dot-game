@@ -422,4 +422,16 @@ export class JumpingDotGame {
     setAnimationId(id: number): void {
         this.animationId = id;
     }
+
+    testUpdate(deltaTime: number = 16.67): void {
+        this.update(deltaTime);
+    }
+
+    testRender(): void {
+        this.render();
+    }
+
+    async testLoadStage(stageNumber: number): Promise<void> {
+        await this.loadStage(stageNumber);
+    }
 }

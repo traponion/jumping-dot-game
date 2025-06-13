@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
-// Global type declarations for test environment
+// Global type declarations for test environment  
 declare let global: {
     document: typeof document;
     window: typeof window;
     fetch: typeof fetch;
     performance: typeof performance;
+    cancelAnimationFrame: typeof cancelAnimationFrame;
 };
 
 // Mock DOM elements
@@ -37,9 +38,29 @@ const mockCanvas = {
     height: 600
 };
 
-const mockGameStatus = { textContent: '' };
-const mockTimer = { textContent: '' };
-const mockScore = { textContent: '' };
+const mockGameStatus = { 
+    textContent: '',
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn()
+} as unknown as HTMLElement;
+
+const mockTimer = { 
+    textContent: '',
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn()
+} as unknown as HTMLElement;
+
+const mockScore = { 
+    textContent: '',
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn()
+} as unknown as HTMLElement;
 
 describe('JumpingDotGame', () => {
     let game: JumpingDotGame;
@@ -63,9 +84,10 @@ describe('JumpingDotGame', () => {
             cancelAnimationFrame: vi.fn()
         } as any;
 
-        // Mock global requestAnimationFrame
+        // Mock global requestAnimationFrame and cancelAnimationFrame
         globalThis.requestAnimationFrame = vi.fn();
         globalThis.cancelAnimationFrame = vi.fn();
+        global.cancelAnimationFrame = vi.fn();
 
         global.fetch = vi.fn().mockResolvedValue({
             ok: false,
@@ -111,12 +133,12 @@ describe('JumpingDotGame', () => {
 
         it('should update game loop when update is called', () => {
             // Verify that update doesn't throw errors
-            expect(() => game.update()).not.toThrow();
+            expect(() => game.testUpdate()).not.toThrow();
         });
 
         it('should render game when render is called', () => {
             // Verify that render doesn't throw errors
-            expect(() => game.render()).not.toThrow();
+            expect(() => game.testRender()).not.toThrow();
         });
     });
 
@@ -150,7 +172,7 @@ describe('JumpingDotGame', () => {
                 })
             });
 
-            await game.loadStage(1);
+            await game.testLoadStage(1);
             
             expect(global.fetch).toHaveBeenCalledWith('/stages/stage1.json');
         });
@@ -159,7 +181,7 @@ describe('JumpingDotGame', () => {
             // Mock failed stage loading
             global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
-            await game.loadStage(1);
+            await game.testLoadStage(1);
             
             // Should not throw error, fallback to hardcoded stage
             expect(true).toBe(true);
@@ -191,10 +213,10 @@ describe('JumpingDotGame', () => {
 
         it('should handle timer display updates', () => {
             game.startGame();
-            game.update();
+            game.testUpdate();
             
             // Timer should be updated (tested through no errors thrown)
-            expect(() => game.update()).not.toThrow();
+            expect(() => game.testUpdate()).not.toThrow();
         });
     });
 
@@ -208,8 +230,8 @@ describe('JumpingDotGame', () => {
             
             // Run several update cycles
             for (let i = 0; i < 10; i++) {
-                game.update();
-                game.render();
+                game.testUpdate();
+                game.testRender();
             }
             
             // Should complete without errors
@@ -217,8 +239,8 @@ describe('JumpingDotGame', () => {
         });
 
         it('should handle multiple stage loads', async () => {
-            await game.loadStage(1);
-            await game.loadStage(2);
+            await game.testLoadStage(1);
+            await game.testLoadStage(2);
             
             // Should handle multiple loads gracefully
             expect(true).toBe(true);
@@ -229,7 +251,7 @@ describe('JumpingDotGame', () => {
             expect(mockGameStatus.textContent).toBe('Playing');
             
             // Game maintains running state consistently
-            game.update();
+            game.testUpdate();
             // After update, status should still be Playing (not timer text)
             expect(mockGameStatus.textContent).toBe('Playing');
         });
@@ -238,11 +260,11 @@ describe('JumpingDotGame', () => {
     describe('game over and cleanup', () => {
         it('should render without errors in any state', () => {
             // Test render in initial state
-            expect(() => game.render()).not.toThrow();
+            expect(() => game.testRender()).not.toThrow();
             
             // Test render after starting game
             game.startGame();
-            expect(() => game.render()).not.toThrow();
+            expect(() => game.testRender()).not.toThrow();
         });
 
         it('should render game over screen when game is over', () => {
@@ -250,10 +272,10 @@ describe('JumpingDotGame', () => {
             
             // Set game over state and test render
             game.setGameOver();
-            expect(() => game.render()).not.toThrow();
+            expect(() => game.testRender()).not.toThrow();
             
             // The game over render path should be executed
-            game.render();
+            game.testRender();
         });
 
         it('should cleanup properly when called', () => {
@@ -306,8 +328,14 @@ describe('JumpingDotGame', () => {
 
         it('should handle invalid canvas context', () => {
             const badCanvas = {
-                getContext: () => null
-            };
+                getContext: () => null,
+                width: 800,
+                height: 600,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                getAttribute: vi.fn(),
+                setAttribute: vi.fn()
+            } as unknown as HTMLCanvasElement;
             global.document.getElementById = vi.fn((id) => {
                 if (id === 'gameCanvas') return badCanvas;
                 if (id === 'gameStatus') return mockGameStatus;
@@ -325,8 +353,8 @@ describe('JumpingDotGame', () => {
             const startTime = performance.now();
             
             for (let i = 0; i < 100; i++) {
-                game.update();
-                game.render();
+                game.testUpdate();
+                game.testRender();
             }
             
             const endTime = performance.now();

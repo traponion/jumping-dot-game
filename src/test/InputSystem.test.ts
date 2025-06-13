@@ -19,8 +19,8 @@ describe('InputSystem', () => {
         inputSystem = new InputSystem(mockGame);
 
         // Clear any existing event listeners
-        document.removeEventListener('keydown', inputSystem.handleKeyDown as EventListener);
-        document.removeEventListener('keyup', inputSystem.handleKeyUp as EventListener);
+        // handleKeyDown is private, no need to remove in test
+        // handleKeyUp is private, no need to remove in test
     });
 
     describe('key state management', () => {
@@ -159,7 +159,7 @@ describe('InputSystem', () => {
             // First set a key when game is not over
             inputSystem.setGameState(false, false);
             const downEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
-            inputSystem.handleKeyDown(downEvent);
+            inputSystem.testHandleKeyDown(downEvent);
 
             // Then set game over and try to release key
             inputSystem.setGameState(false, true);

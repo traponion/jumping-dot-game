@@ -254,8 +254,8 @@ describe('RenderSystem', () => {
     describe('animation rendering', () => {
         it('should render clear animation with particles and text', () => {
             const particles = [
-                { x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2 },
-                { x: 110, y: 210, vx: -1, vy: 1, life: 0.5, size: 2 }
+                { x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2, decay: 0.95 },
+                { x: 110, y: 210, vx: -1, vy: 1, life: 0.5, size: 2, decay: 0.95 }
             ];
 
             // Mock Date.now for pulsing text
@@ -278,7 +278,7 @@ describe('RenderSystem', () => {
         });
 
         it('should not render CLEAR text when progress >= 0.8', () => {
-            const particles = [{ x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2 }];
+            const particles = [{ x: 100, y: 200, vx: 1, vy: -1, life: 0.8, size: 2, decay: 0.95 }];
 
             renderSystem.renderClearAnimation(particles, 0.9, 100, 400);
 
@@ -289,8 +289,8 @@ describe('RenderSystem', () => {
 
         it('should render death animation with red particles', () => {
             const particles = [
-                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6, size: 3 },
-                { x: 160, y: 310, vx: -2, vy: 2, life: 0.4, size: 1 }
+                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6, size: 3, decay: 0.95 },
+                { x: 160, y: 310, vx: -2, vy: 2, life: 0.4, size: 1, decay: 0.95 }
             ];
 
             renderSystem.renderDeathAnimation(particles);
@@ -304,7 +304,7 @@ describe('RenderSystem', () => {
 
         it('should render death animation with default size when size is undefined', () => {
             const particles = [
-                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6 } // No size property
+                { x: 150, y: 300, vx: 2, vy: -2, life: 0.6, decay: 0.95 } // No size property
             ];
 
             renderSystem.renderDeathAnimation(particles);
