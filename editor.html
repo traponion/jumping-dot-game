@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage Editor - Jumping Dot Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-areas: 
+                "toolbar toolbar toolbar"
+                "palette canvas properties"
+                "footer footer footer";
+            grid-template-rows: 60px 1fr 40px;
+            grid-template-columns: 200px 1fr 250px;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            grid-area: toolbar;
+            background: #333;
+            border-bottom: 2px solid #555;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .toolbar h1 {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn.secondary {
+            background: #2196F3;
+        }
+
+        .btn.secondary:hover {
+            background: #1976D2;
+        }
+
+        .btn.danger {
+            background: #f44336;
+        }
+
+        .btn.danger:hover {
+            background: #d32f2f;
+        }
+
+        /* Tool Palette */
+        .tool-palette {
+            grid-area: palette;
+            background: #2a2a2a;
+            border-right: 2px solid #555;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .palette-section {
+            margin-bottom: 30px;
+        }
+
+        .palette-section h3 {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .tool-item {
+            background: #444;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .tool-item:hover {
+            background: #555;
+            border-color: #666;
+        }
+
+        .tool-item.active {
+            background: #4CAF50;
+            border-color: #45a049;
+        }
+
+        .tool-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            grid-area: canvas;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #editorCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* Properties Panel */
+        .properties-panel {
+            grid-area: properties;
+            background: #2a2a2a;
+            border-left: 2px solid #555;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .properties-section {
+            margin-bottom: 20px;
+        }
+
+        .properties-section h3 {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-group label {
+            display: block;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .property-group input,
+        .property-group select,
+        .property-group textarea {
+            width: 100%;
+            background: #444;
+            border: 1px solid #666;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .property-group input:focus,
+        .property-group select:focus,
+        .property-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Footer */
+        .footer {
+            grid-area: footer;
+            background: #333;
+            border-top: 2px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .footer-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .editor-container {
+                grid-template-columns: 180px 1fr 220px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .editor-container {
+                grid-template-areas: 
+                    "toolbar toolbar"
+                    "canvas canvas"
+                    "footer footer";
+                grid-template-columns: 1fr;
+            }
+            
+            .tool-palette,
+            .properties-panel {
+                display: none;
+            }
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: inline-block;
+        }
+
+        .status-indicator.warning {
+            background: #ff9800;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <h1>🎮 Stage Editor</h1>
+            
+            <div class="toolbar-group">
+                <button class="btn" id="newStageBtn">New</button>
+                <button class="btn secondary" id="loadStageBtn">Load</button>
+                <button class="btn secondary" id="saveStageBtn">Save</button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="btn secondary" id="testStageBtn">🎯 Test Stage</button>
+                <button class="btn secondary" id="toggleGridBtn">📏 Grid</button>
+                <button class="btn secondary" id="toggleSnapBtn">🧲 Snap</button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="btn danger" id="clearStageBtn">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Tool Palette -->
+        <div class="tool-palette">
+            <div class="palette-section">
+                <h3>Tools</h3>
+                <div class="tool-grid">
+                    <div class="tool-item active" data-tool="select">
+                        <span class="tool-icon">👆</span>
+                        Select
+                    </div>
+                    <div class="tool-item" data-tool="platform">
+                        <span class="tool-icon">📏</span>
+                        Platform
+                    </div>
+                    <div class="tool-item" data-tool="spike">
+                        <span class="tool-icon">🔺</span>
+                        Spike
+                    </div>
+                    <div class="tool-item" data-tool="goal">
+                        <span class="tool-icon">🎯</span>
+                        Goal
+                    </div>
+                    <div class="tool-item" data-tool="text">
+                        <span class="tool-icon">📝</span>
+                        Text
+                    </div>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Actions</h3>
+                <button class="btn danger" id="deleteObjectBtn" style="width: 100%; margin-bottom: 10px;" disabled>
+                    🗑️ Delete Selected
+                </button>
+                <button class="btn secondary" id="duplicateObjectBtn" style="width: 100%;" disabled>
+                    📋 Duplicate
+                </button>
+            </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <canvas id="editorCanvas" width="800" height="600"></canvas>
+            <div class="canvas-overlay">
+                <div>Mouse: <span id="mouseCoords">0, 0</span></div>
+                <div>Objects: <span id="objectCount">0</span></div>
+                <div>Tool: <span id="currentTool">Select</span></div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+            <div class="properties-section">
+                <h3>Stage Info</h3>
+                <div class="property-group">
+                    <label>Stage Name</label>
+                    <input type="text" id="stageName" value="New Stage" />
+                </div>
+                <div class="property-group">
+                    <label>Stage ID</label>
+                    <input type="number" id="stageId" value="1" min="1" />
+                </div>
+                <div class="property-group">
+                    <label>Description</label>
+                    <textarea id="stageDescription" rows="3" placeholder="Stage description..."></textarea>
+                </div>
+            </div>
+
+            <div class="properties-section" id="objectProperties">
+                <h3>Object Properties</h3>
+                <div id="noSelection" style="color: #666; font-style: italic;">
+                    No object selected
+                </div>
+                
+                <div id="platformProperties" style="display: none;">
+                    <div class="property-group">
+                        <label>Length</label>
+                        <input type="number" id="platformLength" />
+                    </div>
+                    <div class="property-group">
+                        <label>Angle</label>
+                        <input type="number" id="platformAngle" step="0.1" />
+                    </div>
+                </div>
+
+                <div id="spikeProperties" style="display: none;">
+                    <div class="property-group">
+                        <label>Size</label>
+                        <input type="number" id="spikeSize" min="5" max="50" />
+                    </div>
+                </div>
+
+                <div id="goalProperties" style="display: none;">
+                    <div class="property-group">
+                        <label>Width</label>
+                        <input type="number" id="goalWidth" min="20" max="100" />
+                    </div>
+                    <div class="property-group">
+                        <label>Height</label>
+                        <input type="number" id="goalHeight" min="20" max="100" />
+                    </div>
+                </div>
+
+                <div id="textProperties" style="display: none;">
+                    <div class="property-group">
+                        <label>Text Content</label>
+                        <input type="text" id="textContent" />
+                    </div>
+                    <div class="property-group">
+                        <label>Font Size</label>
+                        <input type="number" id="textSize" min="8" max="48" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="properties-section">
+                <h3>Editor Settings</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="gridEnabled" checked />
+                    <label for="gridEnabled">Show Grid</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="snapEnabled" checked />
+                    <label for="snapEnabled">Snap to Grid</label>
+                </div>
+                <div class="property-group">
+                    <label>Grid Size</label>
+                    <input type="number" id="gridSize" value="20" min="5" max="50" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-info">
+                <div><span class="status-indicator"></span> Editor Ready</div>
+                <div>Fabric.js Canvas Editor</div>
+            </div>
+            <div>
+                Click and drag to create platforms | Use tools to place objects
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/editor.js"></script>
+</body>
+</html>

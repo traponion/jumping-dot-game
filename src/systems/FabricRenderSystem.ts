@@ -4,7 +4,7 @@ import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/G
 import type { LandingPrediction } from './LandingPredictionSystem.js';
 
 export class FabricRenderSystem {
-    private canvas: fabric.Canvas;
+    protected canvas: fabric.Canvas;
     private playerShape: fabric.Circle | null = null;
     private platformShapes: fabric.Line[] = [];
     private spikeShapes: fabric.Polygon[] = [];
