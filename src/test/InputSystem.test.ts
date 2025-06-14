@@ -92,10 +92,10 @@ describe('InputSystem', () => {
             expect(mockGame.startGame).not.toHaveBeenCalled();
         });
 
-        it('should restart game when R is pressed and game is over', () => {
+        it('should restart game when Space is pressed and game is over', () => {
             inputSystem.setGameState(false, true); // not running, is over
 
-            const event = new KeyboardEvent('keydown', { code: 'KeyR' });
+            const event = new KeyboardEvent('keydown', { code: 'Space' });
             inputSystem.simulateKeyDown(event);
 
             expect(mockGame.init).toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe('InputSystem', () => {
             expect(keys.ArrowLeft).toBeUndefined();
         });
 
-        it('should not update key state when game is over on keyup', () => {
+        it('should update key state when game is over on keyup', () => {
             // First set a key when game is not over
             inputSystem.setGameState(false, false);
             const downEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
@@ -167,7 +167,7 @@ describe('InputSystem', () => {
             inputSystem.simulateKeyUp(upEvent);
 
             const keys = inputSystem.getKeys();
-            expect(keys.ArrowLeft).toBe(true); // Should remain pressed
+            expect(keys.ArrowLeft).toBe(false); // Should be released (fixed behavior)
         });
     });
 

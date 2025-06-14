@@ -37,13 +37,12 @@ export class InputSystem {
             this.keys[e.code] = true;
         }
 
-        if (e.code === 'Space' && !this.gameRunning && !this.gameOver) {
-            this.gameController.startGame();
-            e.preventDefault();
-        }
-
-        if (e.code === 'KeyR' && this.gameOver && !this.keys.KeyR) {
-            this.gameController.init();
+        if (e.code === 'Space') {
+            if (!this.gameRunning && !this.gameOver) {
+                this.gameController.startGame();
+            } else if (this.gameOver) {
+                this.gameController.init();
+            }
             e.preventDefault();
         }
 
@@ -53,9 +52,7 @@ export class InputSystem {
     }
 
     private onKeyUp(e: KeyboardEvent): void {
-        if (!this.gameOver) {
-            this.keys[e.code] = false;
-        }
+        this.keys[e.code] = false;
     }
 
     getKeys(): KeyState {
