@@ -70,6 +70,21 @@ export class InputSystem {
         this.keys = {};
     }
 
+    // 物理的なキー状態と内部状態を強制同期
+    forceKeySync(): void {
+        // 全てのキーを一旦falseにリセット
+        this.keys = {};
+        
+        // ブラウザにフォーカスを戻して、現在のキー状態をリセット
+        if (document.hasFocus()) {
+            // 仮想的にすべての主要キーのkeyupイベントを発火
+            const commonKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space'];
+            commonKeys.forEach(key => {
+                this.keys[key] = false;
+            });
+        }
+    }
+
     // For testing purposes
     simulateKeyDown(event: KeyboardEvent): void {
         this.onKeyDown(event);

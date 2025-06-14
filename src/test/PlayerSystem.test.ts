@@ -28,7 +28,7 @@ describe('PlayerSystem', () => {
             gameSpeed: 2.0
         };
 
-        playerSystem = new PlayerSystem(player, keys);
+        playerSystem = new PlayerSystem(player);
     });
 
     describe('input handling', () => {

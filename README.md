@@ -84,9 +84,9 @@ npm run test         # テスト実行
 ```
 
 ### 詳細ドキュメント
-- 📖 [開発ガイド](DEVELOPMENT_GUIDE.md) - セットアップから開発まで
-- 🏗️ [アーキテクチャ](ARCHITECTURE.md) - 設計思想と構造
-- 🔧 [API リファレンス](API_REFERENCE.md) - 全API仕様
+- 📖 [開発ガイド](.claude/DEVELOPMENT_GUIDE.md) - セットアップから開発まで
+- 🏗️ [アーキテクチャ](.claude/ARCHITECTURE.md) - 設計思想と構造
+- 🔧 [API リファレンス](.claude/API_REFERENCE.md) - 全API仕様
 
 ## 🎨 エディター機能
 

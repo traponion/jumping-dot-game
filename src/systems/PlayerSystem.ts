@@ -1,22 +1,23 @@
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import type { KeyState, PhysicsConstants, Player, TrailPoint } from '../types/GameTypes.js';
+import type { PhysicsConstants, Player, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
+import type { InputManager } from './InputManager.js';
 
 export class PlayerSystem {
     private player: Player;
-    private keys: KeyState;
+    private inputManager: InputManager | null = null;
     private hasMovedOnce = false;
     private lastJumpTime: number | null = null;
     private trail: TrailPoint[] = [];
     private maxTrailLength = GAME_CONFIG.player.maxTrailLength;
 
-    constructor(player: Player, keys: KeyState) {
+    constructor(player: Player, inputManager?: InputManager) {
         this.player = player;
-        this.keys = keys;
+        this.inputManager = inputManager || null;
     }
 
-    setKeys(keys: KeyState): void {
-        Object.assign(this.keys, keys);
+    setInputManager(inputManager: InputManager): void {
+        this.inputManager = inputManager;
     }
 
     update(deltaTime: number, physics: PhysicsConstants): void {
@@ -28,8 +29,10 @@ export class PlayerSystem {
     }
 
     private handleInput(dtFactor: number): void {
-        const leftInput = this.keys.ArrowLeft;
-        const rightInput = this.keys.ArrowRight;
+        if (!this.inputManager) return;
+
+        const leftInput = this.inputManager.isPressed('move-left');
+        const rightInput = this.inputManager.isPressed('move-right');
 
         const acceleration = GAME_CONFIG.player.acceleration;
         if (leftInput) {

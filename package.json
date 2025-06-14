@@ -30,6 +30,7 @@
     "@types/matter-js": "^0.19.8",
     "detect-collisions": "^9.27.6",
     "fabric": "^6.7.0",
+    "game-inputs": "^0.8.0",
     "matter-js": "^0.20.0",
     "tsparticles": "^3.8.1"
   }

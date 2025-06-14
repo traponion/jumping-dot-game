@@ -1,7 +1,7 @@
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
-import { InputSystem } from '../systems/InputSystem.js';
+import { InputManager } from '../systems/InputManager.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
@@ -29,7 +29,7 @@ export class JumpingDotGame {
     private collisionSystem!: CollisionSystem;
     private animationSystem!: AnimationSystem;
     private renderSystem!: FabricRenderSystem | import('../systems/MockRenderSystem.js').MockRenderSystem;
-    private inputSystem!: InputSystem;
+    private inputManager!: InputManager;
 
     // Stage
     private stageLoader!: StageLoader;
@@ -90,17 +90,18 @@ export class JumpingDotGame {
     private initializeSystems(): void {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
-        // Create placeholder for input system keys
-        const keys = {};
-
-        this.playerSystem = new PlayerSystem(this.player, keys);
         this.physicsSystem = new PhysicsSystem(physicsConstants);
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
         // Environment-aware rendering system
         this.renderSystem = createRenderSystem(this.canvas);
         
-        this.inputSystem = new InputSystem(this);
+        // Initialize InputManager with canvas and game controller
+        this.inputManager = new InputManager(this.canvas, this);
+        
+        // Initialize PlayerSystem with InputManager
+        this.playerSystem = new PlayerSystem(this.player);
+        this.playerSystem.setInputManager(this.inputManager);
     }
 
     async init(): Promise<void> {
@@ -111,6 +112,11 @@ export class JumpingDotGame {
         this.gameStatus.textContent = 'Press SPACE to start';
         this.resetGameState();
         this.updateUI();
+
+        // 最後にもう一度確実にキーをクリア
+        setTimeout(() => {
+            this.inputManager.clearInputs();
+        }, 0);
 
         this.startGameLoop();
     }
@@ -138,8 +144,9 @@ export class JumpingDotGame {
         this.camera.x = 0;
         this.camera.y = 0;
 
-        this.inputSystem.setGameState(false, false);
-        this.inputSystem.clearKeys();
+        // まずキーをクリアしてからゲーム状態を変更
+        this.inputManager.clearInputs();
+        this.inputManager.setGameState(false, false);
 
         this.lastTime = null;
 
@@ -157,9 +164,9 @@ export class JumpingDotGame {
         this.gameState.gameRunning = true;
         this.gameState.gameStartTime = getCurrentTime();
         this.gameStatus.textContent = 'Playing';
-        this.inputSystem.setGameState(true, false);
-        // ゲーム開始時に確実にキーをクリア
-        this.inputSystem.clearKeys();
+        // ゲーム開始時に強力にキーをクリア
+        this.inputManager.clearInputs();
+        this.inputManager.setGameState(true, false);
     }
 
     private startGameLoop(): void {
@@ -208,7 +215,7 @@ export class JumpingDotGame {
         if (!this.stage) return;
         
         // Simple input-based prediction that grows from landing spot
-        const inputKeys = this.inputSystem.getKeys();
+        const inputKeys = this.inputManager.getMovementState();
         const futureDistance = this.calculateFutureMovement(inputKeys);
         const predictedX = this.player.x + futureDistance;
         
@@ -283,8 +290,8 @@ export class JumpingDotGame {
     }
 
     private updateSystems(deltaTime: number): void {
-        const keys = this.inputSystem.getKeys();
-        this.playerSystem.setKeys(keys);
+        // Update input manager
+        this.inputManager.update();
 
         const physicsConstants = this.physicsSystem.getPhysicsConstants();
         this.playerSystem.update(deltaTime, physicsConstants);
@@ -339,7 +346,7 @@ export class JumpingDotGame {
     private handlePlayerDeath(message: string, deathType = 'normal'): void {
         this.gameState.gameOver = true;
         this.gameStatus.textContent = message;
-        this.inputSystem.setGameState(false, true);
+        this.inputManager.setGameState(false, true);
 
         let deathMarkY = this.player.y;
         if (deathType === 'fall') {
@@ -356,7 +363,7 @@ export class JumpingDotGame {
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
         this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press R to restart`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
-        this.inputSystem.setGameState(false, true);
+        this.inputManager.setGameState(false, true);
 
         this.animationSystem.startClearAnimation(this.player);
     }
@@ -422,7 +429,7 @@ export class JumpingDotGame {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
-        this.inputSystem.cleanup();
+        this.inputManager.cleanup();
         this.gameState.gameRunning = false;
         this.gameState.gameOver = true;
     }
