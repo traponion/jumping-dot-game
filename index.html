@@ -48,6 +48,30 @@
             margin-top: 10px;
         }
         
+        .game-ui {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: monospace;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+        
+        .start-screen {
+            font-size: 24px;
+        }
+        
+        .game-over-screen {
+            font-size: 24px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
         
 @media (max-width: 768px) {
             canvas {
@@ -77,6 +101,16 @@
         </div>
         
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <!-- ゲームUI要素 -->
+        <div id="gameUI" class="game-ui">
+            <div id="startScreen" class="start-screen">
+                Press SPACE to Start
+            </div>
+            <div id="gameOverScreen" class="game-over-screen hidden">
+                Game Over - Press R to restart
+            </div>
+        </div>
         
         <div class="controls">
             Use ← → arrow keys to move | SPACE: start | R: restart

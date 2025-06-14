@@ -6,12 +6,14 @@ import type { LandingPrediction } from './LandingPredictionSystem.js';
 export class FabricRenderSystem {
     private canvas: fabric.Canvas;
     private playerShape: fabric.Circle | null = null;
-    private platformShapes: fabric.Rect[] = [];
+    private platformShapes: fabric.Line[] = [];
     private spikeShapes: fabric.Polygon[] = [];
     private goalShape: fabric.Rect | null = null;
     private trailShapes: fabric.Circle[] = [];
     private landingPredictions: LandingPrediction[] = [];
+    private animatedPredictions: { x: number; y: number; targetX: number; targetY: number; confidence: number; jumpNumber: number }[] = [];
     private landingHistory: { x: number; y: number; timestamp: number }[] = [];
+    private readonly LERP_SPEED = 0.1;
     private readonly HISTORY_FADE_TIME = 3000;
 
     constructor(canvasElement: HTMLCanvasElement) {
@@ -20,13 +22,25 @@ export class FabricRenderSystem {
             height: canvasElement.height,
             backgroundColor: 'black',
             selection: false, // ゲームモードでは選択無効
-            renderOnAddRemove: false // パフォーマンス向上
+            renderOnAddRemove: false, // パフォーマンス向上
+            allowTouchScrolling: false, // タッチスクロール無効
+            interactive: false // インタラクション無効（ゲームモード）
         });
+        
+        // upper-canvasの背景を透明に設定
+        const upperCanvas = this.canvas.upperCanvasEl;
+        if (upperCanvas) {
+            upperCanvas.style.backgroundColor = 'transparent';
+        }
+        
+        // 初期描画を実行
+        this.canvas.renderAll();
     }
 
     clearCanvas(): void {
         this.canvas.backgroundColor = 'black';
-        // Fabric.jsでは自動的にクリアされる
+        this.canvas.clear();
+        this.canvas.renderAll();
     }
 
     setDrawingStyle(): void {
@@ -41,7 +55,7 @@ export class FabricRenderSystem {
     }
 
     restoreCameraTransform(): void {
-        // Fabric.jsでは変換が保持される
+        // Fabric.jsではカメラ変換を保持（UI要素のカメラ問題は後で対処）
     }
 
     renderPlayer(player: Player): void {
@@ -66,13 +80,16 @@ export class FabricRenderSystem {
     }
 
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        // 既存のトレイルを削除
+        // オブジェクト作成を最小限に
         this.trailShapes.forEach(shape => this.canvas.remove(shape));
         this.trailShapes = [];
 
-        // 新しいトレイルを追加
-        trail.forEach((point, index) => {
-            const alpha = (index + 1) / trail.length;
+        // トレイルポイント数を制限（元の設定に戻す）
+        const maxTrailPoints = Math.min(trail.length, 50);
+        
+        for (let i = 0; i < maxTrailPoints; i++) {
+            const point = trail[trail.length - 1 - i]; // 最新から
+            const alpha = (maxTrailPoints - i) / maxTrailPoints;
             const radius = playerRadius * alpha * 0.8;
             
             const trailShape = new fabric.Circle({
@@ -86,13 +103,14 @@ export class FabricRenderSystem {
             
             this.trailShapes.push(trailShape);
             this.canvas.add(trailShape);
-        });
+        }
     }
 
     renderStage(stage: StageData): void {
         this.renderPlatforms(stage.platforms);
         this.renderSpikes(stage.spikes);
         this.renderGoal(stage.goal);
+        this.renderStageTexts(stage);
     }
 
     private renderPlatforms(platforms: any[]): void {
@@ -101,20 +119,19 @@ export class FabricRenderSystem {
         this.platformShapes = [];
 
         platforms.forEach(platform => {
-            const platformShape = new fabric.Rect({
-                left: platform.x1,
-                top: platform.y1,
-                width: platform.x2 - platform.x1,
-                height: platform.y2 - platform.y1,
-                fill: 'brown',
+            // レガシーレンダラーに合わせてラインとして描画
+            const platformLine = new fabric.Line([
+                platform.x1, platform.y1,
+                platform.x2, platform.y2
+            ], {
                 stroke: 'white',
                 strokeWidth: 2,
                 selectable: false,
                 evented: false
             });
             
-            this.platformShapes.push(platformShape);
-            this.canvas.add(platformShape);
+            this.platformShapes.push(platformLine);
+            this.canvas.add(platformLine);
         });
     }
 
@@ -132,9 +149,9 @@ export class FabricRenderSystem {
             ];
             
             const spikeShape = new fabric.Polygon(points, {
-                fill: 'red',
-                stroke: 'darkred',
-                strokeWidth: 2,
+                fill: 'white',
+                stroke: 'white',
+                strokeWidth: 1,
                 selectable: false,
                 evented: false
             });
@@ -149,85 +166,235 @@ export class FabricRenderSystem {
             this.canvas.remove(this.goalShape);
         }
 
+        // ゴールの枠を描画（元のデザインに合わせて白い枠）
         this.goalShape = new fabric.Rect({
             left: goal.x,
             top: goal.y,
             width: goal.width,
             height: goal.height,
-            fill: 'gold',
-            stroke: 'orange',
-            strokeWidth: 3,
+            fill: 'transparent',
+            stroke: 'white',
+            strokeWidth: 2,
             selectable: false,
             evented: false
         });
         
         this.canvas.add(this.goalShape);
+        
+        // フラッグパターンを追加（×印）
+        const line1 = new fabric.Line([
+            goal.x, goal.y,
+            goal.x + goal.width, goal.y + goal.height
+        ], {
+            stroke: 'white',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+        
+        const line2 = new fabric.Line([
+            goal.x + goal.width, goal.y,
+            goal.x, goal.y + goal.height
+        ], {
+            stroke: 'white',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+        
+        this.canvas.add(line1);
+        this.canvas.add(line2);
     }
 
-    renderDeathMarks(deathMarks: DeathMark[]): void {
-        // 既存の実装と同様の描画
-        deathMarks.forEach(mark => {
-            const deathMark = new fabric.Text('💀', {
-                left: mark.x - 10,
-                top: mark.y - 10,
-                fontSize: 20,
+    private renderStageTexts(stage: StageData): void {
+        // startTextを描画
+        const startText = new fabric.Text(stage.startText.text, {
+            left: stage.startText.x,
+            top: stage.startText.y,
+            fontSize: 16,
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(startText);
+        
+        // goalTextを描画
+        const goalText = new fabric.Text(stage.goalText.text, {
+            left: stage.goalText.x,
+            top: stage.goalText.y,
+            fontSize: 16,
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(goalText);
+        
+        // leftEdgeMessageを描画（逆走の皮肉文章）
+        if (stage.leftEdgeMessage) {
+            const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
+                left: stage.leftEdgeMessage.x,
+                top: stage.leftEdgeMessage.y,
+                fontSize: 14,
+                fill: 'white',
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
                 selectable: false,
                 evented: false
             });
-            this.canvas.add(deathMark);
+            this.canvas.add(edgeMessage);
+        }
+        
+        // leftEdgeSubMessageを描画
+        if (stage.leftEdgeSubMessage) {
+            const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
+                left: stage.leftEdgeSubMessage.x,
+                top: stage.leftEdgeSubMessage.y,
+                fontSize: 12,
+                fill: 'white',
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+            this.canvas.add(edgeSubMessage);
+        }
+    }
+
+    renderDeathMarks(deathMarks: DeathMark[]): void {
+        deathMarks.forEach(mark => {
+            const size = 8;
+            
+            // ×マークを作成（ライン）
+            const line1 = new fabric.Line([
+                mark.x - size, mark.y - size,
+                mark.x + size, mark.y + size
+            ], {
+                stroke: 'rgba(255, 0, 0, 0.8)',
+                strokeWidth: 3,
+                selectable: false,
+                evented: false
+            });
+            
+            const line2 = new fabric.Line([
+                mark.x + size, mark.y - size,
+                mark.x - size, mark.y + size
+            ], {
+                stroke: 'rgba(255, 0, 0, 0.8)',
+                strokeWidth: 3,
+                selectable: false,
+                evented: false
+            });
+            
+            this.canvas.add(line1);
+            this.canvas.add(line2);
         });
     }
 
     renderLandingPredictions(): void {
-        this.updateLandingPredictionAnimations();
+        // Clean up old history first
+        this.cleanupLandingHistory();
+        
+        // Render landing history (where player actually landed)
         this.renderLandingHistory();
         
-        // 予測点の描画
-        this.landingPredictions.forEach(prediction => {
-            const predictionShape = new fabric.Circle({
-                left: prediction.x - 3,
-                top: prediction.y - 3,
-                radius: 3,
-                fill: `rgba(0, 255, 0, ${prediction.confidence})`,
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(predictionShape);
-        });
+        // Update animation positions for real-time crosshair
+        for (const animPred of this.animatedPredictions) {
+            // Smooth interpolation towards target position
+            animPred.x += (animPred.targetX - animPred.x) * this.LERP_SPEED;
+            animPred.y += (animPred.targetY - animPred.y) * this.LERP_SPEED;
+        }
+
+        // Render real-time animated predictions (main crosshair)
+        for (let i = 0; i < this.animatedPredictions.length; i++) {
+            const animPred = this.animatedPredictions[i];
+            
+            // More visible white that fades with distance and confidence
+            const baseAlpha = animPred.confidence * 0.8;
+            const alpha = Math.max(0.4, baseAlpha - (i * 0.2)); // Fade with distance
+            
+            this.drawCrosshair(animPred.x, animPred.y, 8, alpha);
+        }
     }
 
     private updateLandingPredictionAnimations(): void {
-        // アニメーション更新ロジック
+        // Update or create animated predictions
+        for (let i = 0; i < this.landingPredictions.length; i++) {
+            const prediction = this.landingPredictions[i];
+            // Show trajectory marker closer to ground level
+            const trajectoryOffsetX = -30; // Further ahead for trajectory visualization
+            const trajectoryOffsetY = -20; // Show closer to ground level
+            const targetX = prediction.x + trajectoryOffsetX;
+            const targetY = prediction.y + trajectoryOffsetY;
+
+            if (i < this.animatedPredictions.length) {
+                // Update existing animated prediction
+                this.animatedPredictions[i].targetX = targetX;
+                this.animatedPredictions[i].targetY = targetY;
+                this.animatedPredictions[i].confidence = prediction.confidence;
+                this.animatedPredictions[i].jumpNumber = prediction.jumpNumber;
+            } else {
+                // Create new animated prediction (start at target for immediate appearance)
+                this.animatedPredictions.push({
+                    x: targetX,
+                    y: targetY,
+                    targetX: targetX,
+                    targetY: targetY,
+                    confidence: prediction.confidence,
+                    jumpNumber: prediction.jumpNumber
+                });
+            }
+        }
+
+        // Remove excess animated predictions
+        if (this.animatedPredictions.length > this.landingPredictions.length) {
+            this.animatedPredictions.splice(this.landingPredictions.length);
+        }
     }
 
     private renderLandingHistory(): void {
         const currentTime = Date.now();
+        const HISTORY_FADE_TIME = 3000;
+        
         this.landingHistory = this.landingHistory.filter(
-            history => currentTime - history.timestamp < this.HISTORY_FADE_TIME
+            history => currentTime - history.timestamp < HISTORY_FADE_TIME
         );
 
         this.landingHistory.forEach(history => {
             const age = currentTime - history.timestamp;
-            const alpha = 1 - (age / this.HISTORY_FADE_TIME);
+            const fadeProgress = age / HISTORY_FADE_TIME;
+            const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
+            const lineHeight = 8;
             
-            const historyShape = new fabric.Circle({
-                left: history.x - 2,
-                top: history.y - 2,
-                radius: 2,
-                fill: `rgba(255, 255, 0, ${alpha})`,
+            // 元のデザインに合わせて白い縦線として描画
+            const historyLine = new fabric.Line([
+                history.x, history.y,
+                history.x, history.y - lineHeight
+            ], {
+                stroke: `rgba(255, 255, 255, ${alpha})`,
+                strokeWidth: 1,
                 selectable: false,
                 evented: false
             });
-            this.canvas.add(historyShape);
+            this.canvas.add(historyLine);
         });
     }
 
     renderDeathAnimation(particles: Particle[]): void {
         particles.forEach(particle => {
+            // レガシーレンダラーに合わせてサイズ計算を修正
+            const radius = particle.size || 2;
             const particleShape = new fabric.Circle({
-                left: particle.x - (particle.size || 2) / 2,
-                top: particle.y - (particle.size || 2) / 2,
-                radius: (particle.size || 2) / 2,
+                left: particle.x - radius,
+                top: particle.y - radius,
+                radius: radius,
                 fill: `rgba(255, 0, 0, ${particle.life})`,
                 selectable: false,
                 evented: false
@@ -237,25 +404,32 @@ export class FabricRenderSystem {
     }
 
     renderClearAnimation(particles: Particle[], progress: number, playerX: number, playerY: number): void {
+        // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
         particles.forEach(particle => {
             const particleShape = new fabric.Circle({
-                left: particle.x - (particle.size || 2) / 2,
-                top: particle.y - (particle.size || 2) / 2,
-                radius: (particle.size || 2) / 2,
+                left: particle.x - 2,
+                top: particle.y - 2,
+                radius: 2,
                 fill: `rgba(255, 255, 255, ${particle.life})`,
                 selectable: false,
                 evented: false
             });
             this.canvas.add(particleShape);
         });
-
-        // "CLEAR"テキストの描画
+        
+        // "CLEAR!"テキストを描画
         if (progress < 0.8) {
-            const clearText = new fabric.Text('CLEAR', {
-                left: playerX - 50,
-                top: playerY - 30,
-                fontSize: 30,
-                fill: 'white',
+            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 1;
+            const alpha = Math.max(0, 1 - progress / 0.8);
+            
+            const clearText = new fabric.Text('CLEAR!', {
+                left: playerX,
+                top: playerY - 50,
+                fontSize: Math.floor(32 * pulse),
+                fill: `rgba(255, 255, 255, ${alpha})`,
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
                 selectable: false,
                 evented: false
             });
@@ -264,44 +438,29 @@ export class FabricRenderSystem {
     }
 
     renderStartInstruction(): void {
-        const instruction = new fabric.Text('Press SPACE to start', {
-            left: this.canvas.width! / 2 - 100,
-            top: this.canvas.height! / 2,
-            fontSize: 24,
-            fill: 'white',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(instruction);
+        // HTML要素で表示するため、Canvas描画は不要
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (startScreen) startScreen.classList.remove('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
     }
 
     renderGameOver(): void {
-        const gameOverText = new fabric.Text('GAME OVER', {
-            left: this.canvas.width! / 2 - 80,
-            top: this.canvas.height! / 2,
-            fontSize: 32,
-            fill: 'red',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(gameOverText);
+        // HTML要素で表示するため、Canvas描画は不要
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (startScreen) startScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.remove('hidden');
     }
 
     renderCredits(): void {
-        const credits = new fabric.Text('Made with ♥ by ねつき', {
-            left: 10,
-            top: this.canvas.height! - 30,
-            fontSize: 12,
-            fill: 'gray',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(credits);
+        // クレジットはCanvas外に表示するため、ここでは何もしない
     }
 
     // ランディング予測システム
     setLandingPredictions(predictions: LandingPrediction[]): void {
         this.landingPredictions = predictions;
+        this.updateLandingPredictionAnimations();
     }
 
     addLandingHistory(x: number, y: number): void {
@@ -310,6 +469,39 @@ export class FabricRenderSystem {
             y,
             timestamp: Date.now()
         });
+    }
+
+    private cleanupLandingHistory(): void {
+        const now = Date.now();
+        this.landingHistory = this.landingHistory.filter(
+            landing => now - landing.timestamp < this.HISTORY_FADE_TIME
+        );
+    }
+
+    private drawCrosshair(x: number, y: number, size: number, alpha: number): void {
+        // Vertical line
+        const verticalLine = new fabric.Line([
+            x, y - size,
+            x, y + size
+        ], {
+            stroke: `rgba(255, 255, 255, ${alpha})`,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(verticalLine);
+        
+        // Horizontal line
+        const horizontalLine = new fabric.Line([
+            x - size, y,
+            x + size, y
+        ], {
+            stroke: `rgba(255, 255, 255, ${alpha})`,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(horizontalLine);
     }
 
     // Canvas更新
