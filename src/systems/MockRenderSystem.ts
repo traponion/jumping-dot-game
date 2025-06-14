@@ -24,6 +24,13 @@ export class MockRenderSystem {
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvasElement = canvasElement;
+        
+        // Check if canvas context is available (same as FabricRenderSystem would do)
+        const context = canvasElement.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2D rendering context');
+        }
+        
         this.mockCanvas = this.createMockCanvas();
     }
 

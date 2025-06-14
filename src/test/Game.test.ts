@@ -35,8 +35,13 @@ const mockCanvas = {
         closePath: vi.fn()
     }),
     width: 800,
-    height: 600
-};
+    height: 600,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn(),
+    getBoundingClientRect: vi.fn(() => ({ left: 0, top: 0, width: 800, height: 600 }))
+} as unknown as HTMLCanvasElement;
 
 const mockGameStatus = { 
     textContent: '',
@@ -64,20 +69,20 @@ const mockScore = {
 
 describe('JumpingDotGame', () => {
     let game: JumpingDotGame;
+    let originalGetElementById: typeof document.getElementById;
 
     beforeEach(async () => {
-        // Mock DOM elements
-        global.document = {
-            getElementById: vi.fn((id) => {
-                if (id === 'gameCanvas') return mockCanvas;
-                if (id === 'gameStatus') return mockGameStatus;
-                if (id === 'timer') return mockTimer;
-                if (id === 'score') return mockScore;
-                return null;
-            }),
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn()
-        } as any;
+        // Store original method
+        originalGetElementById = document.getElementById;
+        
+        // Mock only the getElementById method
+        document.getElementById = vi.fn((id) => {
+            if (id === 'gameCanvas') return mockCanvas;
+            if (id === 'gameStatus') return mockGameStatus;
+            if (id === 'timer') return mockTimer;
+            if (id === 'score') return mockScore;
+            return null;
+        }) as any;
 
         global.window = {
             requestAnimationFrame: vi.fn(),
@@ -103,6 +108,8 @@ describe('JumpingDotGame', () => {
     });
 
     afterEach(() => {
+        // Restore original method
+        document.getElementById = originalGetElementById;
         vi.clearAllMocks();
     });
 
