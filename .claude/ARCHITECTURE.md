@@ -21,8 +21,11 @@ graph TB
     Controller --> Model[EditorModel]
     Controller --> View[EditorView]
     Controller --> RenderSystem[EditorRenderSystem]
+    Controller --> ZustandStore[Zustand Store]
     
-    Model --> Store[EditorStore]
+    View --> ZustandStore
+    Model --> ZustandStore
+    ZustandStore --> DevTools[Redux DevTools]
     RenderSystem --> Fabric[Fabric.js Canvas]
     
     Utilities[Utilities] --> Controller
@@ -37,6 +40,9 @@ graph TB
     
     Performance[PerformanceManager] --> RenderSystem
     Performance --> ObjectPool[ObjectPool]
+    
+    style ZustandStore fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    style DevTools fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
 ```
 
 ---
@@ -109,7 +115,7 @@ class EditorView implements IEditorView {
 
 ### Controller Layer - ビジネスロジック層
 
-**責務**: ユーザーアクション調整・ビジネスルール実装
+**責務**: ユーザーアクション調整・ビジネスルール実装・状態管理統合
 
 #### EditorController
 ```typescript
@@ -117,26 +123,62 @@ class EditorController implements IEditorController {
     private editorSystem: EditorRenderSystem;
     private view: IEditorView;
     private model: IEditorModel;
+    private store: ReturnType<typeof useEditorStore.getState>;
+    private unsubscribe: () => void;
+    
+    constructor(
+        canvas: HTMLCanvasElement,
+        view: IEditorView,
+        model: IEditorModel
+    ) {
+        this.store = useEditorStore.getState();
+        
+        // Zustandストアの購読
+        this.unsubscribe = useEditorStore.subscribe((state) => {
+            this.handleStateChange(state);
+        });
+    }
     
     // コア機能
     public async initialize(): Promise<void>
-    public selectTool(tool: string): void
-    public createNewStage(): void
+    public selectTool(tool: string): void {
+        this.store.selectTool(tool);
+        this.editorSystem.selectTool(tool);
+    }
+    public createNewStage(): void {
+        const newStage = this.model.createDefaultStage();
+        this.store.setStageData(newStage);
+    }
     public saveStage(): void
     
     // オブジェクト操作
     public deleteSelectedObject(): void
     public duplicateSelectedObject(): void
     
+    // 状態管理
+    public toggleGrid(): void {
+        this.store.toggleGrid();
+        this.editorSystem.setGridEnabled(this.store.editor.gridEnabled);
+    }
+    
     // イベントハンドリング
-    private handleObjectSelection(object: FabricObjectWithData | null): void
+    private handleObjectSelection(object: FabricObjectWithData | null): void {
+        this.store.setSelectedObject(object);
+    }
     private handleKeyboard(e: KeyboardEvent): void
+    private handleStateChange(state: EditorStore): void
+    
+    public dispose(): void {
+        this.unsubscribe?.();
+    }
 }
 ```
 
 **特徴**:
 - 非同期処理制御
 - 複雑なビジネスルール実装
+- **Zustand統合による統一状態管理**
+- **リアクティブな状態同期**
 - クロスカッティング関心事の調整
 - 外部システムとの統合
 
@@ -189,38 +231,94 @@ class EditorRenderSystem extends FabricRenderSystem {
 
 ## 🗂️ 状態管理システム
 
-### Redux風アーキテクチャ
+### Zustand ベース アーキテクチャ
 
 ```typescript
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+import { devtools } from 'zustand/middleware';
+
 // State Structure
-interface ApplicationState {
+interface EditorStore {
+    // State
     editor: EditorState;
     stage: StageData | null;
     ui: UIState;
     performance: PerformanceState;
+    
+    // Actions
+    selectTool: (tool: string) => void;
+    setStageData: (stage: StageData) => void;
+    updateEditorState: (updates: Partial<EditorState>) => void;
+    toggleGrid: () => void;
+    toggleSnap: () => void;
+    setSelectedObject: (object: FabricObjectWithData | null) => void;
+    
+    // Computed getters
+    getActiveTool: () => string;
+    getCurrentStage: () => StageData | null;
+    getObjectCount: () => number;
 }
 
-// Action Types
-type EditorAction = 
-    | ToolSelectionAction
-    | ObjectCreationAction
-    | ObjectModificationAction
-    | StageModificationAction;
-
-// Reducer Pattern
-function editorReducer(
-    state: EditorState, 
-    action: EditorAction
-): EditorState {
-    switch (action.type) {
-        case 'TOOL_SELECTED':
-            return { ...state, selectedTool: action.tool };
-        case 'OBJECT_CREATED':
-            return { ...state, lastCreatedObject: action.object };
-        default:
-            return state;
-    }
-}
+// Store Implementation
+export const useEditorStore = create<EditorStore>()(
+    devtools(
+        immer((set, get) => ({
+            // Initial State
+            editor: {
+                selectedTool: 'select',
+                selectedObject: null,
+                isDrawing: false,
+                gridEnabled: true,
+                snapToGrid: true
+            },
+            stage: null,
+            ui: {
+                isInitialized: false,
+                isLoading: false,
+                lastError: null,
+                lastSuccess: null
+            },
+            performance: {
+                objectCount: 0,
+                renderTime: 0,
+                lastOperation: ''
+            },
+            
+            // Actions
+            selectTool: (tool) => set((state) => {
+                state.editor.selectedTool = tool;
+            }),
+            
+            setStageData: (stage) => set((state) => {
+                state.stage = stage;
+                state.performance.objectCount = 
+                    stage.platforms.length + stage.spikes.length + 1;
+            }),
+            
+            updateEditorState: (updates) => set((state) => {
+                Object.assign(state.editor, updates);
+            }),
+            
+            toggleGrid: () => set((state) => {
+                state.editor.gridEnabled = !state.editor.gridEnabled;
+            }),
+            
+            toggleSnap: () => set((state) => {
+                state.editor.snapToGrid = !state.editor.snapToGrid;
+            }),
+            
+            setSelectedObject: (object) => set((state) => {
+                state.editor.selectedObject = object;
+            }),
+            
+            // Computed Getters
+            getActiveTool: () => get().editor.selectedTool,
+            getCurrentStage: () => get().stage,
+            getObjectCount: () => get().performance.objectCount
+        }))
+    )
+);
 ```
 
 ### 状態同期メカニズム
@@ -230,15 +328,85 @@ sequenceDiagram
     participant User
     participant View
     participant Controller
-    participant Model
+    participant ZustandStore
     participant RenderSystem
     
     User->>View: Tool Selection
     View->>Controller: selectTool()
-    Controller->>Model: updateEditorState()
+    Controller->>ZustandStore: store.selectTool(tool)
     Controller->>RenderSystem: setSelectedTool()
-    Model-->>View: State Change Notification
+    ZustandStore-->>View: State Change (Subscribe)
     View->>View: Update UI
+```
+
+#### Zustand統合の利点
+
+- **ボイラープレート削減**: Redux比で70%コード削減
+- **型安全性**: TypeScript完全対応
+- **デバッグ容易性**: Redux DevTools対応
+- **テスタビリティ**: Simple mock & spy対応
+- **バンドルサイズ**: わずか2.2KB (gzipped)
+- **学習コストの低さ**: シンプルなAPI設計
+
+#### 使用パターン
+
+```typescript
+// Controller内での使用
+class EditorController {
+    constructor(
+        private canvas: HTMLCanvasElement,
+        private view: IEditorView,
+        private model: IEditorModel
+    ) {
+        // Zustand storeを使用
+        this.store = useEditorStore.getState();
+        
+        // 状態変更の購読
+        useEditorStore.subscribe((state) => {
+            this.handleStateChange(state);
+        });
+    }
+    
+    public selectTool(tool: string): void {
+        // 1. Zustandで状態更新
+        this.store.selectTool(tool);
+        
+        // 2. RenderSystemに反映
+        this.editorSystem.selectTool(tool);
+        
+        // 3. Viewは自動更新（subscribe経由）
+    }
+}
+
+// View内での使用
+class EditorView {
+    constructor(canvas: HTMLCanvasElement) {
+        // 状態変更を購読してUI更新
+        useEditorStore.subscribe((state) => {
+            this.updateToolSelection(state.editor.selectedTool);
+            this.updateObjectCount(state.performance.objectCount);
+        });
+    }
+}
+
+// テストでの使用
+describe('EditorController', () => {
+    beforeEach(() => {
+        // Zustandストアのリセット
+        useEditorStore.setState({
+            editor: { selectedTool: 'select', ... },
+            stage: null,
+            ...
+        });
+    });
+    
+    it('should update tool selection', () => {
+        const store = useEditorStore.getState();
+        controller.selectTool('platform');
+        
+        expect(store.getActiveTool()).toBe('platform');
+    });
+});
 ```
 
 ---
