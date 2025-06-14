@@ -5,7 +5,7 @@
 [![Fabric.js](https://img.shields.io/badge/Fabric.js-6.0+-green.svg)](http://fabricjs.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-2.0+-yellow.svg)](https://vitest.dev/)
 
-マリオメーカー風のビジュアルステージエディター付きジャンプゲーム。TypeScript + Fabric.js による高品質なWebアプリケーション。
+2Dプラットフォーマー風のビジュアルステージエディター付きジャンプゲーム。TypeScript + Fabric.js による高品質なWebアプリケーション。
 
 ## ✨ 特徴
 
