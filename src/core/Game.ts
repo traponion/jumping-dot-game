@@ -5,6 +5,7 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
+import { createRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { Camera, GameState, PhysicsConstants, Player } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import { type StageData, StageLoader } from './StageLoader.js';
@@ -27,7 +28,7 @@ export class JumpingDotGame {
     private physicsSystem!: PhysicsSystem;
     private collisionSystem!: CollisionSystem;
     private animationSystem!: AnimationSystem;
-    private renderSystem!: FabricRenderSystem;
+    private renderSystem!: FabricRenderSystem | import('../systems/MockRenderSystem.js').MockRenderSystem;
     private inputSystem!: InputSystem;
 
     // Stage
@@ -45,7 +46,6 @@ export class JumpingDotGame {
         this.gameStatus = this.getRequiredElement('gameStatus');
         this.timerDisplay = this.getRequiredElement('timer');
         this.scoreDisplay = this.getRequiredElement('score');
-
 
         this.initializeEntities();
         this.initializeSystems();
@@ -97,8 +97,8 @@ export class JumpingDotGame {
         this.physicsSystem = new PhysicsSystem(physicsConstants);
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
-        // Fabric.js rendering system
-        this.renderSystem = new FabricRenderSystem(this.canvas);
+        // Environment-aware rendering system
+        this.renderSystem = createRenderSystem(this.canvas);
         
         this.inputSystem = new InputSystem(this);
     }

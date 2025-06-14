@@ -5,7 +5,15 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ['./src/test/setup.js', './vitest.setup.ts'],
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+      },
+    },
+    pool: 'vmThreads',
+    clearMocks: true,
+    mockReset: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
