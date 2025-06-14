@@ -1,226 +1,376 @@
+import * as fabric from 'fabric';
 import { EditorRenderSystem, type EditorCallbacks } from './systems/EditorRenderSystem.js';
 import { StageLoader, type StageData } from './core/StageLoader.js';
+import {
+    type FabricObjectWithData,
+    type KeyboardEventHandler,
+    EDITOR_TOOLS,
+    KEYBOARD_SHORTCUTS,
+    EDITOR_CONFIG,
+    isValidEditorTool,
+    EditorError
+} from './types/EditorTypes.js';
+import {
+    DOMHelper,
+    TypeHelper,
+    FabricHelper,
+    EventHelper,
+    MathHelper,
+    DebugHelper
+} from './utils/EditorUtils.js';
 
+/**
+ * ステージエディターのメインコントローラークラス
+ */
 class StageEditor {
     private editorSystem!: EditorRenderSystem;
     private stageLoader: StageLoader;
     private currentStage: StageData | null = null;
 
-    // UI Elements
+    // UI Elements (型安全な取得)
     private canvas: HTMLCanvasElement;
     private toolItems!: NodeListOf<Element>;
-    private mouseCoords!: HTMLElement;
-    private objectCount!: HTMLElement;
-    private currentToolDisplay!: HTMLElement;
-    private deleteBtn!: HTMLButtonElement;
-    private duplicateBtn!: HTMLButtonElement;
+    private uiElements!: {
+        mouseCoords: HTMLElement;
+        objectCount: HTMLElement;
+        currentTool: HTMLElement;
+        deleteBtn: HTMLButtonElement;
+        duplicateBtn: HTMLButtonElement;
+        stageNameInput: HTMLInputElement;
+        stageIdInput: HTMLInputElement;
+        stageDescInput: HTMLTextAreaElement;
+        noSelectionDiv: HTMLElement;
+        platformPropsDiv: HTMLElement;
+        spikePropsDiv: HTMLElement;
+        goalPropsDiv: HTMLElement;
+        textPropsDiv: HTMLElement;
+        gridEnabledCheckbox: HTMLInputElement;
+        snapEnabledCheckbox: HTMLInputElement;
+    };
 
-    // Stage Info Elements
-    private stageNameInput!: HTMLInputElement;
-    private stageIdInput!: HTMLInputElement;
-    private stageDescInput!: HTMLTextAreaElement;
-
-    // Object Property Elements
-    private noSelectionDiv!: HTMLElement;
-    private platformPropsDiv!: HTMLElement;
-    private spikePropsDiv!: HTMLElement;
-    private goalPropsDiv!: HTMLElement;
-    private textPropsDiv!: HTMLElement;
-
-    // Settings Elements
-    private gridEnabledCheckbox!: HTMLInputElement;
-    private snapEnabledCheckbox!: HTMLInputElement;
+    // イベントハンドラー（デバウンス処理済み）
+    private debouncedUpdateStageInfo = EventHelper.debounce(() => this.updateStageInfo(), 300);
+    private throttledMouseMove = EventHelper.throttle((e: MouseEvent) => this.handleMouseMove(e), 16);
 
     constructor() {
-        this.canvas = document.getElementById('editorCanvas') as HTMLCanvasElement;
-        this.stageLoader = new StageLoader();
-        
-        this.initializeUI();
-        this.setupEditorSystem();
-        this.setupEventListeners();
-        this.updateUI();
+        try {
+            this.canvas = DOMHelper.getRequiredElement<HTMLCanvasElement>('editorCanvas');
+            this.stageLoader = new StageLoader();
+            
+            this.initializeUI();
+            this.setupEditorSystem();
+            this.setupEventListeners();
+            this.updateUI();
+            
+            DebugHelper.log('StageEditor initialized successfully');
+        } catch (error) {
+            DebugHelper.log('Failed to initialize StageEditor', error);
+            throw new EditorError(
+                'Failed to initialize stage editor',
+                'CANVAS_INIT_FAILED',
+                { error }
+            );
+        }
     }
 
+    /**
+     * UI要素を初期化
+     */
     private initializeUI(): void {
-        // Tool palette
+        // ツールパレット要素
         this.toolItems = document.querySelectorAll('.tool-item');
-        this.mouseCoords = document.getElementById('mouseCoords')!;
-        this.objectCount = document.getElementById('objectCount')!;
-        this.currentToolDisplay = document.getElementById('currentTool')!;
-        this.deleteBtn = document.getElementById('deleteObjectBtn') as HTMLButtonElement;
-        this.duplicateBtn = document.getElementById('duplicateObjectBtn') as HTMLButtonElement;
 
-        // Stage info
-        this.stageNameInput = document.getElementById('stageName') as HTMLInputElement;
-        this.stageIdInput = document.getElementById('stageId') as HTMLInputElement;
-        this.stageDescInput = document.getElementById('stageDescription') as HTMLTextAreaElement;
+        // 必須UI要素を一括取得
+        this.uiElements = {
+            mouseCoords: DOMHelper.getRequiredElement('mouseCoords'),
+            objectCount: DOMHelper.getRequiredElement('objectCount'),
+            currentTool: DOMHelper.getRequiredElement('currentTool'),
+            deleteBtn: DOMHelper.getRequiredElement<HTMLButtonElement>('deleteObjectBtn'),
+            duplicateBtn: DOMHelper.getRequiredElement<HTMLButtonElement>('duplicateObjectBtn'),
+            stageNameInput: DOMHelper.getRequiredElement<HTMLInputElement>('stageName'),
+            stageIdInput: DOMHelper.getRequiredElement<HTMLInputElement>('stageId'),
+            stageDescInput: DOMHelper.getRequiredElement<HTMLTextAreaElement>('stageDescription'),
+            noSelectionDiv: DOMHelper.getRequiredElement('noSelection'),
+            platformPropsDiv: DOMHelper.getRequiredElement('platformProperties'),
+            spikePropsDiv: DOMHelper.getRequiredElement('spikeProperties'),
+            goalPropsDiv: DOMHelper.getRequiredElement('goalProperties'),
+            textPropsDiv: DOMHelper.getRequiredElement('textProperties'),
+            gridEnabledCheckbox: DOMHelper.getRequiredElement<HTMLInputElement>('gridEnabled'),
+            snapEnabledCheckbox: DOMHelper.getRequiredElement<HTMLInputElement>('snapEnabled')
+        };
 
-        // Object properties
-        this.noSelectionDiv = document.getElementById('noSelection')!;
-        this.platformPropsDiv = document.getElementById('platformProperties')!;
-        this.spikePropsDiv = document.getElementById('spikeProperties')!;
-        this.goalPropsDiv = document.getElementById('goalProperties')!;
-        this.textPropsDiv = document.getElementById('textProperties')!;
-
-        // Settings
-        this.gridEnabledCheckbox = document.getElementById('gridEnabled') as HTMLInputElement;
-        this.snapEnabledCheckbox = document.getElementById('snapEnabled') as HTMLInputElement;
+        DebugHelper.log('UI elements initialized', Object.keys(this.uiElements));
     }
 
+    /**
+     * エディターシステムを設定
+     */
     private setupEditorSystem(): void {
         const callbacks: EditorCallbacks = {
-            onObjectSelected: (object) => this.handleObjectSelection(object),
-            onObjectModified: () => this.handleObjectModified(),
-            onStageModified: (stageData) => this.handleStageModified(stageData)
+            onObjectSelected: (object: FabricObjectWithData | null) => this.handleObjectSelection(object),
+            onObjectModified: (object: FabricObjectWithData) => this.handleObjectModified(object),
+            onStageModified: (stageData: StageData) => this.handleStageModified(stageData)
         };
 
         this.editorSystem = new EditorRenderSystem(this.canvas, callbacks);
-        
-        // Initialize with an empty stage
         this.createNewStage();
     }
 
+    /**
+     * イベントリスナーを設定
+     */
     private setupEventListeners(): void {
-        // Tool selection
-        this.toolItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const tool = item.getAttribute('data-tool') as any;
-                this.selectTool(tool);
-            });
+        this.setupToolSelectionEvents();
+        this.setupToolbarEvents();
+        this.setupObjectActionEvents();
+        this.setupSettingsEvents();
+        this.setupStageInfoEvents();
+        this.setupCanvasEvents();
+        this.setupKeyboardEvents();
+    }
+
+    private setupToolSelectionEvents(): void {
+        DOMHelper.addEventListenersToNodeList(
+            this.toolItems,
+            'click',
+            (element) => {
+                const tool = element.getAttribute('data-tool');
+                if (tool && isValidEditorTool(tool)) {
+                    this.selectTool(tool);
+                }
+            }
+        );
+    }
+
+    private setupToolbarEvents(): void {
+        const toolbarActions = {
+            'newStageBtn': () => this.createNewStage(),
+            'loadStageBtn': () => this.loadStage(),
+            'saveStageBtn': () => this.saveStage(),
+            'testStageBtn': () => this.testStage(),
+            'clearStageBtn': () => this.clearStage(),
+            'toggleGridBtn': () => this.toggleGrid(),
+            'toggleSnapBtn': () => this.toggleSnap()
+        };
+
+        Object.entries(toolbarActions).forEach(([id, handler]) => {
+            const element = DOMHelper.getOptionalElement(id);
+            element?.addEventListener('click', handler);
         });
+    }
 
-        // Toolbar buttons
-        document.getElementById('newStageBtn')?.addEventListener('click', () => this.createNewStage());
-        document.getElementById('loadStageBtn')?.addEventListener('click', () => this.loadStage());
-        document.getElementById('saveStageBtn')?.addEventListener('click', () => this.saveStage());
-        document.getElementById('testStageBtn')?.addEventListener('click', () => this.testStage());
-        document.getElementById('clearStageBtn')?.addEventListener('click', () => this.clearStage());
-        document.getElementById('toggleGridBtn')?.addEventListener('click', () => this.toggleGrid());
-        document.getElementById('toggleSnapBtn')?.addEventListener('click', () => this.toggleSnap());
+    private setupObjectActionEvents(): void {
+        this.uiElements.deleteBtn.addEventListener('click', () => this.deleteSelectedObject());
+        this.uiElements.duplicateBtn.addEventListener('click', () => this.duplicateSelectedObject());
+    }
 
-        // Object actions
-        this.deleteBtn.addEventListener('click', () => this.deleteSelectedObject());
-        this.duplicateBtn.addEventListener('click', () => this.duplicateSelectedObject());
-
-        // Settings
-        this.gridEnabledCheckbox.addEventListener('change', () => {
+    private setupSettingsEvents(): void {
+        this.uiElements.gridEnabledCheckbox.addEventListener('change', () => {
             this.editorSystem.toggleGrid();
         });
         
-        this.snapEnabledCheckbox.addEventListener('change', () => {
+        this.uiElements.snapEnabledCheckbox.addEventListener('change', () => {
             this.editorSystem.toggleSnapToGrid();
         });
-
-        // Stage info changes
-        this.stageNameInput.addEventListener('input', () => this.updateStageInfo());
-        this.stageIdInput.addEventListener('input', () => this.updateStageInfo());
-        this.stageDescInput.addEventListener('input', () => this.updateStageInfo());
-
-        // Mouse tracking
-        this.canvas.addEventListener('mousemove', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const x = Math.round(e.clientX - rect.left);
-            const y = Math.round(e.clientY - rect.top);
-            this.mouseCoords.textContent = `${x}, ${y}`;
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
     }
 
+    private setupStageInfoEvents(): void {
+        [this.uiElements.stageNameInput, this.uiElements.stageIdInput, this.uiElements.stageDescInput]
+            .forEach(input => {
+                input.addEventListener('input', this.debouncedUpdateStageInfo);
+            });
+    }
+
+    private setupCanvasEvents(): void {
+        this.canvas.addEventListener('mousemove', this.throttledMouseMove);
+    }
+
+    private setupKeyboardEvents(): void {
+        document.addEventListener('keydown', this.handleKeyboard.bind(this));
+    }
+
+    /**
+     * ツール選択処理
+     */
     private selectTool(tool: string): void {
-        // Update UI
-        this.toolItems.forEach(item => item.classList.remove('active'));
-        document.querySelector(`[data-tool="${tool}"]`)?.classList.add('active');
-        
-        // Update editor system
-        this.editorSystem.setSelectedTool(tool as any);
-        this.currentToolDisplay.textContent = tool.charAt(0).toUpperCase() + tool.slice(1);
-    }
-
-    private handleObjectSelection(object: any): void {
-        // Update action buttons
-        this.deleteBtn.disabled = !object;
-        this.duplicateBtn.disabled = !object;
-
-        // Show/hide property panels
-        this.hideAllPropertyPanels();
-        
-        if (!object) {
-            this.noSelectionDiv.style.display = 'block';
+        if (!isValidEditorTool(tool)) {
+            DebugHelper.log('Invalid tool selected', { tool });
             return;
         }
 
-        const objectType = object.data?.type;
+        // UI更新
+        this.toolItems.forEach(item => item.classList.remove('active'));
+        const selectedTool = document.querySelector(`[data-tool="${tool}"]`);
+        selectedTool?.classList.add('active');
+        
+        // エディターシステム更新
+        this.editorSystem.setSelectedTool(tool);
+        this.uiElements.currentTool.textContent = tool.charAt(0).toUpperCase() + tool.slice(1);
+        
+        DebugHelper.log('Tool selected', { tool });
+    }
+
+    /**
+     * オブジェクト選択時の処理
+     */
+    private handleObjectSelection(object: FabricObjectWithData | null): void {
+        // アクションボタン状態更新
+        this.uiElements.deleteBtn.disabled = !object;
+        this.uiElements.duplicateBtn.disabled = !object;
+
+        // プロパティパネル表示制御
+        this.hideAllPropertyPanels();
+        
+        if (!object) {
+            this.uiElements.noSelectionDiv.style.display = 'block';
+            return;
+        }
+
+        const objectType = FabricHelper.getObjectType(object);
+        this.showPropertyPanel(objectType, object);
+    }
+
+    /**
+     * すべてのプロパティパネルを非表示
+     */
+    private hideAllPropertyPanels(): void {
+        [
+            this.uiElements.noSelectionDiv,
+            this.uiElements.platformPropsDiv,
+            this.uiElements.spikePropsDiv,
+            this.uiElements.goalPropsDiv,
+            this.uiElements.textPropsDiv
+        ].forEach(panel => {
+            panel.style.display = 'none';
+        });
+    }
+
+    /**
+     * 指定タイプのプロパティパネルを表示
+     */
+    private showPropertyPanel(objectType: string | null, object: FabricObjectWithData): void {
         switch (objectType) {
-            case 'platform':
-                this.platformPropsDiv.style.display = 'block';
+            case EDITOR_TOOLS.PLATFORM:
+                this.uiElements.platformPropsDiv.style.display = 'block';
                 this.loadPlatformProperties(object);
                 break;
-            case 'spike':
-                this.spikePropsDiv.style.display = 'block';
+            case EDITOR_TOOLS.SPIKE:
+                this.uiElements.spikePropsDiv.style.display = 'block';
                 this.loadSpikeProperties(object);
                 break;
-            case 'goal':
-                this.goalPropsDiv.style.display = 'block';
+            case EDITOR_TOOLS.GOAL:
+                this.uiElements.goalPropsDiv.style.display = 'block';
                 this.loadGoalProperties(object);
                 break;
-            case 'text':
-                this.textPropsDiv.style.display = 'block';
+            case EDITOR_TOOLS.TEXT:
+                this.uiElements.textPropsDiv.style.display = 'block';
                 this.loadTextProperties(object);
                 break;
+            default:
+                this.uiElements.noSelectionDiv.style.display = 'block';
         }
     }
 
-    private hideAllPropertyPanels(): void {
-        this.noSelectionDiv.style.display = 'none';
-        this.platformPropsDiv.style.display = 'none';
-        this.spikePropsDiv.style.display = 'none';
-        this.goalPropsDiv.style.display = 'none';
-        this.textPropsDiv.style.display = 'none';
-    }
+    /**
+     * プラットフォームプロパティを読み込み
+     */
+    private loadPlatformProperties(platform: FabricObjectWithData): void {
+        const line = platform as unknown as fabric.Line;
+        if (!line.x1 || !line.y1 || !line.x2 || !line.y2) return;
 
-    private loadPlatformProperties(platform: any): void {
-        const length = Math.sqrt(
-            Math.pow(platform.x2 - platform.x1, 2) + 
-            Math.pow(platform.y2 - platform.y1, 2)
+        const length = MathHelper.distance(
+            { x: line.x1, y: line.y1 },
+            { x: line.x2, y: line.y2 }
         );
-        const angle = Math.atan2(platform.y2 - platform.y1, platform.x2 - platform.x1) * 180 / Math.PI;
+        const angle = MathHelper.angle(
+            { x: line.x1, y: line.y1 },
+            { x: line.x2, y: line.y2 }
+        );
         
-        (document.getElementById('platformLength') as HTMLInputElement).value = Math.round(length).toString();
-        (document.getElementById('platformAngle') as HTMLInputElement).value = angle.toFixed(1);
+        const lengthInput = DOMHelper.getOptionalElement<HTMLInputElement>('platformLength');
+        const angleInput = DOMHelper.getOptionalElement<HTMLInputElement>('platformAngle');
+        
+        if (lengthInput) lengthInput.value = Math.round(length).toString();
+        if (angleInput) angleInput.value = angle.toFixed(1);
     }
 
-    private loadSpikeProperties(spike: any): void {
-        (document.getElementById('spikeSize') as HTMLInputElement).value = spike.width?.toString() || '15';
+    /**
+     * スパイクプロパティを読み込み
+     */
+    private loadSpikeProperties(spike: FabricObjectWithData): void {
+        const bounds = FabricHelper.getObjectBounds(spike);
+        const sizeInput = DOMHelper.getOptionalElement<HTMLInputElement>('spikeSize');
+        if (sizeInput) sizeInput.value = bounds.width.toString();
     }
 
-    private loadGoalProperties(goal: any): void {
-        (document.getElementById('goalWidth') as HTMLInputElement).value = goal.width?.toString() || '40';
-        (document.getElementById('goalHeight') as HTMLInputElement).value = goal.height?.toString() || '50';
+    /**
+     * ゴールプロパティを読み込み
+     */
+    private loadGoalProperties(goal: FabricObjectWithData): void {
+        const rect = goal as unknown as fabric.Rect;
+        const widthInput = DOMHelper.getOptionalElement<HTMLInputElement>('goalWidth');
+        const heightInput = DOMHelper.getOptionalElement<HTMLInputElement>('goalHeight');
+        
+        if (widthInput) widthInput.value = (rect.width || EDITOR_CONFIG.OBJECT_SIZES.GOAL.width).toString();
+        if (heightInput) heightInput.value = (rect.height || EDITOR_CONFIG.OBJECT_SIZES.GOAL.height).toString();
     }
 
-    private loadTextProperties(text: any): void {
-        (document.getElementById('textContent') as HTMLInputElement).value = text.text || '';
-        (document.getElementById('textSize') as HTMLInputElement).value = text.fontSize?.toString() || '16';
+    /**
+     * テキストプロパティを読み込み
+     */
+    private loadTextProperties(text: FabricObjectWithData): void {
+        const textObj = text as unknown as fabric.Text;
+        const contentInput = DOMHelper.getOptionalElement<HTMLInputElement>('textContent');
+        const sizeInput = DOMHelper.getOptionalElement<HTMLInputElement>('textSize');
+        
+        if (contentInput) contentInput.value = textObj.text || '';
+        if (sizeInput) sizeInput.value = (textObj.fontSize || 16).toString();
     }
 
-    private handleObjectModified(): void {
+    /**
+     * オブジェクト変更時の処理
+     */
+    private handleObjectModified(object: FabricObjectWithData): void {
         this.updateObjectCount();
-        // Properties will be updated when object is selected again
+        DebugHelper.log('Object modified', { type: FabricHelper.getObjectType(object) });
     }
 
+    /**
+     * ステージ変更時の処理
+     */
     private handleStageModified(stageData: StageData): void {
         this.currentStage = stageData;
         this.updateObjectCount();
+        DebugHelper.log('Stage modified', { objectCount: this.getObjectCount(stageData) });
     }
 
+    /**
+     * オブジェクト数を更新
+     */
     private updateObjectCount(): void {
-        const stageData = this.editorSystem.exportStageData();
-        const count = stageData.platforms.length + stageData.spikes.length + 1; // +1 for goal
-        this.objectCount.textContent = count.toString();
+        if (!this.currentStage) return;
+        
+        const count = this.getObjectCount(this.currentStage);
+        this.uiElements.objectCount.textContent = count.toString();
     }
 
+    private getObjectCount(stageData: StageData): number {
+        return stageData.platforms.length + stageData.spikes.length + 1; // +1 for goal
+    }
+
+    /**
+     * マウス移動時の座標表示更新
+     */
+    private handleMouseMove(e: MouseEvent): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = Math.round(e.clientX - rect.left);
+        const y = Math.round(e.clientY - rect.top);
+        this.uiElements.mouseCoords.textContent = `${x}, ${y}`;
+    }
+
+    /**
+     * 新しいステージを作成
+     */
     private createNewStage(): void {
         const newStage: StageData = {
             id: 1,
@@ -236,11 +386,19 @@ class StageEditor {
         this.editorSystem.loadStageForEditing(newStage);
         this.updateStageInfoUI();
         this.updateUI();
+        
+        DebugHelper.log('New stage created');
     }
 
+    /**
+     * ステージを読み込み
+     */
     private async loadStage(): Promise<void> {
         try {
-            const stageId = parseInt(prompt('Enter stage ID to load:') || '1');
+            const stageIdStr = prompt('Enter stage ID to load:');
+            if (!stageIdStr) return;
+            
+            const stageId = TypeHelper.safeParseInt(stageIdStr, 1);
             const stageData = await this.stageLoader.loadStage(stageId);
             
             this.currentStage = stageData;
@@ -248,26 +406,37 @@ class StageEditor {
             this.updateStageInfoUI();
             this.updateUI();
             
-            console.log('Stage loaded successfully:', stageData);
+            DebugHelper.log('Stage loaded successfully', { stageId: stageData.id });
         } catch (error) {
+            DebugHelper.log('Failed to load stage', error);
             alert('Failed to load stage: ' + error);
         }
     }
 
+    /**
+     * ステージを保存
+     */
     private saveStage(): void {
         if (!this.currentStage) return;
 
         const stageData = this.editorSystem.exportStageData();
         
-        // Update stage info from UI
-        stageData.name = this.stageNameInput.value;
-        stageData.id = parseInt(this.stageIdInput.value);
+        // ステージ情報をUIから更新
+        stageData.name = this.uiElements.stageNameInput.value;
+        stageData.id = TypeHelper.safeParseInt(this.uiElements.stageIdInput.value, 1);
 
+        this.downloadStageAsJson(stageData);
+        DebugHelper.log('Stage saved', { stageId: stageData.id, name: stageData.name });
+    }
+
+    /**
+     * ステージをJSONファイルとしてダウンロード
+     */
+    private downloadStageAsJson(stageData: StageData): void {
         const json = JSON.stringify(stageData, null, 2);
-        
-        // Create download link
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
+        
         const a = document.createElement('a');
         a.href = url;
         a.download = `stage${stageData.id}.json`;
@@ -275,112 +444,136 @@ class StageEditor {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-
-        console.log('Stage saved:', stageData);
     }
 
+    /**
+     * ステージをテスト
+     */
     private testStage(): void {
         if (!this.currentStage) return;
 
-        // Open game in new tab with current stage data
         const stageData = this.editorSystem.exportStageData();
         const json = JSON.stringify(stageData);
         
-        // Store in localStorage for the game to pick up
+        // localStorageに保存してゲームページで読み込み
         localStorage.setItem('testStage', json);
-        
-        // Open game page
         window.open('/index.html?test=true', '_blank');
+        
+        DebugHelper.log('Stage testing started', { stageId: stageData.id });
     }
 
+    /**
+     * ステージをクリア
+     */
     private clearStage(): void {
         if (confirm('Are you sure you want to clear all objects?')) {
             this.createNewStage();
+            DebugHelper.log('Stage cleared');
         }
     }
 
+    /**
+     * グリッド表示切り替え
+     */
     private toggleGrid(): void {
         this.editorSystem.toggleGrid();
-        this.gridEnabledCheckbox.checked = !this.gridEnabledCheckbox.checked;
+        this.uiElements.gridEnabledCheckbox.checked = !this.uiElements.gridEnabledCheckbox.checked;
     }
 
+    /**
+     * スナップ機能切り替え
+     */
     private toggleSnap(): void {
         this.editorSystem.toggleSnapToGrid();
-        this.snapEnabledCheckbox.checked = !this.snapEnabledCheckbox.checked;
+        this.uiElements.snapEnabledCheckbox.checked = !this.uiElements.snapEnabledCheckbox.checked;
     }
 
+    /**
+     * 選択オブジェクトを削除
+     */
     private deleteSelectedObject(): void {
         this.editorSystem.deleteSelectedObject();
+        DebugHelper.log('Selected object deleted');
     }
 
+    /**
+     * 選択オブジェクトを複製（未実装）
+     */
     private duplicateSelectedObject(): void {
-        // TODO: Implement object duplication
+        // TODO: 複製機能の実装
+        DebugHelper.log('Duplicate function not implemented yet');
         console.log('Duplicate function not implemented yet');
     }
 
+    /**
+     * ステージ情報を更新
+     */
     private updateStageInfo(): void {
         if (!this.currentStage) return;
         
-        this.currentStage.name = this.stageNameInput.value;
-        this.currentStage.id = parseInt(this.stageIdInput.value);
+        this.currentStage.name = this.uiElements.stageNameInput.value;
+        this.currentStage.id = TypeHelper.safeParseInt(this.uiElements.stageIdInput.value, this.currentStage.id);
     }
 
+    /**
+     * ステージ情報UIを更新
+     */
     private updateStageInfoUI(): void {
         if (!this.currentStage) return;
 
-        this.stageNameInput.value = this.currentStage.name;
-        this.stageIdInput.value = this.currentStage.id.toString();
-        this.stageDescInput.value = (this.currentStage as any).description || '';
+        this.uiElements.stageNameInput.value = this.currentStage.name;
+        this.uiElements.stageIdInput.value = this.currentStage.id.toString();
+        this.uiElements.stageDescInput.value = (this.currentStage as any).description || '';
     }
 
+    /**
+     * UI全体を更新
+     */
     private updateUI(): void {
         this.updateObjectCount();
         this.handleObjectSelection(null);
     }
 
-    private handleKeyboard(e: KeyboardEvent): void {
-        // Tool shortcuts
-        switch (e.key) {
-            case '1':
-                this.selectTool('select');
-                break;
-            case '2':
-                this.selectTool('platform');
-                break;
-            case '3':
-                this.selectTool('spike');
-                break;
-            case '4':
-                this.selectTool('goal');
-                break;
-            case '5':
-                this.selectTool('text');
-                break;
+    /**
+     * キーボードイベント処理
+     */
+    private handleKeyboard: KeyboardEventHandler = (e) => {
+        const normalizedKey = EventHelper.normalizeKeyboardEvent(e);
+        
+        // ツールショートカット
+        const toolShortcut = KEYBOARD_SHORTCUTS.TOOLS[e.key as keyof typeof KEYBOARD_SHORTCUTS.TOOLS];
+        if (toolShortcut) {
+            this.selectTool(toolShortcut);
+            return;
+        }
+        
+        // アクションショートカット
+        switch (normalizedKey) {
             case 'Delete':
             case 'Backspace':
                 this.deleteSelectedObject();
                 e.preventDefault();
                 break;
-            case 'g':
-            case 'G':
-                if (e.ctrlKey || e.metaKey) {
-                    this.toggleGrid();
-                    e.preventDefault();
-                }
+            case 'Ctrl+KeyG':
+            case 'Cmd+KeyG':
+                this.toggleGrid();
+                e.preventDefault();
                 break;
-            case 's':
-            case 'S':
-                if (e.ctrlKey || e.metaKey) {
-                    this.saveStage();
-                    e.preventDefault();
-                }
+            case 'Ctrl+KeyS':
+            case 'Cmd+KeyS':
+                this.saveStage();
+                e.preventDefault();
                 break;
         }
-    }
+    };
 }
 
-// Initialize editor when DOM is loaded
+// エディターの初期化
 document.addEventListener('DOMContentLoaded', () => {
-    new StageEditor();
-    console.log('🎮 Stage Editor initialized!');
+    try {
+        new StageEditor();
+        console.log('🎮 Stage Editor initialized successfully!');
+    } catch (error) {
+        console.error('❌ Failed to initialize Stage Editor:', error);
+    }
 });

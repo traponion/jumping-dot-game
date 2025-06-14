@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EditorRenderSystem, type EditorCallbacks } from '../systems/EditorRenderSystem.js';
+import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
+import type { EditorCallbacks } from '../types/EditorTypes.js';
 import type { StageData } from '../core/StageLoader.js';
 
 // Mock DOM elements for testing
