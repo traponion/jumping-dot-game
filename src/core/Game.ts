@@ -158,6 +158,8 @@ export class JumpingDotGame {
         this.gameState.gameStartTime = getCurrentTime();
         this.gameStatus.textContent = 'Playing';
         this.inputSystem.setGameState(true, false);
+        // ゲーム開始時に確実にキーをクリア
+        this.inputSystem.clearKeys();
     }
 
     private startGameLoop(): void {
@@ -272,7 +274,7 @@ export class JumpingDotGame {
             this.gameState.timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
 
             if (this.gameState.timeRemaining <= 0) {
-                this.handlePlayerDeath('Time Up! Press SPACE to restart');
+                this.handlePlayerDeath('Time Up! Press R to restart');
                 return;
             }
 
@@ -312,7 +314,7 @@ export class JumpingDotGame {
         }
 
         if (this.collisionSystem.checkSpikeCollisions(this.player, this.stage.spikes)) {
-            this.handlePlayerDeath('Hit by spike! Press SPACE to restart');
+            this.handlePlayerDeath('Hit by spike! Press R to restart');
             return;
         }
 
@@ -328,9 +330,9 @@ export class JumpingDotGame {
 
     private checkBoundaries(): void {
         if (this.collisionSystem.checkHoleCollision(this.player, 600)) {
-            this.handlePlayerDeath('Fell into hole! Press SPACE to restart', 'fall');
+            this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
         } else if (this.collisionSystem.checkBoundaryCollision(this.player, this.canvas.height)) {
-            this.handlePlayerDeath('Game Over - Press SPACE to restart', 'fall');
+            this.handlePlayerDeath('Game Over - Press R to restart', 'fall');
         }
     }
 
@@ -352,7 +354,7 @@ export class JumpingDotGame {
     private handleGoalReached(): void {
         this.gameState.gameOver = true;
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
-        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press SPACE to restart`;
+        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press R to restart`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
         this.inputSystem.setGameState(false, true);
 

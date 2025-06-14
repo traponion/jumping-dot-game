@@ -33,16 +33,18 @@ export class InputSystem {
     }
 
     private onKeyDown(e: KeyboardEvent): void {
-        if (!this.gameOver) {
+        // ゲーム中のみキー状態を更新（ゲームオーバー中は更新しない）
+        if (this.gameRunning && !this.gameOver) {
             this.keys[e.code] = true;
         }
 
-        if (e.code === 'Space') {
-            if (!this.gameRunning && !this.gameOver) {
-                this.gameController.startGame();
-            } else if (this.gameOver) {
-                this.gameController.init();
-            }
+        if (e.code === 'Space' && !this.gameRunning && !this.gameOver) {
+            this.gameController.startGame();
+            e.preventDefault();
+        }
+
+        if (e.code === 'KeyR' && this.gameOver) {
+            this.gameController.init();
             e.preventDefault();
         }
 

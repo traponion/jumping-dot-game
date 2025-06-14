@@ -30,6 +30,7 @@ describe('InputSystem', () => {
         });
 
         it('should update key state on key press', () => {
+            inputSystem.setGameState(true, false); // ゲーム中に設定
             const event = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
 
             inputSystem.simulateKeyDown(event);
@@ -52,6 +53,7 @@ describe('InputSystem', () => {
         });
 
         it('should maintain multiple key states', () => {
+            inputSystem.setGameState(true, false); // ゲーム中に設定
             const leftEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
             const rightEvent = new KeyboardEvent('keydown', { code: 'ArrowRight' });
 
@@ -92,10 +94,10 @@ describe('InputSystem', () => {
             expect(mockGame.startGame).not.toHaveBeenCalled();
         });
 
-        it('should restart game when Space is pressed and game is over', () => {
+        it('should restart game when R is pressed and game is over', () => {
             inputSystem.setGameState(false, true); // not running, is over
 
-            const event = new KeyboardEvent('keydown', { code: 'Space' });
+            const event = new KeyboardEvent('keydown', { code: 'KeyR' });
             inputSystem.simulateKeyDown(event);
 
             expect(mockGame.init).toHaveBeenCalled();
@@ -147,6 +149,16 @@ describe('InputSystem', () => {
     describe('game over state handling', () => {
         it('should not update key state when game is over on keydown', () => {
             inputSystem.setGameState(false, true); // not running, is over
+
+            const event = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+            inputSystem.simulateKeyDown(event);
+
+            const keys = inputSystem.getKeys();
+            expect(keys.ArrowLeft).toBeUndefined();
+        });
+
+        it('should not update key state when game is not running on keydown', () => {
+            inputSystem.setGameState(false, false); // not running, not over
 
             const event = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
             inputSystem.simulateKeyDown(event);
