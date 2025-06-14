@@ -1,7 +1,8 @@
 // Mock render system for testing environment
 // Based on Fabric.js official testing patterns
 
-import type { Camera, Player, StageData } from '../types/GameTypes.js';
+import type { Camera, Player } from '../types/GameTypes.js';
+import type { StageData } from '../core/StageLoader.js';
 
 export interface MockFabricCanvas {
     width: number;
@@ -61,27 +62,27 @@ export class MockRenderSystem {
         this.mockCanvas.setViewportTransform(transform);
     }
 
-    renderStage(stage: StageData): void {
+    renderStage(_stage: StageData): void {
         // Mock stage rendering
     }
 
-    renderPlayer(player: Player): void {
+    renderPlayer(_player: Player): void {
         // Mock player rendering
     }
 
-    renderTrail(trail: any[], playerRadius: number): void {
+    renderTrail(_trail: any[], _playerRadius: number): void {
         // Mock trail rendering
     }
 
-    renderDeathMarks(deathMarks: any[]): void {
+    renderDeathMarks(_deathMarks: any[]): void {
         // Mock death marks rendering
     }
 
-    renderDeathAnimation(particles: any[]): void {
+    renderDeathAnimation(_particles: any[]): void {
         // Mock death animation rendering
     }
 
-    renderClearAnimation(particles: any[], progress: number, playerX: number, playerY: number): void {
+    renderClearAnimation(_particles: any[], _progress: number, _playerX: number, _playerY: number): void {
         // Mock clear animation rendering
     }
 
