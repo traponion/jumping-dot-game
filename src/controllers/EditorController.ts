@@ -17,6 +17,11 @@ import {
     EventHelper,
     DebugHelper
 } from '../utils/EditorUtils.js';
+import { 
+    getEditorStore, 
+    subscribeEditorStore,
+    type EditorStore 
+} from '../stores/EditorZustandStore.js';
 
 // Controller層のインターフェース定義
 export interface IEditorController {
@@ -77,6 +82,8 @@ export class EditorController implements IEditorController {
     private stageLoader: StageLoader;
     private view!: IEditorView;
     private model!: IEditorModel;
+    private store: EditorStore;
+    private unsubscribeStore: (() => void) | null = null;
     
     // イベントハンドラー（デバウンス処理済み）
     private debouncedSave = EventHelper.debounce(() => this.autoSave(), 5000);
@@ -96,8 +103,17 @@ export class EditorController implements IEditorController {
         this.model = model;
         this.keyboardHandler = this.handleKeyboard.bind(this);
         
+        // Initialize Zustand store
+        this.store = getEditorStore();
+        
+        // Subscribe to store changes
+        this.unsubscribeStore = subscribeEditorStore((state) => {
+            this.handleStoreChange(state);
+        });
+        
         DebugHelper.log('EditorController constructed', {
-            canvasSize: { width: canvas.width, height: canvas.height }
+            canvasSize: { width: canvas.width, height: canvas.height },
+            storeConnected: !!this.store
         });
     }
 
@@ -173,11 +189,13 @@ export class EditorController implements IEditorController {
         }
 
         try {
-            this.editorSystem.setSelectedTool(tool);
-            this.model.updateEditorState({ selectedTool: tool });
-            this.view.updateToolSelection(tool);
-            this.view.updateCurrentTool(tool);
+            // Update Zustand store first
+            this.store.selectTool(tool);
             
+            // Update render system
+            this.editorSystem.setSelectedTool(tool);
+            
+            // View will be updated via store subscription
             DebugHelper.log('Tool selected', { tool });
         } catch (error) {
             DebugHelper.log('Tool selection failed', { tool, error });
@@ -192,11 +210,14 @@ export class EditorController implements IEditorController {
         try {
             const newStage: StageData = this.createDefaultStageData();
             
+            // Update Zustand store first
+            this.store.setStageData(newStage);
+            
+            // Update other systems
             this.model.setCurrentStage(newStage);
             this.editorSystem.loadStageForEditing(newStage);
-            this.view.updateStageInfo(newStage);
-            this.updateUIFromModel();
             
+            // View will be updated via store subscription
             DebugHelper.log('New stage created', { stageId: newStage.id });
             this.view.showSuccessMessage('New stage created');
         } catch (error) {
@@ -231,6 +252,8 @@ export class EditorController implements IEditorController {
                 );
             }
             
+            // Update both store and model
+            this.store.setStageData(stageData);
             this.model.setCurrentStage(stageData);
             this.editorSystem.loadStageForEditing(stageData);
             this.view.updateStageInfo(stageData);
@@ -305,7 +328,18 @@ export class EditorController implements IEditorController {
      */
     public clearStage(): void {
         if (confirm('Are you sure you want to clear all objects?')) {
-            this.createNewStage();
+            // Clear store first
+            this.store.setStageData(null);
+            
+            // Clear render system
+            this.editorSystem.clearStage();
+            
+            // Clear model
+            this.model.setCurrentStage(null);
+            
+            // Update UI
+            this.updateUIFromModel();
+            
             DebugHelper.log('Stage cleared');
         }
     }
@@ -362,10 +396,13 @@ export class EditorController implements IEditorController {
      */
     public toggleGrid(): void {
         try {
+            // Update Zustand store first
+            this.store.toggleGrid();
+            
+            // Update render system
             this.editorSystem.toggleGrid();
-            const state = this.editorSystem.getEditorState();
-            this.model.updateEditorState({ gridEnabled: state.gridEnabled });
-            DebugHelper.log('Grid toggled', { enabled: state.gridEnabled });
+            
+            DebugHelper.log('Grid toggled', { enabled: this.store.getEditorState().gridEnabled });
         } catch (error) {
             DebugHelper.log('Grid toggle failed', error);
             this.view.showErrorMessage('Failed to toggle grid');
@@ -377,10 +414,13 @@ export class EditorController implements IEditorController {
      */
     public toggleSnap(): void {
         try {
+            // Update Zustand store first
+            this.store.toggleSnap();
+            
+            // Update render system
             this.editorSystem.toggleSnapToGrid();
-            const state = this.editorSystem.getEditorState();
-            this.model.updateEditorState({ snapToGrid: state.snapToGrid });
-            DebugHelper.log('Snap toggled', { enabled: state.snapToGrid });
+            
+            DebugHelper.log('Snap toggled', { enabled: this.store.getEditorState().snapToGrid });
         } catch (error) {
             DebugHelper.log('Snap toggle failed', error);
             this.view.showErrorMessage('Failed to toggle snap');
@@ -392,6 +432,13 @@ export class EditorController implements IEditorController {
      */
     public dispose(): void {
         document.removeEventListener('keydown', this.keyboardHandler);
+        
+        // Unsubscribe from store
+        if (this.unsubscribeStore) {
+            this.unsubscribeStore();
+            this.unsubscribeStore = null;
+        }
+        
         this.view.dispose();
         this.isInitialized = false;
         DebugHelper.log('EditorController disposed');
@@ -400,10 +447,28 @@ export class EditorController implements IEditorController {
     // === プライベートメソッド ===
 
     /**
+     * Store state change handler
+     */
+    private handleStoreChange(state: EditorStore): void {
+        // Update view based on store changes
+        if (this.view && this.isInitialized) {
+            this.view.updateToolSelection(state.editor.selectedTool);
+            this.view.updateCurrentTool(state.editor.selectedTool);
+            this.view.updateObjectCount(state.performance.objectCount);
+            
+            if (state.stage) {
+                this.view.updateStageInfo(state.stage);
+            }
+        }
+    }
+
+    /**
      * オブジェクト選択時の処理
      */
     private handleObjectSelection(object: FabricObjectWithData | null): void {
-        this.model.updateEditorState({ selectedObject: object });
+        // Update store instead of model directly
+        this.store.setSelectedObject(object);
+        
         this.view.showObjectProperties(object);
         this.view.enableActionButtons(!!object);
         
@@ -429,6 +494,8 @@ export class EditorController implements IEditorController {
      * ステージ変更時の処理
      */
     private handleStageModified(stageData: StageData): void {
+        // Update both store and model
+        this.store.setStageData(stageData);
         this.model.setCurrentStage(stageData);
         this.updateUIFromModel();
         this.triggerAutoSave();
