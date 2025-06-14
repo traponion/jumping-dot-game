@@ -88,3 +88,10 @@ const createGameDOM = () => {
 
 // Create DOM elements when setup runs
 createGameDOM();
+
+// CI environment specific setup
+if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    console.log('CI environment detected, ensuring DOM elements are properly initialized');
+    // Force DOM element creation in CI environment
+    createGameDOM();
+}

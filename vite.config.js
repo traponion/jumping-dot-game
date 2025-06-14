@@ -1,11 +1,15 @@
 import { defineConfig } from 'vite'
+import path from 'path'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/jumping-dot-game/' : '/',
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js', './vitest.setup.ts'],
+    setupFiles: [
+      path.resolve(process.cwd(), 'src/test/setup.js'),
+      path.resolve(process.cwd(), 'vitest.setup.ts')
+    ],
     environmentOptions: {
       jsdom: {
         resources: 'usable',
