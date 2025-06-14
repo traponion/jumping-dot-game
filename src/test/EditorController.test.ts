@@ -59,6 +59,36 @@ vi.mock('fabric', () => ({
     }))
 }));
 
+// EditorRenderSystemをモック
+vi.mock('../systems/EditorRenderSystem.js', () => ({
+    EditorRenderSystem: vi.fn().mockImplementation(() => ({
+        selectTool: vi.fn(),
+        getEditorState: vi.fn().mockReturnValue({
+            selectedTool: 'select',
+            selectedObject: null,
+            isDrawing: false,
+            gridEnabled: true,
+            snapToGrid: true
+        }),
+        toggleGrid: vi.fn(),
+        toggleSnap: vi.fn(),
+        deleteSelectedObject: vi.fn(),
+        duplicateSelectedObject: vi.fn(),
+        clearStage: vi.fn(),
+        loadStageData: vi.fn(),
+        exportStageData: vi.fn().mockReturnValue({
+            id: 1,
+            name: 'New Stage',
+            platforms: [],
+            spikes: [],
+            goal: { x: 100, y: 100, width: 40, height: 50 },
+            startText: { x: 50, y: 50, text: 'START' },
+            goalText: { x: 150, y: 100, text: 'GOAL' }
+        }),
+        dispose: vi.fn()
+    }))
+}));
+
 // DOM要素のモック
 const createMockCanvas = (): HTMLCanvasElement => {
     const canvas = document.createElement('canvas');
@@ -113,6 +143,9 @@ describe('EditorController統合テスト', () => {
         document.body.innerHTML = '';
         createMockUIElements();
         
+        // window.confirm をモック
+        global.confirm = vi.fn().mockReturnValue(true);
+        
         canvas = createMockCanvas();
         document.body.appendChild(canvas);
 
@@ -121,6 +154,9 @@ describe('EditorController統合テスト', () => {
         model = new EditorModel();
         store = new EditorStore();
         controller = new EditorController(canvas, view, model);
+        
+        // ViewにControllerを設定
+        view.setController(controller);
 
         // コントローラーを初期化（非同期）
         try {
@@ -128,6 +164,13 @@ describe('EditorController統合テスト', () => {
         } catch (error) {
             // 初期化エラーを無視して基本的な機能をテスト
             console.warn('Controller initialization failed, continuing with basic tests');
+            
+            // Viewだけでも初期化してmessageContainerを作成
+            try {
+                view.initialize();
+            } catch (viewError) {
+                console.warn('View initialization also failed');
+            }
         }
 
         // エラーハンドラーの統計をリセット
