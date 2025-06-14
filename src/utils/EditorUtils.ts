@@ -1,6 +1,11 @@
 // エディター用のユーティリティ関数
 import * as fabric from 'fabric';
-import { EditorError, type ObjectCreationParams } from '../types/EditorTypes.js';
+import { 
+    EditorError, 
+    ERROR_CODES, 
+    ERROR_TYPES, 
+    type ObjectCreationParams 
+} from '../types/EditorTypes.js';
 import { EDITOR_CONFIG } from '../types/EditorTypes.js';
 
 /**
@@ -15,7 +20,8 @@ export class DOMHelper {
         if (!element) {
             throw new EditorError(
                 `Required DOM element not found: ${id}`,
-                'DOM_ELEMENT_NOT_FOUND',
+                ERROR_CODES.DOM_ELEMENT_NOT_FOUND,
+                ERROR_TYPES.DOM,
                 { elementId: id }
             );
         }

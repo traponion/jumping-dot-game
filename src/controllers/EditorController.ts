@@ -8,7 +8,9 @@ import {
     type KeyboardEventHandler,
     KEYBOARD_SHORTCUTS,
     isValidEditorTool,
-    EditorError
+    EditorError,
+    ERROR_CODES,
+    ERROR_TYPES
 } from '../types/EditorTypes.js';
 import {
     TypeHelper,
@@ -30,6 +32,12 @@ export interface IEditorController {
     toggleGrid(): void;
     toggleSnap(): void;
     dispose(): void;
+    
+    // テストや統合用の追加API
+    createObject(event: any): void;
+    startPlatformDrawing(event: any): void;
+    finishPlatformDrawing(event: any): void;
+    getFabricCanvas(): any;
 }
 
 // View層とModel層のインターフェース
@@ -111,7 +119,8 @@ export class EditorController implements IEditorController {
             DebugHelper.log('EditorController initialization failed', error);
             throw new EditorError(
                 'Failed to initialize editor controller',
-                'CANVAS_INIT_FAILED',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.SYSTEM,
                 { error }
             );
         }
@@ -216,7 +225,8 @@ export class EditorController implements IEditorController {
             if (!this.model.validateStageData(stageData)) {
                 throw new EditorError(
                     'Invalid stage data format',
-                    'INVALID_TOOL',
+                    ERROR_CODES.STAGE_VALIDATION_FAILED,
+                    ERROR_TYPES.VALIDATION,
                     { stageData }
                 );
             }
@@ -319,9 +329,28 @@ export class EditorController implements IEditorController {
      */
     public duplicateSelectedObject(): void {
         try {
-            // TODO: 複製機能の実装
-            DebugHelper.log('Duplicate function not implemented yet');
-            this.view.showErrorMessage('Duplicate function not implemented yet');
+            const selectedObject = this.editorSystem.getSelectedObject();
+            if (!selectedObject) {
+                this.view.showErrorMessage('No object selected to duplicate');
+                return;
+            }
+
+            // オブジェクトタイプに応じて複製処理を実行
+            const duplicatedObject = this.duplicateObject(selectedObject);
+            if (duplicatedObject) {
+                // 複製されたオブジェクトを少しずらして配置
+                this.offsetDuplicatedObject(duplicatedObject);
+                
+                // キャンバスに追加して選択状態にする
+                this.editorSystem.addObject(duplicatedObject);
+                this.editorSystem.selectObject(duplicatedObject);
+                
+                this.updateUIFromModel();
+                DebugHelper.log('Object duplicated successfully', { 
+                    type: duplicatedObject.data?.type 
+                });
+                this.view.showSuccessMessage('Object duplicated');
+            }
         } catch (error) {
             DebugHelper.log('Object duplication failed', error);
             this.view.showErrorMessage('Failed to duplicate object');
@@ -525,5 +554,167 @@ export class EditorController implements IEditorController {
     private hasUnsavedChanges(): boolean {
         // TODO: 実装 - ステージの変更状態を追跡
         return false;
+    }
+
+    /**
+     * オブジェクトを複製
+     */
+    private duplicateObject(original: FabricObjectWithData): FabricObjectWithData | null {
+        try {
+            if (!original.data?.type) {
+                DebugHelper.log('Cannot duplicate object without type data');
+                return null;
+            }
+
+            // オブジェクトをJSON形式でクローン
+            const serialized = original.toObject(['data']);
+            
+            // Fabric.jsオブジェクトタイプに応じて新しいオブジェクトを作成
+            let clonedObject: FabricObjectWithData | null = null;
+
+            switch (original.data.type) {
+                case 'platform':
+                    clonedObject = this.editorSystem.createPlatformFromData(serialized);
+                    break;
+                case 'spike':
+                    clonedObject = this.editorSystem.createSpikeFromData(serialized);
+                    break;
+                case 'goal':
+                    clonedObject = this.editorSystem.createGoalFromData(serialized);
+                    break;
+                case 'text':
+                    clonedObject = this.editorSystem.createTextFromData(serialized);
+                    break;
+                default:
+                    DebugHelper.log('Unknown object type for duplication', { type: original.data.type });
+                    return null;
+            }
+
+            if (clonedObject) {
+                // 同じデータプロパティを設定
+                clonedObject.data = { ...original.data };
+                DebugHelper.log('Object cloned successfully', { type: original.data.type });
+            }
+
+            return clonedObject;
+        } catch (error) {
+            DebugHelper.log('Object cloning failed', error);
+            return null;
+        }
+    }
+
+    /**
+     * 複製されたオブジェクトの位置をオフセット
+     */
+    private offsetDuplicatedObject(object: FabricObjectWithData): void {
+        const OFFSET = 20; // 20px右下にずらす
+        
+        try {
+            if (object.left !== undefined && object.top !== undefined) {
+                object.set({
+                    left: object.left + OFFSET,
+                    top: object.top + OFFSET
+                });
+            }
+
+            // プラットフォームの場合は線の両端をずらす
+            if (object.data?.type === 'platform' && 'x1' in object && 'x2' in object) {
+                const line = object as any;
+                line.set({
+                    x1: line.x1 + OFFSET,
+                    y1: line.y1 + OFFSET,
+                    x2: line.x2 + OFFSET,
+                    y2: line.y2 + OFFSET
+                });
+            }
+
+            DebugHelper.log('Object position offset applied', { offset: OFFSET });
+        } catch (error) {
+            DebugHelper.log('Failed to offset duplicated object', error);
+        }
+    }
+
+    /**
+     * オブジェクトを作成（テスト用API）
+     */
+    public createObject(event: any): void {
+        try {
+            if (!event?.absolutePointer && !event?.pointer) {
+                DebugHelper.log('Invalid event object for createObject');
+                return;
+            }
+
+            const pointer = event.absolutePointer || event.pointer;
+            const currentTool = this.model.getEditorState().selectedTool;
+
+            switch (currentTool) {
+                case 'spike':
+                    this.editorSystem.createSpike(pointer.x, pointer.y);
+                    break;
+                case 'goal':
+                    this.editorSystem.createGoal(pointer.x, pointer.y);
+                    break;
+                case 'text':
+                    this.editorSystem.createText(pointer.x, pointer.y, 'TEXT');
+                    break;
+                default:
+                    DebugHelper.log('Cannot create object for tool', { tool: currentTool });
+                    return;
+            }
+
+            this.updateUIFromModel();
+            DebugHelper.log('Object created via createObject API', { 
+                tool: currentTool, 
+                position: pointer 
+            });
+        } catch (error) {
+            DebugHelper.log('createObject failed', error);
+        }
+    }
+
+    /**
+     * プラットフォーム描画開始（テスト用API）
+     */
+    public startPlatformDrawing(event: any): void {
+        try {
+            if (!event?.absolutePointer && !event?.pointer) {
+                DebugHelper.log('Invalid event object for startPlatformDrawing');
+                return;
+            }
+
+            const pointer = event.absolutePointer || event.pointer;
+            this.editorSystem.startPlatformDrawing(pointer.x, pointer.y);
+            
+            DebugHelper.log('Platform drawing started', { position: pointer });
+        } catch (error) {
+            DebugHelper.log('startPlatformDrawing failed', error);
+        }
+    }
+
+    /**
+     * プラットフォーム描画終了（テスト用API）
+     */
+    public finishPlatformDrawing(event: any): void {
+        try {
+            if (!event?.absolutePointer && !event?.pointer) {
+                DebugHelper.log('Invalid event object for finishPlatformDrawing');
+                return;
+            }
+
+            const pointer = event.absolutePointer || event.pointer;
+            this.editorSystem.finishPlatformDrawing(pointer.x, pointer.y);
+            this.updateUIFromModel();
+            
+            DebugHelper.log('Platform drawing finished', { position: pointer });
+        } catch (error) {
+            DebugHelper.log('finishPlatformDrawing failed', error);
+        }
+    }
+
+    /**
+     * Fabric.jsキャンバスを取得（テスト用API）
+     */
+    public getFabricCanvas(): any {
+        return this.editorSystem?.getFabricCanvas() || null;
     }
 }

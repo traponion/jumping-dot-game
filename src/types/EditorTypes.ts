@@ -191,14 +191,158 @@ export type ObjectType = EditorTool | 'grid';
 export type MouseEventHandler = (e: fabric.TEvent<Event>) => void;
 export type KeyboardEventHandler = (e: KeyboardEvent) => void;
 
-// エラー型定義
+// エラー種別の定義
+export const ERROR_TYPES = {
+    VALIDATION: 'VALIDATION_ERROR',
+    IO: 'IO_ERROR',
+    FABRIC: 'FABRIC_ERROR',
+    PERFORMANCE: 'PERFORMANCE_ERROR',
+    DOM: 'DOM_ERROR',
+    NETWORK: 'NETWORK_ERROR',
+    USER_INPUT: 'USER_INPUT_ERROR',
+    SYSTEM: 'SYSTEM_ERROR'
+} as const;
+
+export type ErrorType = typeof ERROR_TYPES[keyof typeof ERROR_TYPES];
+
+// エラーコードの定義
+export const ERROR_CODES = {
+    // キャンバス関連
+    CANVAS_INIT_FAILED: 'CANVAS_INIT_FAILED',
+    CANVAS_RENDER_FAILED: 'CANVAS_RENDER_FAILED',
+    
+    // オブジェクト関連
+    OBJECT_CREATION_FAILED: 'OBJECT_CREATION_FAILED',
+    OBJECT_MODIFICATION_FAILED: 'OBJECT_MODIFICATION_FAILED',
+    INVALID_OBJECT_TYPE: 'INVALID_OBJECT_TYPE',
+    
+    // ツール関連
+    INVALID_TOOL: 'INVALID_TOOL',
+    TOOL_SWITCH_FAILED: 'TOOL_SWITCH_FAILED',
+    
+    // DOM関連
+    DOM_ELEMENT_NOT_FOUND: 'DOM_ELEMENT_NOT_FOUND',
+    DOM_EVENT_FAILED: 'DOM_EVENT_FAILED',
+    
+    // ステージ関連
+    STAGE_LOAD_FAILED: 'STAGE_LOAD_FAILED',
+    STAGE_SAVE_FAILED: 'STAGE_SAVE_FAILED',
+    STAGE_VALIDATION_FAILED: 'STAGE_VALIDATION_FAILED',
+    
+    // 入力関連
+    INVALID_INPUT: 'INVALID_INPUT',
+    INVALID_COORDINATES: 'INVALID_COORDINATES',
+    
+    // パフォーマンス関連
+    MEMORY_LIMIT_EXCEEDED: 'MEMORY_LIMIT_EXCEEDED',
+    RENDER_TIMEOUT: 'RENDER_TIMEOUT',
+    
+    // ネットワーク関連
+    NETWORK_FAILED: 'NETWORK_FAILED',
+    
+    // システム関連
+    UNKNOWN_ERROR: 'UNKNOWN_ERROR'
+} as const;
+
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+
+/**
+ * エラーハンドリング用のカスタムエラークラス
+ */
 export class EditorError extends Error {
+    public readonly timestamp: Date;
+    
     constructor(
         message: string,
-        public readonly code: 'CANVAS_INIT_FAILED' | 'OBJECT_CREATION_FAILED' | 'INVALID_TOOL' | 'DOM_ELEMENT_NOT_FOUND',
-        public readonly context?: any
+        public readonly code: ErrorCode,
+        public readonly type: ErrorType = ERROR_TYPES.SYSTEM,
+        public readonly details?: any,
+        public readonly recoverable: boolean = true
     ) {
         super(message);
         this.name = 'EditorError';
+        this.timestamp = new Date();
+        
+        // Maintains proper stack trace for where our error was thrown (only available on V8)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, EditorError);
+        }
+    }
+
+    /**
+     * エラーの詳細情報を構造化された形式で取得
+     */
+    public getDetails(): {
+        message: string;
+        code: ErrorCode;
+        type: ErrorType;
+        timestamp: string;
+        recoverable: boolean;
+        details?: any;
+        stack?: string;
+    } {
+        const result: {
+            message: string;
+            code: ErrorCode;
+            type: ErrorType;
+            timestamp: string;
+            recoverable: boolean;
+            details?: any;
+            stack?: string;
+        } = {
+            message: this.message,
+            code: this.code,
+            type: this.type,
+            timestamp: this.timestamp.toISOString(),
+            recoverable: this.recoverable
+        };
+        
+        if (this.details !== undefined) {
+            result.details = this.details;
+        }
+        
+        if (this.stack) {
+            result.stack = this.stack;
+        }
+        
+        return result;
+    }
+
+    /**
+     * ユーザー表示用のメッセージを取得
+     */
+    public getUserMessage(): string {
+        switch (this.type) {
+            case ERROR_TYPES.VALIDATION:
+                return `入力データに問題があります: ${this.message}`;
+            case ERROR_TYPES.IO:
+                return `ファイル操作でエラーが発生しました: ${this.message}`;
+            case ERROR_TYPES.FABRIC:
+                return `描画処理でエラーが発生しました: ${this.message}`;
+            case ERROR_TYPES.PERFORMANCE:
+                return `パフォーマンスの問題が発生しました: ${this.message}`;
+            case ERROR_TYPES.DOM:
+                return `UI要素の操作でエラーが発生しました: ${this.message}`;
+            case ERROR_TYPES.NETWORK:
+                return `ネットワーク接続でエラーが発生しました: ${this.message}`;
+            case ERROR_TYPES.USER_INPUT:
+                return `入力内容を確認してください: ${this.message}`;
+            default:
+                return `予期しないエラーが発生しました: ${this.message}`;
+        }
+    }
+
+    /**
+     * 技術的な詳細を含む開発者向けメッセージを取得
+     */
+    public getDeveloperMessage(): string {
+        return `[${this.type}:${this.code}] ${this.message} (${this.timestamp.toISOString()})`;
+    }
+
+    /**
+     * エラーがリカバリ可能かどうかを判定
+     */
+    public isRecoverable(): boolean {
+        return this.recoverable;
     }
 }

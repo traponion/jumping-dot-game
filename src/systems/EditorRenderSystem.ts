@@ -15,7 +15,9 @@ import {
     isGoalObject,
     isTextObject,
     isGridObject,
-    EditorError
+    EditorError,
+    ERROR_CODES,
+    ERROR_TYPES
 } from '../types/EditorTypes.js';
 
 import {
@@ -71,7 +73,8 @@ export class EditorRenderSystem extends FabricRenderSystem {
         } catch (error) {
             throw new EditorError(
                 'Failed to initialize editor mode',
-                'CANVAS_INIT_FAILED',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC,
                 { error }
             );
         }
@@ -277,7 +280,8 @@ export class EditorRenderSystem extends FabricRenderSystem {
             default:
                 throw new EditorError(
                     `Unsupported object type: ${type}`,
-                    'OBJECT_CREATION_FAILED',
+                    ERROR_CODES.OBJECT_CREATION_FAILED,
+                    ERROR_TYPES.FABRIC,
                     { type, position }
                 );
         }
@@ -517,5 +521,153 @@ export class EditorRenderSystem extends FabricRenderSystem {
      */
     public getEditorState(): EditorState {
         return { ...this.editorState };
+    }
+
+    /**
+     * 選択されたオブジェクトを取得
+     */
+    public getSelectedObject(): FabricObjectWithData | null {
+        return this.editorState.selectedObject;
+    }
+
+    /**
+     * オブジェクトをキャンバスに追加
+     */
+    public addObject(object: FabricObjectWithData): void {
+        this.canvas.add(object);
+        this.canvas.renderAll();
+        this.updateStageDataFromCanvas();
+        DebugHelper.log('Object added to canvas', { type: object.data?.type });
+    }
+
+    /**
+     * オブジェクトを選択状態にする
+     */
+    public selectObject(object: FabricObjectWithData): void {
+        this.canvas.setActiveObject(object);
+        this.editorState.selectedObject = object;
+        this.callbacks.onObjectSelected?.(object);
+        this.canvas.renderAll();
+        DebugHelper.log('Object selected', { type: object.data?.type });
+    }
+
+    /**
+     * Fabric.jsキャンバスを取得
+     */
+    public getFabricCanvas(): fabric.Canvas {
+        return this.canvas;
+    }
+
+    /**
+     * スパイクを作成（API用）
+     */
+    public createSpike(x: number, y: number): void {
+        this.placeObject(EDITOR_TOOLS.SPIKE, { x, y });
+        this.updateStageDataFromCanvas();
+    }
+
+    /**
+     * ゴールを作成（API用）
+     */
+    public createGoal(x: number, y: number): void {
+        this.placeObject(EDITOR_TOOLS.GOAL, { x, y });
+        this.updateStageDataFromCanvas();
+    }
+
+    /**
+     * テキストを作成（API用）
+     */
+    public createText(x: number, y: number, text: string): void {
+        const params: ObjectCreationParams = { 
+            position: { x, y }, 
+            text 
+        };
+        const textObject = ObjectFactory.createText(params);
+        this.canvas.add(textObject);
+        this.canvas.renderAll();
+        this.updateStageDataFromCanvas();
+    }
+
+    /**
+     * プラットフォーム描画開始（API用）
+     */
+    public startPlatformDrawing(x: number, y: number): void {
+        this.startDrawingPlatform({ x, y });
+    }
+
+    /**
+     * プラットフォーム描画終了（API用）
+     */
+    public finishPlatformDrawing(x: number, y: number): void {
+        // 現在描画中のプラットフォームを更新してから完了
+        this.updateDrawingPlatform({ x, y });
+        this.finishDrawingPlatform();
+        this.updateStageDataFromCanvas();
+    }
+
+    /**
+     * シリアライズデータからプラットフォームを作成
+     */
+    public createPlatformFromData(data: any): FabricObjectWithData | null {
+        try {
+            const line = new fabric.Line([data.x1, data.y1, data.x2, data.y2], {
+                stroke: EDITOR_CONFIG.COLORS.PLATFORM,
+                strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
+                selectable: true
+            });
+            FabricHelper.setObjectData(line, { type: EDITOR_TOOLS.PLATFORM });
+            return line as FabricObjectWithData;
+        } catch (error) {
+            DebugHelper.log('Failed to create platform from data', error);
+            return null;
+        }
+    }
+
+    /**
+     * シリアライズデータからスパイクを作成
+     */
+    public createSpikeFromData(data: any): FabricObjectWithData | null {
+        try {
+            const spike = ObjectFactory.createSpike({
+                position: { x: data.left, y: data.top },
+                size: { width: data.width, height: data.height }
+            });
+            return spike;
+        } catch (error) {
+            DebugHelper.log('Failed to create spike from data', error);
+            return null;
+        }
+    }
+
+    /**
+     * シリアライズデータからゴールを作成
+     */
+    public createGoalFromData(data: any): FabricObjectWithData | null {
+        try {
+            const goal = ObjectFactory.createGoal({
+                position: { x: data.left, y: data.top },
+                size: { width: data.width, height: data.height }
+            });
+            return goal;
+        } catch (error) {
+            DebugHelper.log('Failed to create goal from data', error);
+            return null;
+        }
+    }
+
+    /**
+     * シリアライズデータからテキストを作成
+     */
+    public createTextFromData(data: any): FabricObjectWithData | null {
+        try {
+            const text = ObjectFactory.createText({
+                position: { x: data.left, y: data.top },
+                text: data.text || 'TEXT'
+            });
+            return text;
+        } catch (error) {
+            DebugHelper.log('Failed to create text from data', error);
+            return null;
+        }
     }
 }
