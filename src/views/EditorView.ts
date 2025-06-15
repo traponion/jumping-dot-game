@@ -508,9 +508,10 @@ export class EditorView implements IEditorView {
     private removeMessage(messageEl: HTMLElement): void {
         if (messageEl.parentNode) {
             messageEl.style.animation = 'slideOutRight 0.3s ease-in forwards';
-            setTimeout(() => {
+            // Use animationend event instead of setTimeout for better synchronization
+            messageEl.addEventListener('animationend', () => {
                 messageEl.remove();
-            }, 300);
+            }, { once: true });
         }
     }
 
