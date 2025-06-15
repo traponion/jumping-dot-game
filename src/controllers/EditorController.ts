@@ -377,30 +377,12 @@ export class EditorController implements IEditorController {
      */
     public duplicateSelectedObject(): void {
         try {
-            const selectedObject = this.editorSystem.getSelectedObject();
-            if (!selectedObject) {
-                this.view.showErrorMessage('No object selected to duplicate');
-                return;
-            }
-
-            // オブジェクトタイプに応じて複製処理を実行
-            const duplicatedObject = this.duplicateObject(selectedObject);
-            if (duplicatedObject) {
-                // 複製されたオブジェクトを少しずらして配置
-                this.offsetDuplicatedObject(duplicatedObject);
-                
-                // キャンバスに追加して選択状態にする
-                this.editorSystem.addObject(duplicatedObject);
-                this.editorSystem.selectObject(duplicatedObject);
-                
-                // Update stage data and sync with store
-                this.editorSystem.updateStageDataFromCanvas();
-                this.updateUIFromModel();
-                DebugHelper.log('Object duplicated successfully', { 
-                    type: duplicatedObject.data?.type 
-                });
-                this.view.showSuccessMessage('Object duplicated');
-            }
+            this.editorSystem.duplicateSelectedObject();
+            
+            // Update stage data and sync with store
+            this.editorSystem.updateStageDataFromCanvas();
+            this.updateUIFromModel();
+            DebugHelper.log('Selected object duplicated');
         } catch (error) {
             DebugHelper.log('Object duplication failed', error);
             this.view.showErrorMessage('Failed to duplicate object');
@@ -585,7 +567,8 @@ export class EditorController implements IEditorController {
      * ステージをJSONファイルとしてダウンロード
      */
     private downloadStageAsJson(stageData: StageData): void {
-        const json = JSON.stringify(stageData, null, 2);
+        this.model.setCurrentStage(stageData);
+        const json = this.model.exportStageAsJson();
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         
