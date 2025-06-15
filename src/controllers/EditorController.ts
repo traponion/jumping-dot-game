@@ -437,6 +437,11 @@ export class EditorController implements IEditorController {
             this.unsubscribeStore = null;
         }
         
+        // Dispose render system and adapter
+        if (this.editorSystem) {
+            this.editorSystem.dispose();
+        }
+        
         this.view.dispose();
         this.isInitialized = false;
         DebugHelper.log('EditorController disposed');
@@ -523,6 +528,11 @@ export class EditorController implements IEditorController {
             case 'Delete':
             case 'Backspace':
                 this.deleteSelectedObject();
+                e.preventDefault();
+                break;
+            case 'Ctrl+KeyD':
+            case 'Cmd+KeyD':
+                this.duplicateSelectedObject();
                 e.preventDefault();
                 break;
             case 'Ctrl+KeyG':
@@ -622,83 +632,6 @@ export class EditorController implements IEditorController {
         return false;
     }
 
-    /**
-     * オブジェクトを複製
-     */
-    private duplicateObject(original: FabricObjectWithData): FabricObjectWithData | null {
-        try {
-            if (!original.data?.type) {
-                DebugHelper.log('Cannot duplicate object without type data');
-                return null;
-            }
-
-            // オブジェクトをJSON形式でクローン
-            const serialized = original.toObject(['data']);
-            
-            // Fabric.jsオブジェクトタイプに応じて新しいオブジェクトを作成
-            let clonedObject: FabricObjectWithData | null = null;
-
-            switch (original.data.type) {
-                case 'platform':
-                    clonedObject = this.editorSystem.createPlatformFromData(serialized);
-                    break;
-                case 'spike':
-                    clonedObject = this.editorSystem.createSpikeFromData(serialized);
-                    break;
-                case 'goal':
-                    clonedObject = this.editorSystem.createGoalFromData(serialized);
-                    break;
-                case 'text':
-                    clonedObject = this.editorSystem.createTextFromData(serialized);
-                    break;
-                default:
-                    DebugHelper.log('Unknown object type for duplication', { type: original.data.type });
-                    return null;
-            }
-
-            if (clonedObject) {
-                // 同じデータプロパティを設定
-                clonedObject.data = { ...original.data };
-                DebugHelper.log('Object cloned successfully', { type: original.data.type });
-            }
-
-            return clonedObject;
-        } catch (error) {
-            DebugHelper.log('Object cloning failed', error);
-            return null;
-        }
-    }
-
-    /**
-     * 複製されたオブジェクトの位置をオフセット
-     */
-    private offsetDuplicatedObject(object: FabricObjectWithData): void {
-        const OFFSET = 20; // 20px右下にずらす
-        
-        try {
-            if (object.left !== undefined && object.top !== undefined) {
-                object.set({
-                    left: object.left + OFFSET,
-                    top: object.top + OFFSET
-                });
-            }
-
-            // プラットフォームの場合は線の両端をずらす
-            if (object.data?.type === 'platform' && 'x1' in object && 'x2' in object) {
-                const line = object as any;
-                line.set({
-                    x1: line.x1 + OFFSET,
-                    y1: line.y1 + OFFSET,
-                    x2: line.x2 + OFFSET,
-                    y2: line.y2 + OFFSET
-                });
-            }
-
-            DebugHelper.log('Object position offset applied', { offset: OFFSET });
-        } catch (error) {
-            DebugHelper.log('Failed to offset duplicated object', error);
-        }
-    }
 
     /**
      * オブジェクトを作成（テスト用API）

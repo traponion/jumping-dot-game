@@ -11,6 +11,7 @@ import { EDITOR_TOOLS } from '../types/EditorTypes.js';
 // Mock RenderSystemFactory to return our test adapter
 vi.mock('../systems/RenderSystemFactory.js', () => ({
     createEditorRenderSystem: vi.fn(),
+    createRenderAdapter: vi.fn(),
     isTestEnvironment: vi.fn().mockReturnValue(true)
 }));
 
@@ -62,13 +63,21 @@ describe('EditorController (Adapter Pattern)', () => {
         mockCanvas.width = 800;
         mockCanvas.height = 600;
 
-        // Create mock adapter and render system
-        mockAdapter = new MockRenderAdapter();
-        mockRenderSystem = new EditorRenderSystem(mockAdapter);
-
-        // Mock the factory to return our test render system
+        // Mock the factory to create our test adapter
         const RenderSystemFactory = await import('../systems/RenderSystemFactory.js');
-        vi.mocked(RenderSystemFactory.createEditorRenderSystem).mockReturnValue(mockRenderSystem);
+        
+        // Mock the factory methods to create adapter with callbacks
+        vi.mocked(RenderSystemFactory.createRenderAdapter).mockImplementation((canvasElement, callbacks) => {
+            // Create mock adapter with the callbacks passed from EditorController
+            mockAdapter = new MockRenderAdapter(callbacks);
+            return mockAdapter;
+        });
+        
+        vi.mocked(RenderSystemFactory.createEditorRenderSystem).mockImplementation((canvasElement, callbacks) => {
+            const adapter = RenderSystemFactory.createRenderAdapter(canvasElement, callbacks);
+            mockRenderSystem = new EditorRenderSystem(adapter);
+            return mockRenderSystem;
+        });
 
         // Mock view
         mockView = new EditorView(document.createElement('canvas'));
@@ -112,7 +121,8 @@ describe('EditorController (Adapter Pattern)', () => {
             await expect(controller.initialize()).resolves.toBeUndefined();
             
             expect(mockView.initialize).toHaveBeenCalled();
-            expect(mockAdapter.clearCanvasCalled).toBeGreaterThan(0);
+            // Check that adapter was used during initialization
+            expect(mockAdapter.stageLoads).toHaveLength(1); // New stage created
         });
 
         it('should create new stage on initialization', async () => {
@@ -263,7 +273,10 @@ describe('EditorController (Adapter Pattern)', () => {
             mockAdapter.reset();
         });
 
-        it('should handle object selection callback', () => {
+        it('should handle object selection callback', async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            
             const mockObject = { id: 'test-object', type: 'goal' };
             
             // Simulate object selection through adapter
@@ -273,7 +286,11 @@ describe('EditorController (Adapter Pattern)', () => {
             expect(store.editor.selectedObject).toEqual(mockObject);
         });
 
-        it('should handle stage modification callback', () => {
+        it('should handle stage modification callback', async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset(); // Reset after initialization
+            
             const modifiedStageData = {
                 id: 2,
                 name: 'Modified Stage',
@@ -310,7 +327,8 @@ describe('EditorController (Adapter Pattern)', () => {
 
         it('should handle Ctrl+D for duplicate', () => {
             const duplicateEvent = new KeyboardEvent('keydown', { 
-                key: 'd', 
+                key: 'KeyD', 
+                code: 'KeyD',
                 ctrlKey: true 
             });
             document.dispatchEvent(duplicateEvent);
@@ -320,7 +338,8 @@ describe('EditorController (Adapter Pattern)', () => {
 
         it('should handle Ctrl+N for new stage', () => {
             const newStageEvent = new KeyboardEvent('keydown', { 
-                key: 'n', 
+                key: 'KeyN', 
+                code: 'KeyN',
                 ctrlKey: true 
             });
             document.dispatchEvent(newStageEvent);
@@ -365,6 +384,9 @@ describe('EditorController (Adapter Pattern)', () => {
         });
 
         it('should track adapter method calls efficiently', () => {
+            // Reset to ensure clean count
+            mockAdapter.reset();
+            
             // Perform multiple operations
             controller.toggleGrid();
             controller.selectTool(EDITOR_TOOLS.SPIKE);
