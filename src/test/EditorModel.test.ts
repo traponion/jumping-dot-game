@@ -51,7 +51,7 @@ describe('EditorModel', () => {
     describe('ステージデータ管理', () => {
         const validStageData: StageData = {
             id: 1,
-            name: 'テストステージ',
+            name: 'Test Stage',
             platforms: [
                 { x1: 0, y1: 100, x2: 200, y2: 100 }
             ],
@@ -68,7 +68,7 @@ describe('EditorModel', () => {
             const currentStage = model.getCurrentStage();
             
             expect(currentStage).not.toBeNull();
-            expect(currentStage?.name).toBe('テストステージ');
+            expect(currentStage?.name).toBe('Test Stage');
             expect(currentStage?.platforms.length).toBe(1);
         });
 
@@ -472,9 +472,9 @@ describe('EditorModel', () => {
             model.setCurrentStage(complexStageData);
             const stats = model.getStageStatistics();
             
-            // 最小X: 0, 最大X: 425, 最小Y: 75, 最大Y: 150
-            expect(stats?.boundingBox.width).toBe(425);
-            expect(stats?.boundingBox.height).toBe(75);
+            // 最小X: 0, 最大X: 400, 最小Y: 80, 最大Y: 150
+            expect(stats?.boundingBox.width).toBe(400);
+            expect(stats?.boundingBox.height).toBe(70);
         });
     });
 

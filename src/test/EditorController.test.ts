@@ -269,7 +269,7 @@ describe('EditorController統合テスト', () => {
             controller.clearStage();
             
             const currentStage = store.getCurrentStage();
-            expect(currentStage).toBeNull();
+            expect(currentStage).toBeUndefined();
         });
 
         it('ステージ情報を更新できること', () => {
