@@ -42,6 +42,12 @@ const mockCanvas = {
         setProperty: vi.fn(),
         getPropertyValue: vi.fn(),
         removeProperty: vi.fn()
+    },
+    classList: {
+        add: vi.fn(),
+        remove: vi.fn(),
+        toggle: vi.fn(),
+        contains: vi.fn()
     }
 } as unknown as HTMLCanvasElement;
 

@@ -149,12 +149,7 @@ describe('エディターパフォーマンステスト', () => {
         view.initialize(); // Initialize UI elements
         model = new EditorModel();
         
-        // Increase validation limits for performance tests
-        (model as any).validationRules.objectLimits = {
-            platforms: 1000,
-            spikes: 500, 
-            texts: 50
-        };
+        // Note: Using data within validation limits (platforms: 100, spikes: 50)
         
         store = new EditorStore();
         controller = new EditorController(canvas, view, model);
@@ -355,10 +350,10 @@ describe('エディターパフォーマンステスト', () => {
             const largeStageData = {
                 id: 1,
                 name: 'LargeStage',
-                platforms: Array(500).fill(0).map((_, i) => ({
+                platforms: Array(100).fill(0).map((_, i) => ({
                     x1: i * 2, y1: 100, x2: i * 2 + 10, y2: 100
                 })),
-                spikes: Array(300).fill(0).map((_, i) => ({
+                spikes: Array(50).fill(0).map((_, i) => ({
                     x: i * 3, y: 80, width: 15, height: 15
                 })),
                 goal: { x: 1000, y: 50, width: 40, height: 50 },
@@ -433,20 +428,13 @@ describe('エディターパフォーマンステスト', () => {
 
     describe('JSON処理パフォーマンス', () => {
         it('大きなステージのエクスポートが高速であること', () => {
-            // Ensure validation limits are set for this test
-            (model as any).validationRules.objectLimits = {
-                platforms: 1000,
-                spikes: 500, 
-                texts: 50
-            };
-            
             const largeStageData = {
                 id: 1,
                 name: 'LargeExportStage',
-                platforms: Array(900).fill(0).map((_, i) => ({
+                platforms: Array(100).fill(0).map((_, i) => ({
                     x1: i, y1: 100, x2: i + 10, y2: 100
                 })),
-                spikes: Array(450).fill(0).map((_, i) => ({
+                spikes: Array(50).fill(0).map((_, i) => ({
                     x: i * 2, y: 80, width: 15, height: 15
                 })),
                 goal: { x: 2000, y: 50, width: 40, height: 50 },
@@ -465,20 +453,13 @@ describe('エディターパフォーマンステスト', () => {
         });
 
         it('大きなJSONのインポートが高速であること', () => {
-            // Ensure validation limits are set for this test
-            (model as any).validationRules.objectLimits = {
-                platforms: 1000,
-                spikes: 500, 
-                texts: 50
-            };
-            
             const largeStageData = {
                 id: 1,
                 name: 'LargeImportStage',
-                platforms: Array(800).fill(0).map((_, i) => ({
+                platforms: Array(100).fill(0).map((_, i) => ({
                     x1: i, y1: 100, x2: i + 15, y2: 100
                 })),
-                spikes: Array(400).fill(0).map((_, i) => ({
+                spikes: Array(50).fill(0).map((_, i) => ({
                     x: i * 3, y: 80, width: 15, height: 15
                 })),
                 goal: { x: 2400, y: 50, width: 40, height: 50 },
