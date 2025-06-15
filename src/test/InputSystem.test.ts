@@ -216,5 +216,68 @@ describe('InputSystem', () => {
             const keys = inputSystem.getKeys();
             expect(keys).toEqual({});
         });
+
+        it('should force key sync to reset all keys', () => {
+            // Set some keys first
+            inputSystem.setGameState(true, false);
+            const leftEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+            inputSystem.simulateKeyDown(leftEvent);
+
+            // Mock document.hasFocus to return true
+            const hasFocusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+
+            inputSystem.forceKeySync();
+
+            const keys = inputSystem.getKeys();
+            expect(keys.ArrowLeft).toBe(false);
+            expect(keys.ArrowRight).toBe(false);
+            expect(keys.ArrowUp).toBe(false);
+            expect(keys.Space).toBe(false);
+
+            hasFocusSpy.mockRestore();
+        });
+
+        it('should handle force key sync when document has no focus', () => {
+            // Set some keys first
+            inputSystem.setGameState(true, false);
+            const leftEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+            inputSystem.simulateKeyDown(leftEvent);
+
+            // Mock document.hasFocus to return false
+            const hasFocusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+
+            inputSystem.forceKeySync();
+
+            const keys = inputSystem.getKeys();
+            expect(keys).toEqual({});
+
+            hasFocusSpy.mockRestore();
+        });
+    });
+
+    describe('test helper methods', () => {
+        it('should handle testHandleKeyDown', () => {
+            inputSystem.setGameState(true, false);
+            const event = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+
+            inputSystem.testHandleKeyDown(event);
+
+            const keys = inputSystem.getKeys();
+            expect(keys.ArrowLeft).toBe(true);
+        });
+
+        it('should handle testHandleKeyUp', () => {
+            // First press a key
+            inputSystem.setGameState(true, false);
+            const downEvent = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+            inputSystem.testHandleKeyDown(downEvent);
+
+            // Then release it
+            const upEvent = new KeyboardEvent('keyup', { code: 'ArrowLeft' });
+            inputSystem.testHandleKeyUp(upEvent);
+
+            const keys = inputSystem.getKeys();
+            expect(keys.ArrowLeft).toBe(false);
+        });
     });
 });
