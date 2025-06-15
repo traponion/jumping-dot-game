@@ -1,6 +1,11 @@
 // ErrorHandler unit tests
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ErrorHandler, type ErrorReporter } from '../utils/ErrorHandler.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { 
+    ErrorHandler, 
+    type ErrorReporter, 
+    ConsoleErrorReporter,
+    UIErrorReporter 
+} from '../utils/ErrorHandler.js';
 import { EditorError, ERROR_CODES, ERROR_TYPES } from '../types/EditorTypes.js';
 
 describe('ErrorHandler', () => {
@@ -408,5 +413,201 @@ describe('ErrorHandler', () => {
             expect(error.message).toBe('Slow operation');
             expect(error.details).toEqual({ duration: 5000 });
         });
+    });
+
+    describe('ErrorFilter Management', () => {
+        it('should add and use error filters', () => {
+            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
+            errorHandler.addFilter(filter);
+            
+            const fabricError = new EditorError(
+                'Fabric error',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            const validationError = new EditorError(
+                'Validation error',
+                ERROR_CODES.STAGE_VALIDATION_FAILED,
+                ERROR_TYPES.VALIDATION
+            );
+            
+            errorHandler.handleError(fabricError);
+            errorHandler.handleError(validationError);
+            
+            // Only validation error should be reported (fabric error filtered out)
+            expect(mockReporter.reportError).toHaveBeenCalledTimes(1);
+            expect(mockReporter.reportError).toHaveBeenCalledWith(validationError);
+        });
+
+        it('should remove error filters', () => {
+            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
+            errorHandler.addFilter(filter);
+            errorHandler.removeFilter(filter);
+            
+            const fabricError = new EditorError(
+                'Fabric error',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            
+            errorHandler.handleError(fabricError);
+            
+            // Filter removed, so error should be reported
+            expect(mockReporter.reportError).toHaveBeenCalledWith(fabricError);
+        });
+
+        it('should handle removing non-existent filter gracefully', () => {
+            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
+            
+            // Should not throw error when removing non-existent filter
+            expect(() => {
+                errorHandler.removeFilter(filter);
+            }).not.toThrow();
+        });
+    });
+
+    describe('Safe Execute with Context', () => {
+        it('should add context to sync errors', () => {
+            const errorFunction = () => {
+                throw new Error('Test error');
+            };
+            
+            errorHandler.safeExecuteSync(
+                errorFunction,
+                'default',
+                'test context'
+            );
+            
+            expect(mockReporter.reportError).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    details: expect.objectContaining({
+                        context: 'test context'
+                    })
+                })
+            );
+        });
+
+        it('should add context to async errors', async () => {
+            const asyncErrorFunction = async () => {
+                throw new Error('Async test error');
+            };
+            
+            await errorHandler.safeExecute(
+                asyncErrorFunction,
+                'default',
+                'async context'
+            );
+            
+            expect(mockReporter.reportError).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    details: expect.objectContaining({
+                        context: 'async context'
+                    })
+                })
+            );
+        });
+    });
+});
+
+describe('ConsoleErrorReporter', () => {
+    let consoleErrorReporter: ConsoleErrorReporter;
+    let consoleSpy: any;
+    let consoleWarnSpy: any;
+    let consoleInfoSpy: any;
+
+    beforeEach(() => {
+        consoleErrorReporter = new ConsoleErrorReporter();
+        consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        consoleSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
+        consoleInfoSpy.mockRestore();
+    });
+
+    it('should report error to console', () => {
+        const error = new EditorError(
+            'Test error',
+            ERROR_CODES.CANVAS_INIT_FAILED,
+            ERROR_TYPES.FABRIC,
+            { test: 'details' }
+        );
+        
+        consoleErrorReporter.reportError(error);
+        
+        expect(consoleSpy).toHaveBeenCalledWith(
+            expect.stringContaining('🚨'),
+            error.getDetails()
+        );
+    });
+
+    it('should report warning to console with details', () => {
+        consoleErrorReporter.reportWarning('Test warning', { detail: 'value' });
+        
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+            '⚠️ Test warning',
+            { detail: 'value' }
+        );
+    });
+
+    it('should report warning to console without details', () => {
+        consoleErrorReporter.reportWarning('Test warning');
+        
+        expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ Test warning');
+    });
+
+    it('should report info to console with details', () => {
+        consoleErrorReporter.reportInfo('Test info', { detail: 'value' });
+        
+        expect(consoleInfoSpy).toHaveBeenCalledWith(
+            'ℹ️ Test info',
+            { detail: 'value' }
+        );
+    });
+
+    it('should report info to console without details', () => {
+        consoleErrorReporter.reportInfo('Test info');
+        
+        expect(consoleInfoSpy).toHaveBeenCalledWith('ℹ️ Test info');
+    });
+});
+
+describe('UIErrorReporter', () => {
+    let uiErrorReporter: UIErrorReporter;
+    let mockShowMessage: any;
+
+    beforeEach(() => {
+        mockShowMessage = vi.fn();
+        uiErrorReporter = new UIErrorReporter(mockShowMessage);
+    });
+
+    it('should report error to UI', () => {
+        const error = new EditorError(
+            'Test error',
+            ERROR_CODES.CANVAS_INIT_FAILED,
+            ERROR_TYPES.FABRIC
+        );
+        
+        uiErrorReporter.reportError(error);
+        
+        expect(mockShowMessage).toHaveBeenCalledWith(
+            error.getUserMessage(),
+            'error'
+        );
+    });
+
+    it('should report warning to UI', () => {
+        uiErrorReporter.reportWarning('Test warning', { detail: 'value' });
+        
+        expect(mockShowMessage).toHaveBeenCalledWith('Test warning', 'warning');
+    });
+
+    it('should report info to UI', () => {
+        uiErrorReporter.reportInfo('Test info', { detail: 'value' });
+        
+        expect(mockShowMessage).toHaveBeenCalledWith('Test info', 'info');
     });
 });
