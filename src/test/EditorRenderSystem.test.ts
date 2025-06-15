@@ -19,10 +19,11 @@ const createCompatibleCanvasMock = (): HTMLCanvasElement => {
     canvas.removeEventListener = vi.fn();
     
     // Mock getBoundingClientRect
-    canvas.getBoundingClientRect = vi.fn(() => ({
+    canvas.getBoundingClientRect = vi.fn().mockReturnValue({
         left: 0, top: 0, right: 800, bottom: 600, 
-        width: 800, height: 600, x: 0, y: 0
-    }));
+        width: 800, height: 600, x: 0, y: 0,
+        toJSON: () => ({})
+    } as DOMRect);
     
     // Set canvas dimensions
     canvas.width = 800;
