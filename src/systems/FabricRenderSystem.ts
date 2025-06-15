@@ -2,7 +2,7 @@ import * as fabric from 'fabric';
 import type { Goal, Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
-// Landing prediction interface (previously from LandingPredictionSystem)
+// Landing prediction interface for render system
 export interface LandingPrediction {
     x: number;
     y: number;

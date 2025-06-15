@@ -22,7 +22,7 @@ beforeAll(() => {
     console.log('Global fabric setup:', typeof globalThis.fabric);
   }
 
-  // Mock Canvas API for testing (merged from src/test/setup.js)
+  // Mock Canvas API for testing
   if (typeof HTMLCanvasElement !== 'undefined') {
     HTMLCanvasElement.prototype.getContext = () => ({
       fillRect: () => {},
@@ -48,7 +48,7 @@ beforeAll(() => {
     });
   }
 
-  // Mock performance.now for consistent testing (merged from src/test/setup.js)
+  // Mock performance.now for consistent testing
   if (typeof globalThis.performance === 'undefined') {
     globalThis.performance = {
       now: () => Date.now()
@@ -68,7 +68,7 @@ beforeAll(() => {
     } as any;
   }
 
-  // Mock requestAnimationFrame for tests (consolidated from both files)
+  // Mock requestAnimationFrame for tests
   if (typeof globalThis.requestAnimationFrame === 'undefined') {
     globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
       return setTimeout(() => callback(performance.now()), 16);

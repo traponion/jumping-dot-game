@@ -93,8 +93,7 @@ const createMockController = (): IEditorController => ({
     dispose: vi.fn(),
     createObject: vi.fn(),
     startPlatformDrawing: vi.fn(),
-    finishPlatformDrawing: vi.fn(),
-    getFabricCanvas: vi.fn()
+    finishPlatformDrawing: vi.fn()
 });
 
 describe('EditorView', () => {
