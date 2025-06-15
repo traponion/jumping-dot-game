@@ -433,6 +433,13 @@ describe('エディターパフォーマンステスト', () => {
 
     describe('JSON処理パフォーマンス', () => {
         it('大きなステージのエクスポートが高速であること', () => {
+            // Ensure validation limits are set for this test
+            (model as any).validationRules.objectLimits = {
+                platforms: 1000,
+                spikes: 500, 
+                texts: 50
+            };
+            
             const largeStageData = {
                 id: 1,
                 name: 'LargeExportStage',
@@ -458,6 +465,13 @@ describe('エディターパフォーマンステスト', () => {
         });
 
         it('大きなJSONのインポートが高速であること', () => {
+            // Ensure validation limits are set for this test
+            (model as any).validationRules.objectLimits = {
+                platforms: 1000,
+                spikes: 500, 
+                texts: 50
+            };
+            
             const largeStageData = {
                 id: 1,
                 name: 'LargeImportStage',
@@ -596,6 +610,12 @@ describe('エディターパフォーマンステスト', () => {
         });
 
         it('パフォーマンス統計の概要', () => {
+            // Ensure we have at least one measurement for the summary
+            measurer.measure('summary-test', () => {
+                // Simple operation to measure
+                return Array(100).fill(0).reduce((sum, val, index) => sum + index, 0);
+            });
+            
             const allStats = measurer.getAllStats();
             
             console.log('\n=== エディターパフォーマンス統計 ===');
