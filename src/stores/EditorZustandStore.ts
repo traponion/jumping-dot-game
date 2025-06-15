@@ -130,7 +130,7 @@ export const editorStore = createStore<EditorStore>()(
             }),
             
             setSelectedObject: (object: FabricObjectWithData | null) => set((state) => {
-                state.editor.selectedObject = object;
+                state.editor.selectedObject = object as any;
             }),
             
             setDrawingState: (isDrawing: boolean) => set((state) => {

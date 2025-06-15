@@ -450,7 +450,7 @@ export class EditorRenderSystem extends FabricRenderSystem {
     /**
      * キャンバスからステージデータを更新
      */
-    private updateStageDataFromCanvas(): void {
+    public updateStageDataFromCanvas(): void {
         const newStageData = this.generateStageDataFromCanvas();
         this.callbacks.onStageModified?.(newStageData);
     }
