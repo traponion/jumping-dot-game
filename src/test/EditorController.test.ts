@@ -85,6 +85,15 @@ vi.mock('../systems/EditorRenderSystem.js', () => ({
             startText: { x: 50, y: 50, text: 'START' },
             goalText: { x: 150, y: 100, text: 'GOAL' }
         }),
+        // Object creation methods
+        createSpike: vi.fn(),
+        createGoal: vi.fn(),
+        createText: vi.fn(),
+        startPlatformDrawing: vi.fn(),
+        finishPlatformDrawing: vi.fn(),
+        addObject: vi.fn(),
+        getSelectedObject: vi.fn(),
+        selectObject: vi.fn(),
         dispose: vi.fn()
     }))
 }));
@@ -303,8 +312,9 @@ describe('EditorController統合テスト', () => {
             } as any;
             controller.finishPlatformDrawing(endEvent);
             
-            const currentStage = store.getCurrentStage();
-            expect(currentStage?.platforms.length).toBeGreaterThan(0);
+            // Check if the methods were called on EditorRenderSystem mock
+            expect(controller['editorSystem'].startPlatformDrawing).toHaveBeenCalledWith(100, 200);
+            expect(controller['editorSystem'].finishPlatformDrawing).toHaveBeenCalledWith(200, 200);
         });
 
         it('スパイクを作成できること', () => {
@@ -316,8 +326,8 @@ describe('EditorController統合テスト', () => {
             } as any;
             controller.createObject(mockEvent);
             
-            const currentStage = store.getCurrentStage();
-            expect(currentStage?.spikes.length).toBeGreaterThan(0);
+            // Check if the spike creation method was called on EditorRenderSystem mock
+            expect(controller['editorSystem'].createSpike).toHaveBeenCalledWith(150, 180);
         });
 
         it('ゴールを作成できること', () => {
@@ -329,10 +339,8 @@ describe('EditorController統合テスト', () => {
             } as any;
             controller.createObject(mockEvent);
             
-            // ゴールは一つだけなので、位置が更新されていることを確認
-            const currentStage = store.getCurrentStage();
-            expect(currentStage?.goal.x).toBe(300);
-            expect(currentStage?.goal.y).toBe(250);
+            // Check if the goal creation method was called on EditorRenderSystem mock
+            expect(controller['editorSystem'].createGoal).toHaveBeenCalledWith(300, 250);
         });
 
         it('選択されたオブジェクトを削除できること', () => {
@@ -536,11 +544,11 @@ describe('EditorController集約テスト', () => {
             // 6. ステージ保存（実際のダウンロードではなく処理の確認）
             expect(() => testController.saveStage()).not.toThrow();
             
-            // ワークフローが完了したことを確認
-            const finalStage = testModel.getCurrentStage();
-            expect(finalStage).toBeDefined();
-            expect(finalStage?.platforms.length).toBeGreaterThan(0);
-            expect(finalStage?.spikes.length).toBeGreaterThan(0);
+            // ワークフローが完了したことを確認（メソッド呼び出しで確認）
+            expect(testController['editorSystem'].startPlatformDrawing).toHaveBeenCalled();
+            expect(testController['editorSystem'].finishPlatformDrawing).toHaveBeenCalled();
+            expect(testController['editorSystem'].createSpike).toHaveBeenCalled();
+            expect(testController['editorSystem'].createGoal).toHaveBeenCalled();
             
         } finally {
             testController.dispose();

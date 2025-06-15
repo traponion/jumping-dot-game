@@ -331,8 +331,10 @@ export class EditorController implements IEditorController {
             // Clear store first
             this.store.setStageData(null);
             
-            // Clear render system
-            this.editorSystem.clearStage();
+            // Clear render system (if method exists)
+            if (this.editorSystem && typeof this.editorSystem.clearStage === 'function') {
+                this.editorSystem.clearStage();
+            }
             
             // Clear model
             this.model.setCurrentStage(null);
@@ -350,6 +352,9 @@ export class EditorController implements IEditorController {
     public deleteSelectedObject(): void {
         try {
             this.editorSystem.deleteSelectedObject();
+            
+            // Update stage data and sync with store
+            this.updateStageDataFromCanvas();
             this.updateUIFromModel();
             DebugHelper.log('Selected object deleted');
         } catch (error) {
@@ -379,6 +384,8 @@ export class EditorController implements IEditorController {
                 this.editorSystem.addObject(duplicatedObject);
                 this.editorSystem.selectObject(duplicatedObject);
                 
+                // Update stage data and sync with store
+                this.updateStageDataFromCanvas();
                 this.updateUIFromModel();
                 DebugHelper.log('Object duplicated successfully', { 
                     type: duplicatedObject.data?.type 
@@ -729,6 +736,8 @@ export class EditorController implements IEditorController {
                     return;
             }
 
+            // Update stage data and sync with store
+            this.updateStageDataFromCanvas();
             this.updateUIFromModel();
             DebugHelper.log('Object created via createObject API', { 
                 tool: currentTool, 
@@ -770,6 +779,9 @@ export class EditorController implements IEditorController {
 
             const pointer = event.absolutePointer || event.pointer;
             this.editorSystem.finishPlatformDrawing(pointer.x, pointer.y);
+            
+            // Update stage data and sync with store
+            this.updateStageDataFromCanvas();
             this.updateUIFromModel();
             
             DebugHelper.log('Platform drawing finished', { position: pointer });
