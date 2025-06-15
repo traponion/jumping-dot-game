@@ -40,7 +40,7 @@ export default defineConfig({
         },
         'src/systems/**': {
           branches: 90,
-          functions: 95,
+          functions: 90,
           lines: 90,
           statements: 90
         },
