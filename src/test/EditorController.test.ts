@@ -67,7 +67,7 @@ describe('EditorController (Adapter Pattern)', () => {
         const RenderSystemFactory = await import('../systems/RenderSystemFactory.js');
         
         // Mock the factory methods to create adapter with callbacks
-        vi.mocked(RenderSystemFactory.createRenderAdapter).mockImplementation((canvasElement, callbacks) => {
+        vi.mocked(RenderSystemFactory.createRenderAdapter).mockImplementation((_, callbacks) => {
             // Create mock adapter with the callbacks passed from EditorController
             mockAdapter = new MockRenderAdapter(callbacks);
             return mockAdapter;
