@@ -53,7 +53,7 @@ jobs:
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
         id: deployment
+        uses: actions/deploy-pages@v4
         environment:
           name: github-pages
           url: ${{ steps.deployment.outputs.page_url }}
-        uses: actions/deploy-pages@v4
