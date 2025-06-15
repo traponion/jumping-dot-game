@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EditorController } from '../controllers/EditorController.js';
 import { EditorView } from '../views/EditorView.js';
 import { EditorModel } from '../models/EditorModel.js';
-import { EditorStore } from '../stores/EditorStore.js';
+import { getEditorStore } from '../stores/EditorZustandStore.js';
 // import { EditorPerformanceManager } from '../performance/EditorPerformanceManager.js'; // Unused in disabled tests
 import { poolManager } from '../performance/ObjectPool.js';
 import { globalErrorHandler } from '../utils/ErrorHandler.js';
@@ -139,7 +139,7 @@ describe('エディターパフォーマンステスト', () => {
     let controller: EditorController;
     let view: EditorView;
     let model: EditorModel;
-    let store: EditorStore;
+    let store: ReturnType<typeof getEditorStore>;
     // let _performanceManager: EditorPerformanceManager | undefined; // Unused for now
     let measurer: PerformanceMeasurer;
 
@@ -154,7 +154,7 @@ describe('エディターパフォーマンステスト', () => {
         
         // Note: Using data within validation limits (platforms: 100, spikes: 50)
         
-        store = new EditorStore();
+        store = getEditorStore();
         controller = new EditorController(canvas, view, model);
         
         // Skip performance manager initialization for tests
@@ -337,13 +337,13 @@ describe('エディターパフォーマンステスト', () => {
 
     describe('ステート管理パフォーマンス', () => {
         it.skip('ストア操作が高速であること', () => {
-            // Skip due to store implementation changes
+            // Store operations with Zustand
             measurer.measure('store-operations', () => {
                 for (let i = 0; i < 1000; i++) {
-                    store.dispatch({ type: 'SET_SELECTED_TOOL', payload: EDITOR_TOOLS.PLATFORM });
-                    store.dispatch({ type: 'SET_DRAWING_STATE', payload: true });
-                    store.dispatch({ type: 'SET_DRAWING_STATE', payload: false });
-                    store.dispatch({ type: 'TOGGLE_GRID' });
+                    store.selectTool(EDITOR_TOOLS.PLATFORM);
+                    store.setDrawingState(true);
+                    store.setDrawingState(false);
+                    store.toggleGrid();
                 }
             });
 

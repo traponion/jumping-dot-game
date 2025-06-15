@@ -2,7 +2,6 @@
 import { EditorController } from './controllers/EditorController.js';
 import { EditorView } from './views/EditorView.js';
 import { EditorModel } from './models/EditorModel.js';
-// import { EditorStore } from './stores/EditorStore.js'; // 将来の拡張用
 import { globalErrorHandler } from './utils/ErrorHandler.js';
 import {
     DOMHelper,
@@ -22,7 +21,6 @@ class EditorApplication {
     private controller!: EditorController;
     private view!: EditorView;
     private model!: EditorModel;
-    // private store!: EditorStore; // 未使用なのでコメントアウト
     private canvas!: HTMLCanvasElement;
 
     constructor() {
@@ -80,9 +78,6 @@ class EditorApplication {
             this.model = new EditorModel();
             DebugHelper.log('EditorModel initialized');
 
-            // Store - 状態管理（将来の拡張用）
-            // this.store = new EditorStore();
-            // DebugHelper.log('EditorStore initialized');
 
             // View - UI管理
             this.view = new EditorView(this.canvas);
