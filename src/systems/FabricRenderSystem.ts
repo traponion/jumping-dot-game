@@ -1,7 +1,14 @@
 import * as fabric from 'fabric';
 import type { Goal, Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
-import type { LandingPrediction } from './LandingPredictionSystem.js';
+
+// Landing prediction interface (previously from LandingPredictionSystem)
+export interface LandingPrediction {
+    x: number;
+    y: number;
+    confidence: number; // 0-1, how certain we are about this prediction
+    jumpNumber: number; // Which jump this represents (1, 2, 3...)
+}
 
 export class FabricRenderSystem {
     protected canvas: fabric.Canvas;
