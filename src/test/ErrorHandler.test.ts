@@ -219,5 +219,194 @@ describe('ErrorHandler', () => {
             expect(history[1]).toBe(error2);
         });
 
+        it('should get errors by type', () => {
+            const fabricError = new EditorError(
+                'Fabric error',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            const validationError = new EditorError(
+                'Validation error',
+                ERROR_CODES.STAGE_VALIDATION_FAILED,
+                ERROR_TYPES.VALIDATION
+            );
+            
+            errorHandler.handleError(fabricError);
+            errorHandler.handleError(validationError);
+            
+            const fabricErrors = errorHandler.getErrorsByType(ERROR_TYPES.FABRIC);
+            const validationErrors = errorHandler.getErrorsByType(ERROR_TYPES.VALIDATION);
+            
+            expect(fabricErrors).toHaveLength(1);
+            expect(fabricErrors[0]).toBe(fabricError);
+            expect(validationErrors).toHaveLength(1);
+            expect(validationErrors[0]).toBe(validationError);
+        });
+
+        it('should get last error', () => {
+            const error1 = new EditorError(
+                'Error 1',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            const error2 = new EditorError(
+                'Error 2',
+                ERROR_CODES.OBJECT_CREATION_FAILED,
+                ERROR_TYPES.VALIDATION
+            );
+            
+            expect(errorHandler.getLastError()).toBeUndefined();
+            
+            errorHandler.handleError(error1);
+            expect(errorHandler.getLastError()).toBe(error1);
+            
+            errorHandler.handleError(error2);
+            expect(errorHandler.getLastError()).toBe(error2);
+        });
+
+        it('should get frequent error codes', () => {
+            const error1 = new EditorError(
+                'Error 1',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            const error2 = new EditorError(
+                'Error 2',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC
+            );
+            const error3 = new EditorError(
+                'Error 3',
+                ERROR_CODES.OBJECT_CREATION_FAILED,
+                ERROR_TYPES.VALIDATION
+            );
+            
+            errorHandler.handleError(error1);
+            errorHandler.handleError(error2);
+            errorHandler.handleError(error3);
+            
+            const frequentCodes = errorHandler.getFrequentErrorCodes(2);
+            
+            expect(frequentCodes).toHaveLength(2);
+            expect(frequentCodes[0]).toEqual({
+                code: ERROR_CODES.CANVAS_INIT_FAILED,
+                count: 2
+            });
+            expect(frequentCodes[1]).toEqual({
+                code: ERROR_CODES.OBJECT_CREATION_FAILED,
+                count: 1
+            });
+        });
+    });
+
+    describe('Batch Error Handling', () => {
+        it('should handle multiple errors', () => {
+            const errors = [
+                new EditorError('Error 1', ERROR_CODES.CANVAS_INIT_FAILED, ERROR_TYPES.FABRIC),
+                new Error('Regular error'),
+                new EditorError('Error 3', ERROR_CODES.STAGE_VALIDATION_FAILED, ERROR_TYPES.VALIDATION)
+            ];
+            
+            errorHandler.handleErrors(errors);
+            
+            expect(mockReporter.reportError).toHaveBeenCalledTimes(3);
+            
+            const stats = errorHandler.getStatistics();
+            expect(stats.totalErrors).toBe(3);
+        });
+    });
+
+    describe('Safe Execution', () => {
+        it('should execute function safely and return result', () => {
+            const successfulFunction = () => 'success result';
+            
+            const result = errorHandler.safeExecuteSync(
+                successfulFunction,
+                'default result'
+            );
+            
+            expect(result).toBe('success result');
+        });
+
+        it('should handle function errors and return default', () => {
+            const errorFunction = () => {
+                throw new Error('Test error');
+            };
+            
+            const result = errorHandler.safeExecuteSync(
+                errorFunction,
+                'default result'
+            );
+            
+            expect(result).toBe('default result');
+            expect(mockReporter.reportError).toHaveBeenCalled();
+        });
+
+        it('should execute async function safely', async () => {
+            const asyncFunction = async () => 'async success';
+            
+            const result = await errorHandler.safeExecute(
+                asyncFunction,
+                'default result'
+            );
+            
+            expect(result).toBe('async success');
+        });
+
+        it('should handle async function errors', async () => {
+            const asyncErrorFunction = async () => {
+                throw new Error('Async test error');
+            };
+            
+            const result = await errorHandler.safeExecute(
+                asyncErrorFunction,
+                'default result'
+            );
+            
+            expect(result).toBe('default result');
+            expect(mockReporter.reportError).toHaveBeenCalled();
+        });
+    });
+
+    describe('Static Factory Methods', () => {
+        it('should create validation errors', () => {
+            const error = ErrorHandler.createValidationError('Invalid data', { field: 'name' });
+            
+            expect(error.type).toBe(ERROR_TYPES.VALIDATION);
+            expect(error.message).toBe('Invalid data');
+            expect(error.details).toEqual({ field: 'name' });
+        });
+
+        it('should create DOM errors', () => {
+            const error = ErrorHandler.createDOMError('Element not found', 'my-element');
+            
+            expect(error.type).toBe(ERROR_TYPES.DOM);
+            expect(error.message).toBe('Element not found');
+            expect(error.details).toEqual({ elementId: 'my-element' });
+        });
+
+        it('should create Fabric errors', () => {
+            const error = ErrorHandler.createFabricError('Canvas error', { width: 800 });
+            
+            expect(error.type).toBe(ERROR_TYPES.FABRIC);
+            expect(error.message).toBe('Canvas error');
+            expect(error.details).toEqual({ width: 800 });
+        });
+
+        it('should create IO errors', () => {
+            const error = ErrorHandler.createIOError('File not found', { path: '/test.json' });
+            
+            expect(error.type).toBe(ERROR_TYPES.IO);
+            expect(error.message).toBe('File not found');
+            expect(error.details).toEqual({ path: '/test.json' });
+        });
+
+        it('should create performance errors', () => {
+            const error = ErrorHandler.createPerformanceError('Slow operation', { duration: 5000 });
+            
+            expect(error.type).toBe(ERROR_TYPES.PERFORMANCE);
+            expect(error.message).toBe('Slow operation');
+            expect(error.details).toEqual({ duration: 5000 });
+        });
     });
 });
