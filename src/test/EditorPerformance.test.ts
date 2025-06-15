@@ -119,6 +119,11 @@ const setupBasicDOM = (): HTMLCanvasElement => {
         <input id="snapEnabled" type="checkbox" />
     `;
 
+    // Create messageContainer for EditorView compatibility
+    const messageContainer = document.createElement('div');
+    messageContainer.id = 'messageContainer';
+    document.body.appendChild(messageContainer);
+
     Object.values(EDITOR_TOOLS).forEach(tool => {
         const toolElement = document.createElement('div');
         toolElement.className = 'tool-item';
