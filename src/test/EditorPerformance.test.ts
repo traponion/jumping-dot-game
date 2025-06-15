@@ -613,7 +613,7 @@ describe('エディターパフォーマンステスト', () => {
             // Ensure we have at least one measurement for the summary
             measurer.measure('summary-test', () => {
                 // Simple operation to measure
-                return Array(100).fill(0).reduce((sum, val, index) => sum + index, 0);
+                return Array(100).fill(0).reduce((sum, _val, index) => sum + index, 0);
             });
             
             const allStats = measurer.getAllStats();
