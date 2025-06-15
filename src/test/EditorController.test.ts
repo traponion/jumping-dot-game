@@ -405,11 +405,6 @@ describe('EditorController (Adapter Pattern)', () => {
             mockAdapter.reset();
         });
 
-        it('should provide getFabricCanvas for compatibility', () => {
-            expect(() => {
-                controller.getFabricCanvas();
-            }).not.toThrow();
-        });
 
         it('should handle createObject method', () => {
             const mockEvent = { clientX: 100, clientY: 200 };

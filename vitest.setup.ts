@@ -22,6 +22,39 @@ beforeAll(() => {
     console.log('Global fabric setup:', typeof globalThis.fabric);
   }
 
+  // Mock Canvas API for testing (merged from src/test/setup.js)
+  if (typeof HTMLCanvasElement !== 'undefined') {
+    HTMLCanvasElement.prototype.getContext = () => ({
+      fillRect: () => {},
+      clearRect: () => {},
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      font: '',
+      textAlign: '',
+      beginPath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
+      arc: () => {},
+      fill: () => {},
+      stroke: () => {},
+      save: () => {},
+      restore: () => {},
+      translate: () => {},
+      fillText: () => {},
+      strokeRect: () => {},
+      ellipse: () => {},
+      closePath: () => {}
+    });
+  }
+
+  // Mock performance.now for consistent testing (merged from src/test/setup.js)
+  if (typeof globalThis.performance === 'undefined') {
+    globalThis.performance = {
+      now: () => Date.now()
+    } as any;
+  }
+
   // Polyfill for missing browser APIs in test environment
   if (typeof globalThis.Touch === 'undefined') {
     globalThis.Touch = class Touch {
@@ -35,7 +68,7 @@ beforeAll(() => {
     } as any;
   }
 
-  // Mock requestAnimationFrame for tests
+  // Mock requestAnimationFrame for tests (consolidated from both files)
   if (typeof globalThis.requestAnimationFrame === 'undefined') {
     globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
       return setTimeout(() => callback(performance.now()), 16);
