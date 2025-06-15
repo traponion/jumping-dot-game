@@ -144,6 +144,9 @@ describe('エディターパフォーマンステスト', () => {
     let measurer: PerformanceMeasurer;
 
     beforeEach(() => {
+        // Mock window.confirm for test environment
+        global.confirm = vi.fn().mockReturnValue(true);
+        
         canvas = setupBasicDOM();
         view = new EditorView(canvas);
         view.initialize(); // Initialize UI elements
