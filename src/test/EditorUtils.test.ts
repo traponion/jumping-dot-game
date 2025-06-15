@@ -207,7 +207,7 @@ describe('EditorUtils', () => {
             const mockLine = { data: {} };
             vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
             
-            const platform = ObjectFactory.createPlatform(
+            ObjectFactory.createPlatform(
                 { x: 0, y: 0 },
                 { x: 100, y: 100 }
             );
@@ -226,7 +226,7 @@ describe('EditorUtils', () => {
             const mockPolygon = { data: {} };
             vi.mocked(fabric.Polygon).mockReturnValue(mockPolygon as any);
             
-            const spike = ObjectFactory.createSpike({
+            ObjectFactory.createSpike({
                 position: { x: 100, y: 200 }
             });
             
@@ -237,7 +237,7 @@ describe('EditorUtils', () => {
             const mockRect = { data: {} };
             vi.mocked(fabric.Rect).mockReturnValue(mockRect as any);
             
-            const goal = ObjectFactory.createGoal({
+            ObjectFactory.createGoal({
                 position: { x: 100, y: 200 }
             });
             
@@ -248,7 +248,7 @@ describe('EditorUtils', () => {
             const mockText = { data: {} };
             vi.mocked(fabric.Text).mockReturnValue(mockText as any);
             
-            const text = ObjectFactory.createText({
+            ObjectFactory.createText({
                 position: { x: 100, y: 200 },
                 text: 'Hello World'
             });
@@ -266,7 +266,7 @@ describe('EditorUtils', () => {
             const mockLine = { data: {} };
             vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
             
-            const gridLine = ObjectFactory.createGridLine(
+            ObjectFactory.createGridLine(
                 { x: 0, y: 0 },
                 { x: 100, y: 100 }
             );
