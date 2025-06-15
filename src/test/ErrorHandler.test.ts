@@ -302,6 +302,31 @@ describe('ErrorHandler', () => {
                 count: 1
             });
         });
+
+        it('should track recoverable and non-recoverable errors in statistics', () => {
+            const recoverableError = new EditorError(
+                'Recoverable error',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC,
+                undefined,
+                true // recoverable
+            );
+            const nonRecoverableError = new EditorError(
+                'Non-recoverable error',
+                ERROR_CODES.MEMORY_LIMIT_EXCEEDED,
+                ERROR_TYPES.PERFORMANCE,
+                undefined,
+                false // non-recoverable
+            );
+            
+            errorHandler.handleError(recoverableError);
+            errorHandler.handleError(nonRecoverableError);
+            
+            const stats = errorHandler.getStatistics();
+            expect(stats.recoverableErrors).toBe(1);
+            expect(stats.nonRecoverableErrors).toBe(1);
+            expect(stats.totalErrors).toBe(2);
+        });
     });
 
     describe('Batch Error Handling', () => {
@@ -609,5 +634,64 @@ describe('UIErrorReporter', () => {
         uiErrorReporter.reportInfo('Test info', { detail: 'value' });
         
         expect(mockShowMessage).toHaveBeenCalledWith('Test info', 'info');
+    });
+});
+
+describe('ErrorHandler Additional Coverage', () => {
+    let errorHandler: ErrorHandler;
+
+    beforeEach(() => {
+        (ErrorHandler as any).instance = undefined;
+        errorHandler = ErrorHandler.getInstance();
+    });
+
+    it('should handle reporter errors gracefully', () => {
+        const faultyReporter = {
+            reportError: vi.fn().mockImplementation(() => {
+                throw new Error('Reporter error');
+            }),
+            reportWarning: vi.fn(),
+            reportInfo: vi.fn()
+        };
+        
+        const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        
+        errorHandler.addReporter(faultyReporter);
+        
+        const error = new EditorError(
+            'Test error',
+            ERROR_CODES.CANVAS_INIT_FAILED,
+            ERROR_TYPES.FABRIC
+        );
+        
+        // Should not throw even if reporter fails
+        expect(() => {
+            errorHandler.handleError(error);
+        }).not.toThrow();
+        
+        expect(faultyReporter.reportError).toHaveBeenCalled();
+        
+        consoleSpy.mockRestore();
+    });
+
+    it('should remove error reporter correctly', () => {
+        const reporter = {
+            reportError: vi.fn(),
+            reportWarning: vi.fn(),
+            reportInfo: vi.fn()
+        };
+        
+        errorHandler.addReporter(reporter);
+        errorHandler.removeReporter(reporter);
+        
+        const error = new EditorError(
+            'Test error',
+            ERROR_CODES.CANVAS_INIT_FAILED,
+            ERROR_TYPES.FABRIC
+        );
+        
+        errorHandler.handleError(error);
+        
+        expect(reporter.reportError).not.toHaveBeenCalled();
     });
 });
