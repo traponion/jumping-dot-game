@@ -3,6 +3,36 @@ import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
 import type { EditorCallbacks } from '../types/EditorTypes.js';
 import type { StageData } from '../core/StageLoader.js';
 
+// Mock fabric.js completely to avoid JSDOM environment issues
+vi.mock('fabric', () => ({
+    Canvas: vi.fn().mockImplementation(() => ({
+        add: vi.fn(),
+        remove: vi.fn(),
+        renderAll: vi.fn(),
+        clear: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+        getObjects: vi.fn().mockReturnValue([]),
+        getActiveObject: vi.fn().mockReturnValue(null),
+        setActiveObject: vi.fn(),
+        discardActiveObject: vi.fn(),
+        setWidth: vi.fn(),
+        setHeight: vi.fn(),
+        getElement: vi.fn().mockReturnValue(document.createElement('canvas')),
+        dispose: vi.fn(),
+        selection: true,
+        interactive: true,
+        defaultCursor: 'default',
+        hoverCursor: 'move',
+        moveCursor: 'move',
+        backgroundColor: 'black'
+    })),
+    Line: vi.fn().mockImplementation(() => ({ set: vi.fn(), data: {} })),
+    Polygon: vi.fn().mockImplementation(() => ({ set: vi.fn(), data: {} })),
+    Rect: vi.fn().mockImplementation(() => ({ set: vi.fn(), data: {} })),
+    Text: vi.fn().mockImplementation(() => ({ set: vi.fn(), data: {} }))
+}));
+
 // Mock DOM elements for testing
 const mockCanvas = {
     getContext: vi.fn(() => ({
