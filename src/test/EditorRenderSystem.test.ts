@@ -1,175 +1,42 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
-import type { EditorCallbacks } from '../types/EditorTypes.js';
+import { MockRenderAdapter } from '../adapters/MockRenderAdapter.js';
+import type { EditorCallbacks } from '../adapters/IRenderAdapter.js';
 import type { StageData } from '../core/StageLoader.js';
 
-// Use real Fabric.js with enhanced DOM element compatibility
-// (Following official Fabric.js testing strategy)
-
-// Enhanced DOM canvas mock for real Fabric.js compatibility  
-const createCompatibleCanvasMock = (): HTMLCanvasElement => {
-    const canvas = document.createElement('canvas');
-    
-    // Override essential methods for Fabric.js
-    canvas.hasAttribute = vi.fn().mockReturnValue(false);
-    canvas.setAttribute = vi.fn();
-    canvas.getAttribute = vi.fn().mockReturnValue(null);
-    canvas.removeAttribute = vi.fn();
-    canvas.addEventListener = vi.fn();
-    canvas.removeEventListener = vi.fn();
-    
-    // Mock getBoundingClientRect
-    canvas.getBoundingClientRect = vi.fn().mockReturnValue({
-        left: 0, top: 0, right: 800, bottom: 600, 
-        width: 800, height: 600, x: 0, y: 0,
-        toJSON: () => ({})
-    } as DOMRect);
-    
-    // Set canvas dimensions
-    canvas.width = 800;
-    canvas.height = 600;
-    
-    // Enhanced 2D context with all Fabric.js requirements
-    const enhanced2DContext = {
-        canvas: canvas,
-        fillRect: vi.fn(),
-        clearRect: vi.fn(),
-        fillStyle: '#000000',
-        strokeStyle: '#000000',
-        lineWidth: 1,
-        font: '10px sans-serif',
-        textAlign: 'start',
-        textBaseline: 'alphabetic',
-        beginPath: vi.fn(),
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        arc: vi.fn(),
-        fill: vi.fn(),
-        stroke: vi.fn(),
-        closePath: vi.fn(),
-        save: vi.fn(),
-        restore: vi.fn(),
-        scale: vi.fn(),
-        translate: vi.fn(),
-        rotate: vi.fn(),
-        setTransform: vi.fn(),
-        transform: vi.fn(),
-        resetTransform: vi.fn(),
-        createLinearGradient: vi.fn(() => ({
-            addColorStop: vi.fn()
-        })),
-        createRadialGradient: vi.fn(() => ({
-            addColorStop: vi.fn()
-        })),
-        setLineDash: vi.fn(),
-        getLineDash: vi.fn(() => []),
-        measureText: vi.fn(() => ({ 
-            width: 100,
-            actualBoundingBoxLeft: 0,
-            actualBoundingBoxRight: 100,
-            actualBoundingBoxAscent: 10,
-            actualBoundingBoxDescent: 2
-        })),
-        getImageData: vi.fn(() => ({ 
-            data: new Uint8ClampedArray(4),
-            width: 1,
-            height: 1
-        })),
-        putImageData: vi.fn(),
-        createImageData: vi.fn(() => ({ 
-            data: new Uint8ClampedArray(4),
-            width: 1,
-            height: 1
-        })),
-        drawImage: vi.fn(),
-        fillText: vi.fn(),
-        strokeText: vi.fn(),
-        strokeRect: vi.fn(),
-        rect: vi.fn(),
-        ellipse: vi.fn(),
-        globalAlpha: 1,
-        globalCompositeOperation: 'source-over',
-        lineCap: 'butt',
-        lineJoin: 'miter',
-        miterLimit: 10,
-        shadowBlur: 0,
-        shadowColor: 'rgba(0,0,0,0)',
-        shadowOffsetX: 0,
-        shadowOffsetY: 0
-    };
-    
-    canvas.getContext = vi.fn().mockReturnValue(enhanced2DContext);
-    
-    return canvas;
-};
-
-const mockCanvas = createCompatibleCanvasMock();
-
-describe('EditorRenderSystem', () => {
-    let editorSystem: EditorRenderSystem;
-    let mockCallbacks: EditorCallbacks;
-    let originalDocument: any;
+describe('EditorRenderSystem (Adapter Pattern)', () => {
+    let editorRenderSystem: EditorRenderSystem;
+    let mockAdapter: MockRenderAdapter;
+    let callbacks: EditorCallbacks;
 
     beforeEach(() => {
-        // Store original document
-        originalDocument = global.document;
-        
-        // Mock document.getElementById
-        global.document = {
-            getElementById: vi.fn(() => mockCanvas),
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn()
-        } as any;
-
-        // Setup mock callbacks
-        mockCallbacks = {
+        // Reset callbacks
+        callbacks = {
             onObjectSelected: vi.fn(),
             onObjectModified: vi.fn(),
             onStageModified: vi.fn()
         };
 
-        // Create editor system (may fail in test environment)
-        try {
-            editorSystem = new EditorRenderSystem(mockCanvas, mockCallbacks);
-        } catch (error) {
-            // Skip tests if EditorRenderSystem cannot be created in test environment
-            console.warn('EditorRenderSystem creation failed in test environment:', error);
-            editorSystem = null as any;
-        }
+        // Create mock adapter
+        mockAdapter = new MockRenderAdapter(callbacks);
+        
+        // Create editor render system with mock adapter
+        editorRenderSystem = new EditorRenderSystem(mockAdapter);
     });
 
     afterEach(() => {
-        // Restore original document
-        global.document = originalDocument;
-        vi.clearAllMocks();
+        editorRenderSystem.dispose();
+        mockAdapter.reset();
     });
 
-    describe('initialization', () => {
-        it('should create editor system with interactive mode enabled', () => {
-            if (!editorSystem) {
-                console.warn('Skipping test: EditorRenderSystem not available in test environment');
-                return;
-            }
-            
-            expect(editorSystem).toBeInstanceOf(EditorRenderSystem);
-            
-            const editorState = editorSystem.getEditorState();
-            expect(editorState.selectedTool).toBe('select');
-            expect(editorState.selectedObject).toBe(null);
-            expect(editorState.isDrawing).toBe(false);
-            expect(editorState.gridEnabled).toBe(true);
-            expect(editorState.snapToGrid).toBe(true);
+    describe('Basic Operations', () => {
+        it('should initialize with mock adapter', () => {
+            expect(editorRenderSystem).toBeDefined();
+            expect(editorRenderSystem.getRenderAdapter()).toBe(mockAdapter);
         });
 
-        it('should setup callbacks correctly', () => {
-            expect(mockCallbacks.onObjectSelected).toBeDefined();
-            expect(mockCallbacks.onObjectModified).toBeDefined();
-            expect(mockCallbacks.onStageModified).toBeDefined();
-        });
-
-        it('should initialize with default editor state', () => {
-            const state = editorSystem.getEditorState();
-            
+        it('should get editor state from adapter', () => {
+            const state = editorRenderSystem.getEditorState();
             expect(state).toEqual({
                 selectedTool: 'select',
                 selectedObject: null,
@@ -178,253 +45,281 @@ describe('EditorRenderSystem', () => {
                 snapToGrid: true
             });
         });
-    });
 
-    describe('tool selection', () => {
-        it('should change selected tool correctly', () => {
-            editorSystem.setSelectedTool('platform');
-            expect(editorSystem.getEditorState().selectedTool).toBe('platform');
-
-            editorSystem.setSelectedTool('spike');
-            expect(editorSystem.getEditorState().selectedTool).toBe('spike');
-
-            editorSystem.setSelectedTool('goal');
-            expect(editorSystem.getEditorState().selectedTool).toBe('goal');
-
-            editorSystem.setSelectedTool('text');
-            expect(editorSystem.getEditorState().selectedTool).toBe('text');
-
-            editorSystem.setSelectedTool('select');
-            expect(editorSystem.getEditorState().selectedTool).toBe('select');
+        it('should delegate renderAll to adapter', () => {
+            editorRenderSystem.renderAll();
+            expect(mockAdapter.renderAllCalled).toBe(1);
         });
 
-        it('should handle invalid tool selection gracefully', () => {
-            const invalidTool = 'invalid' as any;
-            
-            expect(() => {
-                editorSystem.setSelectedTool(invalidTool);
-            }).not.toThrow();
+        it('should delegate clearCanvas to adapter', () => {
+            editorRenderSystem.clearCanvas();
+            expect(mockAdapter.clearCanvasCalled).toBe(1);
+        });
+
+        it('should delegate dispose to adapter', () => {
+            editorRenderSystem.dispose();
+            expect(mockAdapter.disposeCalled).toBe(1);
         });
     });
 
-    describe('grid functionality', () => {
-        it('should toggle grid visibility', () => {
-            const initialGridState = editorSystem.getEditorState().gridEnabled;
+    describe('Tool Management', () => {
+        it('should set selected tool via adapter', () => {
+            editorRenderSystem.setSelectedTool('spike');
             
-            editorSystem.toggleGrid();
-            expect(editorSystem.getEditorState().gridEnabled).toBe(!initialGridState);
-            
-            editorSystem.toggleGrid();
-            expect(editorSystem.getEditorState().gridEnabled).toBe(initialGridState);
+            expect(mockAdapter.toolChanges).toContain('spike');
+            expect(mockAdapter.getLastToolChange()).toBe('spike');
         });
 
-        it('should toggle snap to grid functionality', () => {
-            const initialSnapState = editorSystem.getEditorState().snapToGrid;
+        it('should handle multiple tool changes', () => {
+            editorRenderSystem.setSelectedTool('platform');
+            editorRenderSystem.setSelectedTool('goal');
+            editorRenderSystem.setSelectedTool('text');
             
-            editorSystem.toggleSnapToGrid();
-            expect(editorSystem.getEditorState().snapToGrid).toBe(!initialSnapState);
-            
-            editorSystem.toggleSnapToGrid();
-            expect(editorSystem.getEditorState().snapToGrid).toBe(initialSnapState);
+            expect(mockAdapter.toolChanges).toEqual(['platform', 'goal', 'text']);
+            expect(mockAdapter.getLastToolChange()).toBe('text');
         });
     });
 
-    describe('object deletion', () => {
-        it('should delete selected object when deleteSelectedObject is called', () => {
-            // This test verifies the method exists and can be called
-            expect(() => {
-                editorSystem.deleteSelectedObject();
-            }).not.toThrow();
+    describe('Grid and Snap Operations', () => {
+        it('should toggle grid via adapter', () => {
+            const initialGridState = mockAdapter.isGridEnabled();
+            
+            editorRenderSystem.toggleGrid();
+            
+            expect(mockAdapter.gridToggles).toBe(1);
+            expect(mockAdapter.isGridEnabled()).toBe(!initialGridState);
         });
 
-        it('should handle deletion when no object is selected', () => {
-            // Ensure no object is selected
-            expect(editorSystem.getEditorState().selectedObject).toBe(null);
+        it('should toggle snap to grid via adapter', () => {
+            const initialSnapState = mockAdapter.isSnapToGridEnabled();
             
-            // Should not throw when trying to delete nothing
-            expect(() => {
-                editorSystem.deleteSelectedObject();
-            }).not.toThrow();
+            editorRenderSystem.toggleSnapToGrid();
+            
+            expect(mockAdapter.snapToggles).toBe(1);
+            expect(mockAdapter.isSnapToGridEnabled()).toBe(!initialSnapState);
+        });
+
+        it('should handle multiple grid toggles', () => {
+            editorRenderSystem.toggleGrid();
+            editorRenderSystem.toggleGrid();
+            editorRenderSystem.toggleGrid();
+            
+            expect(mockAdapter.gridToggles).toBe(3);
         });
     });
 
-    describe('stage data operations', () => {
-        it('should export stage data in correct format', () => {
-            const stageData = editorSystem.exportStageData();
-            
-            expect(stageData).toHaveProperty('id');
-            expect(stageData).toHaveProperty('name');
-            expect(stageData).toHaveProperty('platforms');
-            expect(stageData).toHaveProperty('spikes');
-            expect(stageData).toHaveProperty('goal');
-            expect(stageData).toHaveProperty('startText');
-            expect(stageData).toHaveProperty('goalText');
-            
-            expect(Array.isArray(stageData.platforms)).toBe(true);
-            expect(Array.isArray(stageData.spikes)).toBe(true);
-            expect(typeof stageData.goal).toBe('object');
+    describe('Object Operations', () => {
+        beforeEach(() => {
+            // Simulate having a selected object
+            const mockObject = { id: 'test-object', type: 'spike' };
+            mockAdapter.selectObject(mockObject);
         });
 
-        it('should load stage data for editing', () => {
-            const testStageData: StageData = {
-                id: 99,
-                name: 'Test Stage',
-                platforms: [
-                    { x1: 0, y1: 500, x2: 200, y2: 500 }
-                ],
-                spikes: [
-                    { x: 100, y: 480, width: 15, height: 15 }
-                ],
-                goal: { x: 300, y: 400, width: 40, height: 50 },
-                startText: { x: 50, y: 450, text: 'START' },
-                goalText: { x: 320, y: 380, text: 'GOAL' }
-            };
+        it('should delete selected object via adapter', () => {
+            expect(mockAdapter.hasSelectedObject()).toBe(true);
+            
+            editorRenderSystem.deleteSelectedObject();
+            
+            expect(mockAdapter.deleteObjectCalls).toBe(1);
+            expect(mockAdapter.hasSelectedObject()).toBe(false);
+        });
 
+        it('should duplicate selected object via adapter', () => {
+            editorRenderSystem.duplicateSelectedObject();
+            
+            expect(mockAdapter.duplicateObjectCalls).toBe(1);
+        });
+
+        it('should get selected object from adapter state', () => {
+            const selectedObject = editorRenderSystem.getSelectedObject();
+            expect(selectedObject).toEqual({ id: 'test-object', type: 'spike' });
+        });
+
+        it('should not delete when no object selected', () => {
+            // Clear selection first
+            mockAdapter.selectObject(null);
+            expect(mockAdapter.hasSelectedObject()).toBe(false);
+            
+            editorRenderSystem.deleteSelectedObject();
+            
+            expect(mockAdapter.deleteObjectCalls).toBe(0);
+        });
+
+        it('should not duplicate when no object selected', () => {
+            // Clear selection first
+            mockAdapter.selectObject(null);
+            expect(mockAdapter.hasSelectedObject()).toBe(false);
+            
+            editorRenderSystem.duplicateSelectedObject();
+            
+            expect(mockAdapter.duplicateObjectCalls).toBe(0);
+        });
+    });
+
+    describe('Stage Data Operations', () => {
+        const sampleStageData: StageData = {
+            id: 1,
+            name: 'Test Stage',
+            platforms: [
+                { x1: 100, y1: 400, x2: 300, y2: 400 }
+            ],
+            spikes: [
+                { x: 200, y: 350, width: 20, height: 30 }
+            ],
+            goal: { x: 400, y: 200, width: 40, height: 50 },
+            startText: { x: 50, y: 450, text: 'START' },
+            goalText: { x: 420, y: 180, text: 'GOAL' }
+        };
+
+        it('should load stage for editing via adapter', () => {
+            editorRenderSystem.loadStageForEditing(sampleStageData);
+            
+            expect(mockAdapter.stageLoads).toHaveLength(1);
+            expect(mockAdapter.getLastStageLoad()).toEqual(sampleStageData);
+        });
+
+        it('should export stage data via adapter', () => {
+            // Load stage first
+            editorRenderSystem.loadStageForEditing(sampleStageData);
+            
+            const exportedData = editorRenderSystem.exportStageData();
+            
+            expect(mockAdapter.stageExports).toBe(1);
+            expect(exportedData).toEqual(sampleStageData);
+        });
+
+        it('should handle updateStageDataFromCanvas call', () => {
+            // This method should not throw and should log a message
             expect(() => {
-                editorSystem.loadStageForEditing(testStageData);
+                editorRenderSystem.updateStageDataFromCanvas();
             }).not.toThrow();
-
-            // Verify that the stage was loaded by checking exported data
-            const exportedData = editorSystem.exportStageData();
-            expect(exportedData.id).toBe(99);
-            expect(exportedData.name).toBe('Test Stage');
         });
 
-        it('should handle empty stage data correctly', () => {
-            const emptyStageData: StageData = {
+        it('should export default stage when none loaded', () => {
+            const exportedData = editorRenderSystem.exportStageData();
+            
+            expect(mockAdapter.stageExports).toBe(1);
+            expect(exportedData).toEqual({
                 id: 1,
-                name: 'Empty Stage',
+                name: 'Mock Stage',
                 platforms: [],
                 spikes: [],
-                goal: { x: 400, y: 300, width: 40, height: 50 },
+                goal: { x: 400, y: 200, width: 40, height: 50 },
                 startText: { x: 50, y: 450, text: 'START' },
-                goalText: { x: 420, y: 280, text: 'GOAL' }
-            };
-
-            expect(() => {
-                editorSystem.loadStageForEditing(emptyStageData);
-            }).not.toThrow();
-
-            const exportedData = editorSystem.exportStageData();
-            expect(exportedData.platforms).toHaveLength(0);
-            expect(exportedData.spikes).toHaveLength(0);
+                goalText: { x: 420, y: 180, text: 'GOAL' }
+            });
         });
     });
 
-    describe('editor state management', () => {
-        it('should maintain immutable editor state', () => {
-            const state1 = editorSystem.getEditorState();
-            const state2 = editorSystem.getEditorState();
+    describe('Callback Integration', () => {
+        it('should trigger onObjectSelected callback through adapter', () => {
+            const mockObject = { id: 'test-object', type: 'goal' };
             
-            // Should return different objects (not same reference)
-            expect(state1).not.toBe(state2);
+            mockAdapter.selectObject(mockObject);
             
-            // But with same values
-            expect(state1).toEqual(state2);
+            expect(callbacks.onObjectSelected).toHaveBeenCalledWith(mockObject);
         });
 
-        it('should update editor state through public methods only', () => {
-            const initialState = editorSystem.getEditorState();
+        it('should trigger onObjectModified callback through adapter', () => {
+            const mockObject = { id: 'test-object', type: 'platform' };
+            mockAdapter.selectObject(mockObject);
             
-            // Change tool
-            editorSystem.setSelectedTool('platform');
-            const stateAfterToolChange = editorSystem.getEditorState();
-            expect(stateAfterToolChange.selectedTool).toBe('platform');
-            expect(stateAfterToolChange.selectedTool).not.toBe(initialState.selectedTool);
+            mockAdapter.simulateObjectModification();
             
-            // Toggle grid
-            editorSystem.toggleGrid();
-            const stateAfterGridToggle = editorSystem.getEditorState();
-            expect(stateAfterGridToggle.gridEnabled).not.toBe(stateAfterToolChange.gridEnabled);
-        });
-    });
-
-    describe('error handling', () => {
-        it('should handle canvas initialization errors gracefully', () => {
-            const badCanvas = {
-                getContext: () => null,
-                width: 800,
-                height: 600,
-                addEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                getAttribute: vi.fn(),
-                setAttribute: vi.fn()
-            } as unknown as HTMLCanvasElement;
-
-            expect(() => {
-                new EditorRenderSystem(badCanvas, mockCallbacks);
-            }).toThrow('Failed to get 2D rendering context');
+            expect(callbacks.onObjectModified).toHaveBeenCalledWith(mockObject);
         });
 
-        it('should handle missing callback functions gracefully', () => {
-            expect(() => {
-                new EditorRenderSystem(mockCanvas, {});
-            }).not.toThrow();
-        });
-
-        it('should handle invalid canvas element', () => {
-            const invalidCanvas = {} as HTMLCanvasElement;
-            
-            expect(() => {
-                new EditorRenderSystem(invalidCanvas, mockCallbacks);
-            }).toThrow();
-        });
-    });
-
-    describe('integration with base FabricRenderSystem', () => {
-        it('should inherit core rendering functionality', () => {
-            // Test that core methods from FabricRenderSystem are available
-            expect(typeof editorSystem.clearCanvas).toBe('function');
-            expect(typeof editorSystem.renderAll).toBe('function');
-            expect(typeof editorSystem.dispose).toBe('function');
-        });
-
-        it('should maintain rendering system lifecycle', () => {
-            expect(() => {
-                editorSystem.clearCanvas();
-                editorSystem.renderAll();
-            }).not.toThrow();
-        });
-
-        it('should properly dispose resources', () => {
-            expect(() => {
-                editorSystem.dispose();
-            }).not.toThrow();
-        });
-    });
-
-    describe('performance considerations', () => {
-        it('should not throw errors during rapid tool switching', () => {
-            const tools = ['select', 'platform', 'spike', 'goal', 'text'] as const;
-            
-            expect(() => {
-                for (let i = 0; i < 100; i++) {
-                    const tool = tools[i % tools.length];
-                    editorSystem.setSelectedTool(tool);
-                }
-            }).not.toThrow();
-        });
-
-        it('should handle multiple stage loads efficiently', () => {
-            const testStage: StageData = {
-                id: 1,
-                name: 'Performance Test',
-                platforms: Array.from({ length: 50 }, (_, i) => ({
-                    x1: i * 20, y1: 500, x2: i * 20 + 100, y2: 500
-                })),
-                spikes: Array.from({ length: 20 }, (_, i) => ({
-                    x: i * 40 + 50, y: 480, width: 15, height: 15
-                })),
-                goal: { x: 1000, y: 400, width: 40, height: 50 },
+        it('should trigger onStageModified callback through adapter', () => {
+            const modifiedStageData: StageData = {
+                id: 2,
+                name: 'Modified Stage',
+                platforms: [],
+                spikes: [],
+                goal: { x: 500, y: 300, width: 40, height: 50 },
                 startText: { x: 50, y: 450, text: 'START' },
-                goalText: { x: 1020, y: 380, text: 'GOAL' }
+                goalText: { x: 520, y: 280, text: 'GOAL' }
             };
+            
+            mockAdapter.simulateStageModification(modifiedStageData);
+            
+            expect(callbacks.onStageModified).toHaveBeenCalledWith(modifiedStageData);
+        });
+    });
 
+    describe('Adapter Access', () => {
+        it('should provide access to underlying render adapter', () => {
+            const adapter = editorRenderSystem.getRenderAdapter();
+            
+            expect(adapter).toBe(mockAdapter);
+            expect(adapter).toBeInstanceOf(MockRenderAdapter);
+        });
+
+        it('should allow direct adapter operations', () => {
+            const adapter = editorRenderSystem.getRenderAdapter();
+            
+            adapter.setSelectedTool('text');
+            adapter.toggleGrid();
+            
+            expect(mockAdapter.getLastToolChange()).toBe('text');
+            expect(mockAdapter.gridToggles).toBe(1);
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle adapter operations gracefully', () => {
             expect(() => {
-                for (let i = 0; i < 10; i++) {
-                    editorSystem.loadStageForEditing(testStage);
-                }
+                editorRenderSystem.renderAll();
+                editorRenderSystem.clearCanvas();
+                editorRenderSystem.setSelectedTool('unknown-tool');
+                editorRenderSystem.deleteSelectedObject();
+                editorRenderSystem.duplicateSelectedObject();
             }).not.toThrow();
+        });
+
+        it('should handle empty or invalid stage data', () => {
+            const invalidStageData = {} as StageData;
+            
+            expect(() => {
+                editorRenderSystem.loadStageForEditing(invalidStageData);
+            }).not.toThrow();
+            
+            expect(mockAdapter.stageLoads).toHaveLength(1);
+        });
+    });
+
+    describe('Performance and State Management', () => {
+        it('should track method call counts correctly', () => {
+            editorRenderSystem.renderAll();
+            editorRenderSystem.renderAll();
+            editorRenderSystem.clearCanvas();
+            editorRenderSystem.toggleGrid();
+            editorRenderSystem.toggleSnapToGrid();
+            
+            expect(mockAdapter.renderAllCalled).toBe(2);
+            expect(mockAdapter.clearCanvasCalled).toBe(1);
+            expect(mockAdapter.gridToggles).toBe(1);
+            expect(mockAdapter.snapToggles).toBe(1);
+        });
+
+        it('should reset adapter state properly', () => {
+            // Perform several operations
+            editorRenderSystem.renderAll();
+            editorRenderSystem.setSelectedTool('spike');
+            editorRenderSystem.toggleGrid();
+            
+            // Reset adapter
+            mockAdapter.reset();
+            
+            // Verify all counters are reset
+            expect(mockAdapter.renderAllCalled).toBe(0);
+            expect(mockAdapter.toolChanges).toEqual([]);
+            expect(mockAdapter.gridToggles).toBe(0);
+            
+            // Verify state is reset to defaults
+            const state = mockAdapter.getEditorState();
+            expect(state.selectedTool).toBe('select');
+            expect(state.gridEnabled).toBe(true);
+            expect(state.snapToGrid).toBe(true);
         });
     });
 });

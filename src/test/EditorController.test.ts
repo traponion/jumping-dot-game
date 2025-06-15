@@ -1,170 +1,37 @@
-// EditorController統合テスト
+// EditorController統合テスト (Adapter Pattern版)
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EditorController } from '../controllers/EditorController.js';
 import { EditorView } from '../views/EditorView.js';
 import { EditorModel } from '../models/EditorModel.js';
+import { MockRenderAdapter } from '../adapters/MockRenderAdapter.js';
+import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
 import { editorStore, getEditorStore } from '../stores/EditorZustandStore.js';
-import { EDITOR_TOOLS, EDITOR_CONFIG } from '../types/EditorTypes.js';
-import { globalErrorHandler } from '../utils/ErrorHandler.js';
+import { EDITOR_TOOLS } from '../types/EditorTypes.js';
 
-// モック設定
-vi.mock('fabric', () => ({
-    Canvas: vi.fn().mockImplementation((element) => ({
-        add: vi.fn(),
-        remove: vi.fn(),
-        renderAll: vi.fn(),
-        clear: vi.fn(),
-        on: vi.fn(),
-        off: vi.fn(),
-        getObjects: vi.fn().mockReturnValue([]),
-        getActiveObject: vi.fn().mockReturnValue(null),
-        setActiveObject: vi.fn(),
-        discardActiveObject: vi.fn(),
-        setWidth: vi.fn(),
-        setHeight: vi.fn(),
-        getElement: vi.fn().mockReturnValue(element || document.createElement('canvas')),
-        dispose: vi.fn(),
-        selection: true,
-        interactive: true,
-        defaultCursor: 'default',
-        hoverCursor: 'move',
-        moveCursor: 'move',
-        backgroundColor: 'black',
-        upperCanvasEl: null,
-        lowerCanvasEl: null
-    })),
-    Line: vi.fn().mockImplementation(() => ({
-        set: vi.fn(),
-        data: {},
-        on: vi.fn(),
-        off: vi.fn()
-    })),
-    Polygon: vi.fn().mockImplementation(() => ({
-        set: vi.fn(),
-        data: {},
-        on: vi.fn(),
-        off: vi.fn()
-    })),
-    Rect: vi.fn().mockImplementation(() => ({
-        set: vi.fn(),
-        data: {},
-        on: vi.fn(),
-        off: vi.fn()
-    })),
-    Text: vi.fn().mockImplementation(() => ({
-        set: vi.fn(),
-        data: {},
-        on: vi.fn(),
-        off: vi.fn()
-    }))
+// Mock RenderSystemFactory to return our test adapter
+vi.mock('../systems/RenderSystemFactory.js', () => ({
+    createEditorRenderSystem: vi.fn(),
+    isTestEnvironment: vi.fn().mockReturnValue(true)
 }));
 
-// EditorRenderSystemをモック
-vi.mock('../systems/EditorRenderSystem.js', () => ({
-    EditorRenderSystem: vi.fn().mockImplementation(() => ({
-        selectTool: vi.fn(),
-        getEditorState: vi.fn().mockReturnValue({
-            selectedTool: 'select',
-            selectedObject: null,
-            isDrawing: false,
-            gridEnabled: true,
-            snapToGrid: true
-        }),
-        toggleGrid: vi.fn(),
-        toggleSnap: vi.fn(),
-        deleteSelectedObject: vi.fn(),
-        duplicateSelectedObject: vi.fn(),
-        clearStage: vi.fn(),
-        loadStageData: vi.fn(),
-        exportStageData: vi.fn().mockReturnValue({
-            id: 1,
-            name: 'New Stage',
-            platforms: [],
-            spikes: [],
-            goal: { x: 100, y: 100, width: 40, height: 50 },
-            startText: { x: 50, y: 50, text: 'START' },
-            goalText: { x: 150, y: 100, text: 'GOAL' }
-        }),
-        // Object creation methods
-        createSpike: vi.fn(),
-        createGoal: vi.fn(),
-        createText: vi.fn(),
-        startPlatformDrawing: vi.fn(),
-        finishPlatformDrawing: vi.fn(),
-        addObject: vi.fn(),
-        getSelectedObject: vi.fn(),
-        selectObject: vi.fn(),
-        dispose: vi.fn(),
-        renderAll: vi.fn(),
-        clearCanvas: vi.fn(),
-        updateStageDataFromCanvas: vi.fn()
-    }))
-}));
+// Mock other modules
+vi.mock('../views/EditorView.js');
+vi.mock('../models/EditorModel.js');
+vi.mock('../core/StageLoader.js');
 
-// DOM要素のモック
-const createMockCanvas = (): HTMLCanvasElement => {
-    const canvas = document.createElement('canvas');
-    canvas.id = 'editorCanvas';
-    canvas.width = EDITOR_CONFIG.CANVAS_SIZE.width;
-    canvas.height = EDITOR_CONFIG.CANVAS_SIZE.height;
-    
-    // Add missing hasAttribute method for Fabric.js compatibility
-    if (!canvas.hasAttribute) {
-        canvas.hasAttribute = vi.fn().mockReturnValue(false);
-    }
-    
-    return canvas;
-};
-
-const createMockUIElements = (): void => {
-    // 必要なDOM要素を作成
-    const elements = [
-        'mouseCoords', 'objectCount', 'currentTool', 'deleteObjectBtn', 'duplicateObjectBtn',
-        'stageName', 'stageId', 'stageDescription', 'noSelection', 'platformProperties',
-        'spikeProperties', 'goalProperties', 'textProperties', 'gridEnabled', 'snapEnabled',
-        'messageContainer'
-    ];
-
-    elements.forEach(id => {
-        if (!document.getElementById(id)) {
-            const element = document.createElement('div');
-            element.id = id;
-            document.body.appendChild(element);
-        }
-    });
-
-    // ツールアイテムを作成
-    const tools = Object.values(EDITOR_TOOLS);
-    tools.forEach(tool => {
-        const toolElement = document.createElement('div');
-        toolElement.className = 'tool-item';
-        toolElement.setAttribute('data-tool', tool);
-        document.body.appendChild(toolElement);
-    });
-};
-
-describe('EditorController統合テスト', () => {
-    let canvas: HTMLCanvasElement;
+describe('EditorController (Adapter Pattern)', () => {
     let controller: EditorController;
-    let view: EditorView;
-    let model: EditorModel;
-    let store: ReturnType<typeof getEditorStore>;
+    let mockCanvas: HTMLCanvasElement;
+    let mockView: EditorView;
+    let mockModel: EditorModel;
+    let mockAdapter: MockRenderAdapter;
+    let mockRenderSystem: EditorRenderSystem;
 
     beforeEach(async () => {
-        // DOM要素の初期化
-        document.body.innerHTML = '';
-        createMockUIElements();
-        
-        // window.confirm をモック
-        global.confirm = vi.fn().mockReturnValue(true);
-        
-        canvas = createMockCanvas();
-        document.body.appendChild(canvas);
-
-        // Zustand store reset
+        // Reset Zustand store
         editorStore.setState({
             editor: {
-                selectedTool: 'select',
+                selectedTool: EDITOR_TOOLS.SELECT,
                 selectedObject: null,
                 isDrawing: false,
                 gridEnabled: true,
@@ -172,393 +39,367 @@ describe('EditorController統合テスト', () => {
             },
             stage: null,
             ui: {
-                isInitialized: false,
-                isLoading: false,
-                activeModal: null,
-                lastError: null,
-                lastSuccess: null,
-                mousePosition: { x: 0, y: 0 }
+                showGrid: true,
+                showSnapIndicators: true,
+                theme: 'dark'
             },
             performance: {
+                frameRate: 60,
                 objectCount: 0,
-                renderTime: 0,
-                lastOperation: '',
-                operationTime: 0
+                lastRenderTime: 0
             }
         });
 
-        // インスタンス作成
-        view = new EditorView(canvas);
-        model = new EditorModel();
-        store = getEditorStore();
-        controller = new EditorController(canvas, view, model);
+        // Create DOM elements
+        document.body.innerHTML = '<div id="messageContainer"></div>';
         
-        // ViewにControllerを設定
-        view.setController(controller);
+        // Create mock canvas
+        mockCanvas = document.createElement('canvas');
+        mockCanvas.width = 800;
+        mockCanvas.height = 600;
 
-        // コントローラーを初期化（非同期）
-        try {
-            await controller.initialize();
-        } catch (error) {
-            // 初期化エラーを無視して基本的な機能をテスト
-            console.warn('Controller initialization failed, continuing with basic tests');
-            
-            // Viewだけでも初期化してmessageContainerを作成
-            try {
-                view.initialize();
-            } catch (viewError) {
-                console.warn('View initialization also failed');
-            }
-        }
+        // Create mock adapter and render system
+        mockAdapter = new MockRenderAdapter();
+        mockRenderSystem = new EditorRenderSystem(mockAdapter);
 
-        // エラーハンドラーの統計をリセット
-        globalErrorHandler.resetStatistics();
+        // Mock the factory to return our test render system
+        const RenderSystemFactory = await import('../systems/RenderSystemFactory.js');
+        vi.mocked(RenderSystemFactory.createEditorRenderSystem).mockReturnValue(mockRenderSystem);
+
+        // Mock view
+        mockView = new EditorView();
+        mockView.initialize = vi.fn();
+        mockView.updateToolSelection = vi.fn();
+        mockView.showMessage = vi.fn();
+        mockView.updateStageList = vi.fn();
+
+        // Mock model
+        mockModel = new EditorModel();
+        mockModel.setCurrentStage = vi.fn();
+        mockModel.getCurrentStage = vi.fn().mockReturnValue({
+            id: 1,
+            name: 'Test Stage',
+            platforms: [],
+            spikes: [],
+            goal: { x: 400, y: 200, width: 40, height: 50 },
+            startText: { x: 50, y: 450, text: 'START' },
+            goalText: { x: 420, y: 180, text: 'GOAL' }
+        });
+        mockModel.exportStageAsJson = vi.fn().mockReturnValue('{}');
+        mockModel.validateStageData = vi.fn().mockReturnValue({ isValid: true, errors: [] });
+
+        // Mock window.confirm
+        window.confirm = vi.fn().mockReturnValue(true);
     });
 
     afterEach(() => {
-        // クリーンアップ
+        if (controller) {
+            controller.dispose();
+        }
+        mockAdapter.reset();
         document.body.innerHTML = '';
         vi.clearAllMocks();
     });
 
-    describe('初期化テスト', () => {
-        it('正常に初期化されること', () => {
-            expect(controller).toBeDefined();
-            // expect(controller.getFabricCanvas()).toBeDefined();
+    describe('Initialization', () => {
+        it('should initialize controller successfully', async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            
+            await expect(controller.initialize()).resolves.toBeUndefined();
+            
+            expect(mockView.initialize).toHaveBeenCalled();
+            expect(mockAdapter.clearCanvasCalled).toBeGreaterThan(0);
         });
 
-        it('初期状態でSELECTツールが選択されていること', () => {
-            expect(store.getActiveTool()).toBe(EDITOR_TOOLS.SELECT);
+        it('should create new stage on initialization', async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            
+            expect(mockModel.setCurrentStage).toHaveBeenCalled();
+            expect(mockAdapter.stageLoads).toHaveLength(1);
         });
 
-        it('初期状態でオブジェクト数が0であること', () => {
-            // New stage is created by default, which has 1 goal object
-            expect(store.getObjectCount()).toBeGreaterThanOrEqual(0);
+        it('should setup Zustand store connection', async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            
+            const store = getEditorStore();
+            expect(store).toBeDefined();
         });
     });
 
-    describe('ツール切り替えテスト', () => {
-        it('ツールが正常に切り替わること', () => {
-            Object.values(EDITOR_TOOLS).forEach(tool => {
-                controller.selectTool(tool);
-                expect(store.getActiveTool()).toBe(tool);
-            });
+    describe('Tool Management', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset(); // Reset counters after initialization
         });
 
-        it('無効なツールを選択した場合エラーが発生すること', () => {
-            // 無効なツールIDでエラーを発生させる（例外がスローされるかテスト）
+        it('should select tool and update store', () => {
+            controller.selectTool(EDITOR_TOOLS.SPIKE);
+            
+            expect(mockAdapter.toolChanges).toContain(EDITOR_TOOLS.SPIKE);
+            
+            const store = getEditorStore();
+            expect(store.getState().editor.selectedTool).toBe(EDITOR_TOOLS.SPIKE);
+        });
+
+        it('should handle invalid tool gracefully', () => {
             expect(() => {
-                controller.selectTool('invalid_tool' as any);
-            }).not.toThrow(); // Controller should handle invalid tools gracefully
-            
-            // Check that tool didn't change to invalid value
-            expect(store.getActiveTool()).not.toBe('invalid_tool');
-        });
-    });
-
-    describe('ステージ管理テスト', () => {
-        it('新しいステージを作成できること', async () => {
-            await controller.createNewStage();
-            
-            const currentStage = store.getCurrentStage();
-            expect(currentStage).toBeDefined();
-            expect(currentStage?.name).toBe('New Stage');
+                controller.selectTool('invalid-tool' as any);
+            }).not.toThrow();
         });
 
-        it('ステージをクリアできること', () => {
-            // まずステージを作成
-            controller.createNewStage();
-            
-            // クリア実行
-            controller.clearStage();
-            
-            const currentStage = store.getCurrentStage();
-            expect(currentStage).toBeUndefined();
-        });
-
-        it('ステージ情報を更新できること', () => {
-            const testStageData = {
-                id: 1,
-                name: 'Test Stage',
-                platforms: [],
-                spikes: [],
-                goal: { x: 100, y: 100, width: 40, height: 50 },
-                startText: { x: 50, y: 50, text: 'START' },
-                goalText: { x: 150, y: 100, text: 'GOAL' }
-            };
-
-            model.setCurrentStage(testStageData);
-            
-            const currentStage = model.getCurrentStage();
-            expect(currentStage?.name).toBe('Test Stage');
-            expect(currentStage?.id).toBe(1);
-        });
-    });
-
-    describe('オブジェクト管理テスト', () => {
-        beforeEach(() => {
-            // テスト用のステージを作成
-            controller.createNewStage();
-        });
-
-        it('プラットフォームを作成できること', () => {
+        it('should update view when tool changes', () => {
             controller.selectTool(EDITOR_TOOLS.PLATFORM);
             
-            const startEvent = {
-                absolutePointer: { x: 100, y: 200 },
-                pointer: { x: 100, y: 200 }
-            } as any;
-            controller.startPlatformDrawing(startEvent);
-            
-            const endEvent = {
-                absolutePointer: { x: 200, y: 200 },
-                pointer: { x: 200, y: 200 }
-            } as any;
-            controller.finishPlatformDrawing(endEvent);
-            
-            // Check that methods executed without errors
-            expect(() => controller.startPlatformDrawing(startEvent)).not.toThrow();
-            expect(() => controller.finishPlatformDrawing(endEvent)).not.toThrow();
-        });
-
-        it('スパイクを作成できること', () => {
-            controller.selectTool(EDITOR_TOOLS.SPIKE);
-            
-            const mockEvent = {
-                absolutePointer: { x: 150, y: 180 },
-                pointer: { x: 150, y: 180 }
-            } as any;
-            controller.createObject(mockEvent);
-            
-            // Check that spike creation executed without errors
-            expect(() => controller.createObject(mockEvent)).not.toThrow();
-        });
-
-        it('ゴールを作成できること', () => {
-            controller.selectTool(EDITOR_TOOLS.GOAL);
-            
-            const mockEvent = {
-                absolutePointer: { x: 300, y: 250 },
-                pointer: { x: 300, y: 250 }
-            } as any;
-            controller.createObject(mockEvent);
-            
-            // Check that goal creation executed without errors
-            expect(() => controller.createObject(mockEvent)).not.toThrow();
-        });
-
-        it('選択されたオブジェクトを削除できること', () => {
-            // まずスパイクを作成
-            controller.selectTool(EDITOR_TOOLS.SPIKE);
-            const mockEvent = {
-                absolutePointer: { x: 150, y: 180 },
-                pointer: { x: 150, y: 180 }
-            } as any;
-            controller.createObject(mockEvent);
-            
-            // 削除を実行
-            controller.deleteSelectedObject();
-            
-            // ステージからオブジェクトが削除されていることを確認は難しいので、
-            // エラーが発生しないことを確認
-            expect(() => controller.deleteSelectedObject()).not.toThrow();
+            expect(mockView.updateToolSelection).toHaveBeenCalledWith(EDITOR_TOOLS.PLATFORM);
         });
     });
 
-    describe('グリッドとスナップテスト', () => {
-        it('グリッドを切り替えできること', () => {
-            const initialGridState = store.getEditorState().gridEnabled;
+    describe('Object Operations', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
+            
+            // Simulate having a selected object
+            const mockObject = { id: 'test-object', type: 'spike' };
+            mockAdapter.selectObject(mockObject);
+        });
+
+        it('should delete selected object', () => {
+            expect(mockAdapter.hasSelectedObject()).toBe(true);
+            
+            controller.deleteSelectedObject();
+            
+            expect(mockAdapter.deleteObjectCalls).toBe(1);
+            expect(mockAdapter.hasSelectedObject()).toBe(false);
+        });
+
+        it('should duplicate selected object', () => {
+            controller.duplicateSelectedObject();
+            
+            expect(mockAdapter.duplicateObjectCalls).toBe(1);
+        });
+
+        it('should handle delete when no object selected', () => {
+            mockAdapter.selectObject(null);
+            
+            controller.deleteSelectedObject();
+            
+            expect(mockAdapter.deleteObjectCalls).toBe(0);
+        });
+    });
+
+    describe('Grid and Snap Operations', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
+        });
+
+        it('should toggle grid', () => {
+            const initialGridState = mockAdapter.isGridEnabled();
             
             controller.toggleGrid();
             
-            const newGridState = store.getEditorState().gridEnabled;
-            expect(newGridState).toBe(!initialGridState);
+            expect(mockAdapter.gridToggles).toBe(1);
+            expect(mockAdapter.isGridEnabled()).toBe(!initialGridState);
         });
 
-        it('スナップを切り替えできること', () => {
-            const initialSnapState = store.getEditorState().snapToGrid;
+        it('should toggle snap', () => {
+            const initialSnapState = mockAdapter.isSnapToGridEnabled();
             
             controller.toggleSnap();
             
-            const newSnapState = store.getEditorState().snapToGrid;
-            expect(newSnapState).toBe(!initialSnapState);
+            expect(mockAdapter.snapToggles).toBe(1);
+            expect(mockAdapter.isSnapToGridEnabled()).toBe(!initialSnapState);
         });
     });
 
-    describe('座標スナップテスト', () => {
-        it('スナップが有効な場合座標が調整されること', () => {
-            // スナップ機能がオンの状態でテスト
-            const initialSnapState = store.getEditorState().snapToGrid;
-            if (!initialSnapState) {
-                controller.toggleSnap();
-            }
-            
-            // 座標調整のテストは内部的なので、例外が発生しないことを確認
-            expect(() => {
-                controller.selectTool(EDITOR_TOOLS.SPIKE);
-                const mockEvent = {
-                    absolutePointer: { x: 113, y: 187 }, // グリッドにスナップされるべき座標
-                    pointer: { x: 113, y: 187 }
-                } as any;
-                controller.createObject(mockEvent);
-            }).not.toThrow();
+    describe('Stage Management', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
         });
 
-        it('スナップが無効な場合座標が変更されないこと', () => {
-            // スナップ機能をオフにする
-            const initialSnapState = store.getEditorState().snapToGrid;
-            if (initialSnapState) {
-                controller.toggleSnap();
-            }
+        it('should create new stage', () => {
+            controller.createNewStage();
             
-            // 座標調整のテストは内部的なので、例外が発生しないことを確認
-            expect(() => {
-                controller.selectTool(EDITOR_TOOLS.SPIKE);
-                const mockEvent = {
-                    absolutePointer: { x: 113, y: 187 }, // グリッドにスナップされない座標
-                    pointer: { x: 113, y: 187 }
-                } as any;
-                controller.createObject(mockEvent);
-            }).not.toThrow();
+            expect(mockModel.setCurrentStage).toHaveBeenCalled();
+            expect(mockAdapter.stageLoads).toHaveLength(1);
+        });
+
+        it('should clear stage', () => {
+            controller.clearStage();
+            
+            expect(mockAdapter.clearCanvasCalled).toBe(1);
+        });
+
+        it('should save stage', () => {
+            controller.saveStage();
+            
+            expect(mockAdapter.stageExports).toBe(1);
+            expect(mockModel.exportStageAsJson).toHaveBeenCalled();
+        });
+
+        it('should load stage', async () => {
+            await controller.loadStage(1);
+            
+            expect(mockAdapter.stageLoads).toHaveLength(1);
         });
     });
 
-    describe('エラーハンドリングテスト', () => {
-        it('エラーが適切にキャッチされること', () => {
-            // 存在しないDOM要素にアクセスしてエラーを発生させる
-            const mockCanvas = null as any;
-            expect(() => {
-                new EditorController(mockCanvas, view, model);
-            }).toThrow();
+    describe('Event Handling', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
         });
 
-        it('無効な操作でエラーが記録されること', () => {
-            // Test error handling gracefully without throwing
-            expect(() => {
-                controller.selectTool('invalid' as any);
-            }).not.toThrow();
+        it('should handle object selection callback', () => {
+            const mockObject = { id: 'test-object', type: 'goal' };
             
-            // Verify error handling doesn't break the system
-            expect(store.getActiveTool()).toBe(EDITOR_TOOLS.SELECT); // Should remain unchanged
+            // Simulate object selection through adapter
+            mockAdapter.selectObject(mockObject);
+            
+            const store = getEditorStore();
+            expect(store.getState().editor.selectedObject).toEqual(mockObject);
         });
-    });
 
-    describe('ステート同期テスト', () => {
-        it('Modelの変更がStoreに反映されること', () => {
-            const testStageData = {
+        it('should handle stage modification callback', () => {
+            const modifiedStageData = {
                 id: 2,
-                name: 'Model Store Sync Test',
+                name: 'Modified Stage',
                 platforms: [],
                 spikes: [],
-                goal: { x: 200, y: 200, width: 40, height: 50 },
-                startText: { x: 50, y: 50, text: 'START' },
-                goalText: { x: 250, y: 200, text: 'GOAL' }
+                goal: { x: 500, y: 300, width: 40, height: 50 },
+                startText: { x: 50, y: 450, text: 'START' },
+                goalText: { x: 520, y: 280, text: 'GOAL' }
             };
-
-            // Controller経由でstageを設定してModel側の動作確認
-            model.setCurrentStage(testStageData);
             
-            // Modelからのデータ取得を確認
-            const modelStage = model.getCurrentStage();
-            expect(modelStage?.name).toBe(testStageData.name);
-            expect(modelStage?.id).toBe(testStageData.id);
-        });
-
-        it('Storeの変更がViewに反映されること', () => {
-            // ツール変更
-            store.selectTool(EDITOR_TOOLS.PLATFORM);
+            mockAdapter.simulateStageModification(modifiedStageData);
             
-            // Viewの更新を確認（実際のDOM更新は環境によっては困難なため、
-            // ここではメソッド呼び出しの確認等で代替）
-            expect(store.getActiveTool()).toBe(EDITOR_TOOLS.PLATFORM);
+            expect(mockModel.setCurrentStage).toHaveBeenCalledWith(modifiedStageData);
         });
     });
 
-    describe('パフォーマンステスト', () => {
-        it.skip('大量のオブジェクト作成でも性能が維持されること', async () => {
-            // TODO: EditorController API implementation needed
+    describe('Keyboard Shortcuts', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
+            
+            // Add object for deletion test
+            const mockObject = { id: 'test-object', type: 'spike' };
+            mockAdapter.selectObject(mockObject);
+        });
+
+        it('should handle Delete key', () => {
+            const deleteEvent = new KeyboardEvent('keydown', { key: 'Delete' });
+            document.dispatchEvent(deleteEvent);
+            
+            expect(mockAdapter.deleteObjectCalls).toBe(1);
+        });
+
+        it('should handle Ctrl+D for duplicate', () => {
+            const duplicateEvent = new KeyboardEvent('keydown', { 
+                key: 'd', 
+                ctrlKey: true 
+            });
+            document.dispatchEvent(duplicateEvent);
+            
+            expect(mockAdapter.duplicateObjectCalls).toBe(1);
+        });
+
+        it('should handle Ctrl+N for new stage', () => {
+            const newStageEvent = new KeyboardEvent('keydown', { 
+                key: 'n', 
+                ctrlKey: true 
+            });
+            document.dispatchEvent(newStageEvent);
+            
+            expect(mockAdapter.stageLoads).toHaveLength(1);
         });
     });
 
-    describe('メモリ管理テスト', () => {
-        it.skip('オブジェクト削除でメモリリークが発生しないこと', async () => {
-            // TODO: EditorController API implementation needed
+    describe('Error Handling', () => {
+        it('should handle initialization errors gracefully', async () => {
+            // Mock createEditorRenderSystem to throw
+            const RenderSystemFactory = await import('../systems/RenderSystemFactory.js');
+            vi.mocked(RenderSystemFactory.createEditorRenderSystem).mockImplementation(() => {
+                throw new Error('Test initialization error');
+            });
+            
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            
+            await expect(controller.initialize()).rejects.toThrow();
+        });
+
+        it('should handle missing DOM elements', async () => {
+            document.body.innerHTML = ''; // Remove messageContainer
+            
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            
+            // Should not throw even without messageContainer
+            await expect(controller.initialize()).resolves.toBeUndefined();
         });
     });
-});
 
-describe('EditorController集約テスト', () => {
-    let canvas: HTMLCanvasElement;
-    // Mock controller removed as test is now functional
+    describe('Performance and Cleanup', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+        });
 
-    beforeEach(() => {
-        document.body.innerHTML = '';
-        createMockUIElements();
-        
-        canvas = createMockCanvas();
-        document.body.appendChild(canvas);
+        it('should dispose resources properly', () => {
+            controller.dispose();
+            
+            expect(mockAdapter.disposeCalled).toBe(1);
+        });
+
+        it('should track adapter method calls efficiently', () => {
+            // Perform multiple operations
+            controller.toggleGrid();
+            controller.selectTool(EDITOR_TOOLS.SPIKE);
+            controller.createNewStage();
+            
+            expect(mockAdapter.gridToggles).toBe(1);
+            expect(mockAdapter.toolChanges).toHaveLength(1);
+            expect(mockAdapter.stageLoads).toHaveLength(1);
+        });
     });
 
-    afterEach(() => {
-        document.body.innerHTML = '';
-        vi.clearAllMocks();
-    });
+    describe('Legacy API Compatibility', () => {
+        beforeEach(async () => {
+            controller = new EditorController(mockCanvas, mockView, mockModel);
+            await controller.initialize();
+            mockAdapter.reset();
+        });
 
-    it('完全なワークフロー：ステージ作成→オブジェクト配置→保存', async () => {
-        // 新しいコントローラーインスタンスを作成（集約テスト用）
-        const testCanvas = createMockCanvas();
-        document.body.appendChild(testCanvas);
-        
-        const testView = new EditorView(testCanvas);
-        const testModel = new EditorModel();
-        const testController = new EditorController(testCanvas, testView, testModel);
-        
-        try {
-            // 1. 初期化
-            await testController.initialize();
+        it('should provide getFabricCanvas for compatibility', () => {
+            expect(() => {
+                controller.getFabricCanvas();
+            }).not.toThrow();
+        });
+
+        it('should handle createObject method', () => {
+            const mockEvent = { clientX: 100, clientY: 200 };
             
-            // 2. 新しいステージ作成
-            testController.createNewStage();
+            expect(() => {
+                controller.createObject(mockEvent);
+            }).not.toThrow();
+        });
+
+        it('should handle platform drawing methods', () => {
+            const mockEvent = { clientX: 100, clientY: 200 };
             
-            // 3. プラットフォーム作成
-            testController.selectTool(EDITOR_TOOLS.PLATFORM);
-            testController.startPlatformDrawing({
-                absolutePointer: { x: 100, y: 300 },
-                pointer: { x: 100, y: 300 }
-            });
-            testController.finishPlatformDrawing({
-                absolutePointer: { x: 200, y: 300 },
-                pointer: { x: 200, y: 300 }
-            });
-            
-            // 4. スパイク配置
-            testController.selectTool(EDITOR_TOOLS.SPIKE);
-            testController.createObject({
-                absolutePointer: { x: 150, y: 280 },
-                pointer: { x: 150, y: 280 }
-            });
-            
-            // 5. ゴール設定
-            testController.selectTool(EDITOR_TOOLS.GOAL);
-            testController.createObject({
-                absolutePointer: { x: 300, y: 250 },
-                pointer: { x: 300, y: 250 }
-            });
-            
-            // 6. ステージ保存（実際のダウンロードではなく処理の確認）
-            expect(() => testController.saveStage()).not.toThrow();
-            
-            // ワークフローが完了したことを確認（実行エラーなしで確認）
-            expect(() => testController.saveStage()).not.toThrow();
-            
-            // Model has stage data
-            const finalStage = testModel.getCurrentStage();
-            expect(finalStage).toBeDefined();
-            expect(finalStage?.name).toBe('New Stage');
-            
-        } finally {
-            testController.dispose();
-            document.body.removeChild(testCanvas);
-        }
+            expect(() => {
+                controller.startPlatformDrawing(mockEvent);
+                controller.finishPlatformDrawing(mockEvent);
+            }).not.toThrow();
+        });
     });
 });

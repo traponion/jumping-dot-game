@@ -1,5 +1,6 @@
 // エディターのメインコントローラー - MVCパターンのController層
 import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
+import { createEditorRenderSystem } from '../systems/RenderSystemFactory.js';
 import { StageLoader, type StageData } from '../core/StageLoader.js';
 import {
     type EditorState,
@@ -152,7 +153,7 @@ export class EditorController implements IEditorController {
             onStageModified: (stageData) => this.handleStageModified(stageData)
         };
 
-        this.editorSystem = new EditorRenderSystem(this.canvas, callbacks);
+        this.editorSystem = createEditorRenderSystem(this.canvas, callbacks);
         DebugHelper.log('EditorRenderSystem initialized');
     }
 
@@ -335,10 +336,9 @@ export class EditorController implements IEditorController {
             if (this.editorSystem) {
                 // Try to clear via existing functionality
                 try {
-                    // Use the method that's expected by tests
-                    if (typeof (this.editorSystem as any).clearStage === 'function') {
-                        (this.editorSystem as any).clearStage();
-                    }
+                    // Clear the canvas using the new adapter pattern
+                    this.editorSystem.clearCanvas();
+                    this.editorSystem.updateStageDataFromCanvas();
                 } catch (error) {
                     // Fallback - just update stage data
                     this.editorSystem.updateStageDataFromCanvas();
