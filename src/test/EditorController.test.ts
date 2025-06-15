@@ -94,7 +94,10 @@ vi.mock('../systems/EditorRenderSystem.js', () => ({
         addObject: vi.fn(),
         getSelectedObject: vi.fn(),
         selectObject: vi.fn(),
-        dispose: vi.fn()
+        dispose: vi.fn(),
+        renderAll: vi.fn(),
+        clearCanvas: vi.fn(),
+        updateStageDataFromCanvas: vi.fn()
     }))
 }));
 
