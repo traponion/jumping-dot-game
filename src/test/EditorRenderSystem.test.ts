@@ -35,7 +35,8 @@ const mockCanvas = {
     setAttribute: vi.fn(),
     getBoundingClientRect: vi.fn(() => ({ 
         left: 0, top: 0, width: 800, height: 600 
-    }))
+    })),
+    hasAttribute: vi.fn().mockReturnValue(false)
 } as unknown as HTMLCanvasElement;
 
 describe('EditorRenderSystem', () => {
