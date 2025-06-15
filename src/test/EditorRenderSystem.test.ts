@@ -265,6 +265,36 @@ describe('EditorRenderSystem (Adapter Pattern)', () => {
         });
     });
 
+    describe('Legacy API Compatibility', () => {
+        it('should handle legacy addObject method', () => {
+            const mockObject = { id: 'test', type: 'spike' };
+            expect(() => {
+                editorRenderSystem.addObject(mockObject);
+            }).not.toThrow();
+        });
+
+        it('should handle legacy selectObject method', () => {
+            const mockObject = { id: 'test', type: 'goal' };
+            expect(() => {
+                editorRenderSystem.selectObject(mockObject);
+            }).not.toThrow();
+        });
+
+        it('should return null for legacy getFabricCanvas', () => {
+            expect(editorRenderSystem.getFabricCanvas()).toBeNull();
+        });
+
+        it('should handle legacy object creation methods', () => {
+            expect(() => {
+                editorRenderSystem.createSpike(100, 200);
+                editorRenderSystem.createGoal(300, 400);  
+                editorRenderSystem.createText(500, 600, 'Test');
+                editorRenderSystem.startPlatformDrawing(10, 20);
+                editorRenderSystem.finishPlatformDrawing(30, 40);
+            }).not.toThrow();
+        });
+    });
+
     describe('Error Handling', () => {
         it('should handle adapter operations gracefully', () => {
             expect(() => {

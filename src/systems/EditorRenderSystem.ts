@@ -181,24 +181,4 @@ export class EditorRenderSystem {
         DebugHelper.log('finishPlatformDrawing called (legacy compatibility)', { x, y });
     }
 
-    // Legacy data creation methods (for compatibility)
-    public createPlatformFromData(data: any): any {
-        DebugHelper.log('createPlatformFromData called (legacy compatibility)', { data });
-        return null; // Legacy method, returns null
-    }
-
-    public createSpikeFromData(data: any): any {
-        DebugHelper.log('createSpikeFromData called (legacy compatibility)', { data });
-        return null; // Legacy method, returns null
-    }
-
-    public createGoalFromData(data: any): any {
-        DebugHelper.log('createGoalFromData called (legacy compatibility)', { data });
-        return null; // Legacy method, returns null
-    }
-
-    public createTextFromData(data: any): any {
-        DebugHelper.log('createTextFromData called (legacy compatibility)', { data });
-        return null; // Legacy method, returns null
-    }
 }
