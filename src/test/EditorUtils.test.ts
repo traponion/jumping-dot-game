@@ -5,7 +5,9 @@ import {
     ObjectFactory, 
     TypeHelper, 
     EventHelper, 
-    DebugHelper 
+    DebugHelper,
+    DOMHelper,
+    MathHelper
 } from '../utils/EditorUtils.js';
 import { EDITOR_TOOLS, EDITOR_CONFIG } from '../types/EditorTypes.js';
 import * as fabric from 'fabric';
@@ -280,6 +282,141 @@ describe('EditorUtils', () => {
                     evented: false
                 })
             );
+        });
+    });
+
+    describe('DOMHelper', () => {
+        beforeEach(() => {
+            document.body.innerHTML = '';
+        });
+
+        it('should get required element by id', () => {
+            const element = document.createElement('div');
+            element.id = 'test-element';
+            document.body.appendChild(element);
+
+            const result = DOMHelper.getRequiredElement<HTMLDivElement>('test-element');
+            
+            expect(result).toBe(element);
+            expect(result.tagName).toBe('DIV');
+        });
+
+        it('should throw error for missing required element', () => {
+            expect(() => {
+                DOMHelper.getRequiredElement('non-existent-element');
+            }).toThrow();
+        });
+
+        it('should get optional element by id', () => {
+            const element = document.createElement('span');
+            element.id = 'optional-element';
+            document.body.appendChild(element);
+
+            const result = DOMHelper.getOptionalElement<HTMLSpanElement>('optional-element');
+            
+            expect(result).toBe(element);
+        });
+
+        it('should return null for missing optional element', () => {
+            const result = DOMHelper.getOptionalElement('missing-element');
+            
+            expect(result).toBeNull();
+        });
+
+        it('should get multiple elements by id mapping', () => {
+            const div = document.createElement('div');
+            div.id = 'element1';
+            const span = document.createElement('span');
+            span.id = 'element2';
+            
+            document.body.appendChild(div);
+            document.body.appendChild(span);
+
+            const result = DOMHelper.getElements({
+                first: 'element1',
+                second: 'element2'
+            });
+            
+            expect(result.first).toBe(div);
+            expect(result.second).toBe(span);
+        });
+
+        it('should add event listeners to node list', () => {
+            const elements = [
+                document.createElement('button'),
+                document.createElement('button'),
+                document.createElement('button')
+            ];
+            
+            elements.forEach(el => {
+                el.className = 'test-button';
+                document.body.appendChild(el);
+            });
+
+            const nodeList = document.querySelectorAll('.test-button');
+            const handler = vi.fn();
+            
+            DOMHelper.addEventListenersToNodeList(nodeList, 'click', handler);
+            
+            // Simulate click on each element
+            elements.forEach(el => {
+                el.click();
+            });
+            
+            expect(handler).toHaveBeenCalledTimes(3);
+        });
+    });
+
+    describe('MathHelper', () => {
+        it('should calculate distance between two points', () => {
+            const point1 = { x: 0, y: 0 };
+            const point2 = { x: 3, y: 4 };
+            
+            const result = MathHelper.distance(point1, point2);
+            
+            expect(result).toBe(5); // 3-4-5 triangle
+        });
+
+        it('should calculate distance for same points', () => {
+            const point = { x: 10, y: 20 };
+            
+            const result = MathHelper.distance(point, point);
+            
+            expect(result).toBe(0);
+        });
+
+        it('should calculate angle between two points', () => {
+            const point1 = { x: 0, y: 0 };
+            const point2 = { x: 1, y: 0 }; // 0 degrees (right)
+            
+            const result = MathHelper.angle(point1, point2);
+            
+            expect(result).toBe(0);
+        });
+
+        it('should calculate angle for vertical line', () => {
+            const point1 = { x: 0, y: 0 };
+            const point2 = { x: 0, y: 1 }; // 90 degrees (up)
+            
+            const result = MathHelper.angle(point1, point2);
+            
+            expect(result).toBe(90);
+        });
+
+        it('should clamp values within range', () => {
+            expect(MathHelper.clamp(5, 0, 10)).toBe(5);
+            expect(MathHelper.clamp(-5, 0, 10)).toBe(0);
+            expect(MathHelper.clamp(15, 0, 10)).toBe(10);
+        });
+
+        it('should clamp values at boundaries', () => {
+            expect(MathHelper.clamp(0, 0, 10)).toBe(0);
+            expect(MathHelper.clamp(10, 0, 10)).toBe(10);
+        });
+
+        it('should handle inverted min/max', () => {
+            // When min > max, it should return min
+            expect(MathHelper.clamp(5, 10, 0)).toBe(0);
         });
     });
 });
