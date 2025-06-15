@@ -39,14 +39,18 @@ describe('EditorController (Adapter Pattern)', () => {
             },
             stage: null,
             ui: {
-                showGrid: true,
-                showSnapIndicators: true,
-                theme: 'dark'
+                isInitialized: true,
+                isLoading: false,
+                activeModal: null,
+                lastError: null,
+                lastSuccess: null,
+                mousePosition: { x: 0, y: 0 }
             },
             performance: {
-                frameRate: 60,
                 objectCount: 0,
-                lastRenderTime: 0
+                renderTime: 0,
+                lastOperation: '',
+                operationTime: 0
             }
         });
 
@@ -67,11 +71,11 @@ describe('EditorController (Adapter Pattern)', () => {
         vi.mocked(RenderSystemFactory.createEditorRenderSystem).mockReturnValue(mockRenderSystem);
 
         // Mock view
-        mockView = new EditorView();
+        mockView = new EditorView(document.createElement('canvas'));
         mockView.initialize = vi.fn();
         mockView.updateToolSelection = vi.fn();
-        mockView.showMessage = vi.fn();
-        mockView.updateStageList = vi.fn();
+        (mockView as any).showMessage = vi.fn();
+        mockView.updateStageInfo = vi.fn();
 
         // Mock model
         mockModel = new EditorModel();
@@ -141,7 +145,7 @@ describe('EditorController (Adapter Pattern)', () => {
             expect(mockAdapter.toolChanges).toContain(EDITOR_TOOLS.SPIKE);
             
             const store = getEditorStore();
-            expect(store.getState().editor.selectedTool).toBe(EDITOR_TOOLS.SPIKE);
+            expect(store.editor.selectedTool).toBe(EDITOR_TOOLS.SPIKE);
         });
 
         it('should handle invalid tool gracefully', () => {
@@ -266,7 +270,7 @@ describe('EditorController (Adapter Pattern)', () => {
             mockAdapter.selectObject(mockObject);
             
             const store = getEditorStore();
-            expect(store.getState().editor.selectedObject).toEqual(mockObject);
+            expect(store.editor.selectedObject).toEqual(mockObject);
         });
 
         it('should handle stage modification callback', () => {

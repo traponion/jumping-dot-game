@@ -24,7 +24,7 @@ export interface StageData {
 export interface EditorCallbacks {
     onObjectSelected?: (object: any) => void;
     onObjectModified?: (object: any) => void;
-    onStageModified?: () => void;
+    onStageModified?: (stageData: StageData) => void;
 }
 
 /**

@@ -165,4 +165,25 @@ export class MockRenderAdapter implements IRenderAdapter {
     public hasSelectedObject(): boolean {
         return this.editorState.selectedObject !== null;
     }
+
+    // Object creation methods (for interface compliance)
+    public createSpike(_x: number, _y: number): void {
+        // Mock implementation - just log the call
+    }
+
+    public createGoal(_x: number, _y: number, _width: number, _height: number): void {
+        // Mock implementation - just log the call
+    }
+
+    public createText(_x: number, _y: number, _text: string): void {
+        // Mock implementation - just log the call
+    }
+
+    public startPlatformDrawing(_x: number, _y: number): void {
+        // Mock implementation - just log the call
+    }
+
+    public finishPlatformDrawing(_x: number, _y: number): void {
+        // Mock implementation - just log the call
+    }
 }

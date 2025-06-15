@@ -3,7 +3,6 @@ import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import type { Platform, Spike, Goal, StageData, TextElement } from '../core/StageLoader.js';
 import type { IRenderAdapter, EditorState, EditorCallbacks, StageData as AdapterStageData } from './IRenderAdapter.js';
 import {
-    type FabricObjectWithData,
     type MouseEventHandler,
     type ObjectCreationParams,
     EDITOR_TOOLS,
@@ -511,5 +510,33 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             startText: texts[0] || { x: 50, y: 450, text: 'START' },
             goalText: texts[1] || { x: goal.x + 20, y: goal.y - 20, text: 'GOAL' }
         };
+    }
+
+    // Object creation methods (for interface compliance)
+    public createSpike(x: number, y: number): void {
+        this.placeObject(EDITOR_TOOLS.SPIKE, { x, y });
+    }
+
+    public createGoal(x: number, y: number, _width: number, _height: number): void {
+        this.placeObject(EDITOR_TOOLS.GOAL, { x, y });
+    }
+
+    public createText(x: number, y: number, text: string): void {
+        const params: ObjectCreationParams = { 
+            position: { x, y }, 
+            text 
+        };
+        const textObject = ObjectFactory.createText(params);
+        this.canvas.add(textObject);
+        this.canvas.renderAll();
+    }
+
+    public startPlatformDrawing(x: number, y: number): void {
+        this.startDrawingPlatform({ x, y });
+    }
+
+    public finishPlatformDrawing(x: number, y: number): void {
+        this.updateDrawingPlatform({ x, y });
+        this.finishDrawingPlatform();
     }
 }

@@ -154,4 +154,51 @@ export class EditorRenderSystem {
         DebugHelper.log('getFabricCanvas called (legacy compatibility)');
         return null; // Returns null since we're now using adapters
     }
+
+    // Object creation methods (for compatibility)
+    public createSpike(x: number, y: number): void {
+        this.renderAdapter.createSpike(x, y);
+        DebugHelper.log('createSpike called (legacy compatibility)', { x, y });
+    }
+
+    public createGoal(x: number, y: number): void {
+        this.renderAdapter.createGoal(x, y, 40, 50); // Default size
+        DebugHelper.log('createGoal called (legacy compatibility)', { x, y });
+    }
+
+    public createText(x: number, y: number, text: string): void {
+        this.renderAdapter.createText(x, y, text);
+        DebugHelper.log('createText called (legacy compatibility)', { x, y, text });
+    }
+
+    public startPlatformDrawing(x: number, y: number): void {
+        this.renderAdapter.startPlatformDrawing(x, y);
+        DebugHelper.log('startPlatformDrawing called (legacy compatibility)', { x, y });
+    }
+
+    public finishPlatformDrawing(x: number, y: number): void {
+        this.renderAdapter.finishPlatformDrawing(x, y);
+        DebugHelper.log('finishPlatformDrawing called (legacy compatibility)', { x, y });
+    }
+
+    // Legacy data creation methods (for compatibility)
+    public createPlatformFromData(data: any): any {
+        DebugHelper.log('createPlatformFromData called (legacy compatibility)', { data });
+        return null; // Legacy method, returns null
+    }
+
+    public createSpikeFromData(data: any): any {
+        DebugHelper.log('createSpikeFromData called (legacy compatibility)', { data });
+        return null; // Legacy method, returns null
+    }
+
+    public createGoalFromData(data: any): any {
+        DebugHelper.log('createGoalFromData called (legacy compatibility)', { data });
+        return null; // Legacy method, returns null
+    }
+
+    public createTextFromData(data: any): any {
+        DebugHelper.log('createTextFromData called (legacy compatibility)', { data });
+        return null; // Legacy method, returns null
+    }
 }
