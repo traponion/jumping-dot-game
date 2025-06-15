@@ -130,30 +130,6 @@ export class EditorRenderSystem {
         return this.renderAdapter;
     }
 
-    /**
-     * Add object to canvas (for compatibility)
-     */
-    public addObject(object: any): void {
-        // This is legacy functionality that's now handled by the adapter
-        DebugHelper.log('addObject called (legacy compatibility)', { object });
-    }
-
-    /**
-     * Select object (for compatibility)
-     */
-    public selectObject(object: any): void {
-        // This is legacy functionality that's now handled by the adapter
-        DebugHelper.log('selectObject called (legacy compatibility)', { object });
-    }
-
-    /**
-     * Get Fabric canvas (for compatibility)
-     */
-    public getFabricCanvas(): any {
-        // For compatibility with legacy code that expects Fabric canvas
-        DebugHelper.log('getFabricCanvas called (legacy compatibility)');
-        return null; // Returns null since we're now using adapters
-    }
 
     // Object creation methods (for compatibility)
     public createSpike(x: number, y: number): void {

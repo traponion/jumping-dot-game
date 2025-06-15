@@ -43,7 +43,6 @@ export interface IEditorController {
     createObject(event: any): void;
     startPlatformDrawing(event: any): void;
     finishPlatformDrawing(event: any): void;
-    getFabricCanvas(): any;
 }
 
 // View層とModel層のインターフェース
@@ -715,10 +714,4 @@ export class EditorController implements IEditorController {
         }
     }
 
-    /**
-     * Fabric.jsキャンバスを取得（テスト用API）
-     */
-    public getFabricCanvas(): any {
-        return this.editorSystem?.getFabricCanvas() || null;
-    }
 }
