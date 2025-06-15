@@ -151,6 +151,18 @@ export class EditorModel implements IEditorModel {
     }
 
     /**
+     * 現在のステージをクリア
+     */
+    public clearCurrentStage(): void {
+        this.currentStage = null;
+        this.isModified = false;
+        this.lastSaved = null;
+        this.notifyStageDataChanged();
+        
+        DebugHelper.log('Current stage cleared');
+    }
+
+    /**
      * エディター状態を取得
      */
     public getEditorState(): EditorState {

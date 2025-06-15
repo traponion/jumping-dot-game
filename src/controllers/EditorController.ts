@@ -63,6 +63,7 @@ export interface IEditorView {
 export interface IEditorModel {
     getCurrentStage(): StageData | null;
     setCurrentStage(stageData: StageData): void;
+    clearCurrentStage(): void;
     getEditorState(): EditorState;
     updateEditorState(updates: Partial<EditorState>): void;
     getObjectCount(): number;
@@ -328,8 +329,8 @@ export class EditorController implements IEditorController {
      */
     public clearStage(): void {
         if (confirm('Are you sure you want to clear all objects?')) {
-            // Clear store first (use undefined instead of null for Zustand compatibility)
-            this.store.setStageData(undefined as any);
+            // Clear store first
+            this.store.setStageData(null);
             
             // Clear render system - use existing methods if available
             if (this.editorSystem) {
@@ -344,8 +345,8 @@ export class EditorController implements IEditorController {
                 }
             }
             
-            // Clear model (use undefined instead of null)
-            this.model.setCurrentStage(undefined as any);
+            // Clear model using type-safe method
+            this.model.clearCurrentStage();
             
             // Update UI
             this.updateUIFromModel();
