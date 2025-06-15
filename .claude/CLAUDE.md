@@ -1,5 +1,8 @@
 # Development Guidelines for jumping-dot-game
 
+> **Note**: This document focuses on development workflow and GitHub Flow processes.  
+> For technical architecture and project overview, see `DEVELOPMENT_GUIDE.md` and `ARCHITECTURE.md`.
+
 ## Branch Strategy (GitHub Flow)
 
 This project follows the **GitHub Flow** development strategy with branch protection rules.
@@ -138,6 +141,12 @@ If issues are found in production:
 2. Create new release
 3. Investigate and fix in `dev` branch
 
+## Related Documentation
+- `DEVELOPMENT_GUIDE.md` - Project overview and architecture
+- `ARCHITECTURE.md` - Technical architecture details
+- `DEVELOPMENT_STANDARDS.md` - Coding standards and conventions
+- `testing-coverage-standards.md` - Testing requirements and standards
+
 ## Notes for Claude Development
 - Always check current branch before starting work
 - Use TodoWrite tool for task planning and tracking
@@ -145,6 +154,7 @@ If issues are found in production:
 - Commit frequently with descriptive messages
 - Use GitHub Actions for CI/CD validation
 - Maintain high code coverage standards
+- Review existing `.claude/` documentation before starting new features
 
 ---
 *Last updated: 2025-06-15*
