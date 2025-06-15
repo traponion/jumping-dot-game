@@ -327,6 +327,25 @@ describe('ErrorHandler', () => {
             expect(stats.nonRecoverableErrors).toBe(1);
             expect(stats.totalErrors).toBe(2);
         });
+
+        it('should limit error history size', () => {
+            // Create more than 100 errors (max history size)
+            for (let i = 0; i < 105; i++) {
+                const error = new EditorError(
+                    `Error ${i}`,
+                    ERROR_CODES.CANVAS_INIT_FAILED,
+                    ERROR_TYPES.FABRIC
+                );
+                errorHandler.handleError(error);
+            }
+            
+            const history = errorHandler.getErrorHistory();
+            expect(history.length).toBe(100); // Should be limited to maxHistorySize
+            
+            // Should contain the most recent errors
+            expect(history[0].message).toBe('Error 5'); // oldest kept error
+            expect(history[99].message).toBe('Error 104'); // newest error
+        });
     });
 
     describe('Batch Error Handling', () => {
@@ -437,6 +456,34 @@ describe('ErrorHandler', () => {
             expect(error.type).toBe(ERROR_TYPES.PERFORMANCE);
             expect(error.message).toBe('Slow operation');
             expect(error.details).toEqual({ duration: 5000 });
+        });
+
+        it('should create generic error with all parameters', () => {
+            const error = ErrorHandler.createError(
+                'Generic error',
+                ERROR_CODES.UNKNOWN_ERROR,
+                ERROR_TYPES.SYSTEM,
+                { custom: 'data' },
+                false
+            );
+            
+            expect(error.message).toBe('Generic error');
+            expect(error.code).toBe(ERROR_CODES.UNKNOWN_ERROR);
+            expect(error.type).toBe(ERROR_TYPES.SYSTEM);
+            expect(error.details).toEqual({ custom: 'data' });
+            expect(error.isRecoverable()).toBe(false);
+        });
+
+        it('should create generic error with default parameters', () => {
+            const error = ErrorHandler.createError(
+                'Simple error',
+                ERROR_CODES.CANVAS_INIT_FAILED
+            );
+            
+            expect(error.message).toBe('Simple error');
+            expect(error.code).toBe(ERROR_CODES.CANVAS_INIT_FAILED);
+            expect(error.type).toBe(ERROR_TYPES.SYSTEM);
+            expect(error.isRecoverable()).toBe(true);
         });
     });
 
