@@ -445,19 +445,22 @@ export class FabricRenderSystem {
     }
 
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        // Save current camera transform
-        const currentTransform = this.canvas.viewportTransform!.slice() as [number, number, number, number, number, number];
-        
-        // Temporarily reset transform for UI
-        this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        // Get current camera position from transform
+        const transform = this.canvas.viewportTransform!;
+        const cameraX = -transform[4];
+        const cameraY = -transform[5];
         
         const canvasWidth = this.canvas.getWidth();
         const canvasHeight = this.canvas.getHeight();
+        
+        // Calculate screen center in world coordinates
+        const screenCenterX = cameraX + canvasWidth / 2;
+        const screenCenterY = cameraY + canvasHeight / 2;
 
-        // Semi-transparent overlay
+        // Semi-transparent overlay covering visible screen area
         const overlay = new fabric.Rect({
-            left: 0,
-            top: 0,
+            left: cameraX,
+            top: cameraY,
             width: canvasWidth,
             height: canvasHeight,
             fill: 'rgba(0, 0, 0, 0.8)',
@@ -468,8 +471,8 @@ export class FabricRenderSystem {
 
         // Game Over title
         const gameOverText = new fabric.Text('GAME OVER', {
-            left: canvasWidth / 2,
-            top: canvasHeight / 2 - 80,
+            left: screenCenterX,
+            top: screenCenterY - 80,
             fontSize: 32,
             fill: 'white',
             fontFamily: 'monospace',
@@ -483,8 +486,8 @@ export class FabricRenderSystem {
         // Score display
         if (finalScore > 0) {
             const scoreText = new fabric.Text(`Score: ${finalScore}`, {
-                left: canvasWidth / 2,
-                top: canvasHeight / 2 - 40,
+                left: screenCenterX,
+                top: screenCenterY - 40,
                 fontSize: 20,
                 fill: 'white',
                 fontFamily: 'monospace',
@@ -497,7 +500,7 @@ export class FabricRenderSystem {
         }
 
         // Menu options
-        const startY = canvasHeight / 2;
+        const startY = screenCenterY;
         const itemHeight = 50;
 
         options.forEach((option, index) => {
@@ -507,7 +510,7 @@ export class FabricRenderSystem {
             // Selection indicator
             if (isSelected) {
                 const selectionRect = new fabric.Rect({
-                    left: canvasWidth / 2 - 150,
+                    left: screenCenterX - 150,
                     top: y - 25,
                     width: 300,
                     height: 40,
@@ -520,7 +523,7 @@ export class FabricRenderSystem {
 
             // Option text
             const optionText = new fabric.Text(option, {
-                left: canvasWidth / 2,
+                left: screenCenterX,
                 top: y,
                 fontSize: 24,
                 fill: isSelected ? 'black' : 'white',
@@ -535,8 +538,8 @@ export class FabricRenderSystem {
 
         // Instructions
         const instructionText = new fabric.Text('↑↓ Navigate  ENTER/R/SPACE Select', {
-            left: canvasWidth / 2,
-            top: canvasHeight - 50,
+            left: screenCenterX,
+            top: cameraY + canvasHeight - 50,
             fontSize: 16,
             fill: '#aaa',
             fontFamily: 'monospace',
@@ -546,9 +549,6 @@ export class FabricRenderSystem {
             evented: false
         });
         this.canvas.add(instructionText);
-        
-        // Restore original camera transform after UI rendering
-        this.canvas.setViewportTransform(currentTransform);
     }
 
     renderStartInstruction(): void {
