@@ -10,6 +10,8 @@ export class InputManager {
     private gameController: GameController;
     private gameRunning = false;
     private gameOver = false;
+    private lastInputTime = 0;
+    private inputCooldown = 300; // 300ms cooldown to prevent rapid inputs
 
     constructor(canvas: HTMLCanvasElement, gameController: GameController) {
         this.gameController = gameController;
@@ -41,8 +43,14 @@ export class InputManager {
     }
 
     private setupEventHandlers(): void {
-        // Game start handling
+        // Game start handling with debouncing
         this.inputs.down.on('start-game', () => {
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+
             if (!this.gameRunning && !this.gameOver) {
                 console.log('🚀 Starting game with Space');
                 this.gameController.startGame();
@@ -55,8 +63,14 @@ export class InputManager {
             }
         });
 
-        // Game restart handling
+        // Game restart handling with debouncing
         this.inputs.down.on('restart', () => {
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+
             if (this.gameOver) {
                 console.log('🔄 Restarting game with R');
                 this.gameController.init();

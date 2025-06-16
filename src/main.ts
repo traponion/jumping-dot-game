@@ -53,33 +53,19 @@ class StageSelect {
             case 'ArrowLeft':
                 e.preventDefault();
                 this.selectedStageIndex = Math.max(0, this.selectedStageIndex - 1);
-                // Ensure selected stage is unlocked
-                while (this.selectedStageIndex >= 0 && 
-                       !this.isStageUnlocked(this.stages[this.selectedStageIndex].id)) {
-                    this.selectedStageIndex--;
-                }
-                if (this.selectedStageIndex < 0) this.selectedStageIndex = 0;
                 break;
                 
             case 'ArrowDown':
             case 'ArrowRight':
                 e.preventDefault();
                 this.selectedStageIndex = Math.min(this.stages.length - 1, this.selectedStageIndex + 1);
-                // Ensure selected stage is unlocked
-                while (this.selectedStageIndex < this.stages.length && 
-                       !this.isStageUnlocked(this.stages[this.selectedStageIndex].id)) {
-                    this.selectedStageIndex++;
-                }
-                if (this.selectedStageIndex >= this.stages.length) {
-                    this.selectedStageIndex = this.stages.length - 1;
-                }
                 break;
                 
             case ' ':
             case 'Enter':
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
-                if (selectedStage && this.isStageUnlocked(selectedStage.id)) {
+                if (selectedStage) {
                     this.startStage(selectedStage.id);
                 }
                 break;
@@ -200,10 +186,9 @@ class StageSelect {
         }
     }
     
-    private isStageUnlocked(stageId: number): boolean {
-        if (stageId === 1) return true;
-        const progress = this.getStageProgress();
-        return progress.clearedStages.includes(stageId - 1);
+    private isStageUnlocked(_stageId: number): boolean {
+        // All stages are always unlocked for free selection
+        return true;
     }
     
     private getStageProgress(): { clearedStages: number[] } {
