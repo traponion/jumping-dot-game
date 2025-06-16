@@ -128,9 +128,7 @@ export class JumpingDotGame {
     }
 
     async initWithStage(stageId: number): Promise<void> {
-        console.log(`🏗️ Game.initWithStage called with stageId: ${stageId}`);
         this.gameState.currentStage = stageId;
-        console.log(`📋 Set gameState.currentStage to: ${this.gameState.currentStage}`);
         this.gameStatus.textContent = 'Loading stage...';
 
         await this.loadStage(stageId);

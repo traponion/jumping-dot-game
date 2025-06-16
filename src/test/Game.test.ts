@@ -225,6 +225,37 @@ describe('JumpingDotGame', () => {
             // Timer should be updated (tested through no errors thrown)
             expect(() => game.testUpdate()).not.toThrow();
         });
+
+        it('should return game state correctly', () => {
+            const gameState = game.getGameState();
+            expect(gameState).toHaveProperty('gameRunning');
+            expect(gameState).toHaveProperty('gameOver');
+            expect(gameState).toHaveProperty('currentStage');
+            expect(typeof gameState.gameRunning).toBe('boolean');
+            expect(typeof gameState.gameOver).toBe('boolean');
+            expect(typeof gameState.currentStage).toBe('number');
+        });
+
+        it('should initialize with stage correctly', async () => {
+            // Mock successful stage loading
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    id: 2,
+                    name: 'Test Stage 2',
+                    platforms: [],
+                    spikes: [],
+                    goal: { x: 700, y: 400, width: 50, height: 50 },
+                    holes: [],
+                    text: []
+                })
+            });
+
+            await game.initWithStage(2);
+            const gameState = game.getGameState();
+            expect(gameState.currentStage).toBe(2);
+            expect(mockGameStatus.textContent).toBe('Press SPACE to start');
+        });
     });
 
     describe('integration tests', () => {
@@ -323,6 +354,26 @@ describe('JumpingDotGame', () => {
             expect(cancelSpy).not.toHaveBeenCalled();
 
             global.cancelAnimationFrame = originalCancelAnimationFrame;
+        });
+
+        it('should handle game over menu navigation', () => {
+            game.setGameOver();
+            
+            // Test navigation methods don't throw
+            expect(() => game.handleGameOverNavigation('up')).not.toThrow();
+            expect(() => game.handleGameOverNavigation('down')).not.toThrow();
+            expect(() => game.handleGameOverSelection()).not.toThrow();
+        });
+
+        it('should return to stage select properly', () => {
+            // Mock window.stageSelect
+            (window as any).stageSelect = {
+                returnToStageSelect: vi.fn()
+            };
+
+            game.returnToStageSelect();
+            
+            expect((window as any).stageSelect.returnToStageSelect).toHaveBeenCalled();
         });
     });
 

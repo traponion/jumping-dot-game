@@ -55,23 +55,19 @@ class StageSelect {
             case 'ArrowLeft':
                 e.preventDefault();
                 this.selectedStageIndex = Math.max(0, this.selectedStageIndex - 1);
-                console.log(`🔼 Stage index: ${this.selectedStageIndex} (${this.stages[this.selectedStageIndex]?.name})`);
                 break;
                 
             case 'ArrowDown':
             case 'ArrowRight':
                 e.preventDefault();
                 this.selectedStageIndex = Math.min(this.stages.length - 1, this.selectedStageIndex + 1);
-                console.log(`🔽 Stage index: ${this.selectedStageIndex} (${this.stages[this.selectedStageIndex]?.name})`);
                 break;
                 
             case ' ':
             case 'Enter':
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
-                console.log(`🎯 Enter pressed: selectedIndex=${this.selectedStageIndex}, selectedStage=${selectedStage ? `${selectedStage.id} (${selectedStage.name})` : 'undefined'}`);
                 if (selectedStage) {
-                    console.log(`🚀 Calling startStage with ID: ${selectedStage.id}`);
                     this.startStage(selectedStage.id);
                 }
                 break;
@@ -149,15 +145,12 @@ class StageSelect {
     }
     
     private async startStage(stageId: number): Promise<void> {
-        console.log(`🎮 startStage called with stageId: ${stageId}`);
         this.hideStageSelect();
         
         // Properly cleanup existing game instance before creating new one
         if (this.gameInstance) {
-            console.log('🧹 Cleaning up existing game instance...');
             await this.gameInstance.cleanup();
             this.gameInstance = null;
-            console.log('✅ Cleanup completed');
         }
         
         // Show game UI elements
