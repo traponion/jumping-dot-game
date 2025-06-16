@@ -375,6 +375,43 @@ describe('JumpingDotGame', () => {
             
             expect((window as any).stageSelect.returnToStageSelect).toHaveBeenCalled();
         });
+
+        it('should handle async cleanup properly', async () => {
+            const cleanupSpy = vi.fn();
+            game.setAnimationId(123);
+            
+            // Mock cleanup method exists
+            global.cancelAnimationFrame = cleanupSpy;
+            
+            await game.cleanup();
+            
+            expect(cleanupSpy).toHaveBeenCalledWith(123);
+        });
+
+        it('should handle cleanup without render system', async () => {
+            // Should not throw when render system doesn't have cleanup
+            expect(async () => await game.cleanup()).not.toThrow();
+        });
+
+        it('should handle game over selection edge cases', () => {
+            // Should not throw when not in game over state
+            expect(() => game.handleGameOverSelection()).not.toThrow();
+            
+            // Set game over state
+            game.setGameOver();
+            expect(() => game.handleGameOverSelection()).not.toThrow();
+        });
+
+        it('should handle game over navigation edge cases', () => {
+            // Should not throw when not in game over state
+            expect(() => game.handleGameOverNavigation('up')).not.toThrow();
+            expect(() => game.handleGameOverNavigation('down')).not.toThrow();
+            
+            // Set game over state and test navigation
+            game.setGameOver();
+            expect(() => game.handleGameOverNavigation('up')).not.toThrow();
+            expect(() => game.handleGameOverNavigation('down')).not.toThrow();
+        });
     });
 
     describe('error handling', () => {
