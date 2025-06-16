@@ -56,15 +56,21 @@ export class InputManager {
     private setupEventHandlers(): void {
         // Game start handling with debouncing
         this.inputs.down.on('start-game', () => {
+            const gameState = this.gameController.getGameState();
+            console.log(`🚀 Start-game triggered: gameRunning=${gameState.gameRunning}, gameOver=${gameState.gameOver}`);
+            
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
+                console.log('⏰ Start-game ignored due to cooldown');
                 return; // Ignore rapid inputs
             }
             this.lastInputTime = now;
 
-            if (!this.gameRunning && !this.gameController.getGameState().gameOver) {
-                console.log('🚀 Starting game with Space');
+            if (!this.gameRunning && !gameState.gameOver) {
+                console.log('✅ Starting game with Space');
                 this.gameController.startGame();
+            } else {
+                console.log(`❌ Start-game blocked: gameRunning=${this.gameRunning}, gameOver=${gameState.gameOver}`);
             }
         });
 
@@ -109,6 +115,8 @@ export class InputManager {
                 
                 console.log('✅ Executing game over selection');
                 this.gameController.handleGameOverSelection();
+            } else {
+                console.log(`❌ Menu select blocked: gameOver=${gameState.gameOver}`);
             }
         });
     }
