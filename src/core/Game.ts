@@ -403,22 +403,6 @@ export class JumpingDotGame {
         return this.gameState;
     }
 
-    private async restartStage(): Promise<void> {
-        console.log('🔄 Restarting stage...');
-        
-        // Cleanup render system first and wait for completion
-        if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as any).cleanup();
-        }
-        
-        // Reinitialize systems after cleanup is complete
-        this.initializeSystems();
-        
-        // Initialize the game
-        await this.init();
-        
-        console.log('✅ Stage restarted successfully');
-    }
 
     public handleGameOverNavigation(direction: 'up' | 'down'): void {
         if (!this.gameState.gameOver) return;
@@ -436,12 +420,10 @@ export class JumpingDotGame {
         if (!this.gameState.gameOver) return;
         
         const selectedOption = this.gameOverOptions[this.gameOverMenuIndex];
-        console.log(`🎯 Game over menu selected: ${selectedOption}`);
         
         switch (selectedOption) {
             case 'RESTART STAGE':
-                // Properly cleanup before reinitializing to prevent canvas conflicts
-                this.restartStage();
+                this.init();
                 break;
             case 'STAGE SELECT':
                 this.returnToStageSelect();
