@@ -435,56 +435,14 @@ export class JumpingDotGame {
     }
 
     private renderGameOverMenu(): void {
-        const ctx = this.canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Draw semi-transparent overlay
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Menu styling
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.font = '32px monospace';
-
-        // Game Over title
-        ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 80);
-
-        // Score display if available
-        if (this.gameState.finalScore > 0) {
-            ctx.font = '20px monospace';
-            ctx.fillText(`Score: ${this.gameState.finalScore}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
+        // Use FabricRenderSystem to render the game over menu
+        if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
+            (this.renderSystem as any).renderGameOverMenu(
+                this.gameOverOptions,
+                this.gameOverMenuIndex,
+                this.gameState.finalScore
+            );
         }
-
-        // Menu options
-        const startY = this.canvas.height / 2;
-        const itemHeight = 50;
-
-        this.gameOverOptions.forEach((option, index) => {
-            const y = startY + index * itemHeight;
-            const isSelected = index === this.gameOverMenuIndex;
-
-            // Selection indicator
-            if (isSelected) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(this.canvas.width / 2 - 150, y - 25, 300, 40);
-                ctx.fillStyle = 'black';
-            } else {
-                ctx.fillStyle = 'white';
-            }
-
-            // Option text
-            ctx.font = '24px monospace';
-            ctx.fillText(option, this.canvas.width / 2, y);
-        });
-
-        // Instructions
-        ctx.fillStyle = '#aaa';
-        ctx.font = '16px monospace';
-        ctx.fillText('↑↓ Navigate  ENTER Select', this.canvas.width / 2, this.canvas.height - 50);
-
-        ctx.restore();
     }
 
     private render(): void {
@@ -549,6 +507,12 @@ export class JumpingDotGame {
             this.animationId = null;
         }
         this.inputManager.cleanup();
+        
+        // Cleanup render system to prevent canvas reinitialization issues
+        if (this.renderSystem && 'cleanup' in this.renderSystem) {
+            (this.renderSystem as any).cleanup();
+        }
+        
         this.gameState.gameRunning = false;
         this.gameState.gameOver = true;
     }

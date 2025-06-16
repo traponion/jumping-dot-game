@@ -62,7 +62,8 @@ export class FabricRenderSystem {
     }
 
     restoreCameraTransform(): void {
-        // Fabric.jsではカメラ変換を保持（UI要素のカメラ問題は後で対処）
+        // Reset camera transform for UI elements
+        this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     }
 
     renderPlayer(player: Player): void {
@@ -444,6 +445,104 @@ export class FabricRenderSystem {
         }
     }
 
+    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+        const canvasWidth = this.canvas.getWidth();
+        const canvasHeight = this.canvas.getHeight();
+
+        // Semi-transparent overlay
+        const overlay = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: canvasWidth,
+            height: canvasHeight,
+            fill: 'rgba(0, 0, 0, 0.8)',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(overlay);
+
+        // Game Over title
+        const gameOverText = new fabric.Text('GAME OVER', {
+            left: canvasWidth / 2,
+            top: canvasHeight / 2 - 80,
+            fontSize: 32,
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(gameOverText);
+
+        // Score display
+        if (finalScore > 0) {
+            const scoreText = new fabric.Text(`Score: ${finalScore}`, {
+                left: canvasWidth / 2,
+                top: canvasHeight / 2 - 40,
+                fontSize: 20,
+                fill: 'white',
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+            this.canvas.add(scoreText);
+        }
+
+        // Menu options
+        const startY = canvasHeight / 2;
+        const itemHeight = 50;
+
+        options.forEach((option, index) => {
+            const y = startY + index * itemHeight;
+            const isSelected = index === selectedIndex;
+
+            // Selection indicator
+            if (isSelected) {
+                const selectionRect = new fabric.Rect({
+                    left: canvasWidth / 2 - 150,
+                    top: y - 25,
+                    width: 300,
+                    height: 40,
+                    fill: 'white',
+                    selectable: false,
+                    evented: false
+                });
+                this.canvas.add(selectionRect);
+            }
+
+            // Option text
+            const optionText = new fabric.Text(option, {
+                left: canvasWidth / 2,
+                top: y,
+                fontSize: 24,
+                fill: isSelected ? 'black' : 'white',
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+            this.canvas.add(optionText);
+        });
+
+        // Instructions
+        const instructionText = new fabric.Text('↑↓ Navigate  ENTER Select', {
+            left: canvasWidth / 2,
+            top: canvasHeight - 50,
+            fontSize: 16,
+            fill: '#aaa',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(instructionText);
+    }
+
     renderStartInstruction(): void {
         // HTML要素で表示するため、Canvas描画は不要
         const startScreen = document.getElementById('startScreen');
@@ -462,6 +561,13 @@ export class FabricRenderSystem {
 
     renderCredits(): void {
         // クレジットはCanvas外に表示するため、ここでは何もしない
+    }
+
+    cleanup(): void {
+        // Dispose fabric canvas to prevent memory leaks and reinitialization errors
+        if (this.canvas) {
+            this.canvas.dispose();
+        }
     }
 
     // ランディング予測システム
