@@ -62,7 +62,7 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (!this.gameRunning && !this.gameOver) {
+            if (!this.gameRunning && !this.gameController.getGameState().gameOver) {
                 console.log('🚀 Starting game with Space');
                 this.gameController.startGame();
             }
@@ -96,13 +96,18 @@ export class InputManager {
         });
 
         this.inputs.down.on('menu-select', () => {
-            if (this.gameController.getGameState().gameOver) {
+            const gameState = this.gameController.getGameState();
+            console.log(`🎯 Menu select triggered: gameOver=${gameState.gameOver}, gameRunning=${gameState.gameRunning}`);
+            
+            if (gameState.gameOver) {
                 const now = Date.now();
                 if (now - this.lastInputTime < this.inputCooldown) {
+                    console.log('⏰ Menu select ignored due to cooldown');
                     return; // Ignore rapid inputs
                 }
                 this.lastInputTime = now;
                 
+                console.log('✅ Executing game over selection');
                 this.gameController.handleGameOverSelection();
             }
         });
