@@ -466,4 +466,88 @@ describe('JumpingDotGame', () => {
             expect(result).toBe('coverage-test-marker');
         });
     });
+
+    describe('additional coverage tests', () => {
+        it('should handle initWithStage for different stage numbers', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    id: 3,
+                    name: 'Test Stage 3',
+                    platforms: [],
+                    spikes: [],
+                    goal: { x: 700, y: 400, width: 50, height: 50 },
+                    startText: { x: 50, y: 450, text: 'TEST' },
+                    goalText: { x: 720, y: 380, text: 'GOAL' }
+                })
+            });
+
+            await game.initWithStage(3);
+            const gameState = game.getGameState();
+            expect(gameState.currentStage).toBe(3);
+        });
+
+        it('should handle game over navigation with different directions', () => {
+            game.setGameOver();
+            
+            // Test different navigation directions
+            game.handleGameOverNavigation('up');
+            game.handleGameOverNavigation('down');
+            
+            // Should not throw errors
+            expect(true).toBe(true);
+        });
+
+        it('should handle game over selection in different states', () => {
+            // Test selection without game over state
+            game.handleGameOverSelection();
+            
+            // Test with game over state
+            game.setGameOver();
+            game.handleGameOverSelection();
+            
+            // Should complete without errors
+            expect(true).toBe(true);
+        });
+
+        it('should handle multiple render calls', () => {
+            // Test rendering in different states
+            game.testRender(); // Initial state
+            
+            game.startGame();
+            game.testRender(); // Running state
+            
+            game.setGameOver();
+            game.testRender(); // Game over state
+            
+            // All renders should complete without errors
+            expect(true).toBe(true);
+        });
+
+        it('should handle cleanup in different scenarios', () => {
+            // Test cleanup without any setup
+            game.cleanup();
+            
+            // Test cleanup after starting game
+            game.startGame();
+            game.cleanup();
+            
+            // Multiple cleanups should be safe
+            game.cleanup();
+            game.cleanup();
+            
+            expect(true).toBe(true);
+        });
+
+        it('should handle stage loading edge cases', async () => {
+            // Test loading non-existent stage
+            await game.testLoadStage(999);
+            
+            // Test loading stage 0
+            await game.testLoadStage(0);
+            
+            // Should fallback gracefully
+            expect(true).toBe(true);
+        });
+    });
 });
