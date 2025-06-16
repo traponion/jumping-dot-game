@@ -66,6 +66,7 @@ class StageSelect {
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
                 if (selectedStage) {
+                    console.log(`🎯 Starting stage ${selectedStage.id} (${selectedStage.name})`);
                     this.startStage(selectedStage.id);
                 }
                 break;
@@ -147,6 +148,7 @@ class StageSelect {
     }
     
     private async startStage(stageId: number): Promise<void> {
+        console.log(`🚀 StageSelect.startStage called with ID: ${stageId}`);
         this.isActive = false;
         
         if (this.animationId) {
@@ -163,9 +165,15 @@ class StageSelect {
         if (info) info.style.display = 'block';
         if (controls) controls.style.display = 'block';
         
-        // Create new game instance
-        this.gameInstance = new JumpingDotGame();
-        await this.gameInstance.initWithStage(stageId);
+        try {
+            // Create new game instance
+            console.log(`🎮 Creating game instance for stage ${stageId}`);
+            this.gameInstance = new JumpingDotGame();
+            await this.gameInstance.initWithStage(stageId);
+            console.log(`✅ Game instance initialized for stage ${stageId}`);
+        } catch (error) {
+            console.error(`❌ Failed to start stage ${stageId}:`, error);
+        }
     }
     
     public async returnToStageSelect(): Promise<void> {

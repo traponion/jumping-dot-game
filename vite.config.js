@@ -17,6 +17,8 @@ export default defineConfig({
     pool: 'vmThreads',
     clearMocks: true,
     mockReset: true,
+    testTimeout: 30000, // 30 second timeout for CI
+    hookTimeout: 30000, // 30 second timeout for setup/teardown
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
