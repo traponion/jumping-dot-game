@@ -10,9 +10,9 @@ declare let global: {
     cancelAnimationFrame: typeof cancelAnimationFrame;
 };
 
-// Mock DOM elements
+// Mock DOM elements for JumpingDotGame constructor
 const mockCanvas = {
-    getContext: () => ({
+    getContext: vi.fn(() => ({
         fillRect: vi.fn(),
         clearRect: vi.fn(),
         fillStyle: '',
@@ -33,7 +33,7 @@ const mockCanvas = {
         strokeRect: vi.fn(),
         ellipse: vi.fn(),
         closePath: vi.fn()
-    }),
+    })),
     width: 800,
     height: 600,
     addEventListener: vi.fn(),
@@ -457,6 +457,13 @@ describe('JumpingDotGame', () => {
             
             // Should complete 100 cycles reasonably quickly (less than 1 second)
             expect(duration).toBeLessThan(1000);
+        });
+    });
+
+    describe('coverage verification', () => {
+        it('should call test coverage method to verify tracking', () => {
+            const result = game.testCoverageMethod();
+            expect(result).toBe('coverage-test-marker');
         });
     });
 });

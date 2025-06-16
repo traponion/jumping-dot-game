@@ -543,5 +543,10 @@ export class JumpingDotGame {
         await this.loadStage(stageNumber);
     }
 
+    // Simple test method to verify coverage tracking
+    testCoverageMethod(): string {
+        return 'coverage-test-marker';
+    }
+
 
 }
