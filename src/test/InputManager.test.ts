@@ -11,7 +11,7 @@ const mockGameInputs = {
     up: {
         removeAllListeners: vi.fn()
     },
-    state: {},
+    state: {} as Record<string, boolean>,
     tick: vi.fn(),
     disabled: false
 };
