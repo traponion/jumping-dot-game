@@ -171,8 +171,17 @@ export class InputManager {
     }
 
     cleanup(): void {
-        // game-inputs will handle cleanup automatically
         console.log('🧽 InputManager cleanup');
+        
+        // Remove all event listeners
+        this.inputs.down.removeAllListeners();
+        this.inputs.up.removeAllListeners();
+        
+        // Clear internal state
+        this.gameRunning = false;
+        this.gameOver = false;
+        
+        console.log('✅ InputManager cleanup completed');
     }
 
     // For testing purposes - simulate key events

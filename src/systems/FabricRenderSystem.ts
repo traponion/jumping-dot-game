@@ -574,21 +574,26 @@ export class FabricRenderSystem {
     async cleanup(): Promise<void> {
         // Dispose fabric canvas to prevent memory leaks and reinitialization errors
         if (this.canvas) {
-            const canvasElement = this.canvas.getElement();
-            
-            // In fabric.js v6, dispose is async and must be awaited
-            await this.canvas.dispose();
-            
-            // Clear canvas element to prevent reinitialization errors
-            if (canvasElement) {
-                const context = canvasElement.getContext('2d');
-                if (context) {
-                    context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            try {
+                const canvasElement = this.canvas.getElement();
+                
+                // In fabric.js v6, dispose is async and must be awaited
+                await this.canvas.dispose();
+                
+                // Clear canvas element to prevent reinitialization errors
+                if (canvasElement) {
+                    const context = canvasElement.getContext('2d');
+                    if (context) {
+                        context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                    }
+                    // Remove fabric-specific properties
+                    delete (canvasElement as any).__fabric;
+                    delete (canvasElement as any)._fabric;
                 }
-                // Remove fabric-specific properties
-                delete (canvasElement as any).__fabric;
-                delete (canvasElement as any)._fabric;
+            } catch (error) {
+                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
             }
+            this.canvas = null as any;
         }
     }
 
