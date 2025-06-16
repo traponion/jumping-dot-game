@@ -550,4 +550,22 @@ describe('JumpingDotGame', () => {
             expect(true).toBe(true);
         });
     });
+
+    describe('private method coverage tests', () => {
+        it('should handle goal reached event', () => {
+            // This tests the private handleGoalReached method
+            expect(() => game.testHandleGoalReached()).not.toThrow();
+        });
+
+        it('should handle player death event', () => {
+            // This tests the private handlePlayerDeath method
+            expect(() => game.testHandlePlayerDeath('test death')).not.toThrow();
+            expect(() => game.testHandlePlayerDeath('spike death')).not.toThrow();
+        });
+
+        it('should render game over menu', () => {
+            // This tests the private renderGameOverMenu method
+            expect(() => game.testRenderGameOverMenu()).not.toThrow();
+        });
+    });
 });

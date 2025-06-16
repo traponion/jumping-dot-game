@@ -271,4 +271,43 @@ describe('StageLoader', () => {
             );
         });
     });
+
+    describe('hardcoded stage creation methods', () => {
+        it('should create hardcoded stage 1 with all required properties', () => {
+            const stage1 = stageLoader.getHardcodedStage(1);
+            
+            // Test that all required properties exist and are valid
+            expect(stage1.id).toBe(1);
+            expect(stage1.name).toBe('Stage 1');
+            expect(Array.isArray(stage1.platforms)).toBe(true);
+            expect(stage1.platforms.length).toBeGreaterThan(0);
+            expect(Array.isArray(stage1.spikes)).toBe(true);
+            expect(stage1.goal).toBeDefined();
+            expect(stage1.startText).toBeDefined();
+            expect(stage1.goalText).toBeDefined();
+            expect(stage1.leftEdgeMessage).toBeDefined();
+            expect(stage1.leftEdgeSubMessage).toBeDefined();
+            
+            // Validate the created stage doesn't throw validation errors
+            expect(() => stageLoader.validateStage(stage1)).not.toThrow();
+        });
+
+        it('should create hardcoded stage 2 with moving platforms', () => {
+            const stage2 = stageLoader.getHardcodedStage(2);
+            
+            // Test that all required properties exist and are valid
+            expect(stage2.id).toBe(2);
+            expect(stage2.name).toBe('Stage 2');
+            expect(Array.isArray(stage2.platforms)).toBe(true);
+            expect(Array.isArray(stage2.movingPlatforms)).toBe(true);
+            expect(stage2.movingPlatforms!.length).toBeGreaterThan(0);
+            expect(Array.isArray(stage2.spikes)).toBe(true);
+            expect(stage2.goal).toBeDefined();
+            expect(stage2.startText).toBeDefined();
+            expect(stage2.goalText).toBeDefined();
+            
+            // Validate the created stage doesn't throw validation errors
+            expect(() => stageLoader.validateStage(stage2)).not.toThrow();
+        });
+    });
 });

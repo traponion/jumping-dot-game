@@ -548,5 +548,18 @@ export class JumpingDotGame {
         return 'coverage-test-marker';
     }
 
+    // Test methods to access private functions for coverage
+    testHandleGoalReached(): void {
+        this.handleGoalReached();
+    }
+
+    testHandlePlayerDeath(message: string = 'test death'): void {
+        this.handlePlayerDeath(message, 'test');
+    }
+
+    testRenderGameOverMenu(): void {
+        this.renderGameOverMenu();
+    }
+
 
 }
