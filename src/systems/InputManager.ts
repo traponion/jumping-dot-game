@@ -10,8 +10,8 @@ interface GameController {
 }
 
 export class InputManager {
-    private inputs: GameInputs;
-    private gameController: GameController;
+    private inputs: GameInputs | null;
+    private gameController: GameController | null;
     private lastInputTime = 0;
     private inputCooldown = 300; // 300ms cooldown to prevent rapid inputs
 
@@ -31,6 +31,8 @@ export class InputManager {
     }
 
     private setupBindings(): void {
+        if (!this.inputs) return;
+        
         // Movement controls (bind each key separately)
         this.inputs.bind('move-left', 'ArrowLeft');
         this.inputs.bind('move-left', 'KeyA');
@@ -54,7 +56,7 @@ export class InputManager {
         // Game start is now handled by menu-select to avoid conflicts
 
         // Game restart handling with debouncing (legacy for direct restart)
-        this.inputs.down.on('restart', () => {
+        this.inputs?.down.on('restart', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
             const gameState = this.gameController.getGameState();
             
@@ -71,21 +73,21 @@ export class InputManager {
         });
 
         // Game over menu navigation
-        this.inputs.down.on('menu-up', () => {
+        this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
             if (this.gameController.getGameState().gameOver) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
-        this.inputs.down.on('menu-down', () => {
+        this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
             if (this.gameController.getGameState().gameOver) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
 
-        this.inputs.down.on('menu-select', () => {
+        this.inputs?.down.on('menu-select', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
             const gameState = this.gameController.getGameState();
             
@@ -107,8 +109,7 @@ export class InputManager {
 
     // Check if an action is currently pressed
     isPressed(action: string): boolean {
-        if (!this.inputs) return false; // Guard against cleaned up instance
-        return this.inputs.state[action] || false;
+        return this.inputs?.state[action] || false;
     }
 
     // Check if an action was just pressed this frame
@@ -125,7 +126,7 @@ export class InputManager {
 
     // Get movement input state (compatible with old KeyState)
     getMovementState() {
-        if (!this.inputs) return {}; // Guard against cleaned up instance
+        if (!this.inputs) return {};
         return {
             ArrowLeft: this.isPressed('move-left'),
             ArrowRight: this.isPressed('move-right'),
@@ -140,35 +141,27 @@ export class InputManager {
 
     // Clear all input states (equivalent to old clearKeys)
     clearInputs(): void {
-        if (!this.inputs) return; // Guard against cleaned up instance
         // game-inputs handles this internally, but we can reset our state
-        this.inputs.tick(); // Process any pending events
+        this.inputs?.tick(); // Process any pending events
     }
 
     // Update the input system (call this in game loop)
     update(): void {
-        if (!this.inputs) return; // Guard against cleaned up instance
-        this.inputs.tick();
+        this.inputs?.tick();
     }
 
     cleanup(): void {
-        // Try to destroy the game-inputs instance completely to remove DOM event listeners
-        if (this.inputs && typeof (this.inputs as any).destroy === 'function') {
-            (this.inputs as any).destroy();
-        } else if (this.inputs && typeof (this.inputs as any).dispose === 'function') {
-            (this.inputs as any).dispose();
-        } else {
-            // Fallback: Remove only EventEmitter listeners
+        // Clean up game-inputs instance
+        if (this.inputs) {
+            // game-inputs doesn't have a destroy method, so remove all listeners and disable
             this.inputs.down.removeAllListeners();
             this.inputs.up.removeAllListeners();
-            
-            // Disable the instance to prevent further event processing
             this.inputs.disabled = true;
         }
         
-        // Clear reference to prevent zombie calls
-        (this.inputs as any) = null;
-        (this.gameController as any) = null;
+        // Clear references to prevent zombie calls
+        this.inputs = null;
+        this.gameController = null;
     }
 
     // For testing purposes - simulate key events
