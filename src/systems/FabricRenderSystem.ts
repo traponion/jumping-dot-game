@@ -457,19 +457,7 @@ export class FabricRenderSystem {
         const screenCenterX = cameraX + canvasWidth / 2;
         const screenCenterY = cameraY + canvasHeight / 2;
 
-        // Semi-transparent overlay covering visible screen area
-        const overlay = new fabric.Rect({
-            left: cameraX,
-            top: cameraY,
-            width: canvasWidth,
-            height: canvasHeight,
-            fill: 'rgba(0, 0, 0, 0.8)',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(overlay);
-
-        // Game Over title
+        // Game Over title with shadow for visibility
         const gameOverText = new fabric.Text('GAME OVER', {
             left: screenCenterX,
             top: screenCenterY - 80,
@@ -479,7 +467,13 @@ export class FabricRenderSystem {
             originX: 'center',
             originY: 'center',
             selectable: false,
-            evented: false
+            evented: false,
+            shadow: new fabric.Shadow({
+                color: 'rgba(0,0,0,0.8)',
+                offsetX: 2,
+                offsetY: 2,
+                blur: 4
+            })
         });
         this.canvas.add(gameOverText);
 
@@ -494,7 +488,13 @@ export class FabricRenderSystem {
                 originX: 'center',
                 originY: 'center',
                 selectable: false,
-                evented: false
+                evented: false,
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.8)',
+                    offsetX: 1,
+                    offsetY: 1,
+                    blur: 2
+                })
             });
             this.canvas.add(scoreText);
         }
@@ -531,7 +531,13 @@ export class FabricRenderSystem {
                 originX: 'center',
                 originY: 'center',
                 selectable: false,
-                evented: false
+                evented: false,
+                shadow: isSelected ? null : new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.8)',
+                    offsetX: 1,
+                    offsetY: 1,
+                    blur: 2
+                })
             });
             this.canvas.add(optionText);
         });
@@ -546,7 +552,13 @@ export class FabricRenderSystem {
             originX: 'center',
             originY: 'center',
             selectable: false,
-            evented: false
+            evented: false,
+            shadow: new fabric.Shadow({
+                color: 'rgba(0,0,0,0.8)',
+                offsetX: 1,
+                offsetY: 1,
+                blur: 2
+            })
         });
         this.canvas.add(instructionText);
     }

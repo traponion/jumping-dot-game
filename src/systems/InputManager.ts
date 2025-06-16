@@ -57,20 +57,15 @@ export class InputManager {
         // Game start handling with debouncing
         this.inputs.down.on('start-game', () => {
             const gameState = this.gameController.getGameState();
-            console.log(`🚀 Start-game triggered: gameRunning=${gameState.gameRunning}, gameOver=${gameState.gameOver}`);
             
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
-                console.log('⏰ Start-game ignored due to cooldown');
                 return; // Ignore rapid inputs
             }
             this.lastInputTime = now;
 
             if (!this.gameRunning && !gameState.gameOver) {
-                console.log('✅ Starting game with Space');
                 this.gameController.startGame();
-            } else {
-                console.log(`❌ Start-game blocked: gameRunning=${this.gameRunning}, gameOver=${gameState.gameOver}`);
             }
         });
 
@@ -103,20 +98,15 @@ export class InputManager {
 
         this.inputs.down.on('menu-select', () => {
             const gameState = this.gameController.getGameState();
-            console.log(`🎯 Menu select triggered: gameOver=${gameState.gameOver}, gameRunning=${gameState.gameRunning}`);
             
             if (gameState.gameOver) {
                 const now = Date.now();
                 if (now - this.lastInputTime < this.inputCooldown) {
-                    console.log('⏰ Menu select ignored due to cooldown');
                     return; // Ignore rapid inputs
                 }
                 this.lastInputTime = now;
                 
-                console.log('✅ Executing game over selection');
                 this.gameController.handleGameOverSelection();
-            } else {
-                console.log(`❌ Menu select blocked: gameOver=${gameState.gameOver}`);
             }
         });
     }
@@ -152,7 +142,6 @@ export class InputManager {
     }
 
     setGameState(running: boolean, over: boolean): void {
-        console.log(`🎮 Game state changed: running=${running}, over=${over}`);
         this.gameRunning = running;
         this.gameOver = over;
     }

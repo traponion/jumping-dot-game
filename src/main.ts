@@ -24,7 +24,6 @@ class StageSelect {
     }
     
     private showStageSelect(): void {
-        console.log('📺 Showing stage select - setting isActive = true');
         this.isActive = true;
         this.selectedStageIndex = 0;
         this.startRenderLoop();
@@ -48,19 +47,19 @@ class StageSelect {
     }
     
     private handleKeyboard(e: KeyboardEvent): void {
-        console.log(`⌨️ Key pressed: ${e.key}, isActive: ${this.isActive}`);
-        
         switch (e.key) {
             case 'ArrowUp':
             case 'ArrowLeft':
                 e.preventDefault();
                 this.selectedStageIndex = Math.max(0, this.selectedStageIndex - 1);
+                console.log(`🔼 Stage index: ${this.selectedStageIndex} (${this.stages[this.selectedStageIndex]?.name})`);
                 break;
                 
             case 'ArrowDown':
             case 'ArrowRight':
                 e.preventDefault();
                 this.selectedStageIndex = Math.min(this.stages.length - 1, this.selectedStageIndex + 1);
+                console.log(`🔽 Stage index: ${this.selectedStageIndex} (${this.stages[this.selectedStageIndex]?.name})`);
                 break;
                 
             case ' ':
@@ -68,7 +67,6 @@ class StageSelect {
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
                 if (selectedStage) {
-                    console.log(`🎯 Starting stage ${selectedStage.id} (${selectedStage.name})`);
                     this.startStage(selectedStage.id);
                 }
                 break;
@@ -146,8 +144,6 @@ class StageSelect {
     }
     
     private async startStage(stageId: number): Promise<void> {
-        console.log(`🚀 StageSelect.startStage called with ID: ${stageId}`);
-        console.log('⏸️ Setting isActive = false');
         this.isActive = false;
         
         if (this.animationId) {
@@ -166,10 +162,8 @@ class StageSelect {
         
         try {
             // Create new game instance
-            console.log(`🎮 Creating game instance for stage ${stageId}`);
             this.gameInstance = new JumpingDotGame();
             await this.gameInstance.initWithStage(stageId);
-            console.log(`✅ Game instance initialized for stage ${stageId}`);
         } catch (error) {
             console.error(`❌ Failed to start stage ${stageId}:`, error);
         }
