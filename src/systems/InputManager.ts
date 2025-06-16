@@ -49,6 +49,8 @@ export class InputManager {
         this.inputs.bind('menu-up', 'ArrowUp');
         this.inputs.bind('menu-down', 'ArrowDown');
         this.inputs.bind('menu-select', 'Enter');
+        this.inputs.bind('menu-select', 'KeyR');
+        this.inputs.bind('menu-select', 'Space');
     }
 
     private setupEventHandlers(): void {

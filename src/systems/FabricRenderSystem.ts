@@ -62,8 +62,7 @@ export class FabricRenderSystem {
     }
 
     restoreCameraTransform(): void {
-        // Reset camera transform for UI elements
-        this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        // Keep camera transform for consistency (UI elements handle their own transforms)
     }
 
     renderPlayer(player: Player): void {
@@ -446,6 +445,12 @@ export class FabricRenderSystem {
     }
 
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+        // Save current camera transform
+        const currentTransform = this.canvas.viewportTransform!.slice() as [number, number, number, number, number, number];
+        
+        // Temporarily reset transform for UI
+        this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        
         const canvasWidth = this.canvas.getWidth();
         const canvasHeight = this.canvas.getHeight();
 
@@ -529,7 +534,7 @@ export class FabricRenderSystem {
         });
 
         // Instructions
-        const instructionText = new fabric.Text('↑↓ Navigate  ENTER Select', {
+        const instructionText = new fabric.Text('↑↓ Navigate  ENTER/R/SPACE Select', {
             left: canvasWidth / 2,
             top: canvasHeight - 50,
             fontSize: 16,
@@ -541,6 +546,9 @@ export class FabricRenderSystem {
             evented: false
         });
         this.canvas.add(instructionText);
+        
+        // Restore original camera transform after UI rendering
+        this.canvas.setViewportTransform(currentTransform);
     }
 
     renderStartInstruction(): void {
