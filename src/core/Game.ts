@@ -402,6 +402,10 @@ export class JumpingDotGame {
         }
     }
 
+    public getGameState() {
+        return this.gameState;
+    }
+
     public handleGameOverNavigation(direction: 'up' | 'down'): void {
         if (!this.gameState.gameOver) return;
         

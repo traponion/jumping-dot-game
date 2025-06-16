@@ -6,6 +6,7 @@ interface GameController {
     returnToStageSelect(): void;
     handleGameOverNavigation(direction: 'up' | 'down'): void;
     handleGameOverSelection(): void;
+    getGameState(): { gameRunning: boolean; gameOver: boolean; finalScore: number };
 }
 
 export class InputManager {
@@ -81,19 +82,19 @@ export class InputManager {
 
         // Game over menu navigation
         this.inputs.down.on('menu-up', () => {
-            if (this.gameOver) {
+            if (this.gameController.getGameState().gameOver) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs.down.on('menu-down', () => {
-            if (this.gameOver) {
+            if (this.gameController.getGameState().gameOver) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
 
         this.inputs.down.on('menu-select', () => {
-            if (this.gameOver) {
+            if (this.gameController.getGameState().gameOver) {
                 const now = Date.now();
                 if (now - this.lastInputTime < this.inputCooldown) {
                     return; // Ignore rapid inputs
