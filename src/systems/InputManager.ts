@@ -83,6 +83,11 @@ export class InputManager {
         });
 
         this.inputs.down.on('menu-select', () => {
+            // Check if stage select is active - if so, ignore this game instance
+            if ((window as any).stageSelect && (window as any).stageSelect.isActive) {
+                return; // Stage select handles its own input
+            }
+            
             const gameState = this.gameController.getGameState();
             
             const now = Date.now();
