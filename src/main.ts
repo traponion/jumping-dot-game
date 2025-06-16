@@ -12,20 +12,22 @@ class StageSelect {
     ];
     private animationId: number | null = null;
     private isActive = false;
+    private boundHandleKeyboard: (e: KeyboardEvent) => void;
     
     constructor() {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
+        this.boundHandleKeyboard = this.handleKeyboard.bind(this);
     }
     
     async init(): Promise<void> {
         this.showStageSelect();
-        this.setupEventListeners();
     }
     
     private showStageSelect(): void {
         this.isActive = true;
         this.selectedStageIndex = 0;
+        document.addEventListener('keydown', this.boundHandleKeyboard);
         this.startRenderLoop();
         
         // Hide game UI elements
@@ -38,12 +40,13 @@ class StageSelect {
         if (controls) controls.style.display = 'none';
     }
     
-    private setupEventListeners(): void {
-        document.addEventListener('keydown', (e) => {
-            if (this.isActive) {
-                this.handleKeyboard(e);
-            }
-        });
+    private hideStageSelect(): void {
+        this.isActive = false;
+        document.removeEventListener('keydown', this.boundHandleKeyboard);
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
     }
     
     private handleKeyboard(e: KeyboardEvent): void {
@@ -66,7 +69,9 @@ class StageSelect {
             case 'Enter':
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
+                console.log(`🎯 Enter pressed: selectedIndex=${this.selectedStageIndex}, selectedStage=${selectedStage ? `${selectedStage.id} (${selectedStage.name})` : 'undefined'}`);
                 if (selectedStage) {
+                    console.log(`🚀 Calling startStage with ID: ${selectedStage.id}`);
                     this.startStage(selectedStage.id);
                 }
                 break;
@@ -144,11 +149,15 @@ class StageSelect {
     }
     
     private async startStage(stageId: number): Promise<void> {
-        this.isActive = false;
+        console.log(`🎮 startStage called with stageId: ${stageId}`);
+        this.hideStageSelect();
         
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
+        // Properly cleanup existing game instance before creating new one
+        if (this.gameInstance) {
+            console.log('🧹 Cleaning up existing game instance...');
+            await this.gameInstance.cleanup();
+            this.gameInstance = null;
+            console.log('✅ Cleanup completed');
         }
         
         // Show game UI elements
