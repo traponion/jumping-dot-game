@@ -42,6 +42,7 @@ export class JumpingDotGame {
     // Game loop
     private lastTime: number | null = null;
     private animationId: number | null = null;
+    private isCleanedUp = false;
 
     private prevPlayerY: number = 0;
 
@@ -109,6 +110,7 @@ export class JumpingDotGame {
     }
 
     async init(): Promise<void> {
+        this.isCleanedUp = false; // Reset cleanup flag
         this.gameStatus.textContent = 'Loading stage...';
 
         await this.loadStage(this.gameState.currentStage);
@@ -426,6 +428,8 @@ export class JumpingDotGame {
         
         switch (selectedOption) {
             case 'RESTART STAGE':
+                // Reinitialize render system before restarting
+                this.initializeSystems();
                 this.init();
                 break;
             case 'STAGE SELECT':
@@ -446,6 +450,11 @@ export class JumpingDotGame {
     }
 
     private render(): void {
+        // Prevent rendering if game has been cleaned up
+        if (this.isCleanedUp) {
+            return;
+        }
+        
         const renderer = this.renderSystem;
 
         renderer.clearCanvas();
@@ -502,6 +511,8 @@ export class JumpingDotGame {
     }
 
     cleanup(): void {
+        this.isCleanedUp = true;
+        
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
