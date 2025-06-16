@@ -46,6 +46,12 @@ export class InputManager {
             if (!this.gameRunning && !this.gameOver) {
                 console.log('🚀 Starting game with Space');
                 this.gameController.startGame();
+            } else if (this.gameOver) {
+                // Return to stage select when game over
+                console.log('🏠 Returning to stage select with Space');
+                if ((this.gameController as any).returnToStageSelect) {
+                    (this.gameController as any).returnToStageSelect();
+                }
             }
         });
 

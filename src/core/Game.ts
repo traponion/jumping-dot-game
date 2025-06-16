@@ -121,6 +121,24 @@ export class JumpingDotGame {
         this.startGameLoop();
     }
 
+    async initWithStage(stageId: number): Promise<void> {
+        this.gameState.currentStage = stageId;
+        this.gameStatus.textContent = 'Loading stage...';
+
+        await this.loadStage(stageId);
+
+        this.gameStatus.textContent = 'Press SPACE to start';
+        this.resetGameState();
+        this.updateUI();
+
+        // 最後にもう一度確実にキーをクリア
+        setTimeout(() => {
+            this.inputManager.clearInputs();
+        }, 0);
+
+        this.startGameLoop();
+    }
+
     private async loadStage(stageNumber: number): Promise<void> {
         try {
             this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
@@ -345,7 +363,7 @@ export class JumpingDotGame {
 
     private handlePlayerDeath(message: string, deathType = 'normal'): void {
         this.gameState.gameOver = true;
-        this.gameStatus.textContent = message;
+        this.gameStatus.textContent = `${message} | SPACE: Stage Select`;
         this.inputManager.setGameState(false, true);
 
         let deathMarkY = this.player.y;
@@ -361,11 +379,27 @@ export class JumpingDotGame {
     private handleGoalReached(): void {
         this.gameState.gameOver = true;
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
-        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press R to restart`;
+        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore}`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
         this.inputManager.setGameState(false, true);
 
+        // Mark stage as cleared
+        if ((window as any).stageSelect) {
+            (window as any).stageSelect.markStageCleared(this.gameState.currentStage);
+        }
+
         this.animationSystem.startClearAnimation(this.player);
+        
+        // Auto-return to stage select after clear animation
+        setTimeout(() => {
+            this.returnToStageSelect();
+        }, 3000);
+    }
+
+    public returnToStageSelect(): void {
+        if ((window as any).stageSelect) {
+            (window as any).stageSelect.returnToStageSelect();
+        }
     }
 
     private render(): void {

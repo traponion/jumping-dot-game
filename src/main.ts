@@ -1,7 +1,229 @@
 import { JumpingDotGame } from './core/Game.js';
 
-// Start the game when page loads
+// Stage Select functionality with Canvas rendering
+class StageSelect {
+    private gameInstance: JumpingDotGame | null = null;
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private selectedStageIndex = 0;
+    private stages = [
+        { id: 1, name: 'STAGE 1', description: 'Basic tutorial stage' },
+        { id: 2, name: 'STAGE 2', description: 'Moving platforms' }
+    ];
+    private animationId: number | null = null;
+    private isActive = false;
+    
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d')!;
+    }
+    
+    async init(): Promise<void> {
+        this.showStageSelect();
+        this.setupEventListeners();
+    }
+    
+    private showStageSelect(): void {
+        this.isActive = true;
+        this.selectedStageIndex = 0;
+        this.startRenderLoop();
+        
+        // Hide game UI elements
+        const gameUI = document.getElementById('gameUI') as HTMLElement;
+        const info = document.querySelector('.info') as HTMLElement;
+        const controls = document.querySelector('.controls') as HTMLElement;
+        
+        if (gameUI) gameUI.style.display = 'none';
+        if (info) info.style.display = 'none';
+        if (controls) controls.style.display = 'none';
+    }
+    
+    private setupEventListeners(): void {
+        document.addEventListener('keydown', (e) => {
+            if (this.isActive) {
+                this.handleKeyboard(e);
+            }
+        });
+    }
+    
+    private handleKeyboard(e: KeyboardEvent): void {
+        
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.selectedStageIndex = Math.max(0, this.selectedStageIndex - 1);
+                // Ensure selected stage is unlocked
+                while (this.selectedStageIndex >= 0 && 
+                       !this.isStageUnlocked(this.stages[this.selectedStageIndex].id)) {
+                    this.selectedStageIndex--;
+                }
+                if (this.selectedStageIndex < 0) this.selectedStageIndex = 0;
+                break;
+                
+            case 'ArrowDown':
+            case 'ArrowRight':
+                e.preventDefault();
+                this.selectedStageIndex = Math.min(this.stages.length - 1, this.selectedStageIndex + 1);
+                // Ensure selected stage is unlocked
+                while (this.selectedStageIndex < this.stages.length && 
+                       !this.isStageUnlocked(this.stages[this.selectedStageIndex].id)) {
+                    this.selectedStageIndex++;
+                }
+                if (this.selectedStageIndex >= this.stages.length) {
+                    this.selectedStageIndex = this.stages.length - 1;
+                }
+                break;
+                
+            case ' ':
+            case 'Enter':
+                e.preventDefault();
+                const selectedStage = this.stages[this.selectedStageIndex];
+                if (selectedStage && this.isStageUnlocked(selectedStage.id)) {
+                    this.startStage(selectedStage.id);
+                }
+                break;
+                
+            case 'e':
+            case 'E':
+                e.preventDefault();
+                window.open('/editor.html', '_blank');
+                break;
+        }
+    }
+    
+    private startRenderLoop(): void {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        
+        const render = () => {
+            if (this.isActive) {
+                this.render();
+                this.animationId = requestAnimationFrame(render);
+            }
+        };
+        
+        this.animationId = requestAnimationFrame(render);
+    }
+    
+    private render(): void {
+        // Clear canvas
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Set drawing style
+        this.ctx.font = '32px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = 'white';
+        
+        // Title
+        this.ctx.fillText('JUMPING DOT GAME', this.canvas.width / 2, 100);
+        
+        // Subtitle
+        this.ctx.font = '16px monospace';
+        this.ctx.fillText('SELECT STAGE', this.canvas.width / 2, 140);
+        
+        // Render stage list
+        const progress = this.getStageProgress();
+        const startY = 200;
+        const itemHeight = 60;
+        
+        this.stages.forEach((stage, index) => {
+            const y = startY + index * itemHeight;
+            const isSelected = index === this.selectedStageIndex;
+            const isUnlocked = this.isStageUnlocked(stage.id);
+            const isCleared = progress.clearedStages.includes(stage.id);
+            
+            // Selection indicator
+            if (isSelected && isUnlocked) {
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(150, y - 20, this.canvas.width - 300, 40);
+                this.ctx.fillStyle = 'black';
+            } else {
+                this.ctx.fillStyle = isUnlocked ? 'white' : '#666';
+            }
+            
+            // Stage name
+            this.ctx.font = '24px monospace';
+            this.ctx.fillText(stage.name, this.canvas.width / 2, y);
+            
+            // Status indicator
+            const statusText = isCleared ? '[CLEARED]' : isUnlocked ? '[READY]' : '[LOCKED]';
+            this.ctx.font = '14px monospace';
+            this.ctx.fillText(statusText, this.canvas.width / 2, y + 20);
+        });
+        
+        // Instructions
+        this.ctx.fillStyle = '#aaa';
+        this.ctx.font = '14px monospace';
+        this.ctx.fillText('↑↓ Navigate  SPACE Select  E Editor', this.canvas.width / 2, this.canvas.height - 50);
+    }
+    
+    private async startStage(stageId: number): Promise<void> {
+        this.isActive = false;
+        
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        
+        // Show game UI elements
+        const gameUI = document.getElementById('gameUI') as HTMLElement;
+        const info = document.querySelector('.info') as HTMLElement;
+        const controls = document.querySelector('.controls') as HTMLElement;
+        
+        if (gameUI) gameUI.style.display = 'block';
+        if (info) info.style.display = 'block';
+        if (controls) controls.style.display = 'block';
+        
+        // Create new game instance
+        this.gameInstance = new JumpingDotGame();
+        await this.gameInstance.initWithStage(stageId);
+    }
+    
+    public async returnToStageSelect(): Promise<void> {
+        // Cleanup game
+        if (this.gameInstance) {
+            this.gameInstance.cleanup();
+            this.gameInstance = null;
+        }
+        
+        this.showStageSelect();
+    }
+    
+    public markStageCleared(stageId: number): void {
+        const progress = this.getStageProgress();
+        if (!progress.clearedStages.includes(stageId)) {
+            progress.clearedStages.push(stageId);
+            this.saveStageProgress(progress);
+        }
+    }
+    
+    private isStageUnlocked(stageId: number): boolean {
+        if (stageId === 1) return true;
+        const progress = this.getStageProgress();
+        return progress.clearedStages.includes(stageId - 1);
+    }
+    
+    private getStageProgress(): { clearedStages: number[] } {
+        const saved = localStorage.getItem('stageProgress');
+        return saved ? JSON.parse(saved) : { clearedStages: [] };
+    }
+    
+    private saveStageProgress(progress: { clearedStages: number[] }): void {
+        localStorage.setItem('stageProgress', JSON.stringify(progress));
+    }
+}
+
+// Global stage select instance
+let stageSelect: StageSelect | null = null;
+
+// Initialize stage select when page loads
 window.addEventListener('load', async () => {
-    const game = new JumpingDotGame();
-    await game.init();
+    stageSelect = new StageSelect();
+    await stageSelect.init();
+    
+    // Export for global access
+    (window as any).stageSelect = stageSelect;
 });
