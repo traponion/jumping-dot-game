@@ -131,9 +131,6 @@ export class InputManager {
         };
     }
 
-    setGameState(_running: boolean, _over: boolean): void {
-        // Game state is now managed centrally via gameController.getGameState()
-    }
 
     // Clear all input states (equivalent to old clearKeys)
     clearInputs(): void {

@@ -54,7 +54,6 @@ export class JumpingDotGame {
 
         this.initializeEntities();
         this.initializeSystems();
-        this.init();
     }
 
 
@@ -170,7 +169,6 @@ export class JumpingDotGame {
 
         // まずキーをクリアしてからゲーム状態を変更
         this.inputManager.clearInputs();
-        this.inputManager.setGameState(false, false);
 
         this.lastTime = null;
 
@@ -190,7 +188,6 @@ export class JumpingDotGame {
         this.gameStatus.textContent = 'Playing';
         // ゲーム開始時に強力にキーをクリア
         this.inputManager.clearInputs();
-        this.inputManager.setGameState(true, false);
     }
 
     private startGameLoop(): void {
@@ -371,7 +368,6 @@ export class JumpingDotGame {
         this.gameState.gameOver = true;
         this.gameOverMenuIndex = 0; // Reset menu selection
         this.gameStatus.textContent = message;
-        this.inputManager.setGameState(false, true);
 
         let deathMarkY = this.player.y;
         if (deathType === 'fall') {
@@ -388,7 +384,6 @@ export class JumpingDotGame {
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
         this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore}`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
-        this.inputManager.setGameState(false, true);
 
         this.animationSystem.startClearAnimation(this.player);
         
