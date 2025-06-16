@@ -31,7 +31,9 @@ export class FabricRenderSystem {
             selection: false, // ゲームモードでは選択無効
             renderOnAddRemove: false, // パフォーマンス向上
             allowTouchScrolling: false, // タッチスクロール無効
-            interactive: false // インタラクション無効（ゲームモード）
+            interactive: false, // インタラクション無効（ゲームモード）
+            enableRetinaScaling: false, // パフォーマンス向上
+            stopContextMenu: true // 右クリックメニュー無効
         });
         
         // upper-canvasの背景を透明に設定

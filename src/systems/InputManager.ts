@@ -12,7 +12,6 @@ interface GameController {
 export class InputManager {
     private inputs: GameInputs;
     private gameController: GameController;
-    private gameRunning = false;
     private lastInputTime = 0;
     private inputCooldown = 300; // 300ms cooldown to prevent rapid inputs
 
@@ -41,10 +40,9 @@ export class InputManager {
         this.inputs.bind('jump', 'KeyW');
         
         // Game control
-        this.inputs.bind('start-game', 'Space');
         this.inputs.bind('restart', 'KeyR');
         
-        // Menu navigation
+        // Menu navigation (handles both game over menu and game start)
         this.inputs.bind('menu-up', 'ArrowUp');
         this.inputs.bind('menu-down', 'ArrowDown');
         this.inputs.bind('menu-select', 'Enter');
@@ -53,20 +51,7 @@ export class InputManager {
     }
 
     private setupEventHandlers(): void {
-        // Game start handling with debouncing
-        this.inputs.down.on('start-game', () => {
-            const gameState = this.gameController.getGameState();
-            
-            const now = Date.now();
-            if (now - this.lastInputTime < this.inputCooldown) {
-                return; // Ignore rapid inputs
-            }
-            this.lastInputTime = now;
-
-            if (!this.gameRunning && !gameState.gameOver) {
-                this.gameController.startGame();
-            }
-        });
+        // Game start is now handled by menu-select to avoid conflicts
 
         // Game restart handling with debouncing (legacy for direct restart)
         this.inputs.down.on('restart', () => {
@@ -100,14 +85,18 @@ export class InputManager {
         this.inputs.down.on('menu-select', () => {
             const gameState = this.gameController.getGameState();
             
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+            
             if (gameState.gameOver) {
-                const now = Date.now();
-                if (now - this.lastInputTime < this.inputCooldown) {
-                    return; // Ignore rapid inputs
-                }
-                this.lastInputTime = now;
-                
+                // Game over menu selection
                 this.gameController.handleGameOverSelection();
+            } else if (!gameState.gameRunning) {
+                // Game start (when not running and not over)
+                this.gameController.startGame();
             }
         });
     }
@@ -142,8 +131,8 @@ export class InputManager {
         };
     }
 
-    setGameState(running: boolean, _over: boolean): void {
-        this.gameRunning = running;
+    setGameState(_running: boolean, _over: boolean): void {
+        // Game state is now managed centrally via gameController.getGameState()
     }
 
     // Clear all input states (equivalent to old clearKeys)
@@ -161,9 +150,6 @@ export class InputManager {
         // Remove all event listeners
         this.inputs.down.removeAllListeners();
         this.inputs.up.removeAllListeners();
-        
-        // Clear internal state
-        this.gameRunning = false;
     }
 
     // For testing purposes - simulate key events
