@@ -460,13 +460,6 @@ describe('JumpingDotGame', () => {
         });
     });
 
-    describe('coverage verification', () => {
-        it('should call test coverage method to verify tracking', () => {
-            const result = game.testCoverageMethod();
-            expect(result).toBe('coverage-test-marker');
-        });
-    });
-
     describe('additional coverage tests', () => {
         it('should handle initWithStage for different stage numbers', async () => {
             global.fetch = vi.fn().mockResolvedValue({
@@ -551,21 +544,4 @@ describe('JumpingDotGame', () => {
         });
     });
 
-    describe('private method coverage tests', () => {
-        it('should handle goal reached event', () => {
-            // This tests the private handleGoalReached method
-            expect(() => game.testHandleGoalReached()).not.toThrow();
-        });
-
-        it('should handle player death event', () => {
-            // This tests the private handlePlayerDeath method
-            expect(() => game.testHandlePlayerDeath('test death')).not.toThrow();
-            expect(() => game.testHandlePlayerDeath('spike death')).not.toThrow();
-        });
-
-        it('should render game over menu', () => {
-            // This tests the private renderGameOverMenu method
-            expect(() => game.testRenderGameOverMenu()).not.toThrow();
-        });
-    });
 });

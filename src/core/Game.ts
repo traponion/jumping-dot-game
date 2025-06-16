@@ -543,23 +543,6 @@ export class JumpingDotGame {
         await this.loadStage(stageNumber);
     }
 
-    // Simple test method to verify coverage tracking
-    testCoverageMethod(): string {
-        return 'coverage-test-marker';
-    }
-
-    // Test methods to access private functions for coverage
-    testHandleGoalReached(): void {
-        this.handleGoalReached();
-    }
-
-    testHandlePlayerDeath(message: string = 'test death'): void {
-        this.handlePlayerDeath(message, 'test');
-    }
-
-    testRenderGameOverMenu(): void {
-        this.renderGameOverMenu();
-    }
 
 
 }
