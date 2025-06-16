@@ -24,6 +24,7 @@ class StageSelect {
     }
     
     private showStageSelect(): void {
+        console.log('📺 Showing stage select - setting isActive = true');
         this.isActive = true;
         this.selectedStageIndex = 0;
         this.startRenderLoop();
@@ -47,6 +48,7 @@ class StageSelect {
     }
     
     private handleKeyboard(e: KeyboardEvent): void {
+        console.log(`⌨️ Key pressed: ${e.key}, isActive: ${this.isActive}`);
         
         switch (e.key) {
             case 'ArrowUp':
@@ -145,6 +147,7 @@ class StageSelect {
     
     private async startStage(stageId: number): Promise<void> {
         console.log(`🚀 StageSelect.startStage called with ID: ${stageId}`);
+        console.log('⏸️ Setting isActive = false');
         this.isActive = false;
         
         if (this.animationId) {
