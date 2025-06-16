@@ -13,7 +13,6 @@ export class InputManager {
     private inputs: GameInputs;
     private gameController: GameController;
     private gameRunning = false;
-    private gameOver = false;
     private lastInputTime = 0;
     private inputCooldown = 300; // 300ms cooldown to prevent rapid inputs
 
@@ -71,14 +70,16 @@ export class InputManager {
 
         // Game restart handling with debouncing (legacy for direct restart)
         this.inputs.down.on('restart', () => {
+            const gameState = this.gameController.getGameState();
+            
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
                 return; // Ignore rapid inputs
             }
             this.lastInputTime = now;
 
-            if (this.gameOver) {
-                console.log('🔄 Restarting game with R');
+            // Only allow restart when game is actually over
+            if (gameState.gameOver) {
                 this.gameController.init();
             }
         });
@@ -141,17 +142,14 @@ export class InputManager {
         };
     }
 
-    setGameState(running: boolean, over: boolean): void {
+    setGameState(running: boolean, _over: boolean): void {
         this.gameRunning = running;
-        this.gameOver = over;
     }
 
     // Clear all input states (equivalent to old clearKeys)
     clearInputs(): void {
-        console.log('🧹 Clearing all inputs');
         // game-inputs handles this internally, but we can reset our state
         this.inputs.tick(); // Process any pending events
-        console.log('✅ Inputs cleared');
     }
 
     // Update the input system (call this in game loop)
@@ -160,17 +158,12 @@ export class InputManager {
     }
 
     cleanup(): void {
-        console.log('🧽 InputManager cleanup');
-        
         // Remove all event listeners
         this.inputs.down.removeAllListeners();
         this.inputs.up.removeAllListeners();
         
         // Clear internal state
         this.gameRunning = false;
-        this.gameOver = false;
-        
-        console.log('✅ InputManager cleanup completed');
     }
 
     // For testing purposes - simulate key events

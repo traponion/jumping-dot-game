@@ -45,6 +45,9 @@ export class FabricRenderSystem {
     }
 
     clearCanvas(): void {
+        if (!this.canvas) {
+            return; // Canvas already disposed or not initialized
+        }
         this.canvas.backgroundColor = 'black';
         this.canvas.clear();
         this.canvas.renderAll();
@@ -55,6 +58,8 @@ export class FabricRenderSystem {
     }
 
     applyCameraTransform(camera: Camera): void {
+        if (!this.canvas) return;
+        
         // Fabric.jsのviewport変換
         this.canvas.setViewportTransform([
             1, 0, 0, 1, -camera.x, -camera.y
@@ -658,6 +663,7 @@ export class FabricRenderSystem {
 
     // Canvas更新
     renderAll(): void {
+        if (!this.canvas) return;
         this.canvas.renderAll();
     }
 
