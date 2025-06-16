@@ -3,6 +3,9 @@ import { GameInputs } from 'game-inputs';
 interface GameController {
     startGame(): void;
     init(): void;
+    returnToStageSelect(): void;
+    handleGameOverNavigation(direction: 'up' | 'down'): void;
+    handleGameOverSelection(): void;
 }
 
 export class InputManager {
@@ -40,6 +43,11 @@ export class InputManager {
         // Game control
         this.inputs.bind('start-game', 'Space');
         this.inputs.bind('restart', 'KeyR');
+        
+        // Menu navigation
+        this.inputs.bind('menu-up', 'ArrowUp');
+        this.inputs.bind('menu-down', 'ArrowDown');
+        this.inputs.bind('menu-select', 'Enter');
     }
 
     private setupEventHandlers(): void {
@@ -54,16 +62,10 @@ export class InputManager {
             if (!this.gameRunning && !this.gameOver) {
                 console.log('🚀 Starting game with Space');
                 this.gameController.startGame();
-            } else if (this.gameOver) {
-                // Return to stage select when game over
-                console.log('🏠 Returning to stage select with Space');
-                if ((this.gameController as any).returnToStageSelect) {
-                    (this.gameController as any).returnToStageSelect();
-                }
             }
         });
 
-        // Game restart handling with debouncing
+        // Game restart handling with debouncing (legacy for direct restart)
         this.inputs.down.on('restart', () => {
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
@@ -74,6 +76,31 @@ export class InputManager {
             if (this.gameOver) {
                 console.log('🔄 Restarting game with R');
                 this.gameController.init();
+            }
+        });
+
+        // Game over menu navigation
+        this.inputs.down.on('menu-up', () => {
+            if (this.gameOver) {
+                this.gameController.handleGameOverNavigation('up');
+            }
+        });
+
+        this.inputs.down.on('menu-down', () => {
+            if (this.gameOver) {
+                this.gameController.handleGameOverNavigation('down');
+            }
+        });
+
+        this.inputs.down.on('menu-select', () => {
+            if (this.gameOver) {
+                const now = Date.now();
+                if (now - this.lastInputTime < this.inputCooldown) {
+                    return; // Ignore rapid inputs
+                }
+                this.lastInputTime = now;
+                
+                this.gameController.handleGameOverSelection();
             }
         });
     }

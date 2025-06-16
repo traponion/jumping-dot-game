@@ -112,33 +112,29 @@ class StageSelect {
         this.ctx.fillText('SELECT STAGE', this.canvas.width / 2, 140);
         
         // Render stage list
-        const progress = this.getStageProgress();
         const startY = 200;
         const itemHeight = 60;
         
         this.stages.forEach((stage, index) => {
             const y = startY + index * itemHeight;
             const isSelected = index === this.selectedStageIndex;
-            const isUnlocked = this.isStageUnlocked(stage.id);
-            const isCleared = progress.clearedStages.includes(stage.id);
             
             // Selection indicator
-            if (isSelected && isUnlocked) {
+            if (isSelected) {
                 this.ctx.fillStyle = 'white';
                 this.ctx.fillRect(150, y - 20, this.canvas.width - 300, 40);
                 this.ctx.fillStyle = 'black';
             } else {
-                this.ctx.fillStyle = isUnlocked ? 'white' : '#666';
+                this.ctx.fillStyle = 'white';
             }
             
             // Stage name
             this.ctx.font = '24px monospace';
             this.ctx.fillText(stage.name, this.canvas.width / 2, y);
             
-            // Status indicator
-            const statusText = isCleared ? '[CLEARED]' : isUnlocked ? '[READY]' : '[LOCKED]';
+            // Stage description
             this.ctx.font = '14px monospace';
-            this.ctx.fillText(statusText, this.canvas.width / 2, y + 20);
+            this.ctx.fillText(stage.description, this.canvas.width / 2, y + 20);
         });
         
         // Instructions
@@ -186,27 +182,6 @@ class StageSelect {
         this.showStageSelect();
     }
     
-    public markStageCleared(stageId: number): void {
-        const progress = this.getStageProgress();
-        if (!progress.clearedStages.includes(stageId)) {
-            progress.clearedStages.push(stageId);
-            this.saveStageProgress(progress);
-        }
-    }
-    
-    private isStageUnlocked(_stageId: number): boolean {
-        // All stages are always unlocked for free selection
-        return true;
-    }
-    
-    private getStageProgress(): { clearedStages: number[] } {
-        const saved = localStorage.getItem('stageProgress');
-        return saved ? JSON.parse(saved) : { clearedStages: [] };
-    }
-    
-    private saveStageProgress(progress: { clearedStages: number[] }): void {
-        localStorage.setItem('stageProgress', JSON.stringify(progress));
-    }
 }
 
 // Global stage select instance
