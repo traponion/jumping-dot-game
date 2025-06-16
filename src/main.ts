@@ -175,7 +175,7 @@ class StageSelect {
     public async returnToStageSelect(): Promise<void> {
         // Cleanup game
         if (this.gameInstance) {
-            this.gameInstance.cleanup();
+            await this.gameInstance.cleanup();
             this.gameInstance = null;
         }
         

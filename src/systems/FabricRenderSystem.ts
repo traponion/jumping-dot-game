@@ -571,11 +571,13 @@ export class FabricRenderSystem {
         // クレジットはCanvas外に表示するため、ここでは何もしない
     }
 
-    cleanup(): void {
+    async cleanup(): Promise<void> {
         // Dispose fabric canvas to prevent memory leaks and reinitialization errors
         if (this.canvas) {
             const canvasElement = this.canvas.getElement();
-            this.canvas.dispose();
+            
+            // In fabric.js v6, dispose is async and must be awaited
+            await this.canvas.dispose();
             
             // Clear canvas element to prevent reinitialization errors
             if (canvasElement) {
