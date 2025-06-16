@@ -18,6 +18,10 @@ export class JumpingDotGame {
 
     // Game state
     private gameState!: GameState;
+    
+    // Game over menu state
+    private gameOverMenuIndex = 0;
+    private gameOverOptions = ['RESTART STAGE', 'STAGE SELECT'];
 
     // Game entities
     private player!: Player;
@@ -38,6 +42,7 @@ export class JumpingDotGame {
     // Game loop
     private lastTime: number | null = null;
     private animationId: number | null = null;
+    private isCleanedUp = false;
 
     private prevPlayerY: number = 0;
 
@@ -49,7 +54,6 @@ export class JumpingDotGame {
 
         this.initializeEntities();
         this.initializeSystems();
-        this.init();
     }
 
 
@@ -105,9 +109,28 @@ export class JumpingDotGame {
     }
 
     async init(): Promise<void> {
+        this.isCleanedUp = false; // Reset cleanup flag
         this.gameStatus.textContent = 'Loading stage...';
 
         await this.loadStage(this.gameState.currentStage);
+
+        this.gameStatus.textContent = 'Press SPACE to start';
+        this.resetGameState();
+        this.updateUI();
+
+        // 最後にもう一度確実にキーをクリア
+        setTimeout(() => {
+            this.inputManager.clearInputs();
+        }, 0);
+
+        this.startGameLoop();
+    }
+
+    async initWithStage(stageId: number): Promise<void> {
+        this.gameState.currentStage = stageId;
+        this.gameStatus.textContent = 'Loading stage...';
+
+        await this.loadStage(stageId);
 
         this.gameStatus.textContent = 'Press SPACE to start';
         this.resetGameState();
@@ -146,7 +169,6 @@ export class JumpingDotGame {
 
         // まずキーをクリアしてからゲーム状態を変更
         this.inputManager.clearInputs();
-        this.inputManager.setGameState(false, false);
 
         this.lastTime = null;
 
@@ -166,7 +188,6 @@ export class JumpingDotGame {
         this.gameStatus.textContent = 'Playing';
         // ゲーム開始時に強力にキーをクリア
         this.inputManager.clearInputs();
-        this.inputManager.setGameState(true, false);
     }
 
     private startGameLoop(): void {
@@ -345,8 +366,8 @@ export class JumpingDotGame {
 
     private handlePlayerDeath(message: string, deathType = 'normal'): void {
         this.gameState.gameOver = true;
+        this.gameOverMenuIndex = 0; // Reset menu selection
         this.gameStatus.textContent = message;
-        this.inputManager.setGameState(false, true);
 
         let deathMarkY = this.player.y;
         if (deathType === 'fall') {
@@ -361,14 +382,72 @@ export class JumpingDotGame {
     private handleGoalReached(): void {
         this.gameState.gameOver = true;
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
-        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore} - Press R to restart`;
+        this.gameStatus.textContent = `Goal reached! Score: ${this.gameState.finalScore}`;
         this.scoreDisplay.textContent = `Score: ${this.gameState.finalScore}`;
-        this.inputManager.setGameState(false, true);
 
         this.animationSystem.startClearAnimation(this.player);
+        
+        // Auto-return to stage select after clear animation
+        setTimeout(() => {
+            this.returnToStageSelect();
+        }, 3000);
+    }
+
+    public returnToStageSelect(): void {
+        if ((window as any).stageSelect) {
+            (window as any).stageSelect.returnToStageSelect();
+        }
+    }
+
+    public getGameState() {
+        return this.gameState;
+    }
+
+
+    public handleGameOverNavigation(direction: 'up' | 'down'): void {
+        if (!this.gameState.gameOver) return;
+        
+        if (direction === 'up') {
+            this.gameOverMenuIndex = Math.max(0, this.gameOverMenuIndex - 1);
+        } else {
+            this.gameOverMenuIndex = Math.min(this.gameOverOptions.length - 1, this.gameOverMenuIndex + 1);
+        }
+        
+        console.log(`🎮 Game over menu selection: ${this.gameOverOptions[this.gameOverMenuIndex]}`);
+    }
+
+    public handleGameOverSelection(): void {
+        if (!this.gameState.gameOver) return;
+        
+        const selectedOption = this.gameOverOptions[this.gameOverMenuIndex];
+        
+        switch (selectedOption) {
+            case 'RESTART STAGE':
+                this.init();
+                break;
+            case 'STAGE SELECT':
+                this.returnToStageSelect();
+                break;
+        }
+    }
+
+    private renderGameOverMenu(): void {
+        // Use FabricRenderSystem to render the game over menu
+        if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
+            (this.renderSystem as any).renderGameOverMenu(
+                this.gameOverOptions,
+                this.gameOverMenuIndex,
+                this.gameState.finalScore
+            );
+        }
     }
 
     private render(): void {
+        // Prevent rendering if game has been cleaned up
+        if (this.isCleanedUp) {
+            return;
+        }
+        
         const renderer = this.renderSystem;
 
         renderer.clearCanvas();
@@ -409,7 +488,7 @@ export class JumpingDotGame {
         if (!this.gameState.gameRunning && !this.gameState.gameOver) {
             renderer.renderStartInstruction();
         } else if (this.gameState.gameOver) {
-            renderer.renderGameOver();
+            this.renderGameOverMenu();
         } else {
             // ゲーム実行中はUI要素を隠す
             const startScreen = document.getElementById('startScreen');
@@ -424,12 +503,20 @@ export class JumpingDotGame {
         renderer.renderAll();
     }
 
-    cleanup(): void {
+    async cleanup(): Promise<void> {
+        this.isCleanedUp = true;
+        
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
         this.inputManager.cleanup();
+        
+        // Cleanup render system to prevent canvas reinitialization issues
+        if (this.renderSystem && 'cleanup' in this.renderSystem) {
+            await (this.renderSystem as any).cleanup();
+        }
+        
         this.gameState.gameRunning = false;
         this.gameState.gameOver = true;
     }

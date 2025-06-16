@@ -1,0 +1,89 @@
+
+> jumping-dot-game@1.0.0 test
+> vitest --coverage
+
+
+ DEV  v3.2.3 /home/negiko/work/claude/test_game
+      Coverage enabled with v8
+
+ ✓ src/test/GameUtils.test.ts (19 tests) 14ms
+ ✓ src/test/PhysicsSystem.test.ts (8 tests) 7ms
+ ✓ src/test/EditorUtils.test.ts (32 tests) 47ms
+ ✓ src/test/EditorModel.test.ts (41 tests) 45ms
+ ✓ src/test/ErrorHandler.test.ts (42 tests) 93ms
+ ✓ src/test/AnimationSystem.test.ts (14 tests) 20ms
+ ✓ src/test/EditorRenderSystem.test.ts (29 tests) 35ms
+ ✓ src/test/StageLoader.test.ts (9 tests) 21ms
+stdout | src/test/Game.test.ts > JumpingDotGame > game over and cleanup > should handle game over menu navigation
+🎮 Game over menu selection: RESTART STAGE
+🎮 Game over menu selection: STAGE SELECT
+🎯 Game over menu selected: STAGE SELECT
+
+ ✓ src/test/PlayerSystem.test.ts (9 tests) 35ms
+ ✓ src/test/Game.test.ts (29 tests) 607ms
+ ✓ src/test/EditorController.test.ts (26 tests) 5933ms
+   ✓ EditorController (Adapter Pattern) > Keyboard Shortcuts > should handle Ctrl+N for new stage  381ms
+   ✓ EditorController (Adapter Pattern) > Error Handling > should handle initialization errors gracefully  3023ms
+   ✓ EditorController (Adapter Pattern) > Error Handling > should handle missing DOM elements  555ms
+   ✓ EditorController (Adapter Pattern) > Performance and Cleanup > should dispose resources properly  1022ms
+ ✓ src/test/CollisionSystem.test.ts (16 tests) 250ms
+Cancelling test run. Press CTRL+c again to exit forcefully.
+
+ ✓ src/test/EditorView.test.ts (36 tests) 14841ms
+   ✓ EditorView > プロパティパネル > ゴール選択時に適切なパネルが表示されること  388ms
+   ✓ EditorView > プロパティパネル > テキスト選択時に適切なパネルが表示されること  2835ms
+   ✓ EditorView > アクションボタン > ボタンの有効/無効が切り替わること  1709ms
+   ✓ EditorView > ツール選択イベント > ツールクリックでコントローラーが呼ばれること  406ms
+   ✓ EditorView > メッセージ表示 > メッセージクリックで削除されること  577ms
+   ✓ EditorView > メッセージ表示 > メッセージコンテナが自動作成されること  831ms
+   ✓ EditorView > プロパティ値の読み込み > ゴールプロパティが正しく読み込まれること  553ms
+   ✓ EditorView > プロパティ値の読み込み > テキストプロパティが正しく読み込まれること  516ms
+   ✓ EditorView > リソース管理 > dispose時にイベントリスナーが削除されること  1364ms
+   ✓ EditorView > リソース管理 > dispose後はメソッド呼び出しが安全であること  3674ms
+
+ Test Files  13 passed (13)
+      Tests  310 passed (310)
+   Start at  23:34:29
+   Duration  16.77s (transform 6.67s, setup 338ms, collect 7.69s, tests 21.95s, environment 7.68s, prepare 10.60s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   78.13 |    85.75 |   82.21 |   78.13 |                   
+ src               |       0 |      100 |     100 |       0 |                   
+  editor.ts        |       0 |      100 |     100 |       0 | 2-222             
+ src/adapters      |   38.79 |      100 |   45.76 |   38.79 |                   
+  ...derAdapter.ts |   18.86 |      100 |       0 |   18.86 | ...35-536,539-541 
+  ...derAdapter.ts |       0 |        0 |       0 |       0 |                   
+  ...derAdapter.ts |     100 |      100 |     100 |     100 |                   
+ src/constants     |     100 |      100 |     100 |     100 |                   
+  GameConstants.ts |     100 |      100 |     100 |     100 |                   
+ src/controllers   |   73.53 |    58.97 |   90.62 |   73.53 |                   
+  ...Controller.ts |   73.53 |    58.97 |   90.62 |   73.53 | ...92,705,714-715 
+ src/core          |   84.34 |    73.33 |   91.48 |   84.34 |                   
+  Game.ts          |   77.72 |    68.35 |   88.88 |   77.72 | ...99-507,540-541 
+  StageLoader.ts   |   94.88 |    82.92 |     100 |   94.88 | ...95,201-202,218 
+ src/models        |   93.76 |    92.39 |   96.77 |   93.76 |                   
+  EditorModel.ts   |   93.76 |    92.39 |   96.77 |   93.76 | ...95-496,502-503 
+ src/stores        |   72.72 |      100 |   29.62 |   72.72 |                   
+  ...standStore.ts |   72.72 |      100 |   29.62 |   72.72 | ...87-189,204-205 
+ src/systems       |   90.89 |    96.29 |   94.28 |   90.89 |                   
+  ...tionSystem.ts |     100 |      100 |     100 |     100 |                   
+  ...sionSystem.ts |     100 |      100 |     100 |     100 |                   
+  ...nderSystem.ts |     100 |      100 |     100 |     100 |                   
+  InputManager.ts  |    67.3 |      100 |   69.23 |    67.3 | ...58-159,163-164 
+  PhysicsSystem.ts |     100 |      100 |     100 |     100 |                   
+  PlayerSystem.ts  |   88.09 |    83.33 |     100 |   88.09 | 39-40,42-44,47-51 
+ src/types         |   87.58 |    53.33 |   53.84 |   87.58 |                   
+  EditorTypes.ts   |   87.58 |       50 |      50 |   87.58 | ...25,327,329,331 
+  GameTypes.ts     |       0 |        0 |       0 |       0 |                   
+ src/utils         |     100 |    98.44 |     100 |     100 |                   
+  EditorUtils.ts   |     100 |    96.22 |     100 |     100 | 117-118           
+  ErrorHandler.ts  |     100 |      100 |     100 |     100 |                   
+  GameUtils.ts     |     100 |      100 |     100 |     100 |                   
+ src/views         |   95.53 |    85.71 |     100 |   95.53 |                   
+  EditorView.ts    |   95.53 |    85.71 |     100 |   95.53 | 376,387-400       
+-------------------|---------|----------|---------|---------|-------------------
+ CANCELLED  Test run cancelled. Watching for file changes...
+       press h to show help, press q to quit

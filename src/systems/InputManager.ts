@@ -3,13 +3,17 @@ import { GameInputs } from 'game-inputs';
 interface GameController {
     startGame(): void;
     init(): void;
+    returnToStageSelect(): void;
+    handleGameOverNavigation(direction: 'up' | 'down'): void;
+    handleGameOverSelection(): void;
+    getGameState(): { gameRunning: boolean; gameOver: boolean; finalScore: number };
 }
 
 export class InputManager {
-    private inputs: GameInputs;
-    private gameController: GameController;
-    private gameRunning = false;
-    private gameOver = false;
+    private inputs: GameInputs | null;
+    private gameController: GameController | null;
+    private lastInputTime = 0;
+    private inputCooldown = 300; // 300ms cooldown to prevent rapid inputs
 
     constructor(canvas: HTMLCanvasElement, gameController: GameController) {
         this.gameController = gameController;
@@ -27,6 +31,8 @@ export class InputManager {
     }
 
     private setupBindings(): void {
+        if (!this.inputs) return;
+        
         // Movement controls (bind each key separately)
         this.inputs.bind('move-left', 'ArrowLeft');
         this.inputs.bind('move-left', 'KeyA');
@@ -36,31 +42,74 @@ export class InputManager {
         this.inputs.bind('jump', 'KeyW');
         
         // Game control
-        this.inputs.bind('start-game', 'Space');
         this.inputs.bind('restart', 'KeyR');
+        
+        // Menu navigation (handles both game over menu and game start)
+        this.inputs.bind('menu-up', 'ArrowUp');
+        this.inputs.bind('menu-down', 'ArrowDown');
+        this.inputs.bind('menu-select', 'Enter');
+        this.inputs.bind('menu-select', 'KeyR');
+        this.inputs.bind('menu-select', 'Space');
     }
 
     private setupEventHandlers(): void {
-        // Game start handling
-        this.inputs.down.on('start-game', () => {
-            if (!this.gameRunning && !this.gameOver) {
-                console.log('🚀 Starting game with Space');
-                this.gameController.startGame();
+        // Game start is now handled by menu-select to avoid conflicts
+
+        // Game restart handling with debouncing (legacy for direct restart)
+        this.inputs?.down.on('restart', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+            const gameState = this.gameController.getGameState();
+            
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+
+            // Only allow restart when game is actually over
+            if (gameState.gameOver) {
+                this.gameController.init();
             }
         });
 
-        // Game restart handling
-        this.inputs.down.on('restart', () => {
-            if (this.gameOver) {
-                console.log('🔄 Restarting game with R');
-                this.gameController.init();
+        // Game over menu navigation
+        this.inputs?.down.on('menu-up', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+            if (this.gameController.getGameState().gameOver) {
+                this.gameController.handleGameOverNavigation('up');
+            }
+        });
+
+        this.inputs?.down.on('menu-down', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+            if (this.gameController.getGameState().gameOver) {
+                this.gameController.handleGameOverNavigation('down');
+            }
+        });
+
+        this.inputs?.down.on('menu-select', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+            const gameState = this.gameController.getGameState();
+            
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+            
+            if (gameState.gameOver) {
+                // Game over menu selection
+                this.gameController.handleGameOverSelection();
+            } else if (!gameState.gameRunning) {
+                // Game start (when not running and not over)
+                this.gameController.startGame();
             }
         });
     }
 
     // Check if an action is currently pressed
     isPressed(action: string): boolean {
-        return this.inputs.state[action] || false;
+        return this.inputs?.state[action] || false;
     }
 
     // Check if an action was just pressed this frame
@@ -77,6 +126,7 @@ export class InputManager {
 
     // Get movement input state (compatible with old KeyState)
     getMovementState() {
+        if (!this.inputs) return {};
         return {
             ArrowLeft: this.isPressed('move-left'),
             ArrowRight: this.isPressed('move-right'),
@@ -88,28 +138,30 @@ export class InputManager {
         };
     }
 
-    setGameState(running: boolean, over: boolean): void {
-        console.log(`🎮 Game state changed: running=${running}, over=${over}`);
-        this.gameRunning = running;
-        this.gameOver = over;
-    }
 
     // Clear all input states (equivalent to old clearKeys)
     clearInputs(): void {
-        console.log('🧹 Clearing all inputs');
         // game-inputs handles this internally, but we can reset our state
-        this.inputs.tick(); // Process any pending events
-        console.log('✅ Inputs cleared');
+        this.inputs?.tick(); // Process any pending events
     }
 
     // Update the input system (call this in game loop)
     update(): void {
-        this.inputs.tick();
+        this.inputs?.tick();
     }
 
     cleanup(): void {
-        // game-inputs will handle cleanup automatically
-        console.log('🧽 InputManager cleanup');
+        // Clean up game-inputs instance
+        if (this.inputs) {
+            // game-inputs doesn't have a destroy method, so remove all listeners and disable
+            this.inputs.down.removeAllListeners();
+            this.inputs.up.removeAllListeners();
+            this.inputs.disabled = true;
+        }
+        
+        // Clear references to prevent zombie calls
+        this.inputs = null;
+        this.gameController = null;
     }
 
     // For testing purposes - simulate key events
