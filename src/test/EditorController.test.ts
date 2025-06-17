@@ -29,6 +29,9 @@ describe('EditorController (Adapter Pattern)', () => {
     let mockRenderSystem: EditorRenderSystem;
 
     beforeEach(async () => {
+        // Mock window.confirm for clearStage test
+        global.window.confirm = vi.fn().mockReturnValue(true);
+        
         // Reset Zustand store
         editorStore.setState({
             editor: {
