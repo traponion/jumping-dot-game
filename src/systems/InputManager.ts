@@ -1,4 +1,5 @@
 import { GameInputs } from 'game-inputs';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 interface GameController {
     startGame(): void;
@@ -58,7 +59,6 @@ export class InputManager {
         // Game restart handling with debouncing (legacy for direct restart)
         this.inputs?.down.on('restart', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            const gameState = this.gameController.getGameState();
             
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
@@ -67,7 +67,7 @@ export class InputManager {
             this.lastInputTime = now;
 
             // Only allow restart when game is actually over
-            if (gameState.gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.init();
             }
         });
@@ -75,21 +75,20 @@ export class InputManager {
         // Game over menu navigation
         this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameController.getGameState().gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameController.getGameState().gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
 
         this.inputs?.down.on('menu-select', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            const gameState = this.gameController.getGameState();
             
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
@@ -97,10 +96,10 @@ export class InputManager {
             }
             this.lastInputTime = now;
             
-            if (gameState.gameOver) {
+            if (getGameStore().isGameOver()) {
                 // Game over menu selection
                 this.gameController.handleGameOverSelection();
-            } else if (!gameState.gameRunning) {
+            } else if (!getGameStore().isGameRunning()) {
                 // Game start (when not running and not over)
                 this.gameController.startGame();
             }

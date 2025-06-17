@@ -1,6 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
+// Mock window.dispatchEvent for CustomEvent testing
+if (typeof window !== 'undefined' && !window.dispatchEvent) {
+    window.dispatchEvent = vi.fn(() => true);
+}
+
+// Mock CustomEvent if not available
+if (typeof globalThis.CustomEvent === 'undefined') {
+    globalThis.CustomEvent = class CustomEvent extends Event {
+        detail: any;
+        constructor(type: string, eventInitDict?: CustomEventInit) {
+            super(type, eventInitDict);
+            this.detail = eventInitDict?.detail;
+        }
+    } as any;
+}
+
 // Global type declarations for test environment  
 declare let global: {
     document: typeof document;
@@ -74,6 +90,13 @@ describe('JumpingDotGame', () => {
     beforeEach(async () => {
         // Store original method
         originalGetElementById = document.getElementById;
+        
+        // Mock window.dispatchEvent in each test
+        Object.defineProperty(window, 'dispatchEvent', {
+            value: vi.fn(() => true),
+            writable: true,
+            configurable: true
+        });
         
         // Mock only the getElementById method
         document.getElementById = vi.fn((id) => {
@@ -371,14 +394,17 @@ describe('JumpingDotGame', () => {
         });
 
         it('should return to stage select properly', () => {
-            // Mock window.stageSelect
-            (window as any).stageSelect = {
-                returnToStageSelect: vi.fn()
-            };
+            // Mock window.dispatchEvent to verify CustomEvent is dispatched
+            const mockDispatchEvent = vi.fn();
+            window.dispatchEvent = mockDispatchEvent;
 
             game.returnToStageSelect();
             
-            expect((window as any).stageSelect.returnToStageSelect).toHaveBeenCalled();
+            expect(mockDispatchEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'requestStageSelect'
+                })
+            );
         });
 
         it('should handle async cleanup properly', async () => {
