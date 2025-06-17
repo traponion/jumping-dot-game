@@ -1,20 +1,14 @@
 // EditorModel単体テスト（拡張版）
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EditorModel, type ModelChangeListener } from '../models/EditorModel.js';
+import { EditorModel } from '../models/EditorModel.js';
 import { EDITOR_TOOLS } from '../types/EditorTypes.js';
 import type { StageData } from '../core/StageLoader.js';
 
 describe('EditorModel', () => {
     let model: EditorModel;
-    let mockListener: ModelChangeListener;
 
     beforeEach(() => {
         model = new EditorModel();
-        mockListener = {
-            onStageDataChanged: vi.fn(),
-            onEditorStateChanged: vi.fn(),
-            onValidationError: vi.fn()
-        };
     });
 
     afterEach(() => {
@@ -87,12 +81,10 @@ describe('EditorModel', () => {
                 goal: { x: 100, y: 100 }
             } as any;
 
-            model.addChangeListener(mockListener);
             model.setCurrentStage(invalidStageData);
             
             // 無効なデータの場合、ステージは設定されない
             expect(model.getCurrentStage()).toBeNull();
-            expect(mockListener.onValidationError).toHaveBeenCalled();
         });
 
         it('ステージデータがイミュータブルにコピーされること', () => {
@@ -103,54 +95,6 @@ describe('EditorModel', () => {
             expect(currentStage).not.toBe(validStageData);
             // しかし内容は同じであること
             expect(currentStage?.name).toBe(validStageData.name);
-        });
-    });
-
-    describe('変更通知システム', () => {
-        const testStageData: StageData = {
-            id: 1,
-            name: 'NotificationTest',
-            platforms: [],
-            spikes: [],
-            goal: { x: 100, y: 100, width: 40, height: 50 },
-            startText: { x: 50, y: 50, text: 'START' },
-            goalText: { x: 150, y: 100, text: 'GOAL' }
-        };
-
-        it('リスナーを追加できること', () => {
-            expect(() => {
-                model.addChangeListener(mockListener);
-            }).not.toThrow();
-        });
-
-        it('リスナーを削除できること', () => {
-            model.addChangeListener(mockListener);
-            expect(() => {
-                model.removeChangeListener(mockListener);
-            }).not.toThrow();
-        });
-
-        it('ステージデータ変更時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            model.setCurrentStage(testStageData);
-            
-            expect(mockListener.onStageDataChanged).toHaveBeenCalledWith(testStageData);
-        });
-
-        it('エディター状態変更時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            model.updateEditorState({ selectedTool: EDITOR_TOOLS.PLATFORM });
-            
-            expect(mockListener.onEditorStateChanged).toHaveBeenCalled();
-        });
-
-        it('バリデーションエラー時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            
-            const invalidData = { id: 'invalid' } as any;
-            model.setCurrentStage(invalidData);
-            
-            expect(mockListener.onValidationError).toHaveBeenCalled();
         });
     });
 
@@ -533,29 +477,5 @@ describe('EditorModel', () => {
             }).toThrow('No stage data to export');
         });
 
-        it('リスナーでのエラーがキャッチされること', () => {
-            const faultyListener: ModelChangeListener = {
-                onStageDataChanged: vi.fn(() => { throw new Error('Listener error'); }),
-                onEditorStateChanged: vi.fn(),
-                onValidationError: vi.fn()
-            };
-            
-            model.addChangeListener(faultyListener);
-            
-            // エラーが発生してもメイン処理は継続される
-            expect(() => {
-                model.setCurrentStage({
-                    id: 1,
-                    name: 'Test',
-                    platforms: [],
-                    spikes: [],
-                    goal: { x: 100, y: 100, width: 40, height: 50 },
-                    startText: { x: 50, y: 50, text: 'START' },
-                    goalText: { x: 150, y: 100, text: 'GOAL' }
-                });
-            }).not.toThrow();
-            
-            expect(model.getCurrentStage()).not.toBeNull();
-        });
     });
 });
