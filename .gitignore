@@ -38,6 +38,7 @@ lerna-debug.log*
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
+coverage.txt
 
 # Dependency directories
 jspm_packages/
