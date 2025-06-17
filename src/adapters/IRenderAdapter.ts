@@ -14,11 +14,11 @@ export interface EditorState {
 export interface StageData {
     id: number;
     name: string;
-    platforms: Array<{x1: number, y1: number, x2: number, y2: number}>;
-    spikes: Array<{x: number, y: number, width: number, height: number}>;
-    goal: {x: number, y: number, width: number, height: number};
-    startText: {x: number, y: number, text: string};
-    goalText: {x: number, y: number, text: string};
+    platforms: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+    spikes: Array<{ x: number; y: number; width: number; height: number }>;
+    goal: { x: number; y: number; width: number; height: number };
+    startText: { x: number; y: number; text: string };
+    goalText: { x: number; y: number; text: string };
 }
 
 export interface EditorCallbacks {
@@ -36,21 +36,21 @@ export interface IRenderAdapter {
     renderAll(): void;
     clearCanvas(): void;
     dispose(): void;
-    
+
     // Editor state management
     getEditorState(): EditorState;
     setSelectedTool(tool: string): void;
     toggleGrid(): void;
     toggleSnapToGrid(): void;
-    
+
     // Object operations
     deleteSelectedObject(): void;
     duplicateSelectedObject(): void;
-    
+
     // Stage operations
     loadStageForEditing(stageData: StageData): void;
     exportStageData(): StageData;
-    
+
     // Object creation methods
     createSpike(x: number, y: number): void;
     createGoal(x: number, y: number, width: number, height: number): void;

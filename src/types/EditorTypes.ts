@@ -1,17 +1,17 @@
 // エディター機能の型定義
-import * as fabric from 'fabric';
+import type * as fabric from 'fabric';
 import type { StageData } from '../core/StageLoader.js';
 
 // エディターツールの定数定義
 export const EDITOR_TOOLS = {
     SELECT: 'select',
-    PLATFORM: 'platform', 
+    PLATFORM: 'platform',
     SPIKE: 'spike',
     GOAL: 'goal',
     TEXT: 'text'
 } as const;
 
-export type EditorTool = typeof EDITOR_TOOLS[keyof typeof EDITOR_TOOLS];
+export type EditorTool = (typeof EDITOR_TOOLS)[keyof typeof EDITOR_TOOLS];
 
 // エディター設定の定数
 export const EDITOR_CONFIG = {
@@ -150,10 +150,10 @@ export const KEYBOARD_SHORTCUTS = {
         '5': EDITOR_TOOLS.TEXT
     },
     ACTIONS: {
-        'Delete': 'deleteObject',
-        'Backspace': 'deleteObject',
-        'KeyG': 'toggleGrid',
-        'KeyS': 'saveStage'
+        Delete: 'deleteObject',
+        Backspace: 'deleteObject',
+        KeyG: 'toggleGrid',
+        KeyS: 'saveStage'
     }
 } as const;
 
@@ -166,23 +166,33 @@ export function isValidEditorTool(tool: string): tool is EditorTool {
     return Object.values(EDITOR_TOOLS).includes(tool as EditorTool);
 }
 
-export function isPlatformObject(obj: FabricObjectWithData): obj is FabricObjectWithData & { data: { type: 'platform' } } {
+export function isPlatformObject(
+    obj: FabricObjectWithData
+): obj is FabricObjectWithData & { data: { type: 'platform' } } {
     return obj.data?.type === EDITOR_TOOLS.PLATFORM;
 }
 
-export function isSpikeObject(obj: FabricObjectWithData): obj is FabricObjectWithData & { data: { type: 'spike' } } {
+export function isSpikeObject(
+    obj: FabricObjectWithData
+): obj is FabricObjectWithData & { data: { type: 'spike' } } {
     return obj.data?.type === EDITOR_TOOLS.SPIKE;
 }
 
-export function isGoalObject(obj: FabricObjectWithData): obj is FabricObjectWithData & { data: { type: 'goal' } } {
+export function isGoalObject(
+    obj: FabricObjectWithData
+): obj is FabricObjectWithData & { data: { type: 'goal' } } {
     return obj.data?.type === EDITOR_TOOLS.GOAL;
 }
 
-export function isTextObject(obj: FabricObjectWithData): obj is FabricObjectWithData & { data: { type: 'text' } } {
+export function isTextObject(
+    obj: FabricObjectWithData
+): obj is FabricObjectWithData & { data: { type: 'text' } } {
     return obj.data?.type === EDITOR_TOOLS.TEXT;
 }
 
-export function isGridObject(obj: FabricObjectWithData): obj is FabricObjectWithData & { data: { type: 'grid' } } {
+export function isGridObject(
+    obj: FabricObjectWithData
+): obj is FabricObjectWithData & { data: { type: 'grid' } } {
     return (obj.data?.type as string) === 'grid';
 }
 
@@ -203,55 +213,55 @@ export const ERROR_TYPES = {
     SYSTEM: 'SYSTEM_ERROR'
 } as const;
 
-export type ErrorType = typeof ERROR_TYPES[keyof typeof ERROR_TYPES];
+export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
 // エラーコードの定義
 export const ERROR_CODES = {
     // キャンバス関連
     CANVAS_INIT_FAILED: 'CANVAS_INIT_FAILED',
     CANVAS_RENDER_FAILED: 'CANVAS_RENDER_FAILED',
-    
+
     // オブジェクト関連
     OBJECT_CREATION_FAILED: 'OBJECT_CREATION_FAILED',
     OBJECT_MODIFICATION_FAILED: 'OBJECT_MODIFICATION_FAILED',
     INVALID_OBJECT_TYPE: 'INVALID_OBJECT_TYPE',
-    
+
     // ツール関連
     INVALID_TOOL: 'INVALID_TOOL',
     TOOL_SWITCH_FAILED: 'TOOL_SWITCH_FAILED',
-    
+
     // DOM関連
     DOM_ELEMENT_NOT_FOUND: 'DOM_ELEMENT_NOT_FOUND',
     DOM_EVENT_FAILED: 'DOM_EVENT_FAILED',
-    
+
     // ステージ関連
     STAGE_LOAD_FAILED: 'STAGE_LOAD_FAILED',
     STAGE_SAVE_FAILED: 'STAGE_SAVE_FAILED',
     STAGE_VALIDATION_FAILED: 'STAGE_VALIDATION_FAILED',
-    
+
     // 入力関連
     INVALID_INPUT: 'INVALID_INPUT',
     INVALID_COORDINATES: 'INVALID_COORDINATES',
-    
+
     // パフォーマンス関連
     MEMORY_LIMIT_EXCEEDED: 'MEMORY_LIMIT_EXCEEDED',
     RENDER_TIMEOUT: 'RENDER_TIMEOUT',
-    
+
     // ネットワーク関連
     NETWORK_FAILED: 'NETWORK_FAILED',
-    
+
     // システム関連
     UNKNOWN_ERROR: 'UNKNOWN_ERROR'
 } as const;
 
-export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 /**
  * エラーハンドリング用のカスタムエラークラス
  */
 export class EditorError extends Error {
     public readonly timestamp: Date;
-    
+
     constructor(
         message: string,
         public readonly code: ErrorCode,
@@ -262,7 +272,7 @@ export class EditorError extends Error {
         super(message);
         this.name = 'EditorError';
         this.timestamp = new Date();
-        
+
         // Maintains proper stack trace for where our error was thrown (only available on V8)
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, EditorError);
@@ -296,15 +306,15 @@ export class EditorError extends Error {
             timestamp: this.timestamp.toISOString(),
             recoverable: this.recoverable
         };
-        
+
         if (this.details !== undefined) {
             result.details = this.details;
         }
-        
+
         if (this.stack) {
             result.stack = this.stack;
         }
-        
+
         return result;
     }
 

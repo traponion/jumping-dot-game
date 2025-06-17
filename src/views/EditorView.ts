@@ -1,19 +1,19 @@
+import type * as fabric from 'fabric';
+import type { IEditorController, IEditorView } from '../controllers/EditorController.js';
 // エディターのView層 - UIの状態管理と表示制御
 import type { StageData } from '../core/StageLoader.js';
-import type { IEditorView, IEditorController } from '../controllers/EditorController.js';
 import {
-    type FabricObjectWithData,
-    EDITOR_TOOLS,
     EDITOR_CONFIG,
+    EDITOR_TOOLS,
+    type FabricObjectWithData,
     isValidEditorTool
 } from '../types/EditorTypes.js';
-import * as fabric from 'fabric';
 import {
     DOMHelper,
-    FabricHelper,
+    DebugHelper,
     EventHelper,
-    MathHelper,
-    DebugHelper
+    FabricHelper,
+    MathHelper
 } from '../utils/EditorUtils.js';
 
 /**
@@ -25,7 +25,7 @@ import {
 export class EditorView implements IEditorView {
     private controller!: IEditorController;
     private canvas: HTMLCanvasElement;
-    
+
     // UI要素（型安全な管理）
     private toolItems!: NodeListOf<Element>;
     private uiElements!: {
@@ -33,34 +33,40 @@ export class EditorView implements IEditorView {
         mouseCoords: HTMLElement;
         objectCount: HTMLElement;
         currentTool: HTMLElement;
-        
+
         // アクション系
         deleteBtn: HTMLButtonElement;
         duplicateBtn: HTMLButtonElement;
-        
+
         // ステージ情報系
         stageNameInput: HTMLInputElement;
         stageIdInput: HTMLInputElement;
         stageDescInput: HTMLTextAreaElement;
-        
+
         // プロパティパネル系
         noSelectionDiv: HTMLElement;
         platformPropsDiv: HTMLElement;
         spikePropsDiv: HTMLElement;
         goalPropsDiv: HTMLElement;
         textPropsDiv: HTMLElement;
-        
+
         // 設定系
         gridEnabledCheckbox: HTMLInputElement;
         snapEnabledCheckbox: HTMLInputElement;
-        
+
         // メッセージ系
         messageContainer: HTMLElement;
     };
 
     // イベントハンドラー（最適化済み）
-    private throttledMouseMove = EventHelper.throttle((e: MouseEvent) => this.handleMouseMove(e), 16);
-    private debouncedStageInfoUpdate = EventHelper.debounce(() => this.updateStageInfoFromInputs(), 300);
+    private throttledMouseMove = EventHelper.throttle(
+        (e: MouseEvent) => this.handleMouseMove(e),
+        16
+    );
+    private debouncedStageInfoUpdate = EventHelper.debounce(
+        () => this.updateStageInfoFromInputs(),
+        300
+    );
 
     // ステート
     private isInitialized = false;
@@ -90,7 +96,7 @@ export class EditorView implements IEditorView {
                 this.showWelcomeMessage();
                 this.isInitialized = true;
             });
-            
+
             DebugHelper.log('EditorView initialized successfully');
         } catch (error) {
             DebugHelper.log('EditorView initialization failed', error);
@@ -131,9 +137,9 @@ export class EditorView implements IEditorView {
             messageContainer
         };
 
-        DebugHelper.log('UI elements initialized', { 
+        DebugHelper.log('UI elements initialized', {
             elementCount: Object.keys(this.uiElements).length,
-            toolItemCount: this.toolItems.length 
+            toolItemCount: this.toolItems.length
         });
     }
 
@@ -150,27 +156,23 @@ export class EditorView implements IEditorView {
     }
 
     private setupToolSelectionEvents(): void {
-        DOMHelper.addEventListenersToNodeList(
-            this.toolItems,
-            'click',
-            (element) => {
-                const tool = element.getAttribute('data-tool');
-                if (tool && isValidEditorTool(tool)) {
-                    this.controller.selectTool(tool);
-                }
+        DOMHelper.addEventListenersToNodeList(this.toolItems, 'click', (element) => {
+            const tool = element.getAttribute('data-tool');
+            if (tool && isValidEditorTool(tool)) {
+                this.controller.selectTool(tool);
             }
-        );
+        });
     }
 
     private setupToolbarEvents(): void {
         const toolbarActions = {
-            'newStageBtn': () => this.controller.createNewStage(),
-            'loadStageBtn': () => this.controller.loadStage(),
-            'saveStageBtn': () => this.controller.saveStage(),
-            'testStageBtn': () => this.controller.testStage(),
-            'clearStageBtn': () => this.controller.clearStage(),
-            'toggleGridBtn': () => this.controller.toggleGrid(),
-            'toggleSnapBtn': () => this.controller.toggleSnap()
+            newStageBtn: () => this.controller.createNewStage(),
+            loadStageBtn: () => this.controller.loadStage(),
+            saveStageBtn: () => this.controller.saveStage(),
+            testStageBtn: () => this.controller.testStage(),
+            clearStageBtn: () => this.controller.clearStage(),
+            toggleGridBtn: () => this.controller.toggleGrid(),
+            toggleSnapBtn: () => this.controller.toggleSnap()
         };
 
         Object.entries(toolbarActions).forEach(([id, handler]) => {
@@ -180,25 +182,32 @@ export class EditorView implements IEditorView {
     }
 
     private setupObjectActionEvents(): void {
-        this.uiElements.deleteBtn.addEventListener('click', () => this.controller.deleteSelectedObject());
-        this.uiElements.duplicateBtn.addEventListener('click', () => this.controller.duplicateSelectedObject());
+        this.uiElements.deleteBtn.addEventListener('click', () =>
+            this.controller.deleteSelectedObject()
+        );
+        this.uiElements.duplicateBtn.addEventListener('click', () =>
+            this.controller.duplicateSelectedObject()
+        );
     }
 
     private setupSettingsEvents(): void {
         this.uiElements.gridEnabledCheckbox.addEventListener('change', () => {
             this.controller.toggleGrid();
         });
-        
+
         this.uiElements.snapEnabledCheckbox.addEventListener('change', () => {
             this.controller.toggleSnap();
         });
     }
 
     private setupStageInfoEvents(): void {
-        [this.uiElements.stageNameInput, this.uiElements.stageIdInput, this.uiElements.stageDescInput]
-            .forEach(input => {
-                input.addEventListener('input', this.debouncedStageInfoUpdate);
-            });
+        [
+            this.uiElements.stageNameInput,
+            this.uiElements.stageIdInput,
+            this.uiElements.stageDescInput
+        ].forEach((input) => {
+            input.addEventListener('input', this.debouncedStageInfoUpdate);
+        });
     }
 
     private setupCanvasEvents(): void {
@@ -213,10 +222,10 @@ export class EditorView implements IEditorView {
     public updateToolSelection(tool: string): void {
         if (!this.isInitialized) return;
 
-        this.toolItems.forEach(item => item.classList.remove('active'));
+        this.toolItems.forEach((item) => item.classList.remove('active'));
         const selectedTool = document.querySelector(`[data-tool="${tool}"]`);
         selectedTool?.classList.add('active');
-        
+
         DebugHelper.log('Tool selection updated in view', { tool });
     }
 
@@ -225,9 +234,9 @@ export class EditorView implements IEditorView {
      */
     public updateObjectCount(count: number): void {
         if (!this.isInitialized) return;
-        
+
         this.uiElements.objectCount.textContent = count.toString();
-        
+
         // オブジェクト数に応じた視覚的フィードバック
         this.uiElements.objectCount.className = count > 0 ? 'object-count active' : 'object-count';
     }
@@ -237,7 +246,7 @@ export class EditorView implements IEditorView {
      */
     public updateMouseCoordinates(x: number, y: number): void {
         if (!this.isInitialized) return;
-        
+
         this.uiElements.mouseCoords.textContent = `${x}, ${y}`;
     }
 
@@ -246,9 +255,9 @@ export class EditorView implements IEditorView {
      */
     public updateCurrentTool(tool: string): void {
         if (!this.isInitialized) return;
-        
+
         this.uiElements.currentTool.textContent = tool.charAt(0).toUpperCase() + tool.slice(1);
-        
+
         // ツールに応じたスタイル適用
         this.uiElements.currentTool.className = `current-tool tool-${tool}`;
     }
@@ -262,10 +271,10 @@ export class EditorView implements IEditorView {
         this.uiElements.stageNameInput.value = stageData.name;
         this.uiElements.stageIdInput.value = stageData.id.toString();
         this.uiElements.stageDescInput.value = (stageData as any).description || '';
-        
-        DebugHelper.log('Stage info updated in view', { 
-            stageId: stageData.id, 
-            name: stageData.name 
+
+        DebugHelper.log('Stage info updated in view', {
+            stageId: stageData.id,
+            name: stageData.name
         });
     }
 
@@ -276,7 +285,7 @@ export class EditorView implements IEditorView {
         if (!this.isInitialized) return;
 
         this.hideAllPropertyPanels();
-        
+
         if (!object) {
             this.uiElements.noSelectionDiv.style.display = 'block';
             return;
@@ -291,10 +300,10 @@ export class EditorView implements IEditorView {
      */
     public enableActionButtons(enabled: boolean): void {
         if (!this.isInitialized) return;
-        
+
         this.uiElements.deleteBtn.disabled = !enabled;
         this.uiElements.duplicateBtn.disabled = !enabled;
-        
+
         // 視覚的フィードバック
         const className = enabled ? 'action-btn enabled' : 'action-btn disabled';
         this.uiElements.deleteBtn.className = className;
@@ -346,7 +355,7 @@ export class EditorView implements IEditorView {
             this.uiElements.spikePropsDiv,
             this.uiElements.goalPropsDiv,
             this.uiElements.textPropsDiv
-        ].forEach(panel => {
+        ].forEach((panel) => {
             panel.style.display = 'none';
         });
     }
@@ -384,18 +393,12 @@ export class EditorView implements IEditorView {
         const line = platform as unknown as fabric.Line;
         if (!line.x1 || !line.y1 || !line.x2 || !line.y2) return;
 
-        const length = MathHelper.distance(
-            { x: line.x1, y: line.y1 },
-            { x: line.x2, y: line.y2 }
-        );
-        const angle = MathHelper.angle(
-            { x: line.x1, y: line.y1 },
-            { x: line.x2, y: line.y2 }
-        );
-        
+        const length = MathHelper.distance({ x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 });
+        const angle = MathHelper.angle({ x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 });
+
         const lengthInput = DOMHelper.getOptionalElement<HTMLInputElement>('platformLength');
         const angleInput = DOMHelper.getOptionalElement<HTMLInputElement>('platformAngle');
-        
+
         if (lengthInput) lengthInput.value = Math.round(length).toString();
         if (angleInput) angleInput.value = angle.toFixed(1);
     }
@@ -416,9 +419,11 @@ export class EditorView implements IEditorView {
         const rect = goal as unknown as fabric.Rect;
         const widthInput = DOMHelper.getOptionalElement<HTMLInputElement>('goalWidth');
         const heightInput = DOMHelper.getOptionalElement<HTMLInputElement>('goalHeight');
-        
-        if (widthInput) widthInput.value = (rect.width || EDITOR_CONFIG.OBJECT_SIZES.GOAL.width).toString();
-        if (heightInput) heightInput.value = (rect.height || EDITOR_CONFIG.OBJECT_SIZES.GOAL.height).toString();
+
+        if (widthInput)
+            widthInput.value = (rect.width || EDITOR_CONFIG.OBJECT_SIZES.GOAL.width).toString();
+        if (heightInput)
+            heightInput.value = (rect.height || EDITOR_CONFIG.OBJECT_SIZES.GOAL.height).toString();
     }
 
     /**
@@ -428,7 +433,7 @@ export class EditorView implements IEditorView {
         const textObj = text as unknown as fabric.Text;
         const contentInput = DOMHelper.getOptionalElement<HTMLInputElement>('textContent');
         const sizeInput = DOMHelper.getOptionalElement<HTMLInputElement>('textSize');
-        
+
         if (contentInput) contentInput.value = textObj.text || '';
         if (sizeInput) sizeInput.value = (textObj.fontSize || 16).toString();
     }
@@ -472,7 +477,11 @@ export class EditorView implements IEditorView {
     /**
      * メッセージを表示
      */
-    private showMessage(message: string, type: 'success' | 'error' | 'info', duration: number = 3000): void {
+    private showMessage(
+        message: string,
+        type: 'success' | 'error' | 'info',
+        duration = 3000
+    ): void {
         const messageEl = document.createElement('div');
         messageEl.className = `message message-${type}`;
         messageEl.textContent = message;
@@ -509,9 +518,13 @@ export class EditorView implements IEditorView {
         if (messageEl.parentNode) {
             messageEl.style.animation = 'slideOutRight 0.3s ease-in forwards';
             // Use animationend event instead of setTimeout for better synchronization
-            messageEl.addEventListener('animationend', () => {
-                messageEl.remove();
-            }, { once: true });
+            messageEl.addEventListener(
+                'animationend',
+                () => {
+                    messageEl.remove();
+                },
+                { once: true }
+            );
         }
     }
 

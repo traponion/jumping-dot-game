@@ -10,7 +10,7 @@ export class CollisionSystem {
         if (
             player.x + player.radius <= platform.x1 ||
             player.x - player.radius >= platform.x2 ||
-            player.vy < 0  // Don't collide when moving upward
+            player.vy < 0 // Don't collide when moving upward
         ) {
             return false;
         }
@@ -19,7 +19,7 @@ export class CollisionSystem {
         // Check if player crossed the platform during this frame
         const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
         const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
-        
+
         if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
             // Player crossed the platform - snap to surface
             player.y = platform.y1 - player.radius;

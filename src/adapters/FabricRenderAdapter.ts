@@ -1,28 +1,29 @@
 import * as fabric from 'fabric';
+import type { Goal, Platform, Spike, StageData, TextElement } from '../core/StageLoader.js';
 import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
-import type { Platform, Spike, Goal, StageData, TextElement } from '../core/StageLoader.js';
-import type { IRenderAdapter, EditorState, EditorCallbacks, StageData as AdapterStageData } from './IRenderAdapter.js';
 import {
+    EDITOR_CONFIG,
+    EDITOR_TOOLS,
+    ERROR_CODES,
+    ERROR_TYPES,
+    EditorError,
     type MouseEventHandler,
     type ObjectCreationParams,
-    EDITOR_TOOLS,
-    EDITOR_CONFIG,
     isFabricObjectWithData,
+    isGoalObject,
+    isGridObject,
     isPlatformObject,
     isSpikeObject,
-    isGoalObject,
-    isTextObject,
-    isGridObject,
-    EditorError,
-    ERROR_CODES,
-    ERROR_TYPES
+    isTextObject
 } from '../types/EditorTypes.js';
+import type {
+    StageData as AdapterStageData,
+    EditorCallbacks,
+    EditorState,
+    IRenderAdapter
+} from './IRenderAdapter.js';
 
-import {
-    FabricHelper,
-    ObjectFactory,
-    DebugHelper
-} from '../utils/EditorUtils.js';
+import { DebugHelper, FabricHelper, ObjectFactory } from '../utils/EditorUtils.js';
 
 /**
  * Fabric.js implementation of IRenderAdapter
@@ -32,10 +33,10 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
     private editorState: EditorState;
     private callbacks: EditorCallbacks;
     private stageData: StageData | null = null;
-    
+
     constructor(canvasElement: HTMLCanvasElement, callbacks: EditorCallbacks = {}) {
         super(canvasElement);
-        
+
         this.callbacks = callbacks;
         this.editorState = {
             selectedTool: EDITOR_TOOLS.SELECT,
@@ -44,10 +45,10 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             gridEnabled: true,
             snapToGrid: true
         };
-        
+
         this.initializeEditorMode();
         this.setupEventListeners();
-        
+
         DebugHelper.log('FabricRenderAdapter initialized', {
             canvasSize: { width: this.canvas.width, height: this.canvas.height },
             state: this.editorState
@@ -72,8 +73,8 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
     }
 
     public setSelectedTool(tool: string): void {
-        this.editorState.selectedTool = tool as typeof EDITOR_TOOLS[keyof typeof EDITOR_TOOLS];
-        
+        this.editorState.selectedTool = tool as (typeof EDITOR_TOOLS)[keyof typeof EDITOR_TOOLS];
+
         // Update canvas selection mode
         if (tool === EDITOR_TOOLS.SELECT) {
             this.canvas.selection = true;
@@ -81,7 +82,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             this.canvas.discardActiveObject();
             this.canvas.selection = false;
         }
-        
+
         this.canvas.renderAll();
         DebugHelper.log('Tool selected', { tool });
     }
@@ -104,7 +105,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             this.callbacks.onObjectSelected?.(null);
             this.updateStageDataFromCanvas();
             this.canvas.renderAll();
-            
+
             DebugHelper.log('Object deleted');
         }
     }
@@ -115,17 +116,17 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             // Create a copy offset by 20 pixels
             const bounds = FabricHelper.getObjectBounds(original);
             const newPosition = { x: bounds.left + 20, y: bounds.top + 20 };
-            
+
             if (isPlatformObject(original)) {
                 const line = original as unknown as fabric.Line;
-                const newLine = new fabric.Line([
-                    line.x1! + 20, line.y1! + 20,
-                    line.x2! + 20, line.y2! + 20
-                ], {
-                    stroke: EDITOR_CONFIG.COLORS.PLATFORM,
-                    strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
-                    selectable: true
-                });
+                const newLine = new fabric.Line(
+                    [line.x1! + 20, line.y1! + 20, line.x2! + 20, line.y2! + 20],
+                    {
+                        stroke: EDITOR_CONFIG.COLORS.PLATFORM,
+                        strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
+                        selectable: true
+                    }
+                );
                 FabricHelper.setObjectData(newLine, { type: EDITOR_TOOLS.PLATFORM });
                 this.canvas.add(newLine);
             } else if (isSpikeObject(original)) {
@@ -148,7 +149,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
                 });
                 this.canvas.add(newText);
             }
-            
+
             this.updateStageDataFromCanvas();
             this.canvas.renderAll();
             DebugHelper.log('Object duplicated');
@@ -159,10 +160,10 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
         this.stageData = stageData as StageData;
         this.clearCanvas();
         this.renderGrid();
-        
+
         // Render stage objects as editable Fabric.js objects
         this.renderEditableObjects(stageData as StageData);
-        
+
         this.canvas.renderAll();
         DebugHelper.log('Stage loaded for editing', { stageId: stageData.id });
     }
@@ -178,7 +179,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             this.canvas.selection = true;
             this.canvas.allowTouchScrolling = true;
             this.canvas.preserveObjectStacking = true;
-            
+
             DebugHelper.log('Editor mode enabled');
         } catch (error) {
             throw new EditorError(
@@ -231,7 +232,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
         const typedObject = object && isFabricObjectWithData(object) ? object : null;
         this.editorState.selectedObject = typedObject;
         this.callbacks.onObjectSelected?.(typedObject);
-        
+
         DebugHelper.log('Object selected', {
             objectType: typedObject ? FabricHelper.getObjectType(typedObject) : null,
             objectData: typedObject?.data
@@ -243,9 +244,9 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
         const pointer = this.canvas.getPointer(e.e as any);
         const snappedPointer = this.getSnappedPosition(pointer);
-        
+
         this.editorState.isDrawing = true;
-        
+
         try {
             switch (this.editorState.selectedTool) {
                 case EDITOR_TOOLS.PLATFORM:
@@ -301,7 +302,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
             selectable: false
         });
-        
+
         FabricHelper.setObjectData(line, { type: EDITOR_TOOLS.PLATFORM, isDrawing: true });
         this.canvas.add(line);
         this.canvas.renderAll();
@@ -309,10 +310,11 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
     private updateDrawingPlatform(pointer: { x: number; y: number }): void {
         const objects = this.canvas.getObjects();
-        const drawingPlatform = objects.find(obj => 
-            isFabricObjectWithData(obj) && 
-            obj.data?.type === EDITOR_TOOLS.PLATFORM && 
-            obj.data?.isDrawing
+        const drawingPlatform = objects.find(
+            (obj) =>
+                isFabricObjectWithData(obj) &&
+                obj.data?.type === EDITOR_TOOLS.PLATFORM &&
+                obj.data?.isDrawing
         ) as fabric.Line;
 
         if (drawingPlatform) {
@@ -326,27 +328,31 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
     private finishDrawingPlatform(): void {
         const objects = this.canvas.getObjects();
-        const drawingPlatform = objects.find(obj => 
-            isFabricObjectWithData(obj) && 
-            obj.data?.type === EDITOR_TOOLS.PLATFORM && 
-            obj.data?.isDrawing
+        const drawingPlatform = objects.find(
+            (obj) =>
+                isFabricObjectWithData(obj) &&
+                obj.data?.type === EDITOR_TOOLS.PLATFORM &&
+                obj.data?.isDrawing
         ) as fabric.Line;
 
         if (drawingPlatform) {
             drawingPlatform.set({ selectable: true });
-            FabricHelper.setObjectData(drawingPlatform, { 
-                type: EDITOR_TOOLS.PLATFORM, 
-                isDrawing: false 
+            FabricHelper.setObjectData(drawingPlatform, {
+                type: EDITOR_TOOLS.PLATFORM,
+                isDrawing: false
             });
             this.canvas.renderAll();
         }
     }
 
-    private placeObject(type: typeof EDITOR_TOOLS[keyof typeof EDITOR_TOOLS], position: { x: number; y: number }): void {
+    private placeObject(
+        type: (typeof EDITOR_TOOLS)[keyof typeof EDITOR_TOOLS],
+        position: { x: number; y: number }
+    ): void {
         let object: fabric.Object;
-        
+
         const params: ObjectCreationParams = { position };
-        
+
         switch (type) {
             case EDITOR_TOOLS.SPIKE:
                 object = ObjectFactory.createSpike(params);
@@ -372,10 +378,10 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
     private renderGrid(): void {
         // Remove existing grid objects
-        const gridObjects = this.canvas.getObjects().filter(obj => 
-            isFabricObjectWithData(obj) && isGridObject(obj)
-        );
-        gridObjects.forEach(obj => this.canvas.remove(obj));
+        const gridObjects = this.canvas
+            .getObjects()
+            .filter((obj) => isFabricObjectWithData(obj) && isGridObject(obj));
+        gridObjects.forEach((obj) => this.canvas.remove(obj));
 
         if (!this.editorState.gridEnabled) {
             this.canvas.renderAll();
@@ -387,19 +393,13 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
         // Draw vertical lines
         for (let x = 0; x <= canvasWidth; x += EDITOR_CONFIG.GRID_SIZE) {
-            const line = ObjectFactory.createGridLine(
-                { x, y: 0 },
-                { x, y: canvasHeight }
-            );
+            const line = ObjectFactory.createGridLine({ x, y: 0 }, { x, y: canvasHeight });
             this.canvas.add(line);
         }
 
         // Draw horizontal lines
         for (let y = 0; y <= canvasHeight; y += EDITOR_CONFIG.GRID_SIZE) {
-            const line = ObjectFactory.createGridLine(
-                { x: 0, y },
-                { x: canvasWidth, y }
-            );
+            const line = ObjectFactory.createGridLine({ x: 0, y }, { x: canvasWidth, y });
             this.canvas.add(line);
         }
 
@@ -408,7 +408,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
 
     private renderEditableObjects(stageData: StageData): void {
         // Platforms
-        stageData.platforms.forEach(platform => {
+        stageData.platforms.forEach((platform) => {
             const line = ObjectFactory.createPlatform(
                 { x: platform.x1, y: platform.y1 },
                 { x: platform.x2, y: platform.y2 }
@@ -417,7 +417,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
         });
 
         // Spikes
-        stageData.spikes.forEach(spike => {
+        stageData.spikes.forEach((spike) => {
             const triangle = ObjectFactory.createSpike({
                 position: { x: spike.x, y: spike.y },
                 size: { width: spike.width, height: spike.height }
@@ -440,7 +440,7 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             stageData.leftEdgeSubMessage
         ].filter(Boolean) as TextElement[];
 
-        texts.forEach(textElement => {
+        texts.forEach((textElement) => {
             const text = ObjectFactory.createText({
                 position: { x: textElement.x, y: textElement.y },
                 text: textElement.text
@@ -455,18 +455,18 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
     }
 
     private generateStageDataFromCanvas(): StageData {
-        const objects = this.canvas.getObjects().filter(obj => 
-            isFabricObjectWithData(obj) && !isGridObject(obj)
-        );
-        
+        const objects = this.canvas
+            .getObjects()
+            .filter((obj) => isFabricObjectWithData(obj) && !isGridObject(obj));
+
         const platforms: Platform[] = [];
         const spikes: Spike[] = [];
         let goal: Goal = { x: 0, y: 0, width: 40, height: 50 };
         const texts: TextElement[] = [];
 
-        objects.forEach(obj => {
+        objects.forEach((obj) => {
             if (!isFabricObjectWithData(obj)) return;
-            
+
             if (isPlatformObject(obj)) {
                 const line = obj as unknown as fabric.Line;
                 platforms.push({
@@ -522,9 +522,9 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
     }
 
     public createText(x: number, y: number, text: string): void {
-        const params: ObjectCreationParams = { 
-            position: { x, y }, 
-            text 
+        const params: ObjectCreationParams = {
+            position: { x, y },
+            text
         };
         const textObject = ObjectFactory.createText(params);
         this.canvas.add(textObject);

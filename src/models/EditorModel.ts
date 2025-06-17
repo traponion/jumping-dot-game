@@ -1,15 +1,8 @@
+import type { IEditorModel } from '../controllers/EditorController.js';
 // エディターのModel層 - データ状態管理とビジネスロジック
 import type { StageData } from '../core/StageLoader.js';
-import type { IEditorModel } from '../controllers/EditorController.js';
-import {
-    type EditorState,
-    EDITOR_TOOLS,
-    EDITOR_CONFIG
-} from '../types/EditorTypes.js';
-import {
-    DebugHelper
-} from '../utils/EditorUtils.js';
-
+import { EDITOR_CONFIG, EDITOR_TOOLS, type EditorState } from '../types/EditorTypes.js';
+import { DebugHelper } from '../utils/EditorUtils.js';
 
 /**
  * エディターのModel層実装
@@ -44,11 +37,10 @@ export class EditorModel implements IEditorModel {
 
     constructor() {
         this.editorState = this.createDefaultEditorState();
-        DebugHelper.log('EditorModel constructed', { 
-            editorState: this.editorState 
+        DebugHelper.log('EditorModel constructed', {
+            editorState: this.editorState
         });
     }
-
 
     // === IEditorModel インターフェース実装 ===
 
@@ -70,9 +62,9 @@ export class EditorModel implements IEditorModel {
         this.currentStage = { ...stageData }; // Deep copy for immutability
         this.isModified = false;
         this.lastSaved = null;
-        
-        DebugHelper.log('Current stage set', { 
-            stageId: stageData.id, 
+
+        DebugHelper.log('Current stage set', {
+            stageId: stageData.id,
             name: stageData.name,
             objectCount: this.getObjectCount()
         });
@@ -85,7 +77,7 @@ export class EditorModel implements IEditorModel {
         this.currentStage = null;
         this.isModified = false;
         this.lastSaved = null;
-        
+
         DebugHelper.log('Current stage cleared');
     }
 
@@ -102,15 +94,14 @@ export class EditorModel implements IEditorModel {
     public updateEditorState(updates: Partial<EditorState>): void {
         const previousState = { ...this.editorState };
         this.editorState = { ...this.editorState, ...updates };
-        
+
         // 状態変更をログ
         const changedKeys = Object.keys(updates);
-        DebugHelper.log('Editor state updated', { 
+        DebugHelper.log('Editor state updated', {
             changedKeys,
             previousState: this.pickProperties(previousState, changedKeys),
             newState: this.pickProperties(this.editorState, changedKeys)
         });
-        
     }
 
     /**
@@ -118,10 +109,8 @@ export class EditorModel implements IEditorModel {
      */
     public getObjectCount(): number {
         if (!this.currentStage) return 0;
-        
-        return this.currentStage.platforms.length + 
-               this.currentStage.spikes.length + 
-               1; // +1 for goal
+
+        return this.currentStage.platforms.length + this.currentStage.spikes.length + 1; // +1 for goal
     }
 
     /**
@@ -154,11 +143,11 @@ export class EditorModel implements IEditorModel {
                 return false;
             }
 
-            DebugHelper.log('Stage data validation passed', { 
+            DebugHelper.log('Stage data validation passed', {
                 stageId: stageData.id,
                 objectCount: this.calculateObjectCount(stageData)
             });
-            
+
             return true;
         } catch (error) {
             DebugHelper.log('Stage data validation error', error);
@@ -182,11 +171,11 @@ export class EditorModel implements IEditorModel {
             };
 
             const json = JSON.stringify(exportData, null, 2);
-            DebugHelper.log('Stage exported as JSON', { 
+            DebugHelper.log('Stage exported as JSON', {
                 stageId: this.currentStage.id,
-                dataSize: json.length 
+                dataSize: json.length
             });
-            
+
             return json;
         } catch (error) {
             DebugHelper.log('JSON export failed', error);
@@ -200,7 +189,7 @@ export class EditorModel implements IEditorModel {
     public importStageFromJson(json: string): StageData {
         try {
             const data = JSON.parse(json);
-            
+
             // インポートデータの基本検証
             if (!data || typeof data !== 'object') {
                 throw new Error('Invalid JSON format');
@@ -213,11 +202,11 @@ export class EditorModel implements IEditorModel {
                 throw new Error('Imported data failed validation');
             }
 
-            DebugHelper.log('Stage imported from JSON', { 
+            DebugHelper.log('Stage imported from JSON', {
                 stageId: stageData.id,
                 hasExportMeta: !!(exportedAt || editorVersion)
             });
-            
+
             return stageData;
         } catch (error) {
             DebugHelper.log('JSON import failed', error);
@@ -281,28 +270,27 @@ export class EditorModel implements IEditorModel {
         // プラットフォームの総長計算
         stats.totalLength = this.currentStage.platforms.reduce((total, platform) => {
             const length = Math.sqrt(
-                Math.pow(platform.x2 - platform.x1, 2) + 
-                Math.pow(platform.y2 - platform.y1, 2)
+                Math.pow(platform.x2 - platform.x1, 2) + Math.pow(platform.y2 - platform.y1, 2)
             );
             return total + length;
         }, 0);
 
         // バウンディングボックス計算
         const allCoords = [
-            ...this.currentStage.platforms.flatMap(p => [
-                { x: p.x1, y: p.y1 }, 
+            ...this.currentStage.platforms.flatMap((p) => [
+                { x: p.x1, y: p.y1 },
                 { x: p.x2, y: p.y2 }
             ]),
-            ...this.currentStage.spikes.map(s => ({ x: s.x, y: s.y })),
+            ...this.currentStage.spikes.map((s) => ({ x: s.x, y: s.y })),
             { x: this.currentStage.goal.x, y: this.currentStage.goal.y }
         ];
 
         if (allCoords.length > 0) {
-            const minX = Math.min(...allCoords.map(c => c.x));
-            const maxX = Math.max(...allCoords.map(c => c.x));
-            const minY = Math.min(...allCoords.map(c => c.y));
-            const maxY = Math.max(...allCoords.map(c => c.y));
-            
+            const minX = Math.min(...allCoords.map((c) => c.x));
+            const maxX = Math.max(...allCoords.map((c) => c.x));
+            const minY = Math.min(...allCoords.map((c) => c.y));
+            const maxY = Math.max(...allCoords.map((c) => c.y));
+
             stats.boundingBox = {
                 width: maxX - minX,
                 height: maxY - minY
@@ -329,9 +317,9 @@ export class EditorModel implements IEditorModel {
             goalText: { ...this.currentStage.goalText }
         };
 
-        DebugHelper.log('Stage cloned', { 
+        DebugHelper.log('Stage cloned', {
             originalId: this.currentStage.id,
-            clonedId: cloned.id 
+            clonedId: cloned.id
         });
 
         return cloned;
@@ -357,8 +345,8 @@ export class EditorModel implements IEditorModel {
      */
     private validateRequiredFields(stageData: any): boolean {
         const requiredFields = ['id', 'name', 'platforms', 'spikes', 'goal'];
-        return requiredFields.every(field => 
-            stageData.hasOwnProperty(field) && stageData[field] !== undefined
+        return requiredFields.every(
+            (field) => stageData.hasOwnProperty(field) && stageData[field] !== undefined
         );
     }
 
@@ -367,10 +355,12 @@ export class EditorModel implements IEditorModel {
      */
     private validateStageName(name: string): boolean {
         const rules = this.validationRules.stageName;
-        return typeof name === 'string' &&
-               name.length >= rules.minLength &&
-               name.length <= rules.maxLength &&
-               rules.pattern.test(name);
+        return (
+            typeof name === 'string' &&
+            name.length >= rules.minLength &&
+            name.length <= rules.maxLength &&
+            rules.pattern.test(name)
+        );
     }
 
     /**
@@ -378,10 +368,7 @@ export class EditorModel implements IEditorModel {
      */
     private validateStageId(id: number): boolean {
         const rules = this.validationRules.stageId;
-        return typeof id === 'number' &&
-               Number.isInteger(id) &&
-               id >= rules.min &&
-               id <= rules.max;
+        return typeof id === 'number' && Number.isInteger(id) && id >= rules.min && id <= rules.max;
     }
 
     /**
@@ -389,8 +376,10 @@ export class EditorModel implements IEditorModel {
      */
     private validateObjectLimits(stageData: StageData): boolean {
         const limits = this.validationRules.objectLimits;
-        return stageData.platforms.length <= limits.platforms &&
-               stageData.spikes.length <= limits.spikes;
+        return (
+            stageData.platforms.length <= limits.platforms &&
+            stageData.spikes.length <= limits.spikes
+        );
     }
 
     /**
@@ -398,28 +387,34 @@ export class EditorModel implements IEditorModel {
      */
     private validateCoordinates(stageData: StageData): boolean {
         const maxCoord = EDITOR_CONFIG.CANVAS_SIZE.width * 2; // Allow some overflow
-        
+
         // プラットフォーム座標チェック
         for (const platform of stageData.platforms) {
-            if (!this.isValidCoordinate(platform.x1, maxCoord) ||
+            if (
+                !this.isValidCoordinate(platform.x1, maxCoord) ||
                 !this.isValidCoordinate(platform.y1, maxCoord) ||
                 !this.isValidCoordinate(platform.x2, maxCoord) ||
-                !this.isValidCoordinate(platform.y2, maxCoord)) {
+                !this.isValidCoordinate(platform.y2, maxCoord)
+            ) {
                 return false;
             }
         }
 
         // スパイク座標チェック
         for (const spike of stageData.spikes) {
-            if (!this.isValidCoordinate(spike.x, maxCoord) ||
-                !this.isValidCoordinate(spike.y, maxCoord)) {
+            if (
+                !this.isValidCoordinate(spike.x, maxCoord) ||
+                !this.isValidCoordinate(spike.y, maxCoord)
+            ) {
                 return false;
             }
         }
 
         // ゴール座標チェック
-        if (!this.isValidCoordinate(stageData.goal.x, maxCoord) ||
-            !this.isValidCoordinate(stageData.goal.y, maxCoord)) {
+        if (
+            !this.isValidCoordinate(stageData.goal.x, maxCoord) ||
+            !this.isValidCoordinate(stageData.goal.y, maxCoord)
+        ) {
             return false;
         }
 
@@ -430,10 +425,9 @@ export class EditorModel implements IEditorModel {
      * 座標値の妥当性チェック
      */
     private isValidCoordinate(coord: number, maxValue: number): boolean {
-        return typeof coord === 'number' &&
-               !isNaN(coord) &&
-               coord >= -maxValue &&
-               coord <= maxValue;
+        return (
+            typeof coord === 'number' && !isNaN(coord) && coord >= -maxValue && coord <= maxValue
+        );
     }
 
     /**
@@ -456,7 +450,7 @@ export class EditorModel implements IEditorModel {
      */
     private pickProperties<T extends object>(obj: T, keys: string[]): Partial<T> {
         const result: Partial<T> = {};
-        keys.forEach(key => {
+        keys.forEach((key) => {
             if (key in obj) {
                 (result as any)[key] = (obj as any)[key];
             }

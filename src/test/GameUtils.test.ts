@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { 
-    calculateDeltaFactor, 
-    getCurrentTime, 
-    isCircleRectCollision, 
-    isPointInRect, 
-    randomRange 
+import {
+    calculateDeltaFactor,
+    getCurrentTime,
+    isCircleRectCollision,
+    isPointInRect,
+    randomRange
 } from '../utils/GameUtils.js';
 
 describe('GameUtils', () => {
@@ -18,7 +18,7 @@ describe('GameUtils', () => {
             const beforeCall = performance.now();
             const time = getCurrentTime();
             const afterCall = performance.now();
-            
+
             expect(time).toBeGreaterThanOrEqual(beforeCall);
             expect(time).toBeLessThanOrEqual(afterCall);
         });
@@ -29,7 +29,7 @@ describe('GameUtils', () => {
             const deltaTime = 16.67; // 60fps
             const gameSpeed = 1.0;
             const result = calculateDeltaFactor(deltaTime, gameSpeed);
-            
+
             expect(result).toBeCloseTo(1.0, 2);
         });
 
@@ -37,7 +37,7 @@ describe('GameUtils', () => {
             const deltaTime = 16.67;
             const gameSpeed = 2.0;
             const result = calculateDeltaFactor(deltaTime, gameSpeed);
-            
+
             expect(result).toBeCloseTo(2.0, 2);
         });
 
@@ -45,7 +45,7 @@ describe('GameUtils', () => {
             const deltaTime = 33.33; // 30fps
             const gameSpeed = 1.0;
             const result = calculateDeltaFactor(deltaTime, gameSpeed);
-            
+
             expect(result).toBeCloseTo(2.0, 2);
         });
     });

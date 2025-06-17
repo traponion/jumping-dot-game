@@ -17,7 +17,7 @@ if (typeof globalThis.CustomEvent === 'undefined') {
     } as any;
 }
 
-// Global type declarations for test environment  
+// Global type declarations for test environment
 declare let global: {
     document: typeof document;
     window: typeof window;
@@ -59,7 +59,7 @@ const mockCanvas = {
     getBoundingClientRect: vi.fn(() => ({ left: 0, top: 0, width: 800, height: 600 }))
 } as unknown as HTMLCanvasElement;
 
-const mockGameStatus = { 
+const mockGameStatus = {
     textContent: '',
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -67,7 +67,7 @@ const mockGameStatus = {
     setAttribute: vi.fn()
 } as unknown as HTMLElement;
 
-const mockTimer = { 
+const mockTimer = {
     textContent: '',
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -75,7 +75,7 @@ const mockTimer = {
     setAttribute: vi.fn()
 } as unknown as HTMLElement;
 
-const mockScore = { 
+const mockScore = {
     textContent: '',
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -90,14 +90,14 @@ describe('JumpingDotGame', () => {
     beforeEach(async () => {
         // Store original method
         originalGetElementById = document.getElementById;
-        
+
         // Mock window.dispatchEvent in each test
         Object.defineProperty(window, 'dispatchEvent', {
             value: vi.fn(() => true),
             writable: true,
             configurable: true
         });
-        
+
         // Mock only the getElementById method
         document.getElementById = vi.fn((id) => {
             if (id === 'gameCanvas') return mockCanvas;
@@ -163,7 +163,9 @@ describe('JumpingDotGame', () => {
         it('should initialize game when init is called', () => {
             game.init();
             // Initially shows loading, then updates to ready state
-            expect(['Loading stage...', 'Press SPACE to start']).toContain(mockGameStatus.textContent);
+            expect(['Loading stage...', 'Press SPACE to start']).toContain(
+                mockGameStatus.textContent
+            );
         });
 
         it('should update game loop when update is called', () => {
@@ -208,7 +210,7 @@ describe('JumpingDotGame', () => {
             });
 
             await game.testLoadStage(1);
-            
+
             expect(global.fetch).toHaveBeenCalledWith('/stages/stage1.json');
         });
 
@@ -217,7 +219,7 @@ describe('JumpingDotGame', () => {
             global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
             await game.testLoadStage(1);
-            
+
             // Should not throw error, fallback to hardcoded stage
             expect(true).toBe(true);
         });
@@ -249,7 +251,7 @@ describe('JumpingDotGame', () => {
         it('should handle timer display updates', () => {
             game.startGame();
             game.testUpdate();
-            
+
             // Timer should be updated (tested through no errors thrown)
             expect(() => game.testUpdate()).not.toThrow();
         });
@@ -290,16 +292,16 @@ describe('JumpingDotGame', () => {
         it('should run complete game cycle without errors', () => {
             // Initialize
             game.init();
-            
+
             // Start game
             game.startGame();
-            
+
             // Run several update cycles
             for (let i = 0; i < 10; i++) {
                 game.testUpdate();
                 game.testRender();
             }
-            
+
             // Should complete without errors
             expect(true).toBe(true);
         });
@@ -307,7 +309,7 @@ describe('JumpingDotGame', () => {
         it('should handle multiple stage loads', async () => {
             await game.testLoadStage(1);
             await game.testLoadStage(2);
-            
+
             // Should handle multiple loads gracefully
             expect(true).toBe(true);
         });
@@ -315,7 +317,7 @@ describe('JumpingDotGame', () => {
         it('should maintain consistent state through game loop', () => {
             game.startGame();
             expect(mockGameStatus.textContent).toBe('Playing');
-            
+
             // Game maintains running state consistently
             game.testUpdate();
             // After update, status should still be Playing (not timer text)
@@ -327,7 +329,7 @@ describe('JumpingDotGame', () => {
         it('should render without errors in any state', () => {
             // Test render in initial state
             expect(() => game.testRender()).not.toThrow();
-            
+
             // Test render after starting game
             game.startGame();
             expect(() => game.testRender()).not.toThrow();
@@ -335,11 +337,11 @@ describe('JumpingDotGame', () => {
 
         it('should render game over screen when game is over', () => {
             game.startGame();
-            
+
             // Set game over state and test render
             game.setGameOver();
             expect(() => game.testRender()).not.toThrow();
-            
+
             // The game over render path should be executed
             game.testRender();
         });
@@ -350,7 +352,7 @@ describe('JumpingDotGame', () => {
 
             // Test cleanup functionality - should not throw errors
             expect(() => game.cleanup()).not.toThrow();
-            
+
             // Cleanup function exists and can be called multiple times safely
             expect(() => game.cleanup()).not.toThrow();
         });
@@ -386,7 +388,7 @@ describe('JumpingDotGame', () => {
 
         it('should handle game over menu navigation', () => {
             game.setGameOver();
-            
+
             // Test navigation methods don't throw
             expect(() => game.handleGameOverNavigation('up')).not.toThrow();
             expect(() => game.handleGameOverNavigation('down')).not.toThrow();
@@ -399,7 +401,7 @@ describe('JumpingDotGame', () => {
             window.dispatchEvent = mockDispatchEvent;
 
             game.returnToStageSelect();
-            
+
             expect(mockDispatchEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: 'requestStageSelect'
@@ -410,12 +412,12 @@ describe('JumpingDotGame', () => {
         it('should handle async cleanup properly', async () => {
             const cleanupSpy = vi.fn();
             game.setAnimationId(123);
-            
+
             // Mock cleanup method exists
             global.cancelAnimationFrame = cleanupSpy;
-            
+
             await game.cleanup();
-            
+
             expect(cleanupSpy).toHaveBeenCalledWith(123);
         });
 
@@ -427,7 +429,7 @@ describe('JumpingDotGame', () => {
         it('should handle game over selection edge cases', () => {
             // Should not throw when not in game over state
             expect(() => game.handleGameOverSelection()).not.toThrow();
-            
+
             // Set game over state
             game.setGameOver();
             expect(() => game.handleGameOverSelection()).not.toThrow();
@@ -437,7 +439,7 @@ describe('JumpingDotGame', () => {
             // Should not throw when not in game over state
             expect(() => game.handleGameOverNavigation('up')).not.toThrow();
             expect(() => game.handleGameOverNavigation('down')).not.toThrow();
-            
+
             // Set game over state and test navigation
             game.setGameOver();
             expect(() => game.handleGameOverNavigation('up')).not.toThrow();
@@ -448,7 +450,7 @@ describe('JumpingDotGame', () => {
     describe('error handling', () => {
         it('should handle missing DOM elements gracefully', () => {
             global.document.getElementById = vi.fn(() => null);
-            
+
             expect(() => new JumpingDotGame()).toThrow('Required DOM element');
         });
 
@@ -477,15 +479,15 @@ describe('JumpingDotGame', () => {
     describe('performance', () => {
         it('should handle rapid update calls without performance issues', () => {
             const startTime = performance.now();
-            
+
             for (let i = 0; i < 100; i++) {
                 game.testUpdate();
                 game.testRender();
             }
-            
+
             const endTime = performance.now();
             const duration = endTime - startTime;
-            
+
             // Should complete 100 cycles reasonably quickly (less than 1 second)
             expect(duration).toBeLessThan(1000);
         });
@@ -513,11 +515,11 @@ describe('JumpingDotGame', () => {
 
         it('should handle game over navigation with different directions', () => {
             game.setGameOver();
-            
+
             // Test different navigation directions
             game.handleGameOverNavigation('up');
             game.handleGameOverNavigation('down');
-            
+
             // Should not throw errors
             expect(true).toBe(true);
         });
@@ -525,11 +527,11 @@ describe('JumpingDotGame', () => {
         it('should handle game over selection in different states', () => {
             // Test selection without game over state
             game.handleGameOverSelection();
-            
+
             // Test with game over state
             game.setGameOver();
             game.handleGameOverSelection();
-            
+
             // Should complete without errors
             expect(true).toBe(true);
         });
@@ -537,13 +539,13 @@ describe('JumpingDotGame', () => {
         it('should handle multiple render calls', () => {
             // Test rendering in different states
             game.testRender(); // Initial state
-            
+
             game.startGame();
             game.testRender(); // Running state
-            
+
             game.setGameOver();
             game.testRender(); // Game over state
-            
+
             // All renders should complete without errors
             expect(true).toBe(true);
         });
@@ -551,28 +553,27 @@ describe('JumpingDotGame', () => {
         it('should handle cleanup in different scenarios', () => {
             // Test cleanup without any setup
             game.cleanup();
-            
+
             // Test cleanup after starting game
             game.startGame();
             game.cleanup();
-            
+
             // Multiple cleanups should be safe
             game.cleanup();
             game.cleanup();
-            
+
             expect(true).toBe(true);
         });
 
         it('should handle stage loading edge cases', async () => {
             // Test loading non-existent stage
             await game.testLoadStage(999);
-            
+
             // Test loading stage 0
             await game.testLoadStage(0);
-            
+
             // Should fallback gracefully
             expect(true).toBe(true);
         });
     });
-
 });

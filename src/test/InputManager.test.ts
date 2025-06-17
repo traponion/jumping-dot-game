@@ -41,7 +41,7 @@ describe('InputManager', () => {
     beforeEach(() => {
         // Reset all mocks
         vi.clearAllMocks();
-        
+
         // Create mock canvas
         mockCanvas = {
             addEventListener: vi.fn(),
@@ -51,7 +51,7 @@ describe('InputManager', () => {
         // Reset GameInputs mock
         mockGameInputs.disabled = false;
         mockGameInputs.state = {};
-        
+
         // Create InputManager instance
         inputManager = new InputManager(mockCanvas, mockGameController as any);
     });
@@ -84,7 +84,10 @@ describe('InputManager', () => {
             expect(mockGameInputs.down.on).toHaveBeenCalledWith('restart', expect.any(Function));
             expect(mockGameInputs.down.on).toHaveBeenCalledWith('menu-up', expect.any(Function));
             expect(mockGameInputs.down.on).toHaveBeenCalledWith('menu-down', expect.any(Function));
-            expect(mockGameInputs.down.on).toHaveBeenCalledWith('menu-select', expect.any(Function));
+            expect(mockGameInputs.down.on).toHaveBeenCalledWith(
+                'menu-select',
+                expect.any(Function)
+            );
         });
     });
 
@@ -126,9 +129,9 @@ describe('InputManager', () => {
             mockGameInputs.state = {
                 'move-left': true,
                 'move-right': false,
-                'jump': true
+                jump: true
             };
-            
+
             const state = inputManager.getMovementState();
             expect(state.ArrowLeft).toBe(true);
             expect(state.KeyA).toBe(true);
@@ -167,7 +170,7 @@ describe('InputManager', () => {
     describe('cleanup', () => {
         it('should disable inputs and remove all listeners', () => {
             inputManager.cleanup();
-            
+
             expect(mockGameInputs.down.removeAllListeners).toHaveBeenCalled();
             expect(mockGameInputs.up.removeAllListeners).toHaveBeenCalled();
             expect(mockGameInputs.disabled).toBe(true);
@@ -175,7 +178,7 @@ describe('InputManager', () => {
 
         it('should set inputs and gameController to null', () => {
             inputManager.cleanup();
-            
+
             expect(inputManager.isPressed('any-action')).toBe(false);
             expect(inputManager.getMovementState()).toEqual({});
         });

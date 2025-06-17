@@ -1,4 +1,4 @@
-import type { IRenderAdapter, EditorState, StageData, EditorCallbacks } from './IRenderAdapter.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
 
 /**
  * Mock implementation of IRenderAdapter for testing
@@ -8,7 +8,7 @@ export class MockRenderAdapter implements IRenderAdapter {
     private editorState: EditorState;
     private stageData: StageData | null = null;
     private callbacks: EditorCallbacks;
-    
+
     // Track method calls for testing
     public renderAllCalled = 0;
     public clearCanvasCalled = 0;
@@ -88,7 +88,7 @@ export class MockRenderAdapter implements IRenderAdapter {
 
     public exportStageData(): StageData {
         this.stageExports++;
-        
+
         // Return a default stage if none loaded
         if (!this.stageData) {
             return {
@@ -101,7 +101,7 @@ export class MockRenderAdapter implements IRenderAdapter {
                 goalText: { x: 420, y: 180, text: 'GOAL' }
             };
         }
-        
+
         return { ...this.stageData };
     }
 
@@ -117,7 +117,7 @@ export class MockRenderAdapter implements IRenderAdapter {
         this.duplicateObjectCalls = 0;
         this.stageLoads = [];
         this.stageExports = 0;
-        
+
         this.editorState = {
             selectedTool: 'select',
             selectedObject: null,
@@ -125,7 +125,7 @@ export class MockRenderAdapter implements IRenderAdapter {
             gridEnabled: true,
             snapToGrid: true
         };
-        
+
         this.stageData = null;
     }
 
