@@ -1,6 +1,6 @@
 # Contributing to Jumping Dot Game
 
-Welcome to the Jumping Dot Game project! This is a Mario Maker-style stage editor with a jumping game, built with high-quality MVC architecture and Fabric.js for professional web game editing.
+Welcome to the Jumping Dot Game project! This is a platform-style stage editor with a jumping game, built with high-quality MVC architecture and Fabric.js for professional web game editing.
 
 ## Table of Contents
 
