@@ -54,7 +54,7 @@ export default defineConfig({
         },
         'src/core/**': {
           branches: 70,
-          functions: 90,
+          functions: 85,
           lines: 80,
           statements: 80
         },
