@@ -84,9 +84,14 @@ describe('JumpingDotGame', () => {
             return null;
         }) as any;
 
+        // Extend existing window instead of replacing it
         global.window = {
+            ...global.window,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
             requestAnimationFrame: vi.fn(),
-            cancelAnimationFrame: vi.fn()
+            cancelAnimationFrame: vi.fn(),
+            document: global.document
         } as any;
 
         // Mock global requestAnimationFrame and cancelAnimationFrame

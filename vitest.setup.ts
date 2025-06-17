@@ -77,6 +77,19 @@ beforeAll(() => {
       clearTimeout(id);
     };
   }
+
+  // Mock window event listeners for game-inputs compatibility
+  if (typeof window !== 'undefined') {
+    if (!window.addEventListener) {
+      window.addEventListener = () => {};
+      window.removeEventListener = () => {};
+    }
+    
+    // Ensure window has required properties for game-inputs
+    if (!window.document) {
+      window.document = document;
+    }
+  }
 });
 
 // DOM element creation is handled by individual test files for consistency
