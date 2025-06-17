@@ -5,102 +5,103 @@
 [![Fabric.js](https://img.shields.io/badge/Fabric.js-6.0+-green.svg)](http://fabricjs.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-2.0+-yellow.svg)](https://vitest.dev/)
 
-2Dプラットフォーマー風のビジュアルステージエディター付きジャンプゲーム。TypeScript + Fabric.js による高品質なWebアプリケーション。
+A 2D platform-style jumping game with a visual stage editor. High-quality web application built with TypeScript + Fabric.js.
 
-## ✨ 特徴
+## ✨ Features
 
-- 🎨 **直感的なステージエディター**: ドラッグ&ドロップでステージ作成
-- 🏗️ **MVCアーキテクチャ**: 保守性と拡張性を重視した設計
-- 🚀 **高パフォーマンス**: オブジェクトプールによる最適化
-- 🧪 **包括的テスト**: 単体・統合・パフォーマンステスト完備
-- 📱 **レスポンシブ対応**: デスクトップ・タブレット対応
-- ⌨️ **キーボードショートカット**: プロ向け操作性
+- 🎨 **Intuitive Stage Editor**: Create stages with drag & drop
+- 🏗️ **MVC Architecture**: Maintainable and extensible design
+- 🚀 **High Performance**: Optimized with object pooling
+- 🧪 **Comprehensive Testing**: Unit, integration, and performance tests
+- 📱 **Responsive Design**: Desktop and tablet support
+- ⌨️ **Keyboard Shortcuts**: Professional workflow efficiency
 
-## 🚀 クイックスタート
+## 🚀 Quick Start
 
-### 必要環境
+### Requirements
 - Node.js 18.0+
 - npm 9.0+
 
-### インストール & 起動
+### Installation & Launch
 ```bash
-# 依存関係インストール
+# Install dependencies
 npm install
 
-# 開発サーバー起動
+# Start development server
 npm run dev
 
-# ブラウザで開く
-# ゲーム: http://localhost:5173/
-# エディター: http://localhost:5173/editor.html
+# Open in browser
+# Game: http://localhost:5173/
+# Editor: http://localhost:5173/editor.html
 ```
 
-## 🎮 遊び方
+## 🎮 How to Play
 
-### ゲーム操作
-| キー | 操作 |
-|------|------|
-| ← → / A D | 左右移動 |
-| ↑ / W / Space | ジャンプ |
-| Space | ゲーム開始 |
-| R | リスタート |
+### Game Controls
+| Key | Action |
+|-----|--------|
+| ← → / A D | Move left/right |
+| ↑ / W / Space | Jump |
+| Space | Start game |
+| R | Restart |
 
-### エディター操作
-| キー | 操作 |
-|------|------|
-| 1-5 | ツール選択 |
-| Delete / Backspace | オブジェクト削除 |
-| Ctrl+S | ステージ保存 |
-| Ctrl+N | 新規ステージ |
-| Ctrl+O | ステージ読み込み |
-| Ctrl+G | グリッド切り替え |
+### Editor Controls
+| Key | Action |
+|-----|--------|
+| 1-5 | Select tool |
+| Delete / Backspace | Delete object |
+| Ctrl+S | Save stage |
+| Ctrl+N | New stage |
+| Ctrl+O | Load stage |
+| Ctrl+G | Toggle grid |
 
-## 🛠️ 開発ガイド
+## 🛠️ Development Guide
 
-### プロジェクト構造
+### Project Structure
 ```
 src/
-├── controllers/        # MVC Controller層
-├── views/             # MVC View層
-├── models/            # MVC Model層
-├── systems/           # レンダリングシステム
-├── types/             # TypeScript型定義
-├── utils/             # ユーティリティ
-├── performance/       # パフォーマンス最適化
-├── test/              # テストスイート
-└── core/              # コアシステム
+├── controllers/        # MVC Controller layer
+├── views/             # MVC View layer
+├── models/            # MVC Model layer
+├── systems/           # Rendering systems
+├── types/             # TypeScript type definitions
+├── utils/             # Utilities
+├── performance/       # Performance optimization
+├── test/              # Test suite
+└── core/              # Core systems
 ```
 
-### 主要コマンド
+### Main Commands
 ```bash
-# 開発
-npm run dev          # 開発サーバー起動
-npm run build        # プロダクションビルド
-npm run preview      # ビルド結果プレビュー
+# Development
+npm run dev          # Start development server
+npm run build        # Production build
+npm run preview      # Preview build result
 
-# 品質管理
-npm run typecheck    # TypeScript型チェック
-npm run test         # テスト実行
+# Quality Control
+npm run typecheck    # TypeScript type checking
+npm run test         # Run tests
 ```
 
-### 詳細ドキュメント
-- 📖 [開発ガイド](.claude/DEVELOPMENT_GUIDE.md) - セットアップから開発まで
-- 🏗️ [アーキテクチャ](.claude/ARCHITECTURE.md) - 設計思想と構造
-- 🔧 [API リファレンス](.claude/API_REFERENCE.md) - 全API仕様
+### Documentation
+- 📖 [Contributing Guide](CONTRIBUTING.md) - Setup and development workflow
+- 🏗️ [Architecture Guide](docs/architecture.md) - Design principles and structure
+- 🔧 [API Reference](docs/api-reference.md) - Complete API specifications
+- 📋 [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
-## 🎨 エディター機能
+## 🎨 Editor Features
 
-### ツール一覧
-- **🖱️ Select**: オブジェクト選択・移動
-- **📏 Platform**: プラットフォーム描画
-- **🔺 Spike**: スパイク配置
-- **🎯 Goal**: ゴール設定
-- **📝 Text**: テキスト追加
+### Tool List
+- **🖱️ Select**: Object selection and movement
+- **📏 Platform**: Platform drawing
+- **🔺 Spike**: Spike placement
+- **🎯 Goal**: Goal setting
+- **📝 Text**: Text addition
 
-### エディター画面
+### Editor Interface
 ```
 ┌─────────────────────────────────────────────────┐
-│ [New] [Load] [Save] [Test] [Clear]              │ ← ツールバー
+│ [New] [Load] [Save] [Test] [Clear]              │ ← Toolbar
 ├──────────┬──────────────────────┬───────────────┤
 │          │                      │ Stage Info    │
 │ Tools    │                      │ ┌───────────┐ │
@@ -116,49 +117,49 @@ npm run test         # テスト実行
 │ [Delete] │                      │ └───────────┘ │
 │ [Dup]    │                      │               │
 └──────────┴──────────────────────┴───────────────┤
-│ Objects: 15 | Mouse: 120,340 | Tool: Platform  │ ← ステータス
+│ Objects: 15 | Mouse: 120,340 | Tool: Platform  │ ← Status
 └─────────────────────────────────────────────────┘
 ```
 
-## 🧪 テスト
+## 🧪 Testing
 
-### テスト実行
+### Running Tests
 ```bash
-# 全テスト
+# All tests
 npm run test
 
-# 特定テスト
+# Specific test
 npm run test EditorController
 ```
 
-## 🚀 パフォーマンス
+## 🚀 Performance
 
-### ベンチマーク結果
-| 指標 | 目標 | 実測値 |
-|------|------|--------|
+### Benchmark Results
+| Metric | Target | Actual |
+|--------|--------|--------|
 | FPS | 60fps | 58-60fps |
-| 初期化時間 | <3秒 | 2.1秒 |
-| メモリ使用量 | <50MB | 42MB |
-| オブジェクト作成 | <16ms | 12ms |
+| Initialization Time | <3s | 2.1s |
+| Memory Usage | <50MB | 42MB |
+| Object Creation | <16ms | 12ms |
 
-## 🏗️ アーキテクチャ
+## 🏗️ Architecture
 
-### MVC設計
-- **EditorController**: ビジネスロジック制御
-- **EditorView**: UI管理・イベント処理
-- **EditorModel**: データ管理・永続化
-- **EditorRenderSystem**: Canvas描画・操作
+### MVC Design
+- **EditorController**: Business logic control
+- **EditorView**: UI management and event handling
+- **EditorModel**: Data management and persistence
+- **EditorRenderSystem**: Canvas rendering and operations
 
-## 🔧 カスタマイズ
+## 🔧 Customization
 
-### 新しいツール追加
+### Adding New Tools
 ```typescript
-// 1. ツール定義
+// 1. Define tool
 const CUSTOM_TOOLS = {
     ENEMY: 'enemy'
 } as const;
 
-// 2. Factory に追加
+// 2. Add to Factory
 class ObjectFactory {
     static createEnemy(params: ObjectCreationParams): fabric.Object {
         // Enemy creation logic
@@ -166,24 +167,24 @@ class ObjectFactory {
 }
 ```
 
-## 📊 ロードマップ
+## 📊 Roadmap
 
 ### Version 2.0
-- [ ] Undo/Redo機能
-- [ ] オブジェクトグループ化
-- [ ] アニメーション機能
-- [ ] サウンド管理
+- [ ] Undo/Redo functionality
+- [ ] Object grouping
+- [ ] Animation features
+- [ ] Sound management
 
 ### Version 3.0
-- [ ] プラグインシステム
-- [ ] リアルタイム協作
-- [ ] クラウド保存
-- [ ] コミュニティ機能
+- [ ] Plugin system
+- [ ] Real-time collaboration
+- [ ] Cloud storage
+- [ ] Community features
 
-## 📄 ライセンス
+## 📄 License
 
 MIT License
 
 ---
 
-**🎮 楽しいステージ作成を！ Have fun creating stages! ⩌⩊⩌**
+**🎮 Have fun creating stages!**

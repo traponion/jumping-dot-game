@@ -141,9 +141,39 @@ If issues are found in production:
 2. Create new release
 3. Investigate and fix in `dev` branch
 
+## Documentation Standards
+
+### Language and Location Requirements
+1. **Language:** All official documentation (`README.md`, `CONTRIBUTING.md`, files in `/docs`) must be written in English.
+2. **Location:**
+   - User-facing and contributor-facing documents reside in the root or `/docs` directory.
+   - Temporary or internal development notes (like TODOs) should be managed via GitHub Issues.
+   - Archived technical write-ups are stored in `.claude/archive/`.
+3. **Tone & Style:** Maintain a professional and objective tone. Avoid personal names, slang, or overly casual expressions in official documents.
+4. **Review Process:** All changes to official documentation must be submitted via Pull Request and are subject to the same review process as code changes.
+5. **`CLAUDE.md`:** This file is for providing context and instructions to AI assistants. It can be more informal.
+
+### Document Structure
+- **Root Directory:**
+  - `README.md` - Project overview and quick start
+  - `CONTRIBUTING.md` - Contribution guidelines and setup
+  - `CODE_OF_CONDUCT.md` - Community behavior guidelines
+  - `LICENSE` - Project license
+- **`/docs` Directory:**
+  - `architecture.md` - Technical architecture and design
+  - `api-reference.md` - Complete API documentation
+- **`.github` Directory:**
+  - Issue and pull request templates
+  - GitHub Actions workflows
+- **`.claude` Directory:**
+  - Internal development documentation
+  - AI assistant instructions
+  - Archived technical documents
+
 ## Related Documentation
-- `DEVELOPMENT_GUIDE.md` - Project overview and architecture
-- `ARCHITECTURE.md` - Technical architecture details
+- `CONTRIBUTING.md` - Contribution guidelines and workflow
+- `docs/architecture.md` - Technical architecture details
+- `docs/api-reference.md` - API specifications
 - `DEVELOPMENT_STANDARDS.md` - Coding standards and conventions
 - `testing-coverage-standards.md` - Testing requirements and standards
 
