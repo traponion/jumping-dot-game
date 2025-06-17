@@ -686,16 +686,6 @@ export class FabricRenderSystem {
         });
     }
 
-    // JSON保存・読み込み（エディタ用）
-    toJSON(): string {
-        return JSON.stringify(this.canvas.toJSON());
-    }
-
-    fromJSON(jsonData: string): void {
-        this.canvas.loadFromJSON(jsonData, () => {
-            this.canvas.renderAll();
-        });
-    }
 
     // クリーンアップ
     dispose(): void {

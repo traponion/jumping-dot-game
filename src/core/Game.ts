@@ -394,9 +394,9 @@ export class JumpingDotGame {
     }
 
     public returnToStageSelect(): void {
-        if ((window as any).stageSelect) {
-            (window as any).stageSelect.returnToStageSelect();
-        }
+        // Dispatch custom event instead of direct window access
+        const event = new CustomEvent('requestStageSelect');
+        window.dispatchEvent(event);
     }
 
     public getGameState() {

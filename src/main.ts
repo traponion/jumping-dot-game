@@ -18,6 +18,11 @@ class StageSelect {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
         this.boundHandleKeyboard = this.handleKeyboard.bind(this);
+        
+        // Listen for custom event from Game
+        window.addEventListener('requestStageSelect', () => {
+            this.returnToStageSelect();
+        });
     }
     
     async init(): Promise<void> {

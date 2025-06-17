@@ -185,6 +185,10 @@ If issues are found in production:
 - Use GitHub Actions for CI/CD validation
 - Maintain high code coverage standards
 - Review existing `.claude/` documentation before starting new features
+- **Parallel Task Execution**: Utilize multiple tool calls in a single response for efficiency when tasks are independent (e.g., reading multiple files, running multiple bash commands)
+- **Task Delegation**: For large file operations, web searches, or complex searches across codebase, consider using the Task tool to delegate work to specialized agents
+- **Review File Cleanup**: Always delete review.md files after processing them completely - this is a mandatory cleanup rule
+- **Library Documentation**: When explaining frameworks, plugins, or libraries, use Context7 (mcp__context7__resolve-library-id and mcp__context7__get-library-docs) to get the most up-to-date and accurate information instead of relying on training data
 
 ---
 *Last updated: 2025-06-15*

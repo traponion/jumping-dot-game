@@ -10,12 +10,6 @@ import {
     DebugHelper
 } from '../utils/EditorUtils.js';
 
-// Model層の状態変更通知用インターフェース
-export interface ModelChangeListener {
-    onStageDataChanged(stageData: StageData | null): void;
-    onEditorStateChanged(editorState: EditorState): void;
-    onValidationError(error: string): void;
-}
 
 /**
  * エディターのModel層実装
@@ -27,7 +21,6 @@ export interface ModelChangeListener {
 export class EditorModel implements IEditorModel {
     private currentStage: StageData | null = null;
     private editorState: EditorState;
-    private changeListeners: ModelChangeListener[] = [];
     private isModified = false;
     private lastSaved: Date | null = null;
 
@@ -56,69 +49,6 @@ export class EditorModel implements IEditorModel {
         });
     }
 
-    // === 変更通知システム ===
-
-    /**
-     * 変更リスナーを追加
-     */
-    public addChangeListener(listener: ModelChangeListener): void {
-        this.changeListeners.push(listener);
-        DebugHelper.log('Change listener added', { 
-            listenerCount: this.changeListeners.length 
-        });
-    }
-
-    /**
-     * 変更リスナーを削除
-     */
-    public removeChangeListener(listener: ModelChangeListener): void {
-        const index = this.changeListeners.indexOf(listener);
-        if (index > -1) {
-            this.changeListeners.splice(index, 1);
-            DebugHelper.log('Change listener removed', { 
-                listenerCount: this.changeListeners.length 
-            });
-        }
-    }
-
-    /**
-     * ステージデータ変更を通知
-     */
-    private notifyStageDataChanged(): void {
-        this.changeListeners.forEach(listener => {
-            try {
-                listener.onStageDataChanged(this.currentStage);
-            } catch (error) {
-                DebugHelper.log('Error in stage data change listener', error);
-            }
-        });
-    }
-
-    /**
-     * エディター状態変更を通知
-     */
-    private notifyEditorStateChanged(): void {
-        this.changeListeners.forEach(listener => {
-            try {
-                listener.onEditorStateChanged(this.editorState);
-            } catch (error) {
-                DebugHelper.log('Error in editor state change listener', error);
-            }
-        });
-    }
-
-    /**
-     * バリデーションエラーを通知
-     */
-    private notifyValidationError(error: string): void {
-        this.changeListeners.forEach(listener => {
-            try {
-                listener.onValidationError(error);
-            } catch (error) {
-                DebugHelper.log('Error in validation error listener', error);
-            }
-        });
-    }
 
     // === IEditorModel インターフェース実装 ===
 
@@ -134,14 +64,12 @@ export class EditorModel implements IEditorModel {
      */
     public setCurrentStage(stageData: StageData): void {
         if (!this.validateStageData(stageData)) {
-            this.notifyValidationError('Invalid stage data provided');
             return;
         }
 
         this.currentStage = { ...stageData }; // Deep copy for immutability
         this.isModified = false;
         this.lastSaved = null;
-        this.notifyStageDataChanged();
         
         DebugHelper.log('Current stage set', { 
             stageId: stageData.id, 
@@ -157,7 +85,6 @@ export class EditorModel implements IEditorModel {
         this.currentStage = null;
         this.isModified = false;
         this.lastSaved = null;
-        this.notifyStageDataChanged();
         
         DebugHelper.log('Current stage cleared');
     }
@@ -184,7 +111,6 @@ export class EditorModel implements IEditorModel {
             newState: this.pickProperties(this.editorState, changedKeys)
         });
         
-        this.notifyEditorStateChanged();
     }
 
     /**
@@ -210,25 +136,21 @@ export class EditorModel implements IEditorModel {
 
             // ステージ名の検証
             if (!this.validateStageName(stageData.name)) {
-                this.notifyValidationError('Invalid stage name');
                 return false;
             }
 
             // ステージIDの検証
             if (!this.validateStageId(stageData.id)) {
-                this.notifyValidationError('Invalid stage ID');
                 return false;
             }
 
             // オブジェクト数の制限チェック
             if (!this.validateObjectLimits(stageData)) {
-                this.notifyValidationError('Too many objects in stage');
                 return false;
             }
 
             // 座標値の検証
             if (!this.validateCoordinates(stageData)) {
-                this.notifyValidationError('Invalid object coordinates');
                 return false;
             }
 
@@ -240,7 +162,6 @@ export class EditorModel implements IEditorModel {
             return true;
         } catch (error) {
             DebugHelper.log('Stage data validation error', error);
-            this.notifyValidationError('Validation failed due to unexpected error');
             return false;
         }
     }
