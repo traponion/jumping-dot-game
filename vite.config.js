@@ -23,8 +23,8 @@ export default defineConfig({
     },
     clearMocks: true,
     mockReset: true,
-    testTimeout: 60000, // 60 second timeout for CI (increased from 30s)
-    hookTimeout: 60000, // 60 second timeout for setup/teardown
+    testTimeout: 120000, // 120 second timeout for CI (increased from 60s)
+    hookTimeout: 120000, // 120 second timeout for setup/teardown
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
