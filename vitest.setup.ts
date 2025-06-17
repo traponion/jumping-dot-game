@@ -85,6 +85,16 @@ beforeAll(() => {
       window.removeEventListener = () => {};
     }
     
+    // Mock window.confirm for EditorController tests
+    if (!window.confirm) {
+      window.confirm = () => true; // Default to confirm for tests
+    }
+    
+    // Mock window.alert for completeness
+    if (!window.alert) {
+      window.alert = () => {};
+    }
+    
     // Ensure window has required properties for game-inputs
     if (!window.document) {
       window.document = document;
