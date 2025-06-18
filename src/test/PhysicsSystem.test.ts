@@ -69,9 +69,12 @@ describe('PhysicsSystem', () => {
 
             physicsSystem.update(16.67);
 
+            // Get updated player from store
+            const updatedPlayer = getGameStore().getPlayer();
+            
             // Position should change based on velocity and game speed
-            expect(player.x).not.toBe(initialX);
-            expect(player.y).not.toBe(initialY);
+            expect(updatedPlayer.x).not.toBe(initialX);
+            expect(updatedPlayer.y).not.toBe(initialY);
         });
 
         it('should account for game speed in position updates', () => {
@@ -81,15 +84,24 @@ describe('PhysicsSystem', () => {
             const slowPhysics = new PhysicsSystem(slowConstants);
             const fastPhysics = new PhysicsSystem(fastConstants);
 
-            const slowPlayer = { ...player };
-            const fastPlayer = { ...player };
-
+            // Reset store and set up initial player for slow test
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+            const initialX = player.x;
+            
             slowPhysics.update(16.67);
+            const slowPlayer = getGameStore().getPlayer();
+            const slowDistance = Math.abs(slowPlayer.x - initialX);
+
+            // Reset store and set up initial player for fast test  
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+            
             fastPhysics.update(16.67);
+            const fastPlayer = getGameStore().getPlayer();
+            const fastDistance = Math.abs(fastPlayer.x - initialX);
 
             // Fast physics should move player further
-            const slowDistance = Math.abs(slowPlayer.x - player.x);
-            const fastDistance = Math.abs(fastPlayer.x - player.x);
             expect(fastDistance).toBeGreaterThan(slowDistance);
         });
     });
