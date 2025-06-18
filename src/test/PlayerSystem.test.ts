@@ -1,25 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
-import type { KeyState, PhysicsConstants, Player } from '../types/GameTypes.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
+import type { InputManager } from '../systems/InputManager.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('PlayerSystem', () => {
-    let player: Player;
-    let keys: KeyState;
     let playerSystem: PlayerSystem;
     let physics: PhysicsConstants;
+    let mockInputManager: InputManager;
 
     beforeEach(() => {
-        player = {
+        // Reset store to clean state
+        getGameStore().reset();
+        
+        // Set up test player state in store
+        getGameStore().updatePlayer({
             x: 100,
             y: 400,
-            vx: 0,
-            vy: 0,
+            vx: 2,
+            vy: 5,
             radius: 3,
             grounded: false
-        };
-
-        keys = {};
+        });
 
         physics = {
             gravity: 0.6,
@@ -29,7 +31,20 @@ describe('PlayerSystem', () => {
             gameSpeed: 2.0
         };
 
-        playerSystem = new PlayerSystem(player);
+        // Create mock InputManager
+        mockInputManager = {
+            isPressed: vi.fn(),
+            getMovementState: vi.fn().mockReturnValue({}),
+            clearInputs: vi.fn(),
+            handleKeyEvent: vi.fn(),
+            lastInputTime: 0,
+            inputCooldown: 100,
+            inputs: new Map(),
+            gameController: null,
+            canvas: null
+        } as unknown as InputManager;
+
+        playerSystem = new PlayerSystem(mockInputManager);
     });
 
     describe('input handling', () => {
@@ -44,7 +59,7 @@ describe('PlayerSystem', () => {
 
     describe('auto jump system', () => {
         it('should auto jump when grounded and interval passed', () => {
-            player.grounded = true;
+            getGameStore().updatePlayer({ grounded: true });
 
             // Mock performance.now to simulate time passage
             const originalNow = globalThis.performance.now;
@@ -58,8 +73,9 @@ describe('PlayerSystem', () => {
             mockTime += physics.autoJumpInterval + 10;
             playerSystem.update(16.67, physics);
 
-            expect(player.vy).toBe(physics.jumpForce);
-            expect(player.grounded).toBe(false);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vy).toBe(physics.jumpForce);
+            expect(updatedPlayer.grounded).toBe(false);
 
             globalThis.performance.now = originalNow;
         });
@@ -73,13 +89,14 @@ describe('PlayerSystem', () => {
 
             const trail = playerSystem.getTrail();
             expect(trail.length).toBe(initialTrailLength + 1);
-            expect(trail[trail.length - 1]).toEqual({ x: player.x, y: player.y });
+            const currentPlayer = getGameStore().getPlayer();
+            expect(trail[trail.length - 1]).toEqual({ x: currentPlayer.x, y: currentPlayer.y });
         });
 
         it('should limit trail length to maximum', () => {
             // Update many times to exceed max trail length
             for (let i = 0; i < 20; i++) {
-                player.x = i; // Change position each time
+                getGameStore().updatePlayer({ x: i }); // Change position each time
                 playerSystem.update(16.67, physics);
             }
 
@@ -89,36 +106,37 @@ describe('PlayerSystem', () => {
 
     describe('speed clamping', () => {
         it('should clamp velocity to max speed', () => {
-            player.vx = 10; // Exceed max speed
+            getGameStore().updatePlayer({ vx: 10 }); // Exceed max speed
 
             playerSystem.clampSpeed(physics.moveSpeed);
 
-            expect(player.vx).toBe(physics.moveSpeed);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vx).toBe(physics.moveSpeed);
         });
 
         it('should clamp negative velocity to negative max speed', () => {
-            player.vx = -10; // Exceed negative max speed
+            getGameStore().updatePlayer({ vx: -10 }); // Exceed negative max speed
 
             playerSystem.clampSpeed(physics.moveSpeed);
 
-            expect(player.vx).toBe(-physics.moveSpeed);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vx).toBe(-physics.moveSpeed);
         });
     });
 
     describe('reset functionality', () => {
         it('should reset player to specified position', () => {
-            player.vx = 5;
-            player.vy = -3;
-            keys.ArrowRight = true;
+            getGameStore().updatePlayer({ vx: 5, vy: -3 });
             playerSystem.update(16.67, physics); // Make some changes
 
             playerSystem.reset(200, 300);
 
-            expect(player.x).toBe(200);
-            expect(player.y).toBe(300);
-            expect(player.vx).toBe(0);
-            expect(player.vy).toBe(0);
-            expect(player.grounded).toBe(false);
+            const resetPlayer = getGameStore().getPlayer();
+            expect(resetPlayer.x).toBe(200);
+            expect(resetPlayer.y).toBe(300);
+            expect(resetPlayer.vx).toBe(0);
+            expect(resetPlayer.vy).toBe(0);
+            expect(resetPlayer.grounded).toBe(false);
             expect(playerSystem.getHasMovedOnce()).toBe(false);
             expect(playerSystem.getTrail().length).toBe(0);
         });
@@ -129,12 +147,12 @@ describe('PlayerSystem', () => {
             globalThis.performance.now = () => mockTime;
 
             // First establish a baseline - do an initial update to set lastJumpTime
-            player.grounded = true;
+            getGameStore().updatePlayer({ grounded: true });
             playerSystem.update(16.67, physics);
 
             // Reset the player state for the actual test
-            player.vy = 0;
-            player.grounded = true;
+            getGameStore().updatePlayer({ vy: 0 });
+            getGameStore().updatePlayer({ grounded: true });
 
             // Now call resetJumpTimer
             playerSystem.resetJumpTimer();
@@ -143,8 +161,9 @@ describe('PlayerSystem', () => {
             mockTime += 10;
             playerSystem.update(16.67, physics);
 
-            expect(player.vy).toBe(physics.jumpForce);
-            expect(player.grounded).toBe(false);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vy).toBe(physics.jumpForce);
+            expect(updatedPlayer.grounded).toBe(false);
 
             globalThis.performance.now = originalNow;
         });
@@ -172,7 +191,7 @@ describe('PlayerSystem', () => {
             };
             
             // Create PlayerSystem with InputManager
-            const playerSystemWithInput = new PlayerSystem(undefined, mockInputManager as any);
+            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
             
             // Mock left key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-left');
@@ -199,7 +218,7 @@ describe('PlayerSystem', () => {
                 isPressed: vi.fn()
             };
             
-            const playerSystemWithInput = new PlayerSystem(undefined, mockInputManager as any);
+            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
             
             // Mock right key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-right');
