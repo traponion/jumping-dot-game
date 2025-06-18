@@ -1,4 +1,9 @@
-import type { IRenderAdapter, EditorState, EditorCallbacks, StageData as AdapterStageData } from '../adapters/IRenderAdapter.js';
+import type {
+    StageData as AdapterStageData,
+    EditorCallbacks,
+    EditorState,
+    IRenderAdapter
+} from '../adapters/IRenderAdapter.js';
 import type { StageData } from '../core/StageLoader.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
 
@@ -11,10 +16,10 @@ export type { EditorState, EditorCallbacks };
  */
 export class EditorRenderSystem {
     private renderAdapter: IRenderAdapter;
-    
+
     constructor(renderAdapter: IRenderAdapter) {
         this.renderAdapter = renderAdapter;
-        
+
         DebugHelper.log('EditorRenderSystem initialized with adapter', {
             adapterType: renderAdapter.constructor.name
         });
@@ -98,7 +103,6 @@ export class EditorRenderSystem {
         DebugHelper.log('Stage loaded for editing', { stageId: stageData.id });
     }
 
-
     /**
      * Export stage data
      */
@@ -130,7 +134,6 @@ export class EditorRenderSystem {
         return this.renderAdapter;
     }
 
-
     // Object creation methods (for compatibility)
     public createSpike(x: number, y: number): void {
         this.renderAdapter.createSpike(x, y);
@@ -156,5 +159,4 @@ export class EditorRenderSystem {
         this.renderAdapter.finishPlatformDrawing(x, y);
         DebugHelper.log('finishPlatformDrawing called (legacy compatibility)', { x, y });
     }
-
 }

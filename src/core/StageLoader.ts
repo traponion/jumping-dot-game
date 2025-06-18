@@ -128,24 +128,32 @@ export class StageLoader {
             'goalText'
         ];
 
-        return requiredFields.every(field => field in data);
+        return requiredFields.every((field) => field in data);
     }
 
-    private isValidGoal(goal: unknown): goal is { x: number; y: number; width: number; height: number } {
-        return typeof goal === 'object' && 
-               goal !== null &&
-               typeof (goal as any).x === 'number' &&
-               typeof (goal as any).y === 'number' &&
-               typeof (goal as any).width === 'number' &&
-               typeof (goal as any).height === 'number';
+    private isValidGoal(
+        goal: unknown
+    ): goal is { x: number; y: number; width: number; height: number } {
+        return (
+            typeof goal === 'object' &&
+            goal !== null &&
+            typeof (goal as any).x === 'number' &&
+            typeof (goal as any).y === 'number' &&
+            typeof (goal as any).width === 'number' &&
+            typeof (goal as any).height === 'number'
+        );
     }
 
-    private isValidTextElement(textObj: unknown): textObj is { x: number; y: number; text: string } {
-        return typeof textObj === 'object' && 
-               textObj !== null &&
-               typeof (textObj as any).x === 'number' &&
-               typeof (textObj as any).y === 'number' &&
-               typeof (textObj as any).text === 'string';
+    private isValidTextElement(
+        textObj: unknown
+    ): textObj is { x: number; y: number; text: string } {
+        return (
+            typeof textObj === 'object' &&
+            textObj !== null &&
+            typeof (textObj as any).x === 'number' &&
+            typeof (textObj as any).y === 'number' &&
+            typeof (textObj as any).text === 'string'
+        );
     }
 
     validateStage(stageData: unknown): asserts stageData is StageData {

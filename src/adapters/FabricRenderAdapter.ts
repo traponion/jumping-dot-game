@@ -1,41 +1,49 @@
 import * as fabric from 'fabric';
-import { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
-import type { Platform, Spike, Goal, StageData, TextElement } from '../core/StageLoader.js';
-import type { IRenderAdapter, EditorState, EditorCallbacks, StageData as AdapterStageData } from './IRenderAdapter.js';
 import {
-    type MouseEventHandler,
-    type ObjectCreationParams,
-    EDITOR_TOOLS,
     EDITOR_CONFIG,
-    isFabricObjectWithData,
-    isPlatformObject,
-    isSpikeObject,
-    isGoalObject,
-    isTextObject,
-    isGridObject,
-    EditorError,
+    EDITOR_TOOLS,
     ERROR_CODES,
-    ERROR_TYPES
+    ERROR_TYPES,
+    EditorError
 } from '../types/EditorTypes.js';
-
-import {
-    FabricHelper,
-    ObjectFactory,
-    DebugHelper
-} from '../utils/EditorUtils.js';
+import { DebugHelper } from '../utils/EditorUtils.js';
+import type {
+    IRenderAdapter,
+    EditorState,
+    EditorCallbacks
+} from './IRenderAdapter.js';
+import { EditorInputHandler } from './EditorInputHandler.js';
+import { StageDataConverter } from './StageDataConverter.js';
+import { ObjectDrawer } from './ObjectDrawer.js';
 
 /**
- * Fabric.js implementation of IRenderAdapter
- * Handles all rendering operations using Fabric.js library
+ * FabricRenderAdapter (v2) - Pure adapter implementation following Nana-chan's guidance
+ * 
+ * Key Changes from v1:
+ * - NO INHERITANCE from FabricRenderSystem (composition over inheritance)
+ * - Uses delegation pattern with focused component classes
+ * - Cleaner separation of concerns
+ * - Follows Dependency Inversion Principle
+ * 
+ * Architecture:
+ * - FabricRenderAdapter: Core adapter orchestration
+ * - EditorInputHandler: Input processing
+ * - StageDataConverter: Data conversion
+ * - ObjectDrawer: Drawing operations
+ * 
+ * This follows the "Adapter should make A usable as B" principle correctly.
  */
-export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAdapter {
+export class FabricRenderAdapter implements IRenderAdapter {
+    private canvas: fabric.Canvas;
     private editorState: EditorState;
     private callbacks: EditorCallbacks;
-    private stageData: StageData | null = null;
     
+    // Component delegation (composition over inheritance)
+    private inputHandler: EditorInputHandler;
+    private stageConverter: StageDataConverter;
+    private objectDrawer: ObjectDrawer;
+
     constructor(canvasElement: HTMLCanvasElement, callbacks: EditorCallbacks = {}) {
-        super(canvasElement);
-        
         this.callbacks = callbacks;
         this.editorState = {
             selectedTool: EDITOR_TOOLS.SELECT,
@@ -44,159 +52,214 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
             gridEnabled: true,
             snapToGrid: true
         };
+
+        // Initialize Fabric.js canvas
+        this.canvas = this.initializeFabricCanvas(canvasElement);
         
-        this.initializeEditorMode();
-        this.setupEventListeners();
-        
-        DebugHelper.log('FabricRenderAdapter initialized', {
+        // Create component instances (delegation pattern)
+        this.objectDrawer = new ObjectDrawer(this.canvas);
+        this.inputHandler = new EditorInputHandler(this, this.objectDrawer);
+        this.stageConverter = new StageDataConverter(this, this.objectDrawer);
+
+        // Set up event system
+        this.setupEventListeners(callbacks);
+
+        DebugHelper.log('FabricRenderAdapter v2 initialized', {
             canvasSize: { width: this.canvas.width, height: this.canvas.height },
             state: this.editorState
         });
     }
 
-    // IRenderAdapter implementation
-    public renderAll(): void {
-        this.canvas.renderAll();
-    }
+    // ===== IRenderAdapter Core Implementation =====
 
-    public clearCanvas(): void {
-        this.canvas.clear();
-    }
-
-    public dispose(): void {
-        this.canvas.dispose();
-    }
-
-    public getEditorState(): EditorState {
-        return { ...this.editorState };
-    }
-
-    public setSelectedTool(tool: string): void {
-        this.editorState.selectedTool = tool as typeof EDITOR_TOOLS[keyof typeof EDITOR_TOOLS];
-        
-        // Update canvas selection mode
-        if (tool === EDITOR_TOOLS.SELECT) {
-            this.canvas.selection = true;
-        } else {
-            this.canvas.discardActiveObject();
-            this.canvas.selection = false;
-        }
-        
-        this.canvas.renderAll();
-        DebugHelper.log('Tool selected', { tool });
-    }
-
-    public toggleGrid(): void {
-        this.editorState.gridEnabled = !this.editorState.gridEnabled;
-        this.renderGrid();
-        DebugHelper.log('Grid toggled', { enabled: this.editorState.gridEnabled });
-    }
-
-    public toggleSnapToGrid(): void {
-        this.editorState.snapToGrid = !this.editorState.snapToGrid;
-        DebugHelper.log('Snap to grid toggled', { enabled: this.editorState.snapToGrid });
-    }
-
-    public deleteSelectedObject(): void {
-        if (this.editorState.selectedObject) {
-            this.canvas.remove(this.editorState.selectedObject as fabric.Object);
-            this.editorState.selectedObject = null;
-            this.callbacks.onObjectSelected?.(null);
-            this.updateStageDataFromCanvas();
-            this.canvas.renderAll();
-            
-            DebugHelper.log('Object deleted');
-        }
-    }
-
-    public duplicateSelectedObject(): void {
-        if (this.editorState.selectedObject) {
-            const original = this.editorState.selectedObject;
-            // Create a copy offset by 20 pixels
-            const bounds = FabricHelper.getObjectBounds(original);
-            const newPosition = { x: bounds.left + 20, y: bounds.top + 20 };
-            
-            if (isPlatformObject(original)) {
-                const line = original as unknown as fabric.Line;
-                const newLine = new fabric.Line([
-                    line.x1! + 20, line.y1! + 20,
-                    line.x2! + 20, line.y2! + 20
-                ], {
-                    stroke: EDITOR_CONFIG.COLORS.PLATFORM,
-                    strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
-                    selectable: true
-                });
-                FabricHelper.setObjectData(newLine, { type: EDITOR_TOOLS.PLATFORM });
-                this.canvas.add(newLine);
-            } else if (isSpikeObject(original)) {
-                const spike = ObjectFactory.createSpike({
-                    position: newPosition,
-                    size: { width: bounds.width, height: bounds.height }
-                });
-                this.canvas.add(spike);
-            } else if (isGoalObject(original)) {
-                const goal = ObjectFactory.createGoal({
-                    position: newPosition,
-                    size: { width: bounds.width, height: bounds.height }
-                });
-                this.canvas.add(goal);
-            } else if (isTextObject(original)) {
-                const text = original as unknown as fabric.Text;
-                const newText = ObjectFactory.createText({
-                    position: newPosition,
-                    text: text.text || 'TEXT'
-                });
-                this.canvas.add(newText);
-            }
-            
-            this.updateStageDataFromCanvas();
-            this.canvas.renderAll();
-            DebugHelper.log('Object duplicated');
-        }
-    }
-
-    public loadStageForEditing(stageData: AdapterStageData): void {
-        this.stageData = stageData as StageData;
-        this.clearCanvas();
-        this.renderGrid();
-        
-        // Render stage objects as editable Fabric.js objects
-        this.renderEditableObjects(stageData as StageData);
-        
-        this.canvas.renderAll();
-        DebugHelper.log('Stage loaded for editing', { stageId: stageData.id });
-    }
-
-    public exportStageData(): AdapterStageData {
-        return this.generateStageDataFromCanvas() as AdapterStageData;
-    }
-
-    // Private methods for editor functionality
-    private initializeEditorMode(): void {
+    /**
+     * Render all canvas objects
+     */
+    renderAll(): void {
         try {
-            // Enable Fabric.js interactive features
-            this.canvas.selection = true;
-            this.canvas.allowTouchScrolling = true;
-            this.canvas.preserveObjectStacking = true;
-            
-            DebugHelper.log('Editor mode enabled');
+            this.canvas.renderAll();
+        } catch (error) {
+            DebugHelper.log('Error during renderAll', error);
+        }
+    }
+
+    /**
+     * Clear the canvas
+     */
+    clearCanvas(): void {
+        try {
+            this.canvas.clear();
+            DebugHelper.log('Canvas cleared');
         } catch (error) {
             throw new EditorError(
-                'Failed to initialize editor mode',
-                ERROR_CODES.CANVAS_INIT_FAILED,
+                'Failed to clear canvas',
+                ERROR_CODES.CANVAS_OPERATION_FAILED,
                 ERROR_TYPES.FABRIC,
                 { error }
             );
         }
     }
 
-    private setupEventListeners(): void {
-        this.setupSelectionEvents();
-        this.setupModificationEvents();
-        this.setupMouseEvents();
+    /**
+     * Dispose of the canvas and clean up resources
+     */
+    dispose(): void {
+        try {
+            this.removeEventListeners();
+            this.canvas.dispose();
+            DebugHelper.log('Canvas disposed');
+        } catch (error) {
+            DebugHelper.log('Error during disposal', error);
+        }
     }
 
-    private setupSelectionEvents(): void {
+    /**
+     * Get current editor state
+     */
+    getEditorState(): EditorState {
+        return { ...this.editorState };
+    }
+
+    /**
+     * Render grid based on enabled state
+     */
+    renderGrid(enabled: boolean): void {
+        try {
+            this.editorState.gridEnabled = enabled;
+            
+            // Remove existing grid objects
+            this.removeGridObjects();
+            
+            if (!enabled) {
+                this.renderAll();
+                return;
+            }
+
+            // Draw new grid
+            this.drawGrid();
+            this.renderAll();
+            
+            DebugHelper.log('Grid rendered', { enabled });
+        } catch (error) {
+            throw new EditorError(
+                'Failed to render grid',
+                ERROR_CODES.CANVAS_OPERATION_FAILED,
+                ERROR_TYPES.FABRIC,
+                { enabled, error }
+            );
+        }
+    }
+
+    /**
+     * Get currently selected object
+     */
+    getSelectedObject(): unknown | null {
+        return this.editorState.selectedObject;
+    }
+
+    /**
+     * Select an object
+     */
+    selectObject(object: unknown | null): void {
+        this.editorState.selectedObject = object;
+        
+        if (object && object instanceof fabric.Object) {
+            this.canvas.setActiveObject(object);
+        } else {
+            this.canvas.discardActiveObject();
+        }
+        
+        this.callbacks.onObjectSelected?.(object);
+        this.renderAll();
+        
+        DebugHelper.log('Object selected', { hasObject: !!object });
+    }
+
+    /**
+     * Delete currently selected object
+     */
+    deleteSelectedObject(): void {
+        if (this.editorState.selectedObject && this.editorState.selectedObject instanceof fabric.Object) {
+            this.canvas.remove(this.editorState.selectedObject);
+            this.editorState.selectedObject = null;
+            this.callbacks.onObjectSelected?.(null);
+            this.notifyStageModified();
+            this.renderAll();
+            
+            DebugHelper.log('Object deleted');
+        }
+    }
+
+    /**
+     * Duplicate currently selected object
+     */
+    duplicateSelectedObject(): void {
+        if (!this.editorState.selectedObject || !(this.editorState.selectedObject instanceof fabric.Object)) {
+            return;
+        }
+
+        try {
+            const original = this.editorState.selectedObject;
+            const bounds = this.objectDrawer.getObjectBounds(original);
+            const offset = { x: 20, y: 20 };
+            const newPosition = { x: bounds.x + offset.x, y: bounds.y + offset.y };
+            
+            // Get object type from data
+            const objectData = this.objectDrawer.getObjectData(original);
+            const objectType = objectData?.type;
+
+            switch (objectType) {
+                case EDITOR_TOOLS.PLATFORM:
+                    this.objectDrawer.createPlatform(
+                        newPosition,
+                        { x: newPosition.x + bounds.width, y: newPosition.y }
+                    );
+                    break;
+                case EDITOR_TOOLS.SPIKE:
+                    this.objectDrawer.createSpike(newPosition, {
+                        width: bounds.width,
+                        height: bounds.height
+                    });
+                    break;
+                case EDITOR_TOOLS.GOAL:
+                    this.objectDrawer.createGoal(newPosition, {
+                        width: bounds.width,
+                        height: bounds.height
+                    });
+                    break;
+                case EDITOR_TOOLS.TEXT:
+                    this.objectDrawer.createText(newPosition, 'TEXT');
+                    break;
+                default:
+                    throw new EditorError(
+                        `Cannot duplicate object of type: ${objectType}`,
+                        ERROR_CODES.UNSUPPORTED_OPERATION,
+                        ERROR_TYPES.EDITOR,
+                        { objectType, original }
+                    );
+            }
+
+            this.notifyStageModified();
+            this.renderAll();
+            
+            DebugHelper.log('Object duplicated', { objectType, newPosition });
+        } catch (error) {
+            throw new EditorError(
+                'Failed to duplicate object',
+                ERROR_CODES.OBJECT_CREATION_FAILED,
+                ERROR_TYPES.FABRIC,
+                { selectedObject: this.editorState.selectedObject, error }
+            );
+        }
+    }
+
+    /**
+     * Set up event listeners
+     */
+    setupEventListeners(callbacks: EditorCallbacks): void {
+        this.callbacks = { ...this.callbacks, ...callbacks };
+        
+        // Selection events
         this.canvas.on('selection:created', (e: any) => {
             const selectedObject = e.selected?.[0] || null;
             this.handleObjectSelection(selectedObject);
@@ -210,333 +273,273 @@ export class FabricRenderAdapter extends FabricRenderSystem implements IRenderAd
         this.canvas.on('selection:cleared', () => {
             this.handleObjectSelection(null);
         });
-    }
 
-    private setupModificationEvents(): void {
+        // Modification events
         this.canvas.on('object:modified', (e: any) => {
-            if (e.target && isFabricObjectWithData(e.target)) {
+            if (e.target) {
                 this.callbacks.onObjectModified?.(e.target);
-                this.updateStageDataFromCanvas();
+                this.notifyStageModified();
             }
         });
-    }
 
-    private setupMouseEvents(): void {
-        this.canvas.on('mouse:down', this.handleMouseDown.bind(this));
-        this.canvas.on('mouse:move', this.handleMouseMove.bind(this));
-        this.canvas.on('mouse:up', this.handleMouseUp.bind(this));
-    }
+        // Mouse events - delegate to input handler
+        this.canvas.on('mouse:down', (e: any) => {
+            const pointer = this.canvas.getPointer(e.e);
+            this.inputHandler.handleMouseDown(pointer);
+        });
 
-    private handleObjectSelection(object: fabric.Object | null): void {
-        const typedObject = object && isFabricObjectWithData(object) ? object : null;
-        this.editorState.selectedObject = typedObject;
-        this.callbacks.onObjectSelected?.(typedObject);
-        
-        DebugHelper.log('Object selected', {
-            objectType: typedObject ? FabricHelper.getObjectType(typedObject) : null,
-            objectData: typedObject?.data
+        this.canvas.on('mouse:move', (e: any) => {
+            const pointer = this.canvas.getPointer(e.e);
+            this.inputHandler.handleMouseMove(pointer);
+        });
+
+        this.canvas.on('mouse:up', (e: any) => {
+            const pointer = this.canvas.getPointer(e.e);
+            this.inputHandler.handleMouseUp(pointer);
         });
     }
 
-    private handleMouseDown: MouseEventHandler = (e) => {
-        if (this.editorState.selectedTool === EDITOR_TOOLS.SELECT) return;
+    /**
+     * Remove event listeners
+     */
+    removeEventListeners(): void {
+        this.canvas.off(); // Remove all event listeners
+    }
 
-        const pointer = this.canvas.getPointer(e.e as any);
-        const snappedPointer = this.getSnappedPosition(pointer);
-        
-        this.editorState.isDrawing = true;
-        
+    // ===== Public API for Editor Integration =====
+
+
+    // ===== Private Implementation Methods =====
+
+    /**
+     * Initialize Fabric.js canvas with editor settings
+     */
+    private initializeFabricCanvas(canvasElement: HTMLCanvasElement): fabric.Canvas {
         try {
-            switch (this.editorState.selectedTool) {
-                case EDITOR_TOOLS.PLATFORM:
-                    this.startDrawingPlatform(snappedPointer);
-                    break;
-                case EDITOR_TOOLS.SPIKE:
-                    this.placeObject(EDITOR_TOOLS.SPIKE, snappedPointer);
-                    break;
-                case EDITOR_TOOLS.GOAL:
-                    this.placeObject(EDITOR_TOOLS.GOAL, snappedPointer);
-                    break;
-                case EDITOR_TOOLS.TEXT:
-                    this.placeObject(EDITOR_TOOLS.TEXT, snappedPointer);
-                    break;
-            }
+            const canvas = new fabric.Canvas(canvasElement, {
+                width: canvasElement.width,
+                height: canvasElement.height,
+                backgroundColor: 'white',
+                selection: true, // Enable selection in editor mode
+                renderOnAddRemove: true, // Auto-render when objects are added/removed
+                allowTouchScrolling: false,
+                interactive: true, // Enable interaction in editor mode
+                enableRetinaScaling: true,
+                stopContextMenu: true
+            });
+
+            return canvas;
         } catch (error) {
-            DebugHelper.log('Error during object creation', error);
-            this.editorState.isDrawing = false;
+            throw new EditorError(
+                'Failed to initialize Fabric.js canvas',
+                ERROR_CODES.CANVAS_INIT_FAILED,
+                ERROR_TYPES.FABRIC,
+                { canvasElement, error }
+            );
         }
-    };
-
-    private handleMouseMove: MouseEventHandler = (e) => {
-        if (!this.editorState.isDrawing) return;
-
-        const pointer = this.canvas.getPointer(e.e as any);
-        const snappedPointer = this.getSnappedPosition(pointer);
-
-        if (this.editorState.selectedTool === EDITOR_TOOLS.PLATFORM) {
-            this.updateDrawingPlatform(snappedPointer);
-        }
-    };
-
-    private handleMouseUp: MouseEventHandler = () => {
-        if (!this.editorState.isDrawing) return;
-
-        this.editorState.isDrawing = false;
-
-        if (this.editorState.selectedTool === EDITOR_TOOLS.PLATFORM) {
-            this.finishDrawingPlatform();
-        }
-
-        this.updateStageDataFromCanvas();
-    };
-
-    private getSnappedPosition(pointer: { x: number; y: number }): { x: number; y: number } {
-        if (!this.editorState.snapToGrid) return pointer;
-        return FabricHelper.snapToGrid(pointer, EDITOR_CONFIG.GRID_SIZE);
     }
 
-    private startDrawingPlatform(pointer: { x: number; y: number }): void {
-        const line = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], {
-            stroke: EDITOR_CONFIG.COLORS.PLATFORM,
-            strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
-            selectable: false
+    /**
+     * Handle object selection
+     */
+    private handleObjectSelection(object: fabric.Object | null): void {
+        this.editorState.selectedObject = object;
+        this.callbacks.onObjectSelected?.(object);
+        
+        DebugHelper.log('Object selection changed', { 
+            hasObject: !!object,
+            objectType: object ? this.objectDrawer.getObjectData(object)?.type : null
+        });
+    }
+
+    /**
+     * Remove grid objects from canvas
+     */
+    private removeGridObjects(): void {
+        const objects = this.canvas.getObjects();
+        const gridObjects = objects.filter(obj => {
+            const data = this.objectDrawer.getObjectData(obj);
+            return data?.isGrid === true;
         });
         
-        FabricHelper.setObjectData(line, { type: EDITOR_TOOLS.PLATFORM, isDrawing: true });
-        this.canvas.add(line);
-        this.canvas.renderAll();
-    }
-
-    private updateDrawingPlatform(pointer: { x: number; y: number }): void {
-        const objects = this.canvas.getObjects();
-        const drawingPlatform = objects.find(obj => 
-            isFabricObjectWithData(obj) && 
-            obj.data?.type === EDITOR_TOOLS.PLATFORM && 
-            obj.data?.isDrawing
-        ) as fabric.Line;
-
-        if (drawingPlatform) {
-            drawingPlatform.set({
-                x2: pointer.x,
-                y2: pointer.y
-            });
-            this.canvas.renderAll();
-        }
-    }
-
-    private finishDrawingPlatform(): void {
-        const objects = this.canvas.getObjects();
-        const drawingPlatform = objects.find(obj => 
-            isFabricObjectWithData(obj) && 
-            obj.data?.type === EDITOR_TOOLS.PLATFORM && 
-            obj.data?.isDrawing
-        ) as fabric.Line;
-
-        if (drawingPlatform) {
-            drawingPlatform.set({ selectable: true });
-            FabricHelper.setObjectData(drawingPlatform, { 
-                type: EDITOR_TOOLS.PLATFORM, 
-                isDrawing: false 
-            });
-            this.canvas.renderAll();
-        }
-    }
-
-    private placeObject(type: typeof EDITOR_TOOLS[keyof typeof EDITOR_TOOLS], position: { x: number; y: number }): void {
-        let object: fabric.Object;
-        
-        const params: ObjectCreationParams = { position };
-        
-        switch (type) {
-            case EDITOR_TOOLS.SPIKE:
-                object = ObjectFactory.createSpike(params);
-                break;
-            case EDITOR_TOOLS.GOAL:
-                object = ObjectFactory.createGoal(params);
-                break;
-            case EDITOR_TOOLS.TEXT:
-                object = ObjectFactory.createText(params);
-                break;
-            default:
-                throw new EditorError(
-                    `Unsupported object type: ${type}`,
-                    ERROR_CODES.OBJECT_CREATION_FAILED,
-                    ERROR_TYPES.FABRIC,
-                    { type, position }
-                );
-        }
-
-        this.canvas.add(object);
-        this.canvas.renderAll();
-    }
-
-    private renderGrid(): void {
-        // Remove existing grid objects
-        const gridObjects = this.canvas.getObjects().filter(obj => 
-            isFabricObjectWithData(obj) && isGridObject(obj)
-        );
         gridObjects.forEach(obj => this.canvas.remove(obj));
+    }
 
-        if (!this.editorState.gridEnabled) {
-            this.canvas.renderAll();
-            return;
-        }
-
+    /**
+     * Draw grid lines
+     */
+    private drawGrid(): void {
         const canvasWidth = this.canvas.width!;
         const canvasHeight = this.canvas.height!;
+        const gridSize = EDITOR_CONFIG.GRID_SIZE;
 
         // Draw vertical lines
-        for (let x = 0; x <= canvasWidth; x += EDITOR_CONFIG.GRID_SIZE) {
-            const line = ObjectFactory.createGridLine(
+        for (let x = 0; x <= canvasWidth; x += gridSize) {
+            this.objectDrawer.createGridLine(
                 { x, y: 0 },
                 { x, y: canvasHeight }
             );
-            this.canvas.add(line);
         }
 
         // Draw horizontal lines
-        for (let y = 0; y <= canvasHeight; y += EDITOR_CONFIG.GRID_SIZE) {
-            const line = ObjectFactory.createGridLine(
+        for (let y = 0; y <= canvasHeight; y += gridSize) {
+            this.objectDrawer.createGridLine(
                 { x: 0, y },
                 { x: canvasWidth, y }
             );
-            this.canvas.add(line);
         }
-
-        this.canvas.renderAll();
     }
 
-    private renderEditableObjects(stageData: StageData): void {
-        // Platforms
-        stageData.platforms.forEach(platform => {
-            const line = ObjectFactory.createPlatform(
-                { x: platform.x1, y: platform.y1 },
-                { x: platform.x2, y: platform.y2 }
-            );
-            this.canvas.add(line);
-        });
-
-        // Spikes
-        stageData.spikes.forEach(spike => {
-            const triangle = ObjectFactory.createSpike({
-                position: { x: spike.x, y: spike.y },
-                size: { width: spike.width, height: spike.height }
-            });
-            this.canvas.add(triangle);
-        });
-
-        // Goal
-        const goal = ObjectFactory.createGoal({
-            position: { x: stageData.goal.x, y: stageData.goal.y },
-            size: { width: stageData.goal.width, height: stageData.goal.height }
-        });
-        this.canvas.add(goal);
-
-        // Text elements
-        const texts = [
-            stageData.startText,
-            stageData.goalText,
-            stageData.leftEdgeMessage,
-            stageData.leftEdgeSubMessage
-        ].filter(Boolean) as TextElement[];
-
-        texts.forEach(textElement => {
-            const text = ObjectFactory.createText({
-                position: { x: textElement.x, y: textElement.y },
-                text: textElement.text
-            });
-            this.canvas.add(text);
-        });
+    /**
+     * Notify that stage has been modified
+     */
+    private notifyStageModified(): void {
+        try {
+            const stageData = this.stageConverter.exportStageData();
+            this.callbacks.onStageModified?.(stageData);
+        } catch (error) {
+            DebugHelper.log('Failed to notify stage modified', error);
+        }
     }
 
-    public updateStageDataFromCanvas(): void {
-        const newStageData = this.generateStageDataFromCanvas();
-        this.callbacks.onStageModified?.(newStageData);
+    // ===== Legacy Compatibility Methods =====
+    // These methods maintain compatibility with EditorRenderSystem
+    // They delegate to appropriate component classes
+
+    /**
+     * Create spike at position (legacy compatibility)
+     */
+    createSpike(x: number, y: number): void {
+        const position = { x, y };
+        const spike = this.objectDrawer.createSpike(position);
+        if (spike instanceof fabric.Object) {
+            this.canvas.add(spike);
+            this.notifyStageModified();
+            this.renderAll();
+        }
+        DebugHelper.log('Legacy createSpike called', { x, y });
     }
 
-    private generateStageDataFromCanvas(): StageData {
-        const objects = this.canvas.getObjects().filter(obj => 
-            isFabricObjectWithData(obj) && !isGridObject(obj)
-        );
+    /**
+     * Create goal at position (legacy compatibility)
+     */
+    createGoal(x: number, y: number, width: number = 40, height: number = 50): void {
+        const position = { x, y };
+        const size = { width, height };
+        const goal = this.objectDrawer.createGoal(position, size);
+        if (goal instanceof fabric.Object) {
+            this.canvas.add(goal);
+            this.notifyStageModified();
+            this.renderAll();
+        }
+        DebugHelper.log('Legacy createGoal called', { x, y, width, height });
+    }
+
+    /**
+     * Create text at position (legacy compatibility)
+     */
+    createText(x: number, y: number, text: string): void {
+        const position = { x, y };
+        const textObject = this.objectDrawer.createText(position, text);
+        if (textObject instanceof fabric.Object) {
+            this.canvas.add(textObject);
+            this.notifyStageModified();
+            this.renderAll();
+        }
+        DebugHelper.log('Legacy createText called', { x, y, text });
+    }
+
+    /**
+     * Start platform drawing (legacy compatibility)
+     */
+    startPlatformDrawing(x: number, y: number): void {
+        const position = { x, y };
+        this.inputHandler.startPlatformDrawing(position);
+        DebugHelper.log('Legacy startPlatformDrawing called', { x, y });
+    }
+
+    /**
+     * Finish platform drawing (legacy compatibility)
+     */
+    finishPlatformDrawing(x: number, y: number): void {
+        // InputHandler tracks drawing state internally, so we just call finish
+        this.inputHandler.finishPlatformDrawing();
+        DebugHelper.log('Legacy finishPlatformDrawing called', { x, y });
+    }
+
+    /**
+     * Set selected tool (legacy compatibility)
+     */
+    setSelectedTool(tool: string): void {
+        this.editorState.selectedTool = tool as any;
         
-        const platforms: Platform[] = [];
-        const spikes: Spike[] = [];
-        let goal: Goal = { x: 0, y: 0, width: 40, height: 50 };
-        const texts: TextElement[] = [];
+        // Update canvas interaction mode
+        if (tool === EDITOR_TOOLS.SELECT) {
+            this.canvas.selection = true;
+        } else {
+            this.canvas.discardActiveObject();
+            this.canvas.selection = false;
+        }
+        
+        this.renderAll();
+        this.inputHandler.setSelectedTool(tool);
+        DebugHelper.log('Legacy setSelectedTool called', { tool });
+    }
 
-        objects.forEach(obj => {
-            if (!isFabricObjectWithData(obj)) return;
-            
-            if (isPlatformObject(obj)) {
-                const line = obj as unknown as fabric.Line;
-                platforms.push({
-                    x1: line.x1!,
-                    y1: line.y1!,
-                    x2: line.x2!,
-                    y2: line.y2!
-                });
-            } else if (isSpikeObject(obj)) {
-                const bounds = FabricHelper.getObjectBounds(obj);
-                spikes.push({
-                    x: bounds.left + bounds.width / 2,
-                    y: bounds.top + bounds.height,
-                    width: bounds.width,
-                    height: bounds.height
-                });
-            } else if (isGoalObject(obj)) {
-                const rect = obj as unknown as fabric.Rect;
-                goal = {
-                    x: rect.left!,
-                    y: rect.top!,
-                    width: rect.width!,
-                    height: rect.height!
-                };
-            } else if (isTextObject(obj)) {
-                const text = obj as unknown as fabric.Text;
-                texts.push({
-                    x: text.left!,
-                    y: text.top!,
-                    text: text.text!
-                });
-            }
+    /**
+     * Toggle grid (legacy compatibility)
+     */
+    toggleGrid(): void {
+        this.inputHandler.toggleGrid();
+        DebugHelper.log('Legacy toggleGrid called');
+    }
+
+    /**
+     * Toggle snap to grid (legacy compatibility)
+     */
+    toggleSnapToGrid(): void {
+        this.editorState.snapToGrid = !this.editorState.snapToGrid;
+        this.inputHandler.toggleSnapToGrid();
+        DebugHelper.log('Legacy toggleSnapToGrid called');
+    }
+
+    /**
+     * Load stage for editing (legacy compatibility)
+     */
+    loadStageForEditing(stageData: any): void {
+        this.stageConverter.loadStageForEditing(stageData);
+        DebugHelper.log('Legacy loadStageForEditing called');
+    }
+
+    /**
+     * Export stage data (legacy compatibility)
+     */
+    exportStageData(): any {
+        const stageData = this.stageConverter.exportStageData();
+        DebugHelper.log('Legacy exportStageData called');
+        return stageData;
+    }
+    
+    // ===== Public API for Components =====
+    // These methods allow component classes to access canvas state
+    
+    /**
+     * Get all editable objects from canvas (excluding grid objects)
+     * Used by StageDataConverter to export stage data
+     */
+    public getEditableObjects(): fabric.Object[] {
+        const allObjects = this.canvas.getObjects();
+        return allObjects.filter(obj => {
+            const data = this.objectDrawer.getObjectData(obj);
+            return !data?.isGrid; // Exclude grid objects
         });
-
-        return {
-            id: this.stageData?.id || 1,
-            name: this.stageData?.name || 'New Stage',
-            platforms,
-            spikes,
-            goal,
-            startText: texts[0] || { x: 50, y: 450, text: 'START' },
-            goalText: texts[1] || { x: goal.x + 20, y: goal.y - 20, text: 'GOAL' }
-        };
     }
-
-    // Object creation methods (for interface compliance)
-    public createSpike(x: number, y: number): void {
-        this.placeObject(EDITOR_TOOLS.SPIKE, { x, y });
-    }
-
-    public createGoal(x: number, y: number, _width: number, _height: number): void {
-        this.placeObject(EDITOR_TOOLS.GOAL, { x, y });
-    }
-
-    public createText(x: number, y: number, text: string): void {
-        const params: ObjectCreationParams = { 
-            position: { x, y }, 
-            text 
-        };
-        const textObject = ObjectFactory.createText(params);
-        this.canvas.add(textObject);
-        this.canvas.renderAll();
-    }
-
-    public startPlatformDrawing(x: number, y: number): void {
-        this.startDrawingPlatform({ x, y });
-    }
-
-    public finishPlatformDrawing(x: number, y: number): void {
-        this.updateDrawingPlatform({ x, y });
-        this.finishDrawingPlatform();
+    
+    /**
+     * Get canvas reference for advanced operations
+     * Used by component classes when needed
+     */
+    public getCanvas(): fabric.Canvas {
+        return this.canvas;
     }
 }

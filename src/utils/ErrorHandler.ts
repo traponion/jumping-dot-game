@@ -1,10 +1,10 @@
 // エラーハンドリングとレポーティングの統一管理
 import {
-    EditorError,
-    ERROR_TYPES,
     ERROR_CODES,
-    type ErrorType,
-    type ErrorCode
+    ERROR_TYPES,
+    EditorError,
+    type ErrorCode,
+    type ErrorType
 } from '../types/EditorTypes.js';
 import { DebugHelper } from './EditorUtils.js';
 
@@ -49,7 +49,7 @@ export class ErrorHandler {
     private errorFilters: ErrorFilter[] = [];
     private maxHistorySize = 100;
     private sessionStartTime = Date.now();
-    
+
     // エラー統計
     private statistics: ErrorStatistics = {
         totalErrors: 0,
@@ -85,7 +85,7 @@ export class ErrorHandler {
         code: ErrorCode,
         type: ErrorType = ERROR_TYPES.SYSTEM,
         details?: any,
-        recoverable: boolean = true
+        recoverable = true
     ): EditorError {
         return new EditorError(message, code, type, details, recoverable);
     }
@@ -162,7 +162,7 @@ export class ErrorHandler {
      */
     public handleError(error: Error | EditorError): void {
         const editorError = this.normalizeError(error);
-        
+
         // フィルターチェック
         if (!this.passesFilters(editorError)) {
             return;
@@ -170,13 +170,13 @@ export class ErrorHandler {
 
         // 履歴に追加
         this.addToHistory(editorError);
-        
+
         // 統計を更新
         this.updateStatistics(editorError);
-        
+
         // レポーターに通知
         this.notifyReporters(editorError);
-        
+
         // 開発者ログ
         DebugHelper.log('Error handled', editorError.getDetails());
     }
@@ -185,7 +185,7 @@ export class ErrorHandler {
      * 複数のエラーを一括処理
      */
     public handleErrors(errors: (Error | EditorError)[]): void {
-        errors.forEach(error => this.handleError(error));
+        errors.forEach((error) => this.handleError(error));
     }
 
     /**
@@ -296,8 +296,8 @@ export class ErrorHandler {
         const sessionDuration = (Date.now() - this.sessionStartTime) / (1000 * 60); // 分
         return {
             ...this.statistics,
-            averageErrorsPerSession: sessionDuration > 0 ? 
-                this.statistics.totalErrors / (sessionDuration / 60) : 0
+            averageErrorsPerSession:
+                sessionDuration > 0 ? this.statistics.totalErrors / (sessionDuration / 60) : 0
         };
     }
 
@@ -312,7 +312,7 @@ export class ErrorHandler {
      * 指定タイプのエラー履歴を取得
      */
     public getErrorsByType(type: ErrorType): EditorError[] {
-        return this.errorHistory.filter(error => error.type === type);
+        return this.errorHistory.filter((error) => error.type === type);
     }
 
     /**
@@ -325,7 +325,7 @@ export class ErrorHandler {
     /**
      * エラー率の高いコードを取得
      */
-    public getFrequentErrorCodes(limit: number = 5): Array<{ code: ErrorCode; count: number }> {
+    public getFrequentErrorCodes(limit = 5): Array<{ code: ErrorCode; count: number }> {
         return Object.entries(this.statistics.errorsByCode)
             .map(([code, count]) => ({ code: code as ErrorCode, count }))
             .sort((a, b) => b.count - a.count)
@@ -351,7 +351,7 @@ export class ErrorHandler {
         if (error instanceof EditorError) {
             return error;
         }
-        
+
         return new EditorError(
             error.message || 'Unknown error',
             ERROR_CODES.UNKNOWN_ERROR,
@@ -365,7 +365,7 @@ export class ErrorHandler {
      * フィルターを通過するかチェック
      */
     private passesFilters(error: EditorError): boolean {
-        return this.errorFilters.every(filter => filter(error));
+        return this.errorFilters.every((filter) => filter(error));
     }
 
     /**
@@ -383,15 +383,17 @@ export class ErrorHandler {
      */
     private updateStatistics(error: EditorError): void {
         this.statistics.totalErrors++;
-        this.statistics.errorsByType[error.type] = (this.statistics.errorsByType[error.type] || 0) + 1;
-        this.statistics.errorsByCode[error.code] = (this.statistics.errorsByCode[error.code] || 0) + 1;
-        
+        this.statistics.errorsByType[error.type] =
+            (this.statistics.errorsByType[error.type] || 0) + 1;
+        this.statistics.errorsByCode[error.code] =
+            (this.statistics.errorsByCode[error.code] || 0) + 1;
+
         if (error.isRecoverable()) {
             this.statistics.recoverableErrors++;
         } else {
             this.statistics.nonRecoverableErrors++;
         }
-        
+
         this.statistics.lastError = error;
     }
 
@@ -399,7 +401,7 @@ export class ErrorHandler {
      * レポーターに通知
      */
     private notifyReporters(error: EditorError): void {
-        this.reporters.forEach(reporter => {
+        this.reporters.forEach((reporter) => {
             try {
                 reporter.reportError(error);
             } catch (reporterError) {
@@ -416,10 +418,10 @@ export class ErrorHandler {
         this.statistics = {
             totalErrors: 0,
             errorsByType: Object.fromEntries(
-                Object.values(ERROR_TYPES).map(type => [type, 0])
+                Object.values(ERROR_TYPES).map((type) => [type, 0])
             ) as Record<ErrorType, number>,
             errorsByCode: Object.fromEntries(
-                Object.values(ERROR_CODES).map(code => [code, 0])
+                Object.values(ERROR_CODES).map((code) => [code, 0])
             ) as Record<ErrorCode, number>,
             recoverableErrors: 0,
             nonRecoverableErrors: 0,
@@ -457,7 +459,9 @@ export class ConsoleErrorReporter implements ErrorReporter {
  * UI表示用エラーレポーター
  */
 export class UIErrorReporter implements ErrorReporter {
-    constructor(private showMessage: (message: string, type: 'error' | 'warning' | 'info') => void) {}
+    constructor(
+        private showMessage: (message: string, type: 'error' | 'warning' | 'info') => void
+    ) {}
 
     public reportError(error: EditorError): void {
         this.showMessage(error.getUserMessage(), 'error');

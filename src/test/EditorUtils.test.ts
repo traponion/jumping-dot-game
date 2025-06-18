@@ -1,22 +1,22 @@
-// EditorUtils unit tests
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-    FabricHelper, 
-    ObjectFactory, 
-    TypeHelper, 
-    EventHelper, 
-    DebugHelper,
-    DOMHelper,
-    MathHelper
-} from '../utils/EditorUtils.js';
-import { EDITOR_TOOLS, EDITOR_CONFIG } from '../types/EditorTypes.js';
 import * as fabric from 'fabric';
+// EditorUtils unit tests
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EDITOR_CONFIG, EDITOR_TOOLS } from '../types/EditorTypes.js';
+import {
+    DOMHelper,
+    DebugHelper,
+    EventHelper,
+    FabricHelper,
+    MathHelper,
+    ObjectFactory,
+    TypeHelper
+} from '../utils/EditorUtils.js';
 
 // Mock fabric.js for testing
 vi.mock('fabric', () => ({
     Line: vi.fn(),
     Polygon: vi.fn(),
-    Rect: vi.fn(), 
+    Rect: vi.fn(),
     Text: vi.fn()
 }));
 
@@ -36,7 +36,7 @@ describe('EditorUtils', () => {
 
         it('should safely get object properties', () => {
             const obj = { name: 'test', value: 42 };
-            
+
             expect(TypeHelper.safeGetProperty(obj, 'name', 'default')).toBe('test');
             expect(TypeHelper.safeGetProperty(obj, 'value', 0)).toBe(42);
             expect(TypeHelper.safeGetProperty(obj as any, 'missing', 'default')).toBe('default');
@@ -78,16 +78,16 @@ describe('EditorUtils', () => {
         });
 
         it('should normalize keyboard events', () => {
-            const ctrlEvent = new KeyboardEvent('keydown', { 
-                code: 'KeyS', 
-                ctrlKey: true 
+            const ctrlEvent = new KeyboardEvent('keydown', {
+                code: 'KeyS',
+                ctrlKey: true
             });
-            const metaEvent = new KeyboardEvent('keydown', { 
-                code: 'KeyS', 
-                metaKey: true 
+            const metaEvent = new KeyboardEvent('keydown', {
+                code: 'KeyS',
+                metaKey: true
             });
-            const regularEvent = new KeyboardEvent('keydown', { 
-                code: 'KeyS' 
+            const regularEvent = new KeyboardEvent('keydown', {
+                code: 'KeyS'
             });
 
             expect(EventHelper.normalizeKeyboardEvent(ctrlEvent)).toBe('Ctrl+KeyS');
@@ -107,31 +107,30 @@ describe('EditorUtils', () => {
         it('should log messages in development mode', () => {
             // Force debug mode
             (DebugHelper as any).debugMode = true;
-            
+
             DebugHelper.log('test message', { data: 'test' });
-            
-            expect(console.log).toHaveBeenCalledWith(
-                '[Editor Debug] test message', 
-                { data: 'test' }
-            );
+
+            expect(console.log).toHaveBeenCalledWith('[Editor Debug] test message', {
+                data: 'test'
+            });
         });
 
         it('should not log messages in production mode', () => {
             // Force production mode
             (DebugHelper as any).debugMode = false;
-            
+
             DebugHelper.log('test message');
-            
+
             expect(console.log).not.toHaveBeenCalled();
         });
 
         it('should measure performance in development mode', () => {
             // Force debug mode
             (DebugHelper as any).debugMode = true;
-            
+
             const mockFn = vi.fn(() => 'result');
             const result = DebugHelper.time('test-operation', mockFn);
-            
+
             expect(console.time).toHaveBeenCalledWith('test-operation');
             expect(console.timeEnd).toHaveBeenCalledWith('test-operation');
             expect(mockFn).toHaveBeenCalled();
@@ -141,10 +140,10 @@ describe('EditorUtils', () => {
         it('should not measure performance in production mode', () => {
             // Force production mode
             (DebugHelper as any).debugMode = false;
-            
+
             const mockFn = vi.fn(() => 'result');
             const result = DebugHelper.time('test-operation', mockFn);
-            
+
             expect(console.time).not.toHaveBeenCalled();
             expect(console.timeEnd).not.toHaveBeenCalled();
             expect(mockFn).toHaveBeenCalled();
@@ -171,19 +170,19 @@ describe('EditorUtils', () => {
         it('should set object data', () => {
             const data = { type: EDITOR_TOOLS.SPIKE };
             FabricHelper.setObjectData(mockObject, data);
-            
+
             expect(mockObject.data).toEqual(data);
         });
 
         it('should get object type', () => {
             mockObject.data = { type: EDITOR_TOOLS.PLATFORM };
-            
+
             expect(FabricHelper.getObjectType(mockObject)).toBe(EDITOR_TOOLS.PLATFORM);
         });
 
         it('should get object bounds', () => {
             const bounds = FabricHelper.getObjectBounds(mockObject);
-            
+
             expect(bounds).toEqual({
                 left: 10,
                 top: 20,
@@ -195,7 +194,7 @@ describe('EditorUtils', () => {
         it('should snap position to grid', () => {
             const position = { x: 127, y: 143 };
             const snapped = FabricHelper.snapToGrid(position, 20);
-            
+
             expect(snapped).toEqual({ x: 120, y: 140 });
         });
     });
@@ -208,12 +207,9 @@ describe('EditorUtils', () => {
         it('should create platform object', () => {
             const mockLine = { data: {} };
             vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
-            
-            ObjectFactory.createPlatform(
-                { x: 0, y: 0 },
-                { x: 100, y: 100 }
-            );
-            
+
+            ObjectFactory.createPlatform({ x: 0, y: 0 }, { x: 100, y: 100 });
+
             expect(fabric.Line).toHaveBeenCalledWith(
                 [0, 0, 100, 100],
                 expect.objectContaining({
@@ -227,34 +223,34 @@ describe('EditorUtils', () => {
         it('should create spike object', () => {
             const mockPolygon = { data: {} };
             vi.mocked(fabric.Polygon).mockReturnValue(mockPolygon as any);
-            
+
             ObjectFactory.createSpike({
                 position: { x: 100, y: 200 }
             });
-            
+
             expect(fabric.Polygon).toHaveBeenCalled();
         });
 
         it('should create goal object', () => {
             const mockRect = { data: {} };
             vi.mocked(fabric.Rect).mockReturnValue(mockRect as any);
-            
+
             ObjectFactory.createGoal({
                 position: { x: 100, y: 200 }
             });
-            
+
             expect(fabric.Rect).toHaveBeenCalled();
         });
 
         it('should create text object', () => {
             const mockText = { data: {} };
             vi.mocked(fabric.Text).mockReturnValue(mockText as any);
-            
+
             ObjectFactory.createText({
                 position: { x: 100, y: 200 },
                 text: 'Hello World'
             });
-            
+
             expect(fabric.Text).toHaveBeenCalledWith(
                 'Hello World',
                 expect.objectContaining({
@@ -267,12 +263,9 @@ describe('EditorUtils', () => {
         it('should create grid line', () => {
             const mockLine = { data: {} };
             vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
-            
-            ObjectFactory.createGridLine(
-                { x: 0, y: 0 },
-                { x: 100, y: 100 }
-            );
-            
+
+            ObjectFactory.createGridLine({ x: 0, y: 0 }, { x: 100, y: 100 });
+
             expect(fabric.Line).toHaveBeenCalledWith(
                 [0, 0, 100, 100],
                 expect.objectContaining({
@@ -296,7 +289,7 @@ describe('EditorUtils', () => {
             document.body.appendChild(element);
 
             const result = DOMHelper.getRequiredElement<HTMLDivElement>('test-element');
-            
+
             expect(result).toBe(element);
             expect(result.tagName).toBe('DIV');
         });
@@ -313,13 +306,13 @@ describe('EditorUtils', () => {
             document.body.appendChild(element);
 
             const result = DOMHelper.getOptionalElement<HTMLSpanElement>('optional-element');
-            
+
             expect(result).toBe(element);
         });
 
         it('should return null for missing optional element', () => {
             const result = DOMHelper.getOptionalElement('missing-element');
-            
+
             expect(result).toBeNull();
         });
 
@@ -328,7 +321,7 @@ describe('EditorUtils', () => {
             div.id = 'element1';
             const span = document.createElement('span');
             span.id = 'element2';
-            
+
             document.body.appendChild(div);
             document.body.appendChild(span);
 
@@ -336,7 +329,7 @@ describe('EditorUtils', () => {
                 first: 'element1',
                 second: 'element2'
             });
-            
+
             expect(result.first).toBe(div);
             expect(result.second).toBe(span);
         });
@@ -347,22 +340,22 @@ describe('EditorUtils', () => {
                 document.createElement('button'),
                 document.createElement('button')
             ];
-            
-            elements.forEach(el => {
+
+            elements.forEach((el) => {
                 el.className = 'test-button';
                 document.body.appendChild(el);
             });
 
             const nodeList = document.querySelectorAll('.test-button');
             const handler = vi.fn();
-            
+
             DOMHelper.addEventListenersToNodeList(nodeList, 'click', handler);
-            
+
             // Simulate click on each element
-            elements.forEach(el => {
+            elements.forEach((el) => {
                 el.click();
             });
-            
+
             expect(handler).toHaveBeenCalledTimes(3);
         });
     });
@@ -371,35 +364,35 @@ describe('EditorUtils', () => {
         it('should calculate distance between two points', () => {
             const point1 = { x: 0, y: 0 };
             const point2 = { x: 3, y: 4 };
-            
+
             const result = MathHelper.distance(point1, point2);
-            
+
             expect(result).toBe(5); // 3-4-5 triangle
         });
 
         it('should calculate distance for same points', () => {
             const point = { x: 10, y: 20 };
-            
+
             const result = MathHelper.distance(point, point);
-            
+
             expect(result).toBe(0);
         });
 
         it('should calculate angle between two points', () => {
             const point1 = { x: 0, y: 0 };
             const point2 = { x: 1, y: 0 }; // 0 degrees (right)
-            
+
             const result = MathHelper.angle(point1, point2);
-            
+
             expect(result).toBe(0);
         });
 
         it('should calculate angle for vertical line', () => {
             const point1 = { x: 0, y: 0 };
             const point2 = { x: 0, y: 1 }; // 90 degrees (up)
-            
+
             const result = MathHelper.angle(point1, point2);
-            
+
             expect(result).toBe(90);
         });
 

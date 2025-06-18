@@ -32,14 +32,10 @@ describe('PlayerSystem', () => {
     });
 
     describe('input handling', () => {
-
-
-
-
         // Note: Input handling tests were skipped due to complex integration requirements
         // with the InputManager system. PlayerSystem movement is primarily tested through
         // integration tests where the full system is available.
-        
+
         it('should initialize with hasMovedOnce as false', () => {
             expect(playerSystem.getHasMovedOnce()).toBe(false);
         });

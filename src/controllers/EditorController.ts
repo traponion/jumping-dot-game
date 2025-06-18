@@ -1,28 +1,24 @@
-// エディターのメインコントローラー - MVCパターンのController層
-import { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
-import { createEditorRenderSystem } from '../systems/RenderSystemFactory.js';
-import { StageLoader, type StageData } from '../core/StageLoader.js';
+import { type StageData, StageLoader } from '../core/StageLoader.js';
 import {
-    type EditorState,
-    type EditorCallbacks,
-    type FabricObjectWithData,
-    type KeyboardEventHandler,
-    KEYBOARD_SHORTCUTS,
-    isValidEditorTool,
-    EditorError,
-    ERROR_CODES,
-    ERROR_TYPES
-} from '../types/EditorTypes.js';
-import {
-    TypeHelper,
-    EventHelper,
-    DebugHelper
-} from '../utils/EditorUtils.js';
-import { 
-    getEditorStore, 
-    subscribeEditorStore,
-    type EditorStore 
+    type EditorStore,
+    getEditorStore,
+    subscribeEditorStore
 } from '../stores/EditorZustandStore.js';
+// エディターのメインコントローラー - MVCパターンのController層
+import type { EditorRenderSystem } from '../systems/EditorRenderSystem.js';
+import { createEditorRenderSystem } from '../systems/RenderSystemFactory.js';
+import {
+    ERROR_CODES,
+    ERROR_TYPES,
+    type EditorCallbacks,
+    EditorError,
+    type EditorState,
+    type FabricObjectWithData,
+    KEYBOARD_SHORTCUTS,
+    type KeyboardEventHandler,
+    isValidEditorTool
+} from '../types/EditorTypes.js';
+import { DebugHelper, EventHelper, TypeHelper } from '../utils/EditorUtils.js';
 
 // Controller層のインターフェース定義
 export interface IEditorController {
@@ -38,7 +34,7 @@ export interface IEditorController {
     toggleGrid(): void;
     toggleSnap(): void;
     dispose(): void;
-    
+
     // テストや統合用の追加API
     createObject(event: any): void;
     startPlatformDrawing(event: any): void;
@@ -85,11 +81,11 @@ export class EditorController implements IEditorController {
     private model!: IEditorModel;
     private store: EditorStore;
     private unsubscribeStore: (() => void) | null = null;
-    
+
     // イベントハンドラー（デバウンス処理済み）
     private debouncedSave = EventHelper.debounce(() => this.autoSave(), 5000);
     private keyboardHandler: KeyboardEventHandler;
-    
+
     // ステート
     private isInitialized = false;
     private autoSaveEnabled = false;
@@ -103,15 +99,15 @@ export class EditorController implements IEditorController {
         this.view = view;
         this.model = model;
         this.keyboardHandler = this.handleKeyboard.bind(this);
-        
+
         // Initialize Zustand store
         this.store = getEditorStore();
-        
+
         // Subscribe to store changes
         this.unsubscribeStore = subscribeEditorStore((state) => {
             this.handleStoreChange(state);
         });
-        
+
         DebugHelper.log('EditorController constructed', {
             canvasSize: { width: canvas.width, height: canvas.height },
             storeConnected: !!this.store
@@ -130,7 +126,7 @@ export class EditorController implements IEditorController {
                 this.createNewStage();
                 this.isInitialized = true;
             });
-            
+
             DebugHelper.log('EditorController initialized successfully');
         } catch (error) {
             DebugHelper.log('EditorController initialization failed', error);
@@ -153,7 +149,9 @@ export class EditorController implements IEditorController {
             onStageModified: (stageData) => this.handleStageModified(stageData)
         };
 
-        this.editorSystem = createEditorRenderSystem(this.canvas, callbacks);
+        // Cast to generic adapter callbacks for v2 compatibility
+        const adapterCallbacks = callbacks as any;
+        this.editorSystem = createEditorRenderSystem(this.canvas, adapterCallbacks);
         DebugHelper.log('EditorRenderSystem initialized');
     }
 
@@ -162,7 +160,7 @@ export class EditorController implements IEditorController {
      */
     private setupEventListeners(): void {
         document.addEventListener('keydown', this.keyboardHandler);
-        
+
         // ページ離脱時の警告
         window.addEventListener('beforeunload', (e) => {
             if (this.hasUnsavedChanges()) {
@@ -170,7 +168,7 @@ export class EditorController implements IEditorController {
                 e.returnValue = 'Unsaved changes will be lost. Are you sure?';
             }
         });
-        
+
         DebugHelper.log('Global event listeners setup');
     }
 
@@ -192,10 +190,10 @@ export class EditorController implements IEditorController {
         try {
             // Update Zustand store first
             this.store.selectTool(tool);
-            
+
             // Update render system
             this.editorSystem.setSelectedTool(tool);
-            
+
             // View will be updated via store subscription
             DebugHelper.log('Tool selected', { tool });
         } catch (error) {
@@ -210,14 +208,14 @@ export class EditorController implements IEditorController {
     public createNewStage(): void {
         try {
             const newStage: StageData = this.createDefaultStageData();
-            
+
             // Update Zustand store first
             this.store.setStageData(newStage);
-            
+
             // Update other systems
             this.model.setCurrentStage(newStage);
             this.editorSystem.loadStageForEditing(newStage);
-            
+
             // View will be updated via store subscription
             DebugHelper.log('New stage created', { stageId: newStage.id });
             this.view.showSuccessMessage('New stage created');
@@ -233,7 +231,7 @@ export class EditorController implements IEditorController {
     public async loadStage(stageId?: number): Promise<void> {
         try {
             let targetStageId: number;
-            
+
             if (stageId !== undefined) {
                 targetStageId = stageId;
             } else {
@@ -241,9 +239,9 @@ export class EditorController implements IEditorController {
                 if (!stageIdStr) return;
                 targetStageId = TypeHelper.safeParseInt(stageIdStr, 1);
             }
-            
+
             const stageData = await this.stageLoader.loadStage(targetStageId);
-            
+
             if (!this.model.validateStageData(stageData)) {
                 throw new EditorError(
                     'Invalid stage data format',
@@ -252,14 +250,14 @@ export class EditorController implements IEditorController {
                     { stageData }
                 );
             }
-            
+
             // Update both store and model
             this.store.setStageData(stageData);
             this.model.setCurrentStage(stageData);
             this.editorSystem.loadStageForEditing(stageData);
             this.view.updateStageInfo(stageData);
             this.updateUIFromModel();
-            
+
             DebugHelper.log('Stage loaded successfully', { stageId: stageData.id });
             this.view.showSuccessMessage(`Stage ${stageData.id} loaded successfully`);
         } catch (error) {
@@ -285,7 +283,7 @@ export class EditorController implements IEditorController {
 
             this.downloadStageAsJson(stageData);
             this.model.setCurrentStage(stageData);
-            
+
             DebugHelper.log('Stage saved', { stageId: stageData.id, name: stageData.name });
             this.view.showSuccessMessage(`Stage "${stageData.name}" saved successfully`);
         } catch (error) {
@@ -306,7 +304,7 @@ export class EditorController implements IEditorController {
             }
 
             const stageData = this.editorSystem.exportStageData();
-            
+
             if (!this.model.validateStageData(stageData)) {
                 this.view.showErrorMessage('Stage validation failed');
                 return;
@@ -315,7 +313,7 @@ export class EditorController implements IEditorController {
             const json = this.model.exportStageAsJson();
             localStorage.setItem('testStage', json);
             window.open('/index.html?test=true', '_blank');
-            
+
             DebugHelper.log('Stage testing started', { stageId: stageData.id });
             this.view.showSuccessMessage('Test stage opened in new tab');
         } catch (error) {
@@ -331,7 +329,7 @@ export class EditorController implements IEditorController {
         if (confirm('Are you sure you want to clear all objects?')) {
             // Clear store first
             this.store.setStageData(null);
-            
+
             // Clear render system - use existing methods if available
             if (this.editorSystem) {
                 // Try to clear via existing functionality
@@ -344,13 +342,13 @@ export class EditorController implements IEditorController {
                     this.editorSystem.updateStageDataFromCanvas();
                 }
             }
-            
+
             // Clear model using type-safe method
             this.model.clearCurrentStage();
-            
+
             // Update UI
             this.updateUIFromModel();
-            
+
             DebugHelper.log('Stage cleared');
         }
     }
@@ -361,7 +359,7 @@ export class EditorController implements IEditorController {
     public deleteSelectedObject(): void {
         try {
             this.editorSystem.deleteSelectedObject();
-            
+
             // Update stage data and sync with store
             this.editorSystem.updateStageDataFromCanvas();
             this.updateUIFromModel();
@@ -378,7 +376,7 @@ export class EditorController implements IEditorController {
     public duplicateSelectedObject(): void {
         try {
             this.editorSystem.duplicateSelectedObject();
-            
+
             // Update stage data and sync with store
             this.editorSystem.updateStageDataFromCanvas();
             this.updateUIFromModel();
@@ -396,10 +394,10 @@ export class EditorController implements IEditorController {
         try {
             // Update Zustand store first
             this.store.toggleGrid();
-            
+
             // Update render system
             this.editorSystem.toggleGrid();
-            
+
             DebugHelper.log('Grid toggled', { enabled: this.store.getEditorState().gridEnabled });
         } catch (error) {
             DebugHelper.log('Grid toggle failed', error);
@@ -414,10 +412,10 @@ export class EditorController implements IEditorController {
         try {
             // Update Zustand store first
             this.store.toggleSnap();
-            
+
             // Update render system
             this.editorSystem.toggleSnapToGrid();
-            
+
             DebugHelper.log('Snap toggled', { enabled: this.store.getEditorState().snapToGrid });
         } catch (error) {
             DebugHelper.log('Snap toggle failed', error);
@@ -430,18 +428,18 @@ export class EditorController implements IEditorController {
      */
     public dispose(): void {
         document.removeEventListener('keydown', this.keyboardHandler);
-        
+
         // Unsubscribe from store
         if (this.unsubscribeStore) {
             this.unsubscribeStore();
             this.unsubscribeStore = null;
         }
-        
+
         // Dispose render system and adapter
         if (this.editorSystem) {
             this.editorSystem.dispose();
         }
-        
+
         this.view.dispose();
         this.isInitialized = false;
         DebugHelper.log('EditorController disposed');
@@ -458,7 +456,7 @@ export class EditorController implements IEditorController {
             this.view.updateToolSelection(state.editor.selectedTool);
             this.view.updateCurrentTool(state.editor.selectedTool);
             this.view.updateObjectCount(state.performance.objectCount);
-            
+
             if (state.stage) {
                 this.view.updateStageInfo(state.stage);
             }
@@ -471,13 +469,13 @@ export class EditorController implements IEditorController {
     private handleObjectSelection(object: FabricObjectWithData | null): void {
         // Update store instead of model directly
         this.store.setSelectedObject(object);
-        
+
         this.view.showObjectProperties(object);
         this.view.enableActionButtons(!!object);
-        
-        DebugHelper.log('Object selection handled', { 
+
+        DebugHelper.log('Object selection handled', {
             hasObject: !!object,
-            objectType: object ? (object as any).data?.type : null 
+            objectType: object ? (object as any).data?.type : null
         });
     }
 
@@ -487,9 +485,9 @@ export class EditorController implements IEditorController {
     private handleObjectModified(object: FabricObjectWithData): void {
         this.updateUIFromModel();
         this.triggerAutoSave();
-        
-        DebugHelper.log('Object modification handled', { 
-            objectType: (object as any).data?.type 
+
+        DebugHelper.log('Object modification handled', {
+            objectType: (object as any).data?.type
         });
     }
 
@@ -502,9 +500,9 @@ export class EditorController implements IEditorController {
         this.model.setCurrentStage(stageData);
         this.updateUIFromModel();
         this.triggerAutoSave();
-        
-        DebugHelper.log('Stage modification handled', { 
-            objectCount: this.model.getObjectCount() 
+
+        DebugHelper.log('Stage modification handled', {
+            objectCount: this.model.getObjectCount()
         });
     }
 
@@ -515,14 +513,15 @@ export class EditorController implements IEditorController {
         if (!this.isInitialized) return;
 
         const normalizedKey = EventHelper.normalizeKeyboardEvent(e);
-        
+
         // ツールショートカット
-        const toolShortcut = KEYBOARD_SHORTCUTS.TOOLS[e.key as keyof typeof KEYBOARD_SHORTCUTS.TOOLS];
+        const toolShortcut =
+            KEYBOARD_SHORTCUTS.TOOLS[e.key as keyof typeof KEYBOARD_SHORTCUTS.TOOLS];
         if (toolShortcut) {
             this.selectTool(toolShortcut);
             return;
         }
-        
+
         // アクションショートカット
         switch (normalizedKey) {
             case 'Delete':
@@ -581,7 +580,7 @@ export class EditorController implements IEditorController {
         const json = this.model.exportStageAsJson();
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement('a');
         a.href = url;
         a.download = `stage${stageData.id}.json`;
@@ -632,7 +631,6 @@ export class EditorController implements IEditorController {
         return false;
     }
 
-
     /**
      * オブジェクトを作成（テスト用API）
      */
@@ -664,9 +662,9 @@ export class EditorController implements IEditorController {
             // Update stage data and sync with store
             this.editorSystem.updateStageDataFromCanvas();
             this.updateUIFromModel();
-            DebugHelper.log('Object created via createObject API', { 
-                tool: currentTool, 
-                position: pointer 
+            DebugHelper.log('Object created via createObject API', {
+                tool: currentTool,
+                position: pointer
             });
         } catch (error) {
             DebugHelper.log('createObject failed', error);
@@ -685,7 +683,7 @@ export class EditorController implements IEditorController {
 
             const pointer = event.absolutePointer || event.pointer;
             this.editorSystem.startPlatformDrawing(pointer.x, pointer.y);
-            
+
             DebugHelper.log('Platform drawing started', { position: pointer });
         } catch (error) {
             DebugHelper.log('startPlatformDrawing failed', error);
@@ -704,15 +702,14 @@ export class EditorController implements IEditorController {
 
             const pointer = event.absolutePointer || event.pointer;
             this.editorSystem.finishPlatformDrawing(pointer.x, pointer.y);
-            
+
             // Update stage data and sync with store
             this.editorSystem.updateStageDataFromCanvas();
             this.updateUIFromModel();
-            
+
             DebugHelper.log('Platform drawing finished', { position: pointer });
         } catch (error) {
             DebugHelper.log('finishPlatformDrawing failed', error);
         }
     }
-
 }

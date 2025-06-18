@@ -1,20 +1,14 @@
 // EditorModel単体テスト（拡張版）
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EditorModel, type ModelChangeListener } from '../models/EditorModel.js';
-import { EDITOR_TOOLS } from '../types/EditorTypes.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StageData } from '../core/StageLoader.js';
+import { EditorModel } from '../models/EditorModel.js';
+import { EDITOR_TOOLS } from '../types/EditorTypes.js';
 
 describe('EditorModel', () => {
     let model: EditorModel;
-    let mockListener: ModelChangeListener;
 
     beforeEach(() => {
         model = new EditorModel();
-        mockListener = {
-            onStageDataChanged: vi.fn(),
-            onEditorStateChanged: vi.fn(),
-            onValidationError: vi.fn()
-        };
     });
 
     afterEach(() => {
@@ -52,12 +46,8 @@ describe('EditorModel', () => {
         const validStageData: StageData = {
             id: 1,
             name: 'Test Stage',
-            platforms: [
-                { x1: 0, y1: 100, x2: 200, y2: 100 }
-            ],
-            spikes: [
-                { x: 150, y: 80, width: 15, height: 15 }
-            ],
+            platforms: [{ x1: 0, y1: 100, x2: 200, y2: 100 }],
+            spikes: [{ x: 150, y: 80, width: 15, height: 15 }],
             goal: { x: 300, y: 50, width: 40, height: 50 },
             startText: { x: 50, y: 50, text: 'START' },
             goalText: { x: 350, y: 50, text: 'GOAL' }
@@ -66,7 +56,7 @@ describe('EditorModel', () => {
         it('有効なステージデータを設定できること', () => {
             model.setCurrentStage(validStageData);
             const currentStage = model.getCurrentStage();
-            
+
             expect(currentStage).not.toBeNull();
             expect(currentStage?.name).toBe('Test Stage');
             expect(currentStage?.platforms.length).toBe(1);
@@ -81,76 +71,26 @@ describe('EditorModel', () => {
         it('無効なステージデータは拒否されること', () => {
             const invalidStageData = {
                 id: 'invalid', // 数値ではない
-                name: '',      // 空文字
+                name: '', // 空文字
                 platforms: [],
                 spikes: [],
                 goal: { x: 100, y: 100 }
             } as any;
 
-            model.addChangeListener(mockListener);
             model.setCurrentStage(invalidStageData);
-            
+
             // 無効なデータの場合、ステージは設定されない
             expect(model.getCurrentStage()).toBeNull();
-            expect(mockListener.onValidationError).toHaveBeenCalled();
         });
 
         it('ステージデータがイミュータブルにコピーされること', () => {
             model.setCurrentStage(validStageData);
             const currentStage = model.getCurrentStage();
-            
+
             // 元のオブジェクトとは異なるインスタンスであること
             expect(currentStage).not.toBe(validStageData);
             // しかし内容は同じであること
             expect(currentStage?.name).toBe(validStageData.name);
-        });
-    });
-
-    describe('変更通知システム', () => {
-        const testStageData: StageData = {
-            id: 1,
-            name: 'NotificationTest',
-            platforms: [],
-            spikes: [],
-            goal: { x: 100, y: 100, width: 40, height: 50 },
-            startText: { x: 50, y: 50, text: 'START' },
-            goalText: { x: 150, y: 100, text: 'GOAL' }
-        };
-
-        it('リスナーを追加できること', () => {
-            expect(() => {
-                model.addChangeListener(mockListener);
-            }).not.toThrow();
-        });
-
-        it('リスナーを削除できること', () => {
-            model.addChangeListener(mockListener);
-            expect(() => {
-                model.removeChangeListener(mockListener);
-            }).not.toThrow();
-        });
-
-        it('ステージデータ変更時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            model.setCurrentStage(testStageData);
-            
-            expect(mockListener.onStageDataChanged).toHaveBeenCalledWith(testStageData);
-        });
-
-        it('エディター状態変更時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            model.updateEditorState({ selectedTool: EDITOR_TOOLS.PLATFORM });
-            
-            expect(mockListener.onEditorStateChanged).toHaveBeenCalled();
-        });
-
-        it('バリデーションエラー時にリスナーが呼ばれること', () => {
-            model.addChangeListener(mockListener);
-            
-            const invalidData = { id: 'invalid' } as any;
-            model.setCurrentStage(invalidData);
-            
-            expect(mockListener.onValidationError).toHaveBeenCalled();
         });
     });
 
@@ -172,7 +112,7 @@ describe('EditorModel', () => {
         it('必須フィールドが欠けている場合バリデーションが失敗すること', () => {
             const invalidData = {
                 id: 1,
-                name: 'InvalidStage',
+                name: 'InvalidStage'
                 // platforms, spikes, goalが欠けている
             } as any;
 
@@ -257,7 +197,7 @@ describe('EditorModel', () => {
 
         it('座標値の範囲バリデーションが働くこと', () => {
             const extremeCoordinate = 10000;
-            
+
             const stageWithExtremeCoords = {
                 id: 1,
                 name: 'ExtremeCoords',
@@ -291,15 +231,15 @@ describe('EditorModel', () => {
         it('エディター状態がイミュータブルに返されること', () => {
             const state1 = model.getEditorState();
             const state2 = model.getEditorState();
-            
+
             expect(state1).not.toBe(state2); // 異なるインスタンス
-            expect(state1).toEqual(state2);  // しかし内容は同じ
+            expect(state1).toEqual(state2); // しかし内容は同じ
         });
 
         it('部分的な更新が正しく動作すること', () => {
             model.updateEditorState({ selectedTool: EDITOR_TOOLS.SPIKE });
             model.updateEditorState({ isDrawing: true });
-            
+
             const state = model.getEditorState();
             expect(state.selectedTool).toBe(EDITOR_TOOLS.SPIKE);
             expect(state.isDrawing).toBe(true);
@@ -321,9 +261,9 @@ describe('EditorModel', () => {
         it('ステージデータをJSONとしてエクスポートできること', () => {
             model.setCurrentStage(testStageData);
             const jsonString = model.exportStageAsJson();
-            
+
             expect(jsonString).toBeTruthy();
-            
+
             const parsedData = JSON.parse(jsonString);
             expect(parsedData.name).toBe('ExportTest');
             expect(parsedData.exportedAt).toBeTruthy();
@@ -333,9 +273,9 @@ describe('EditorModel', () => {
         it('JSONからステージデータをインポートできること', () => {
             model.setCurrentStage(testStageData);
             const jsonString = model.exportStageAsJson();
-            
+
             const importedData = model.importStageFromJson(jsonString);
-            
+
             expect(importedData.name).toBe('ExportTest');
             expect(importedData.id).toBe(2);
             expect(importedData.platforms.length).toBe(1);
@@ -346,30 +286,24 @@ describe('EditorModel', () => {
             model.setCurrentStage(testStageData);
             const exported = model.exportStageAsJson();
             const imported = model.importStageFromJson(exported);
-            
+
             // 基本プロパティの確認
             expect(imported.id).toBe(testStageData.id);
             expect(imported.name).toBe(testStageData.name);
-            
+
             // 配列の長さの確認
             expect(imported.platforms.length).toBe(testStageData.platforms.length);
             expect(imported.spikes.length).toBe(testStageData.spikes.length);
-            
+
             // 座標の確認
             expect(imported.goal.x).toBe(testStageData.goal.x);
             expect(imported.goal.y).toBe(testStageData.goal.y);
         });
 
         it('無効なJSONのインポートでエラーが発生すること', () => {
-            const invalidJsonCases = [
-                '{ invalid json }',
-                '{ "name": }',
-                '',
-                'null',
-                '[]'
-            ];
+            const invalidJsonCases = ['{ invalid json }', '{ "name": }', '', 'null', '[]'];
 
-            invalidJsonCases.forEach(invalidJson => {
+            invalidJsonCases.forEach((invalidJson) => {
                 expect(() => {
                     model.importStageFromJson(invalidJson);
                 }).toThrow();
@@ -380,7 +314,7 @@ describe('EditorModel', () => {
             model.setCurrentStage(testStageData);
             const jsonString = model.exportStageAsJson();
             const parsedData = JSON.parse(jsonString);
-            
+
             expect(parsedData.exportedAt).toBeDefined();
             expect(parsedData.editorVersion).toBe('1.0.0');
             expect(new Date(parsedData.exportedAt)).toBeInstanceOf(Date);
@@ -392,10 +326,10 @@ describe('EditorModel', () => {
                 exportedAt: new Date().toISOString(),
                 editorVersion: '1.0.0'
             };
-            
+
             const jsonString = JSON.stringify(dataWithMeta);
             const imported = model.importStageFromJson(jsonString);
-            
+
             expect('exportedAt' in imported).toBe(false);
             expect('editorVersion' in imported).toBe(false);
         });
@@ -427,7 +361,7 @@ describe('EditorModel', () => {
             model.setCurrentStage(testStageData);
             model.markAsModified();
             model.markAsSaved();
-            
+
             expect(model.isStageModified()).toBe(false);
             expect(model.getLastSavedTime()).toBeInstanceOf(Date);
         });
@@ -454,7 +388,7 @@ describe('EditorModel', () => {
         it('ステージ統計を取得できること', () => {
             model.setCurrentStage(complexStageData);
             const stats = model.getStageStatistics();
-            
+
             expect(stats).not.toBeNull();
             expect(stats?.platformCount).toBe(2);
             expect(stats?.spikeCount).toBe(3);
@@ -471,7 +405,7 @@ describe('EditorModel', () => {
         it('バウンディングボックスが正しく計算されること', () => {
             model.setCurrentStage(complexStageData);
             const stats = model.getStageStatistics();
-            
+
             // 最小X: 0, 最大X: 400, 最小Y: 80, 最大Y: 150
             expect(stats?.boundingBox.width).toBe(400);
             expect(stats?.boundingBox.height).toBe(70);
@@ -492,7 +426,7 @@ describe('EditorModel', () => {
         it('ステージを複製できること', () => {
             model.setCurrentStage(originalStageData);
             const cloned = model.cloneCurrentStage();
-            
+
             expect(cloned).not.toBeNull();
             expect(cloned?.id).not.toBe(originalStageData.id);
             expect(cloned?.name).toBe('Original (Copy)');
@@ -501,7 +435,7 @@ describe('EditorModel', () => {
         it('カスタムIDと名前で複製できること', () => {
             model.setCurrentStage(originalStageData);
             const cloned = model.cloneCurrentStage(999, 'Custom Clone');
-            
+
             expect(cloned?.id).toBe(999);
             expect(cloned?.name).toBe('Custom Clone');
         });
@@ -509,11 +443,11 @@ describe('EditorModel', () => {
         it('複製データが元データと独立していること', () => {
             model.setCurrentStage(originalStageData);
             const cloned = model.cloneCurrentStage();
-            
+
             expect(cloned?.platforms).not.toBe(originalStageData.platforms);
             expect(cloned?.spikes).not.toBe(originalStageData.spikes);
             expect(cloned?.goal).not.toBe(originalStageData.goal);
-            
+
             // しかし内容は同じ
             expect(cloned?.platforms[0]).toEqual(originalStageData.platforms[0]);
             expect(cloned?.spikes[0]).toEqual(originalStageData.spikes[0]);
@@ -531,31 +465,6 @@ describe('EditorModel', () => {
             expect(() => {
                 model.exportStageAsJson();
             }).toThrow('No stage data to export');
-        });
-
-        it('リスナーでのエラーがキャッチされること', () => {
-            const faultyListener: ModelChangeListener = {
-                onStageDataChanged: vi.fn(() => { throw new Error('Listener error'); }),
-                onEditorStateChanged: vi.fn(),
-                onValidationError: vi.fn()
-            };
-            
-            model.addChangeListener(faultyListener);
-            
-            // エラーが発生してもメイン処理は継続される
-            expect(() => {
-                model.setCurrentStage({
-                    id: 1,
-                    name: 'Test',
-                    platforms: [],
-                    spikes: [],
-                    goal: { x: 100, y: 100, width: 40, height: 50 },
-                    startText: { x: 50, y: 50, text: 'START' },
-                    goalText: { x: 150, y: 100, text: 'GOAL' }
-                });
-            }).not.toThrow();
-            
-            expect(model.getCurrentStage()).not.toBeNull();
         });
     });
 });

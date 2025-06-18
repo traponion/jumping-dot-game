@@ -1,17 +1,10 @@
 // エディターメインファイル - MVCアーキテクチャ統合版
 import { EditorController } from './controllers/EditorController.js';
-import { EditorView } from './views/EditorView.js';
 import { EditorModel } from './models/EditorModel.js';
+import { ERROR_CODES, ERROR_TYPES, EditorError } from './types/EditorTypes.js';
+import { DOMHelper, DebugHelper } from './utils/EditorUtils.js';
 import { globalErrorHandler } from './utils/ErrorHandler.js';
-import {
-    DOMHelper,
-    DebugHelper
-} from './utils/EditorUtils.js';
-import {
-    EditorError,
-    ERROR_CODES,
-    ERROR_TYPES
-} from './types/EditorTypes.js';
+import { EditorView } from './views/EditorView.js';
 
 /**
  * エディターアプリケーションのメインクラス
@@ -25,7 +18,7 @@ class EditorApplication {
 
     constructor() {
         DebugHelper.log('Initializing Editor Application...');
-        this.initialize().catch(error => {
+        this.initialize().catch((error) => {
             globalErrorHandler.handleError(error);
             console.error('❌ Failed to initialize Editor Application:', error);
         });
@@ -38,9 +31,9 @@ class EditorApplication {
         try {
             // 1. キャンバス要素を取得
             this.canvas = DOMHelper.getRequiredElement<HTMLCanvasElement>('editorCanvas');
-            DebugHelper.log('Canvas element found', { 
-                width: this.canvas.width, 
-                height: this.canvas.height 
+            DebugHelper.log('Canvas element found', {
+                width: this.canvas.width,
+                height: this.canvas.height
             });
 
             // 2. MVCコンポーネントを初期化
@@ -55,7 +48,6 @@ class EditorApplication {
             // 5. 初期化完了
             DebugHelper.log('Editor Application initialized successfully');
             this.showSuccessMessage('🎮 Stage Editor ready!');
-
         } catch (error) {
             const editorError = new EditorError(
                 'Failed to initialize editor application',
@@ -63,7 +55,7 @@ class EditorApplication {
                 ERROR_TYPES.SYSTEM,
                 { error }
             );
-            
+
             globalErrorHandler.handleError(editorError);
             throw editorError;
         }
@@ -78,19 +70,17 @@ class EditorApplication {
             this.model = new EditorModel();
             DebugHelper.log('EditorModel initialized');
 
-
             // View - UI管理
             this.view = new EditorView(this.canvas);
             DebugHelper.log('EditorView initialized');
 
             // Controller - ビジネスロジック制御
             this.controller = new EditorController(this.canvas, this.view, this.model);
-            
+
             // View にController参照を設定
             this.view.setController(this.controller);
-            
-            DebugHelper.log('All MVC components initialized');
 
+            DebugHelper.log('All MVC components initialized');
         } catch (error) {
             throw new EditorError(
                 'Failed to initialize MVC components',
@@ -122,9 +112,10 @@ class EditorApplication {
             async reportError(error) {
                 // UIにエラーメッセージを表示
                 if (viewRef) {
-                    const message = error instanceof EditorError 
-                        ? error.getUserMessage() 
-                        : 'An unexpected error occurred';
+                    const message =
+                        error instanceof EditorError
+                            ? error.getUserMessage()
+                            : 'An unexpected error occurred';
                     viewRef.showErrorMessage(message);
                 }
             },
@@ -145,7 +136,7 @@ class EditorApplication {
     private showSuccessMessage(message: string): void {
         // コンソールに表示
         console.log(`✅ ${message}`);
-        
+
         // UIに表示（Viewが初期化されている場合）
         if (this.view) {
             this.view.showSuccessMessage(message);
@@ -159,7 +150,7 @@ class EditorApplication {
         try {
             this.controller?.dispose();
             this.view?.dispose();
-            
+
             DebugHelper.log('Editor Application disposed');
         } catch (error) {
             globalErrorHandler.handleError(error as Error);
@@ -188,10 +179,9 @@ function initializeEditor(): void {
         window.addEventListener('beforeunload', () => {
             editorApp?.dispose();
         });
-
     } catch (error) {
         console.error('❌ Critical error during editor initialization:', error);
-        
+
         // 最後の手段：基本的なエラーメッセージを表示
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = `

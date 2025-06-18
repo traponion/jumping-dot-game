@@ -1,8 +1,8 @@
 // Mock render system for testing environment
 // Based on Fabric.js official testing patterns
 
-import type { Camera, Player } from '../types/GameTypes.js';
 import type { StageData } from '../core/StageLoader.js';
+import type { Camera, Player } from '../types/GameTypes.js';
 
 export interface MockFabricCanvas {
     width: number;
@@ -24,13 +24,13 @@ export class MockRenderSystem {
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvasElement = canvasElement;
-        
+
         // Check if canvas context is available (same as FabricRenderSystem would do)
         const context = canvasElement.getContext('2d');
         if (!context) {
             throw new Error('Failed to get 2D rendering context');
         }
-        
+
         this.mockCanvas = this.createMockCanvas();
     }
 
@@ -44,7 +44,7 @@ export class MockRenderSystem {
             getObjects: () => [],
             add: () => {},
             remove: () => {},
-            setViewportTransform: () => {},
+            setViewportTransform: () => {}
         };
     }
 
@@ -89,7 +89,12 @@ export class MockRenderSystem {
         // Mock death animation rendering
     }
 
-    renderClearAnimation(_particles: any[], _progress: number, _playerX: number, _playerY: number): void {
+    renderClearAnimation(
+        _particles: any[],
+        _progress: number,
+        _playerX: number,
+        _playerY: number
+    ): void {
         // Mock clear animation rendering
     }
 

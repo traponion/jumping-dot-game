@@ -1,4 +1,5 @@
 import { GameInputs } from 'game-inputs';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 interface GameController {
     startGame(): void;
@@ -17,7 +18,7 @@ export class InputManager {
 
     constructor(canvas: HTMLCanvasElement, gameController: GameController) {
         this.gameController = gameController;
-        
+
         // Initialize game-inputs with the canvas
         this.inputs = new GameInputs(canvas, {
             preventDefaults: true,
@@ -32,7 +33,7 @@ export class InputManager {
 
     private setupBindings(): void {
         if (!this.inputs) return;
-        
+
         // Movement controls (bind each key separately)
         this.inputs.bind('move-left', 'ArrowLeft');
         this.inputs.bind('move-left', 'KeyA');
@@ -40,10 +41,10 @@ export class InputManager {
         this.inputs.bind('move-right', 'KeyD');
         this.inputs.bind('jump', 'ArrowUp');
         this.inputs.bind('jump', 'KeyW');
-        
+
         // Game control
         this.inputs.bind('restart', 'KeyR');
-        
+
         // Menu navigation (handles both game over menu and game start)
         this.inputs.bind('menu-up', 'ArrowUp');
         this.inputs.bind('menu-down', 'ArrowDown');
@@ -58,8 +59,7 @@ export class InputManager {
         // Game restart handling with debouncing (legacy for direct restart)
         this.inputs?.down.on('restart', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            const gameState = this.gameController.getGameState();
-            
+
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
                 return; // Ignore rapid inputs
@@ -67,7 +67,7 @@ export class InputManager {
             this.lastInputTime = now;
 
             // Only allow restart when game is actually over
-            if (gameState.gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.init();
             }
         });
@@ -75,32 +75,31 @@ export class InputManager {
         // Game over menu navigation
         this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameController.getGameState().gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameController.getGameState().gameOver) {
+            if (getGameStore().isGameOver()) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
 
         this.inputs?.down.on('menu-select', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            const gameState = this.gameController.getGameState();
-            
+
             const now = Date.now();
             if (now - this.lastInputTime < this.inputCooldown) {
                 return; // Ignore rapid inputs
             }
             this.lastInputTime = now;
-            
-            if (gameState.gameOver) {
+
+            if (getGameStore().isGameOver()) {
                 // Game over menu selection
                 this.gameController.handleGameOverSelection();
-            } else if (!gameState.gameRunning) {
+            } else if (!getGameStore().isGameRunning()) {
                 // Game start (when not running and not over)
                 this.gameController.startGame();
             }
@@ -138,7 +137,6 @@ export class InputManager {
         };
     }
 
-
     // Clear all input states (equivalent to old clearKeys)
     clearInputs(): void {
         // game-inputs handles this internally, but we can reset our state
@@ -158,7 +156,7 @@ export class InputManager {
             this.inputs.up.removeAllListeners();
             this.inputs.disabled = true;
         }
-        
+
         // Clear references to prevent zombie calls
         this.inputs = null;
         this.gameController = null;

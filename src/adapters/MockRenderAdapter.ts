@@ -1,4 +1,4 @@
-import type { IRenderAdapter, EditorState, StageData, EditorCallbacks } from './IRenderAdapter.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
 
 /**
  * Mock implementation of IRenderAdapter for testing
@@ -8,7 +8,7 @@ export class MockRenderAdapter implements IRenderAdapter {
     private editorState: EditorState;
     private stageData: StageData | null = null;
     private callbacks: EditorCallbacks;
-    
+
     // Track method calls for testing
     public renderAllCalled = 0;
     public clearCanvasCalled = 0;
@@ -50,6 +50,27 @@ export class MockRenderAdapter implements IRenderAdapter {
         return { ...this.editorState };
     }
 
+    public renderGrid(enabled: boolean): void {
+        this.editorState.gridEnabled = enabled;
+    }
+
+    public getSelectedObject(): unknown | null {
+        return this.editorState.selectedObject;
+    }
+
+    public selectObject(object: unknown | null): void {
+        this.editorState.selectedObject = object;
+        this.callbacks.onObjectSelected?.(object);
+    }
+
+    public setupEventListeners(callbacks: EditorCallbacks): void {
+        this.callbacks = { ...this.callbacks, ...callbacks };
+    }
+
+    public removeEventListeners(): void {
+        // Mock implementation - no-op
+    }
+
     public setSelectedTool(tool: string): void {
         this.editorState.selectedTool = tool;
         this.toolChanges.push(tool);
@@ -88,7 +109,7 @@ export class MockRenderAdapter implements IRenderAdapter {
 
     public exportStageData(): StageData {
         this.stageExports++;
-        
+
         // Return a default stage if none loaded
         if (!this.stageData) {
             return {
@@ -101,7 +122,7 @@ export class MockRenderAdapter implements IRenderAdapter {
                 goalText: { x: 420, y: 180, text: 'GOAL' }
             };
         }
-        
+
         return { ...this.stageData };
     }
 
@@ -117,7 +138,7 @@ export class MockRenderAdapter implements IRenderAdapter {
         this.duplicateObjectCalls = 0;
         this.stageLoads = [];
         this.stageExports = 0;
-        
+
         this.editorState = {
             selectedTool: 'select',
             selectedObject: null,
@@ -125,13 +146,8 @@ export class MockRenderAdapter implements IRenderAdapter {
             gridEnabled: true,
             snapToGrid: true
         };
-        
-        this.stageData = null;
-    }
 
-    public selectObject(mockObject: any): void {
-        this.editorState.selectedObject = mockObject;
-        this.callbacks.onObjectSelected?.(mockObject);
+        this.stageData = null;
     }
 
     public simulateObjectModification(): void {
@@ -171,7 +187,7 @@ export class MockRenderAdapter implements IRenderAdapter {
         // Mock implementation - just log the call
     }
 
-    public createGoal(_x: number, _y: number, _width: number, _height: number): void {
+    public createGoal(_x: number, _y: number, _width?: number, _height?: number): void {
         // Mock implementation - just log the call
     }
 
@@ -185,5 +201,18 @@ export class MockRenderAdapter implements IRenderAdapter {
 
     public finishPlatformDrawing(_x: number, _y: number): void {
         // Mock implementation - just log the call
+    }
+    
+    // ===== Component Support Methods =====
+    
+    /**
+     * Get editable objects (mock implementation)
+     */
+    public getEditableObjects(): any[] {
+        // Return mock objects for testing
+        return [
+            { type: 'platform', data: { objectType: 'platform', x1: 100, y1: 200, x2: 200, y2: 200 } },
+            { type: 'spike', data: { objectType: 'spike', x: 150, y: 180, width: 20, height: 20 } }
+        ];
     }
 }

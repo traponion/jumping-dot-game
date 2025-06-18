@@ -85,6 +85,17 @@ beforeAll(() => {
       window.removeEventListener = () => {};
     }
     
+    // Mock CustomEvent for older test environments
+    if (typeof globalThis.CustomEvent === 'undefined') {
+      globalThis.CustomEvent = class CustomEvent extends Event {
+        detail: any;
+        constructor(type: string, eventInitDict?: CustomEventInit) {
+          super(type, eventInitDict);
+          this.detail = eventInitDict?.detail;
+        }
+      } as any;
+    }
+    
     // Mock window.confirm for EditorController tests
     if (!window.confirm) {
       window.confirm = () => true; // Default to confirm for tests
@@ -93,6 +104,11 @@ beforeAll(() => {
     // Mock window.alert for completeness
     if (!window.alert) {
       window.alert = () => {};
+    }
+    
+    // Mock window.dispatchEvent for CustomEvent testing
+    if (!window.dispatchEvent) {
+      window.dispatchEvent = () => true;
     }
     
     // Ensure window has required properties for game-inputs
