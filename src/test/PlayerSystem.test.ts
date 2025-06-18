@@ -3,6 +3,7 @@ import { PlayerSystem } from '../systems/PlayerSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
 import type { InputManager } from '../systems/InputManager.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 
 describe('PlayerSystem', () => {
     let playerSystem: PlayerSystem;
@@ -81,8 +82,8 @@ describe('PlayerSystem', () => {
         });
     });
 
-    describe('trail system', () => {
-        it('should update trail with player position', () => {
+    describe('trail system (Zustand integration)', () => {
+        it('should update trail with player position via Zustand store', () => {
             const initialTrailLength = playerSystem.getTrail().length;
 
             playerSystem.update(16.67, physics);
@@ -93,7 +94,7 @@ describe('PlayerSystem', () => {
             expect(trail[trail.length - 1]).toEqual({ x: currentPlayer.x, y: currentPlayer.y });
         });
 
-        it('should limit trail length to maximum', () => {
+        it('should limit trail length to maximum via Zustand store', () => {
             // Update many times to exceed max trail length
             for (let i = 0; i < 20; i++) {
                 getGameStore().updatePlayer({ x: i }); // Change position each time
@@ -101,6 +102,61 @@ describe('PlayerSystem', () => {
             }
 
             expect(playerSystem.getTrail().length).toBeLessThanOrEqual(8);
+        });
+
+        it('should clear trail via Zustand store action', () => {
+            // Arrange: Add some trail points
+            for (let i = 0; i < 5; i++) {
+                getGameStore().updatePlayer({ x: i * 10, y: i * 10 });
+                playerSystem.update(16.67, physics);
+            }
+            expect(playerSystem.getTrail().length).toBeGreaterThan(0);
+
+            // Act
+            playerSystem.clearTrail();
+
+            // Assert
+            expect(playerSystem.getTrail().length).toBe(0);
+            expect(getGameStore().runtime.trail.length).toBe(0);
+        });
+
+        it('should get trail from Zustand store, not local state', () => {
+            // Arrange: Directly add trail points to store
+            const directTrail = [{ x: 100, y: 200 }, { x: 150, y: 250 }];
+            getGameStore().updateTrail(directTrail);
+
+            // Act & Assert: PlayerSystem should return the store's trail
+            expect(playerSystem.getTrail()).toEqual(directTrail);
+        });
+
+        it('should respect GAME_CONFIG.player.maxTrailLength', () => {
+            // Arrange: Use the actual config value
+            const maxLength = GAME_CONFIG.player.maxTrailLength;
+            
+            // Act: Add more points than max
+            for (let i = 0; i < maxLength + 3; i++) {
+                getGameStore().updatePlayer({ x: i, y: i });
+                playerSystem.update(16.67, physics);
+            }
+
+            // Assert
+            expect(playerSystem.getTrail().length).toBe(maxLength);
+            expect(getGameStore().runtime.trail.length).toBe(maxLength);
+        });
+
+        it('should maintain trail consistency between PlayerSystem and store', () => {
+            // Arrange: Add trail points through PlayerSystem
+            for (let i = 0; i < 3; i++) {
+                getGameStore().updatePlayer({ x: i * 50, y: i * 50 });
+                playerSystem.update(16.67, physics);
+            }
+
+            // Assert: Both should return the same trail
+            const playerSystemTrail = playerSystem.getTrail();
+            const storeTrail = getGameStore().runtime.trail;
+            
+            expect(playerSystemTrail).toEqual(storeTrail);
+            expect(playerSystemTrail.length).toBe(storeTrail.length);
         });
     });
 

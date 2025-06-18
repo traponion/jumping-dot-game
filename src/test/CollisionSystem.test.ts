@@ -264,5 +264,202 @@ describe('CollisionSystem', () => {
 
             expect(result).toBe(false);
         });
+
+        it('should detect boundary collision exactly above threshold', () => {
+            const canvasHeight = 600;
+            player.y = canvasHeight + 100.1; // Just above threshold
+
+            const result = collisionSystem.checkBoundaryCollision(player, canvasHeight);
+
+            expect(result).toBe(true);
+        });
+
+        it('should not detect boundary collision just below threshold', () => {
+            const canvasHeight = 600;
+            player.y = canvasHeight + 99; // Just below threshold
+
+            const result = collisionSystem.checkBoundaryCollision(player, canvasHeight);
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('hole collision edge cases', () => {
+        it('should detect hole collision exactly at threshold', () => {
+            const holeThreshold = 500;
+            player.y = holeThreshold; // Exactly at threshold
+
+            const result = collisionSystem.checkHoleCollision(player, holeThreshold);
+
+            expect(result).toBe(false); // Should be false when exactly at threshold
+        });
+
+        it('should detect hole collision just above threshold', () => {
+            const holeThreshold = 500;
+            player.y = holeThreshold + 0.1; // Just above threshold
+
+            const result = collisionSystem.checkHoleCollision(player, holeThreshold);
+
+            expect(result).toBe(true);
+        });
+
+        it('should not detect hole collision below threshold', () => {
+            const holeThreshold = 500;
+            player.y = holeThreshold - 1; // Below threshold
+
+            const result = collisionSystem.checkHoleCollision(player, holeThreshold);
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('platform collision edge cases', () => {
+        beforeEach(() => {
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+        });
+
+        it('should not detect collision when player is horizontally aligned but moving upward', () => {
+            const platform: Platform = { x1: 90, y1: 410, x2: 110, y2: 410 };
+            const upwardMovingPlayer = { ...player, x: 100, y: 420, vy: -5, radius: 3 };
+            const prevPlayerFootY = 420;
+
+            const result = collisionSystem.checkPlatformCollision(upwardMovingPlayer, platform, prevPlayerFootY);
+
+            expect(result).toBeNull();
+        });
+
+        it('should detect collision when player exactly touches platform edge', () => {
+            const platform: Platform = { x1: 90, y1: 410, x2: 110, y2: 410 };
+            const edgePlayer = { ...player, x: 90, y: 408, vy: 2, radius: 3 };
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkPlatformCollision(edgePlayer, platform, prevPlayerFootY);
+
+            expect(result).toBeDefined();
+            expect(result?.grounded).toBe(true);
+        });
+
+        it('should not detect collision when player is just outside platform horizontally', () => {
+            const platform: Platform = { x1: 90, y1: 410, x2: 110, y2: 410 };
+            const outsidePlayer = { ...player, x: 86, y: 408, vy: 2, radius: 3 }; // 86 + 3 = 89 < 90
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkPlatformCollision(outsidePlayer, platform, prevPlayerFootY);
+
+            expect(result).toBeNull();
+        });
+
+        it('should handle multiple platform collisions correctly', () => {
+            const platforms: Platform[] = [
+                { x1: 90, y1: 410, x2: 110, y2: 410 },
+                { x1: 90, y1: 420, x2: 110, y2: 420 },
+                { x1: 90, y1: 400, x2: 110, y2: 400 }
+            ];
+            const fallingPlayer = { ...player, y: 408, vy: 5 };
+            getGameStore().updatePlayer(fallingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.handlePlatformCollisions(platforms, prevPlayerFootY);
+
+            expect(result).toBeDefined();
+            expect(result?.grounded).toBe(true);
+            // Should collide with the first platform found (y: 410)
+            expect(result?.y).toBe(407); // 410 - 3 (radius)
+        });
+    });
+
+    describe('spike collision precision', () => {
+        it('should detect collision when player center is at spike edge', () => {
+            const spike: Spike = { x: 100, y: 400, width: 10, height: 10 };
+            const edgePlayer = { ...player, x: 105, y: 405, radius: 3 };
+
+            const result = collisionSystem.checkSpikeCollision(edgePlayer, spike);
+
+            expect(result).toBe(true);
+        });
+
+        it('should not detect collision when player is just outside spike', () => {
+            const spike: Spike = { x: 100, y: 400, width: 10, height: 10 };
+            const outsidePlayer = { ...player, x: 90, y: 405, radius: 3 };
+
+            const result = collisionSystem.checkSpikeCollision(outsidePlayer, spike);
+
+            expect(result).toBe(false);
+        });
+
+        it('should handle empty spike array', () => {
+            const emptySpikes: Spike[] = [];
+
+            const result = collisionSystem.checkSpikeCollisions(player, emptySpikes);
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('goal collision precision', () => {
+        it('should detect collision when player center is at goal edge', () => {
+            const goal: Goal = { x: 100, y: 400, width: 20, height: 30 };
+            const edgePlayer = { ...player, x: 110, y: 410, radius: 3 };
+
+            const result = collisionSystem.checkGoalCollision(edgePlayer, goal);
+
+            expect(result).toBe(true);
+        });
+
+        it('should not detect collision when player is just outside goal', () => {
+            const goal: Goal = { x: 100, y: 400, width: 20, height: 30 };
+            const outsidePlayer = { ...player, x: 90, y: 410, radius: 3 };
+
+            const result = collisionSystem.checkGoalCollision(outsidePlayer, goal);
+
+            expect(result).toBe(false);
+        });
+
+        it('should handle goal collision with different player radius', () => {
+            const goal: Goal = { x: 100, y: 400, width: 20, height: 30 };
+            const largePlayer = { ...player, x: 105, y: 405, radius: 10 };
+
+            const result = collisionSystem.checkGoalCollision(largePlayer, goal);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('grounded state management', () => {
+        beforeEach(() => {
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+        });
+
+        it('should always reset grounded to false first in handlePlatformCollisions', () => {
+            // Arrange: Set player as grounded
+            getGameStore().updatePlayer({ grounded: true });
+            const platforms: Platform[] = []; // No platforms
+            const prevPlayerFootY = 400;
+
+            // Act
+            const result = collisionSystem.handlePlatformCollisions(platforms, prevPlayerFootY);
+
+            // Assert: Should return grounded: false when no collisions
+            expect(result).toEqual({ grounded: false });
+        });
+
+        it('should return first collision found when multiple platforms', () => {
+            const platforms: Platform[] = [
+                { x1: 90, y1: 420, x2: 110, y2: 420 }, // Lower platform (first in array)
+                { x1: 90, y1: 410, x2: 110, y2: 410 }, // Higher platform
+            ];
+            const fallingPlayer = { ...player, y: 408, vy: 5 };
+            getGameStore().updatePlayer(fallingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.handlePlatformCollisions(platforms, prevPlayerFootY);
+
+            expect(result).toBeDefined();
+            expect(result?.grounded).toBe(true);
+            // Should collide with the first valid platform found (y: 410, since 420 is below current position)
+            expect(result?.y).toBe(407); // 410 - 3 (radius)
+        });
     });
 });
