@@ -48,6 +48,7 @@ export interface GameStore {
 
     // Stage Management
     setCurrentStage: (stageId: number) => void;
+    setTimeLimit: (limit: number) => void;
     updateTimeRemaining: (time: number) => void;
     setFinalScore: (score: number) => void;
     markPlayerMoved: () => void;
@@ -180,6 +181,12 @@ export const gameStore = createStore<GameStore>()(
             setCurrentStage: (stageId: number) =>
                 set((state) => {
                     state.game.currentStage = stageId;
+                }),
+
+            setTimeLimit: (limit: number) =>
+                set((state) => {
+                    state.game.timeLimit = limit;
+                    state.game.timeRemaining = limit; // Reset remaining time when limit changes
                 }),
 
             updateTimeRemaining: (time: number) =>

@@ -41,6 +41,7 @@ export interface TextElement {
 export interface StageData {
     id: number;
     name: string;
+    timeLimit?: number; // Optional time limit in seconds for this stage
     platforms: Platform[];
     movingPlatforms?: MovingPlatform[];
     holes?: Hole[];
@@ -231,6 +232,7 @@ export class StageLoader {
         return {
             id: 1,
             name: 'Stage 1',
+            timeLimit: 10, // Stage 1 has 10 seconds
             platforms: [
                 // Ground sections with proper clearable gaps
                 { x1: -500, y1: 500, x2: 350, y2: 500 },
@@ -305,6 +307,7 @@ export class StageLoader {
         return {
             id: 2,
             name: 'Stage 2',
+            timeLimit: 45, // Stage 2 has 45 seconds
             platforms: [
                 // Ground sections with bigger gaps for moving platforms
                 { x1: -500, y1: 500, x2: 300, y2: 500 },

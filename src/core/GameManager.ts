@@ -90,9 +90,23 @@ export class GameManager {
     async loadStage(stageNumber: number): Promise<void> {
         try {
             this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
+
+            // Set timeLimit from stage data if available
+            if (this.stage && this.stage.timeLimit !== undefined) {
+                gameStore.getState().setTimeLimit(this.stage.timeLimit);
+            } else {
+                // Use default timeLimit from current store state
+                const defaultTimeLimit = getGameStore().game.timeLimit;
+                gameStore.getState().setTimeLimit(defaultTimeLimit);
+            }
+
         } catch (error) {
             console.error('Failed to load stage:', error);
-            this.stage = this.stageLoader.getHardcodedStage(1);
+            this.stage = this.stageLoader.getHardcodedStage(stageNumber);
+            
+            // Set timeLimit from fallback stage data
+            const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
+            gameStore.getState().setTimeLimit(fallbackTimeLimit);
         }
     }
 
