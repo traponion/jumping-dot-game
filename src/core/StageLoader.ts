@@ -218,182 +218,25 @@ export class StageLoader {
      * @returns Hardcoded stage data
      */
     getHardcodedStage(stageId: number): StageData {
-        switch (stageId) {
-            case 1:
-                return this.createHardcodedStage1();
-            case 2:
-                return this.createHardcodedStage2();
-            default:
-                return this.createHardcodedStage1();
-        }
+        console.warn(`Falling back to hardcoded stage for stageId: ${stageId}`);
+        // Always return minimal fallback stage regardless of ID
+        return this.createMinimalFallbackStage();
     }
 
-    private createHardcodedStage1(): StageData {
+    private createMinimalFallbackStage(): StageData {
+        console.warn('Creating a minimal fallback stage. Stage data might be incomplete.');
         return {
-            id: 1,
-            name: 'Stage 1',
-            timeLimit: 10, // Stage 1 has 10 seconds
+            id: 0, // ID 0 indicates error/fallback stage
+            name: 'Offline Mode',
+            timeLimit: 99, // Generous time for error recovery
             platforms: [
-                // Ground sections with proper clearable gaps
-                { x1: -500, y1: 500, x2: 350, y2: 500 },
-                { x1: 450, y1: 500, x2: 750, y2: 500 },
-                { x1: 850, y1: 500, x2: 1150, y2: 500 },
-                { x1: 1250, y1: 480, x2: 1550, y2: 480 },
-                { x1: 1650, y1: 460, x2: 1950, y2: 460 },
-                { x1: 2050, y1: 440, x2: 2350, y2: 440 },
-
-                // Floating platforms for safe landing
-                { x1: 375, y1: 420, x2: 425, y2: 420 },
-                { x1: 775, y1: 400, x2: 825, y2: 400 },
-                { x1: 1175, y1: 400, x2: 1225, y2: 400 },
-                { x1: 1575, y1: 380, x2: 1625, y2: 380 },
-                { x1: 1975, y1: 360, x2: 2025, y2: 360 }
+                { x1: 0, y1: 500, x2: 800, y2: 500 } // Single safe platform
             ],
-
-            movingPlatforms: [], // No moving platforms in stage 1
-
-            holes: [
-                // Smaller, jumpable gaps
-                { x1: 350, x2: 450 },
-                { x1: 750, x2: 850 },
-                { x1: 1150, x2: 1250 },
-                { x1: 1550, x2: 1650 },
-                { x1: 1950, x2: 2050 }
-            ],
-
-            spikes: [
-                // Fewer, more strategic spikes
-                { x: 500, y: 480, width: 15, height: 15 },
-                { x: 900, y: 480, width: 15, height: 15 },
-                { x: 1700, y: 440, width: 15, height: 15 }
-            ],
-
-            movingSpikes: [], // No moving spikes in stage 1
-
-            goal: {
-                x: 2400,
-                y: 390,
-                width: 40,
-                height: 50
-            },
-
-            startText: {
-                x: 50,
-                y: 450,
-                text: 'STAGE 1'
-            },
-
-            goalText: {
-                x: 2420,
-                y: 370,
-                text: 'GOAL'
-            },
-
-            leftEdgeMessage: {
-                x: -400,
-                y: 450,
-                text: 'NOTHING HERE'
-            },
-
-            leftEdgeSubMessage: {
-                x: -400,
-                y: 470,
-                text: 'GO RIGHT →'
-            }
-        };
-    }
-
-    private createHardcodedStage2(): StageData {
-        return {
-            id: 2,
-            name: 'Stage 2',
-            timeLimit: 45, // Stage 2 has 45 seconds
-            platforms: [
-                // Ground sections with bigger gaps for moving platforms
-                { x1: -500, y1: 500, x2: 300, y2: 500 },
-                { x1: 500, y1: 500, x2: 700, y2: 500 },
-                { x1: 900, y1: 500, x2: 1100, y2: 500 },
-                { x1: 1300, y1: 480, x2: 1500, y2: 480 },
-                { x1: 1700, y1: 460, x2: 1900, y2: 460 },
-                { x1: 2100, y1: 440, x2: 2350, y2: 440 },
-
-                // Some fixed floating platforms
-                { x1: 1150, y1: 400, x2: 1250, y2: 400 },
-                { x1: 1950, y1: 360, x2: 2050, y2: 360 }
-            ],
-
-            movingPlatforms: [
-                // Moving platforms (placeholders for now)
-                {
-                    x1: 350,
-                    y1: 450,
-                    x2: 450,
-                    y2: 450,
-                    startX: 350,
-                    endX: 450,
-                    speed: 1,
-                    direction: 1
-                },
-                {
-                    x1: 750,
-                    y1: 430,
-                    x2: 850,
-                    y2: 430,
-                    startX: 750,
-                    endX: 850,
-                    speed: 1.5,
-                    direction: -1
-                }
-            ],
-
-            holes: [
-                // Bigger gaps requiring moving platforms
-                { x1: 300, x2: 500 },
-                { x1: 700, x2: 900 },
-                { x1: 1100, x2: 1300 },
-                { x1: 1500, x2: 1700 },
-                { x1: 1900, x2: 2100 }
-            ],
-
-            spikes: [
-                { x: 550, y: 480, width: 15, height: 15 },
-                { x: 950, y: 480, width: 15, height: 15 },
-                { x: 1350, y: 460, width: 15, height: 15 },
-                { x: 1750, y: 440, width: 15, height: 15 }
-            ],
-
-            movingSpikes: [], // No moving spikes yet
-
-            goal: {
-                x: 2400,
-                y: 390,
-                width: 40,
-                height: 50
-            },
-
-            startText: {
-                x: 50,
-                y: 450,
-                text: 'STAGE 2'
-            },
-
-            goalText: {
-                x: 2420,
-                y: 370,
-                text: 'GOAL'
-            },
-
-            leftEdgeMessage: {
-                x: -400,
-                y: 450,
-                text: 'MOVING PLATFORMS!'
-            },
-
-            leftEdgeSubMessage: {
-                x: -400,
-                y: 470,
-                text: 'TIMING IS KEY →'
-            }
+            spikes: [], // No spikes for safe error recovery
+            goal: { x: 700, y: 450, width: 40, height: 50 },
+            startText: { x: 100, y: 450, text: 'Network Error' },
+            goalText: { x: 720, y: 430, text: 'GOAL' }
         };
     }
 }
+
