@@ -106,6 +106,10 @@ export class MockRenderSystem {
         // Mock game over rendering
     }
 
+    renderGameOverMenu(_options: string[], _selectedIndex: number, _finalScore: number): void {
+        // Mock game over menu rendering
+    }
+
     renderCredits(): void {
         // Mock credits rendering
     }

@@ -8,6 +8,7 @@ import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
+import type { GameUI } from './GameUI.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
@@ -342,7 +343,7 @@ export class GameManager {
     /**
      * Render the game
      */
-    render(): void {
+    render(ui?: GameUI): void {
         const renderer = this.renderSystem;
 
         renderer.clearCanvas();
@@ -377,13 +378,23 @@ export class GameManager {
 
         renderer.restoreCameraTransform();
 
-        if (!getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
+        // UI state-based rendering - consolidated in GameManager
+        if (getGameStore().isGameOver()) {
+            if (ui) {
+                const menuData = ui.getGameOverMenuData();
+                renderer.renderGameOverMenu(
+                    menuData.options,
+                    menuData.selectedIndex,
+                    getGameStore().getFinalScore()
+                );
+            }
+        } else if (!getGameStore().isGameRunning()) {
             renderer.renderStartInstruction();
         }
 
         renderer.renderCredits();
 
-        // Fabric.js specific update
+        // All rendering commands completed, now render everything
         renderer.renderAll();
     }
 
