@@ -12,7 +12,7 @@ import type {
     Position,
     Size,
     Bounds
-} from './IRenderAdapter.v2.js';
+} from './IRenderAdapter.js';
 
 /**
  * ObjectDrawer - Handles individual object drawing details

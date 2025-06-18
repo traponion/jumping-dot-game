@@ -15,7 +15,7 @@ import type {
     IStageDataConverter,
     IRenderAdapter,
     IObjectDrawer
-} from './IRenderAdapter.v2.js';
+} from './IRenderAdapter.js';
 
 /**
  * StageDataConverter - Handles Stage Data ↔ Canvas Object conversion

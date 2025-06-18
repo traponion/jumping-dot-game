@@ -11,7 +11,7 @@ import type {
     IRenderAdapter,
     IObjectDrawer,
     Position
-} from './IRenderAdapter.v2.js';
+} from './IRenderAdapter.js';
 
 /**
  * EditorInputHandler - Handles editor-specific input processing

@@ -1,4 +1,4 @@
-import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.v2.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
 
 /**
  * Mock implementation of IRenderAdapter for testing
