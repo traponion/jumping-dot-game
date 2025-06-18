@@ -74,7 +74,10 @@ export class StageLoader {
         }
 
         try {
-            const response = await fetch(`/stages/stage${stageId}.json`);
+            // Use Vite's BASE_URL to resolve correct path for both local and production environments
+            const baseUrl = import.meta.env.BASE_URL;
+            const stageUrl = `${baseUrl}stages/stage${stageId}.json`;
+            const response = await fetch(stageUrl);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
