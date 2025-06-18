@@ -236,7 +236,7 @@ describe('PlayerSystem', () => {
         });
     });
 
-    describe('Zustand store integration (TDD - should fail before fix)', () => {
+    describe('Zustand store integration', () => {
         it('should update Zustand store when player moves horizontally', () => {
             // Reset store state for clean test
             getGameStore().reset();
