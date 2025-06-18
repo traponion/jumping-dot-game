@@ -89,6 +89,36 @@ npm run test         # Run tests
 - 🔧 [API Reference](docs/api-reference.md) - Complete API specifications
 - 📋 [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
+## 🔄 Development Workflow
+
+This project follows **GitHub Flow** for simple and effective collaboration:
+
+### Quick Start for Contributors
+```bash
+# 1. Start from main branch
+git checkout main
+git pull origin main
+
+# 2. Create feature branch
+git checkout -b feature/your-feature-name
+
+# 3. Make changes and commit
+git add .
+git commit -m "feat: your feature description"
+git push -u origin feature/your-feature-name
+
+# 4. Create pull request to main
+gh pr create --base main --title "feat: Your Feature Title"
+```
+
+### Branch Strategy
+- **`main`** - Default branch (production-ready, protected)
+- **`feature/*`** - Feature development
+- **`bugfix/*`** - Bug fixes  
+- **`refactor/*`** - Code improvements
+
+All pull requests target `main` branch directly. See [Contributing Guide](CONTRIBUTING.md) for detailed guidelines.
+
 ## 🎨 Editor Features
 
 ### Tool List

@@ -135,16 +135,17 @@ npm run test:coverage
 This project follows **GitHub Flow** with branch protection:
 
 ### Branch Structure
-- `main` - Production-ready, stable code (protected)
-- `dev` - Default development branch (integration)
+- `main` - Default and production-ready branch (protected)
 - `feature/*` - Feature development branches
+- `bugfix/*` - Bug fix branches
+- `refactor/*` - Refactoring branches
 
 ### Starting Development
 
 ```bash
-# Always start from the latest dev branch
-git checkout dev
-git pull origin dev
+# Always start from the latest main branch
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
 ```
 
@@ -162,7 +163,7 @@ git push -u origin feature/your-feature-name
 ### 2. Create Pull Request
 
 ```bash
-gh pr create --base dev --title "feat: Your Feature Title" --body "
+gh pr create --base main --title "feat: Your Feature Title" --body "
 ## Summary
 - Brief description of changes
 
