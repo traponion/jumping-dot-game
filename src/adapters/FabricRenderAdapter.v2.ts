@@ -519,4 +519,27 @@ export class FabricRenderAdapterV2 implements IRenderAdapter {
         DebugHelper.log('Legacy exportStageData called');
         return stageData;
     }
+    
+    // ===== Public API for Components =====
+    // These methods allow component classes to access canvas state
+    
+    /**
+     * Get all editable objects from canvas (excluding grid objects)
+     * Used by StageDataConverter to export stage data
+     */
+    public getEditableObjects(): fabric.Object[] {
+        const allObjects = this.canvas.getObjects();
+        return allObjects.filter(obj => {
+            const data = this.objectDrawer.getObjectData(obj);
+            return !data?.isGrid; // Exclude grid objects
+        });
+    }
+    
+    /**
+     * Get canvas reference for advanced operations
+     * Used by component classes when needed
+     */
+    public getCanvas(): fabric.Canvas {
+        return this.canvas;
+    }
 }

@@ -202,4 +202,17 @@ export class MockRenderAdapter implements IRenderAdapter {
     public finishPlatformDrawing(_x: number, _y: number): void {
         // Mock implementation - just log the call
     }
+    
+    // ===== Component Support Methods =====
+    
+    /**
+     * Get editable objects (mock implementation)
+     */
+    public getEditableObjects(): any[] {
+        // Return mock objects for testing
+        return [
+            { type: 'platform', data: { objectType: 'platform', x1: 100, y1: 200, x2: 200, y2: 200 } },
+            { type: 'spike', data: { objectType: 'spike', x: 150, y: 180, width: 20, height: 20 } }
+        ];
+    }
 }

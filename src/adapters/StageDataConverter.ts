@@ -397,9 +397,13 @@ export class StageDataConverter implements IStageDataConverter {
      * Get all editable objects from canvas (excluding grid)
      */
     private getEditableObjects(): any[] {
-        // This would need to be implemented with actual canvas object retrieval
-        // For now, returning empty array as placeholder
-        // In actual implementation, this would filter out grid objects and return only editable ones
+        // Get editable objects from the adapter (excluding grid objects)
+        if (this.adapter && 'getEditableObjects' in this.adapter) {
+            return (this.adapter as any).getEditableObjects();
+        }
+        
+        // Fallback for adapters that don't implement getEditableObjects
+        DebugHelper.log('Warning: Adapter does not implement getEditableObjects, returning empty array');
         return [];
     }
 
