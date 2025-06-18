@@ -2,8 +2,8 @@
 // Based on Fabric.js official testing patterns
 // Now uses the Adapter Pattern for better testability
 
-import { FabricRenderAdapter } from '../adapters/FabricRenderAdapter.js';
-import type { EditorCallbacks, IRenderAdapter } from '../adapters/IRenderAdapter.js';
+import { FabricRenderAdapterV2 } from '../adapters/FabricRenderAdapter.v2.js';
+import type { EditorCallbacks, IRenderAdapter } from '../adapters/IRenderAdapter.v2.js';
 import { MockRenderAdapter } from '../adapters/MockRenderAdapter.js';
 import { EditorRenderSystem } from './EditorRenderSystem.js';
 import { FabricRenderSystem } from './FabricRenderSystem.js';
@@ -44,7 +44,7 @@ export function createRenderAdapter(
     }
 
     // Use Fabric.js adapter in production/development
-    return new FabricRenderAdapter(canvasElement, callbacks);
+    return new FabricRenderAdapterV2(canvasElement, callbacks);
 }
 
 export function createEditorRenderSystem(
@@ -69,6 +69,6 @@ export function isMockRenderAdapter(adapter: any): adapter is MockRenderAdapter 
     return adapter instanceof MockRenderAdapter;
 }
 
-export function isFabricRenderAdapter(adapter: any): adapter is FabricRenderAdapter {
-    return adapter instanceof FabricRenderAdapter;
+export function isFabricRenderAdapter(adapter: any): adapter is FabricRenderAdapterV2 {
+    return adapter instanceof FabricRenderAdapterV2;
 }

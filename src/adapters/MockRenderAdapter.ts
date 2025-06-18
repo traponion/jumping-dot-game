@@ -1,4 +1,4 @@
-import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.v2.js';
 
 /**
  * Mock implementation of IRenderAdapter for testing
@@ -48,6 +48,27 @@ export class MockRenderAdapter implements IRenderAdapter {
 
     public getEditorState(): EditorState {
         return { ...this.editorState };
+    }
+
+    public renderGrid(enabled: boolean): void {
+        this.editorState.gridEnabled = enabled;
+    }
+
+    public getSelectedObject(): unknown | null {
+        return this.editorState.selectedObject;
+    }
+
+    public selectObject(object: unknown | null): void {
+        this.editorState.selectedObject = object;
+        this.callbacks.onObjectSelected?.(object);
+    }
+
+    public setupEventListeners(callbacks: EditorCallbacks): void {
+        this.callbacks = { ...this.callbacks, ...callbacks };
+    }
+
+    public removeEventListeners(): void {
+        // Mock implementation - no-op
     }
 
     public setSelectedTool(tool: string): void {
@@ -129,11 +150,6 @@ export class MockRenderAdapter implements IRenderAdapter {
         this.stageData = null;
     }
 
-    public selectObject(mockObject: any): void {
-        this.editorState.selectedObject = mockObject;
-        this.callbacks.onObjectSelected?.(mockObject);
-    }
-
     public simulateObjectModification(): void {
         if (this.editorState.selectedObject) {
             this.callbacks.onObjectModified?.(this.editorState.selectedObject);
@@ -171,7 +187,7 @@ export class MockRenderAdapter implements IRenderAdapter {
         // Mock implementation - just log the call
     }
 
-    public createGoal(_x: number, _y: number, _width: number, _height: number): void {
+    public createGoal(_x: number, _y: number, _width?: number, _height?: number): void {
         // Mock implementation - just log the call
     }
 

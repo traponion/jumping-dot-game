@@ -3,7 +3,7 @@ import type {
     EditorCallbacks,
     EditorState,
     IRenderAdapter
-} from '../adapters/IRenderAdapter.js';
+} from '../adapters/IRenderAdapter.v2.js';
 import type { StageData } from '../core/StageLoader.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
 

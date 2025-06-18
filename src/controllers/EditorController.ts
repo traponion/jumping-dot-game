@@ -149,7 +149,9 @@ export class EditorController implements IEditorController {
             onStageModified: (stageData) => this.handleStageModified(stageData)
         };
 
-        this.editorSystem = createEditorRenderSystem(this.canvas, callbacks);
+        // Cast to generic adapter callbacks for v2 compatibility
+        const adapterCallbacks = callbacks as any;
+        this.editorSystem = createEditorRenderSystem(this.canvas, adapterCallbacks);
         DebugHelper.log('EditorRenderSystem initialized');
     }
 

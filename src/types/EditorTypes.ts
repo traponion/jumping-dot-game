@@ -24,9 +24,15 @@ export const EDITOR_CONFIG = {
     COLORS: {
         PLATFORM: 'white',
         SPIKE: 'white',
+        SPIKE_BORDER: 'gray',
         GOAL: 'yellow',
+        GOAL_BORDER: 'orange',
         TEXT: 'white',
         GRID: 'rgba(255, 255, 255, 0.1)'
+    },
+    TEXT: {
+        FONT_SIZE: 16,
+        FONT_FAMILY: 'Arial'
     },
     STROKE_WIDTH: {
         PLATFORM: 3,
@@ -210,7 +216,8 @@ export const ERROR_TYPES = {
     DOM: 'DOM_ERROR',
     NETWORK: 'NETWORK_ERROR',
     USER_INPUT: 'USER_INPUT_ERROR',
-    SYSTEM: 'SYSTEM_ERROR'
+    SYSTEM: 'SYSTEM_ERROR',
+    EDITOR: 'EDITOR_ERROR'
 } as const;
 
 export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
@@ -237,6 +244,13 @@ export const ERROR_CODES = {
     // ステージ関連
     STAGE_LOAD_FAILED: 'STAGE_LOAD_FAILED',
     STAGE_SAVE_FAILED: 'STAGE_SAVE_FAILED',
+    STAGE_EXPORT_FAILED: 'STAGE_EXPORT_FAILED',
+
+    // キャンバス操作関連
+    CANVAS_OPERATION_FAILED: 'CANVAS_OPERATION_FAILED',
+
+    // 汎用操作関連
+    UNSUPPORTED_OPERATION: 'UNSUPPORTED_OPERATION',
     STAGE_VALIDATION_FAILED: 'STAGE_VALIDATION_FAILED',
 
     // 入力関連
