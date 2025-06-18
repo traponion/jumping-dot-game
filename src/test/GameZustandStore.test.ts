@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import { createGameStore, getGameStore } from '../stores/GameZustandStore.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('GameZustandStore', () => {
     beforeEach(() => {
@@ -232,7 +232,7 @@ describe('GameZustandStore', () => {
     describe('Runtime State Actions', () => {
         it('should add particles correctly', () => {
             // Arrange
-            const particle = { x: 100, y: 200, vx: 1, vy: -1, life: 1.0, size: 3 };
+            const particle = { x: 100, y: 200, vx: 1, vy: -1, life: 1.0, decay: 0.1, size: 3 };
             
             // Act
             getGameStore().addParticle(particle);
@@ -243,10 +243,10 @@ describe('GameZustandStore', () => {
 
         it('should update particles array', () => {
             // Arrange
-            getGameStore().addParticle({ x: 1, y: 1, vx: 0, vy: 0, life: 1, size: 1 });
+            getGameStore().addParticle({ x: 1, y: 1, vx: 0, vy: 0, life: 1, decay: 0.1, size: 1 });
             const newParticles = [
-                { x: 10, y: 10, vx: 1, vy: 1, life: 0.8, size: 2 },
-                { x: 20, y: 20, vx: -1, vy: 1, life: 0.6, size: 3 }
+                { x: 10, y: 10, vx: 1, vy: 1, life: 0.8, decay: 0.05, size: 2 },
+                { x: 20, y: 20, vx: -1, vy: 1, life: 0.6, decay: 0.08, size: 3 }
             ];
             
             // Act
@@ -300,7 +300,7 @@ describe('GameZustandStore', () => {
             getGameStore().setFinalScore(2000);
             getGameStore().markPlayerMoved();
             getGameStore().addTrailPoint({ x: 100, y: 100 });
-            getGameStore().addParticle({ x: 50, y: 50, vx: 1, vy: 1, life: 1, size: 2 });
+            getGameStore().addParticle({ x: 50, y: 50, vx: 1, vy: 1, life: 1, decay: 0.1, size: 2 });
             
             // Act
             getGameStore().reset();

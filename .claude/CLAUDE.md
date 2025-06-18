@@ -3,14 +3,13 @@
 > **Note**: This document focuses on development workflow and GitHub Flow processes.  
 > For technical architecture and project overview, see `DEVELOPMENT_GUIDE.md` and `ARCHITECTURE.md`.
 
-## Branch Strategy (GitHub Flow)
+## Branch Strategy (GitHub Flow - Simplified)
 
-This project follows the **GitHub Flow** development strategy with branch protection rules.
+This project follows a **simplified GitHub Flow** with direct main-branch development.
 
 ### Branch Structure
 - `main` - Production-ready, stable code (protected)
-- `dev` - Default development branch (integration)
-- `feature/*` - Feature development branches
+- `feature/*` or `bugfix/*` - Short-lived development branches (disposable)
 
 ### Branch Protection Rules
 - **main branch is protected**:
@@ -24,23 +23,25 @@ This project follows the **GitHub Flow** development strategy with branch protec
 
 ### 1. Starting New Development
 ```bash
-# Always start from the latest dev branch
-git checkout dev
-git pull origin dev
+# Always start from the latest main branch
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
+# or
+git checkout -b bugfix/issue-description
 ```
 
 ### 2. Development Process
 ```bash
-# Make your changes
+# Make your changes with frequent commits
 git add .
 git commit -m "feat: description of your feature"
 git push -u origin feature/your-feature-name
 ```
 
-### 3. Create Pull Request to dev
+### 3. Create Pull Request to main
 ```bash
-gh pr create --base dev --title "feat: Your Feature Title" --body "
+gh pr create --base main --title "feat: Your Feature Title" --body "
 ## Summary
 - Brief description of changes
 
@@ -53,26 +54,20 @@ gh pr create --base dev --title "feat: Your Feature Title" --body "
 "
 ```
 
-### 4. Code Review Process
+### 4. Code Review and Merge
 - Wait for at least 1 approval from another developer
 - Address review comments if any
 - Ensure all CI/CD checks pass
-- Merge after approval
+- **Merge immediately after approval** (no dev branch integration needed)
+- **Delete feature branch** after merge to keep repository clean
 
-### 5. Release to Production (main)
+### 5. Post-Merge Cleanup
 ```bash
-# After features are tested in dev, create release PR
-gh pr create --base main --title "release: v1.x.x" --body "
-## Release Notes
-- Feature 1 description
-- Feature 2 description
-- Bug fixes
-
-## Checklist
-- [ ] All tests passing
-- [ ] Code coverage maintained
-- [ ] Documentation updated
-"
+# After successful merge, clean up local branches
+git checkout main
+git pull origin main
+git branch -d feature/your-feature-name
+git remote prune origin
 ```
 
 ## Code Quality Standards
@@ -131,15 +126,17 @@ gh run list
 ### Hotfix Process
 For urgent production fixes:
 1. Create `hotfix/description` branch from `main`
-2. Make minimal fix
-3. Create PR directly to `main` (will require admin override)
-4. After merge, also merge `main` back to `dev`
+2. Make minimal fix with tests
+3. Create PR directly to `main` (may require admin override for expedited review)
+4. Deploy immediately after merge
+5. Delete hotfix branch after successful deployment
 
 ### Rolling Back
 If issues are found in production:
 1. Revert the problematic commit on `main`
-2. Create new release
-3. Investigate and fix in `dev` branch
+2. Deploy reverted version immediately
+3. Create new feature branch to investigate and fix properly
+4. Follow normal PR process for the proper fix
 
 ## Documentation Standards
 
@@ -197,5 +194,5 @@ If issues are found in production:
 - **Alternative testing**: Use unit tests and build verification instead of live server testing when possible
 
 ---
-*Last updated: 2025-06-15*
-*This document should be updated when development processes change*
+*Last updated: 2025-06-18*
+*Updated to simplified GitHub Flow (removed dev branch) for cleaner development workflow*
