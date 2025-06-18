@@ -190,6 +190,12 @@ If issues are found in production:
 - **Review File Cleanup**: Always delete review.md files after processing them completely - this is a mandatory cleanup rule
 - **Library Documentation**: When explaining frameworks, plugins, or libraries, use Context7 (mcp__context7__resolve-library-id and mcp__context7__get-library-docs) to get the most up-to-date and accurate information instead of relying on training data
 
+### Local Development Server Constraints
+- **Cannot run `npm run dev`**: Claude cannot start or manage local development servers
+- **User responsibility**: User must start and maintain `npm run dev` session when needed for testing
+- **Request format**: When server testing is needed, ask user to start the server and provide feedback
+- **Alternative testing**: Use unit tests and build verification instead of live server testing when possible
+
 ---
 *Last updated: 2025-06-15*
 *This document should be updated when development processes change*

@@ -10,6 +10,7 @@ import type {
     Player,
     TrailPoint
 } from '../types/GameTypes.js';
+import { getCurrentTime } from '../utils/GameUtils.js';
 
 // Game Runtime State interface
 interface GameRuntimeState {
@@ -50,6 +51,8 @@ export interface GameStore {
     updateTimeRemaining: (time: number) => void;
     setFinalScore: (score: number) => void;
     markPlayerMoved: () => void;
+    updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) => void;
+    clampPlayerSpeed: (maxSpeed: number) => void;
 
     // Runtime State Actions
     updatePlayer: (player: Partial<Player>) => void;
@@ -129,7 +132,7 @@ export const gameStore = createStore<GameStore>()(
                 set((state) => {
                     state.game.gameRunning = true;
                     state.game.gameOver = false;
-                    state.game.gameStartTime = Date.now();
+                    state.game.gameStartTime = getCurrentTime();
                     state.game.timeRemaining = state.game.timeLimit;
                     state.game.finalScore = 0;
                     state.game.hasMovedOnce = false;
@@ -184,14 +187,33 @@ export const gameStore = createStore<GameStore>()(
                     state.game.timeRemaining = time;
                 }),
 
-            setFinalScore: (score: number) =>
+            // Player Movement Actions
+            updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) =>
                 set((state) => {
-                    state.game.finalScore = score;
+                    const acceleration = 0.5; // GAME_CONFIG.player.acceleration equivalent
+                    if (direction === 'left') {
+                        state.runtime.player.vx -= acceleration * dtFactor;
+                    } else {
+                        state.runtime.player.vx += acceleration * dtFactor;
+                    }
                 }),
 
             markPlayerMoved: () =>
                 set((state) => {
                     state.game.hasMovedOnce = true;
+                }),
+
+            // Physics System Actions
+            clampPlayerSpeed: (maxSpeed: number) =>
+                set((state) => {
+                    if (Math.abs(state.runtime.player.vx) > maxSpeed) {
+                        state.runtime.player.vx = state.runtime.player.vx >= 0 ? maxSpeed : -maxSpeed;
+                    }
+                }),
+
+            setFinalScore: (score: number) =>
+                set((state) => {
+                    state.game.finalScore = score;
                 }),
 
             // Runtime State Actions

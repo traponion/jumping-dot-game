@@ -69,3 +69,7 @@ jspm_packages/
 # Temporary files
 .tmp/
 .temp/
+
+# Review files (should not be committed)
+review.md
+*_review.md

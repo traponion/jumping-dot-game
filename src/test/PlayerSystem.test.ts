@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import type { KeyState, PhysicsConstants, Player } from '../types/GameTypes.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('PlayerSystem', () => {
     let player: Player;
@@ -157,6 +158,63 @@ describe('PlayerSystem', () => {
             playerSystem.clearTrail();
 
             expect(playerSystem.getTrail().length).toBe(0);
+        });
+    });
+
+    describe('Zustand store integration (TDD - should fail before fix)', () => {
+        it('should update Zustand store when player moves horizontally', () => {
+            // Reset store state for clean test
+            getGameStore().reset();
+            
+            // Mock InputManager to simulate key press
+            const mockInputManager = {
+                isPressed: vi.fn()
+            };
+            
+            // Create PlayerSystem with InputManager
+            const playerSystemWithInput = new PlayerSystem(undefined, mockInputManager as any);
+            
+            // Mock left key press
+            mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-left');
+            
+            // Get initial store state
+            const initialPlayer = getGameStore().getPlayer();
+            expect(initialPlayer.vx).toBe(0);
+            
+            // Update PlayerSystem (this should update the store, but currently doesn't)
+            playerSystemWithInput.update(16.67, physics);
+            
+            // Check if store was updated (this will fail before fix)
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vx).toBeLessThan(0); // Should be negative for left movement
+            expect(getGameStore().game.hasMovedOnce).toBe(true);
+        });
+
+        it('should update Zustand store when player moves right', () => {
+            // Reset store state for clean test
+            getGameStore().reset();
+            
+            // Mock InputManager to simulate right key press
+            const mockInputManager = {
+                isPressed: vi.fn()
+            };
+            
+            const playerSystemWithInput = new PlayerSystem(undefined, mockInputManager as any);
+            
+            // Mock right key press
+            mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-right');
+            
+            // Get initial store state
+            const initialPlayer = getGameStore().getPlayer();
+            expect(initialPlayer.vx).toBe(0);
+            
+            // Update PlayerSystem
+            playerSystemWithInput.update(16.67, physics);
+            
+            // Check if store was updated
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vx).toBeGreaterThan(0); // Should be positive for right movement
+            expect(getGameStore().game.hasMovedOnce).toBe(true);
         });
     });
 });

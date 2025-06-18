@@ -80,8 +80,7 @@ export class GameManager {
         this.inputManager = new InputManager(this.canvas, gameController);
 
         // Initialize PlayerSystem with InputManager
-        this.playerSystem = new PlayerSystem(getGameStore().getPlayer());
-        this.playerSystem.setInputManager(this.inputManager);
+        this.playerSystem = new PlayerSystem(this.inputManager);
     }
 
     /**
@@ -146,9 +145,11 @@ export class GameManager {
 
         const physicsConstants = this.physicsSystem.getPhysicsConstants();
         this.playerSystem.update(deltaTime, physicsConstants);
-        this.playerSystem.clampSpeed(physicsConstants.moveSpeed);
 
-        this.physicsSystem.update(getGameStore().getPlayer(), deltaTime);
+        this.physicsSystem.update(deltaTime);
+        
+        // Use store action for clamping speed
+        getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
@@ -161,23 +162,25 @@ export class GameManager {
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
         const platformCollision = this.collisionSystem.handlePlatformCollisions(
-            player,
             this.stage.platforms,
             prevPlayerFootY
         );
 
         if (platformCollision) {
             this.playerSystem.resetJumpTimer();
-            // Add landing history marker
-            this.renderSystem.addLandingHistory(player.x, player.y + player.radius);
+            // Get updated player state from store after collision
+            const updatedPlayer = getGameStore().getPlayer();
+            this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
         }
 
-        if (this.collisionSystem.checkSpikeCollisions(player, this.stage.spikes)) {
+        // Get latest player state from store for other collision checks
+        const latestPlayer = getGameStore().getPlayer();
+        if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
             this.handlePlayerDeath('Hit by spike! Press R to restart');
             return;
         }
 
-        if (this.collisionSystem.checkGoalCollision(player, this.stage.goal)) {
+        if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
             this.handleGoalReached();
             return;
         }
