@@ -8,8 +8,7 @@ export class PlayerSystem {
     private inputManager: InputManager | null = null;
     private hasMovedOnce = false;
     private lastJumpTime: number | null = null;
-    private trail: TrailPoint[] = [];
-    private maxTrailLength = GAME_CONFIG.player.maxTrailLength;
+    // Trail is now managed by Zustand store
 
     constructor(inputManager?: InputManager) {
         // Use Zustand store for all state management
@@ -68,10 +67,7 @@ export class PlayerSystem {
 
     private updateTrail(): void {
         const currentPlayer = getGameStore().getPlayer();
-        this.trail.push({ x: currentPlayer.x, y: currentPlayer.y });
-        if (this.trail.length > this.maxTrailLength) {
-            this.trail.shift();
-        }
+        getGameStore().addTrailPoint({ x: currentPlayer.x, y: currentPlayer.y });
     }
 
     clampSpeed(maxSpeed: number): void {
@@ -88,11 +84,11 @@ export class PlayerSystem {
     }
 
     clearTrail(): void {
-        this.trail = [];
+        getGameStore().updateTrail([]);
     }
 
     getTrail(): TrailPoint[] {
-        return [...this.trail];
+        return getGameStore().runtime.trail;
     }
 
     reset(x: number, y: number): void {
@@ -105,7 +101,7 @@ export class PlayerSystem {
         });
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        this.trail = [];
+        getGameStore().updateTrail([]);
     }
 
     getHasMovedOnce(): boolean {

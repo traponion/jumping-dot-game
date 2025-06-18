@@ -11,6 +11,7 @@ import type {
     TrailPoint
 } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 
 // Game Runtime State interface
 interface GameRuntimeState {
@@ -62,6 +63,7 @@ export interface GameStore {
     updateParticles: (particles: Particle[]) => void;
     addDeathMark: (deathMark: DeathMark) => void;
     updateTrail: (trail: TrailPoint[]) => void;
+    addTrailPoint: (point: TrailPoint) => void;
     setInitialized: (initialized: boolean) => void;
 
     // Performance Actions
@@ -197,7 +199,7 @@ export const gameStore = createStore<GameStore>()(
             // Player Movement Actions
             updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) =>
                 set((state) => {
-                    const acceleration = 0.5; // GAME_CONFIG.player.acceleration equivalent
+                    const acceleration = GAME_CONFIG.player.acceleration;
                     if (direction === 'left') {
                         state.runtime.player.vx -= acceleration * dtFactor;
                     } else {
@@ -252,6 +254,15 @@ export const gameStore = createStore<GameStore>()(
             updateTrail: (trail: TrailPoint[]) =>
                 set((state) => {
                     state.runtime.trail = trail;
+                }),
+
+            addTrailPoint: (point: TrailPoint) =>
+                set((state) => {
+                    state.runtime.trail.push(point);
+                    const maxTrailLength = GAME_CONFIG.player.maxTrailLength;
+                    if (state.runtime.trail.length > maxTrailLength) {
+                        state.runtime.trail.shift();
+                    }
                 }),
 
             setInitialized: (initialized: boolean) =>

@@ -176,16 +176,21 @@ export class GameManager {
         const player = getGameStore().getPlayer();
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
-        const platformCollision = this.collisionSystem.handlePlatformCollisions(
+        const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
             this.stage.platforms,
             prevPlayerFootY
         );
 
-        if (platformCollision) {
-            this.playerSystem.resetJumpTimer();
-            // Get updated player state from store after collision
-            const updatedPlayer = getGameStore().getPlayer();
-            this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+        if (platformCollisionUpdate) {
+            // GameManager is responsible for updating the store
+            getGameStore().updatePlayer(platformCollisionUpdate);
+            
+            if (platformCollisionUpdate.grounded) {
+                this.playerSystem.resetJumpTimer();
+                // Get updated player state from store after collision
+                const updatedPlayer = getGameStore().getPlayer();
+                this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+            }
         }
 
         // Get latest player state from store for other collision checks

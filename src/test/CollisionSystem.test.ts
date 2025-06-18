@@ -91,11 +91,12 @@ describe('CollisionSystem', () => {
                 prevPlayerFootY
             );
 
-            expect(result).toBe(true);
-            // Check that store was updated with collision result
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.y).toBe(407); // Should land on first platform
-            expect(updatedPlayer.grounded).toBe(true);
+            expect(result).toBeDefined();
+            expect(result).toEqual({
+                y: 407, // Should land on first platform
+                vy: 0,
+                grounded: true
+            });
         });
 
         it('should prevent clipping through platform with high speed movement', () => {
@@ -144,12 +145,12 @@ describe('CollisionSystem', () => {
 
             const result = collisionSystem.handlePlatformCollisions(platforms, prevPlayerFootY);
 
-            expect(result).toBe(true);
-            // Verify store was updated
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.y).toBe(407);
-            expect(updatedPlayer.vy).toBe(0);
-            expect(updatedPlayer.grounded).toBe(true);
+            expect(result).toBeDefined();
+            expect(result).toEqual({
+                y: 407,
+                vy: 0,
+                grounded: true // Collision sets grounded to true
+            });
         });
 
         it('should reset grounded to false when handlePlatformCollisions finds no collision', () => {
@@ -163,10 +164,9 @@ describe('CollisionSystem', () => {
 
             const result = collisionSystem.handlePlatformCollisions(platforms, prevPlayerFootY);
 
-            expect(result).toBe(false);
-            // Grounded should be reset to false
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.grounded).toBe(false);
+            expect(result).toEqual({
+                grounded: false // No collision, just grounded reset
+            });
         });
     });
 

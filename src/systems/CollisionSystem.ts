@@ -33,23 +33,21 @@ export class CollisionSystem {
         return null;
     }
 
-    handlePlatformCollisions(platforms: Platform[], prevPlayerFootY: number): boolean {
+    handlePlatformCollisions(platforms: Platform[], prevPlayerFootY: number): Partial<Player> | null {
         const player = getGameStore().getPlayer(); // Get latest player state from store
-        let collisionDetected = false;
-
-        // First reset grounded state
-        getGameStore().updatePlayer({ grounded: false });
+        let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
 
         for (const platform of platforms) {
             const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
             if (collisionUpdate) {
-                // Update store with collision result
-                getGameStore().updatePlayer(collisionUpdate);
-                collisionDetected = true;
-                break; // Exit on first collision
+                // Merge the collision update with the grounded reset
+                collisionResult = { ...collisionResult, ...collisionUpdate };
+                return collisionResult; // Return the first collision found
             }
         }
-        return collisionDetected;
+
+        // If no collision found, return just the grounded reset
+        return collisionResult;
     }
 
     checkSpikeCollision(player: Player, spike: Spike): boolean {
