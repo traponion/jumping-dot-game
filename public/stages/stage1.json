@@ -1,6 +1,7 @@
 {
   "id": 1,
   "name": "Stage 1",
+  "timeLimit": 10,
   "description": "Basic tutorial stage with simple jumps and obstacles",
   "platforms": [
     { "x1": -500, "y1": 500, "x2": 350, "y2": 500 },

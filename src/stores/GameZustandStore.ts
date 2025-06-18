@@ -10,6 +10,8 @@ import type {
     Player,
     TrailPoint
 } from '../types/GameTypes.js';
+import { getCurrentTime } from '../utils/GameUtils.js';
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 
 // Game Runtime State interface
 interface GameRuntimeState {
@@ -47,9 +49,12 @@ export interface GameStore {
 
     // Stage Management
     setCurrentStage: (stageId: number) => void;
+    setTimeLimit: (limit: number) => void;
     updateTimeRemaining: (time: number) => void;
     setFinalScore: (score: number) => void;
     markPlayerMoved: () => void;
+    updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) => void;
+    clampPlayerSpeed: (maxSpeed: number) => void;
 
     // Runtime State Actions
     updatePlayer: (player: Partial<Player>) => void;
@@ -58,6 +63,7 @@ export interface GameStore {
     updateParticles: (particles: Particle[]) => void;
     addDeathMark: (deathMark: DeathMark) => void;
     updateTrail: (trail: TrailPoint[]) => void;
+    addTrailPoint: (point: TrailPoint) => void;
     setInitialized: (initialized: boolean) => void;
 
     // Performance Actions
@@ -129,7 +135,7 @@ export const gameStore = createStore<GameStore>()(
                 set((state) => {
                     state.game.gameRunning = true;
                     state.game.gameOver = false;
-                    state.game.gameStartTime = Date.now();
+                    state.game.gameStartTime = getCurrentTime();
                     state.game.timeRemaining = state.game.timeLimit;
                     state.game.finalScore = 0;
                     state.game.hasMovedOnce = false;
@@ -179,19 +185,44 @@ export const gameStore = createStore<GameStore>()(
                     state.game.currentStage = stageId;
                 }),
 
+            setTimeLimit: (limit: number) =>
+                set((state) => {
+                    state.game.timeLimit = limit;
+                    state.game.timeRemaining = limit; // Reset remaining time when limit changes
+                }),
+
             updateTimeRemaining: (time: number) =>
                 set((state) => {
                     state.game.timeRemaining = time;
                 }),
 
-            setFinalScore: (score: number) =>
+            // Player Movement Actions
+            updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) =>
                 set((state) => {
-                    state.game.finalScore = score;
+                    const acceleration = GAME_CONFIG.player.acceleration;
+                    if (direction === 'left') {
+                        state.runtime.player.vx -= acceleration * dtFactor;
+                    } else {
+                        state.runtime.player.vx += acceleration * dtFactor;
+                    }
                 }),
 
             markPlayerMoved: () =>
                 set((state) => {
                     state.game.hasMovedOnce = true;
+                }),
+
+            // Physics System Actions
+            clampPlayerSpeed: (maxSpeed: number) =>
+                set((state) => {
+                    if (Math.abs(state.runtime.player.vx) > maxSpeed) {
+                        state.runtime.player.vx = state.runtime.player.vx >= 0 ? maxSpeed : -maxSpeed;
+                    }
+                }),
+
+            setFinalScore: (score: number) =>
+                set((state) => {
+                    state.game.finalScore = score;
                 }),
 
             // Runtime State Actions
@@ -223,6 +254,15 @@ export const gameStore = createStore<GameStore>()(
             updateTrail: (trail: TrailPoint[]) =>
                 set((state) => {
                     state.runtime.trail = trail;
+                }),
+
+            addTrailPoint: (point: TrailPoint) =>
+                set((state) => {
+                    state.runtime.trail.push(point);
+                    const maxTrailLength = GAME_CONFIG.player.maxTrailLength;
+                    if (state.runtime.trail.length > maxTrailLength) {
+                        state.runtime.trail.shift();
+                    }
                 }),
 
             setInitialized: (initialized: boolean) =>

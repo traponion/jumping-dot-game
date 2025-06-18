@@ -8,6 +8,7 @@ import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
+import type { GameUI } from './GameUI.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
@@ -80,8 +81,7 @@ export class GameManager {
         this.inputManager = new InputManager(this.canvas, gameController);
 
         // Initialize PlayerSystem with InputManager
-        this.playerSystem = new PlayerSystem(getGameStore().getPlayer());
-        this.playerSystem.setInputManager(this.inputManager);
+        this.playerSystem = new PlayerSystem(this.inputManager);
     }
 
     /**
@@ -90,9 +90,23 @@ export class GameManager {
     async loadStage(stageNumber: number): Promise<void> {
         try {
             this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
+
+            // Set timeLimit from stage data if available
+            if (this.stage && this.stage.timeLimit !== undefined) {
+                gameStore.getState().setTimeLimit(this.stage.timeLimit);
+            } else {
+                // Use default timeLimit from current store state
+                const defaultTimeLimit = getGameStore().game.timeLimit;
+                gameStore.getState().setTimeLimit(defaultTimeLimit);
+            }
+
         } catch (error) {
             console.error('Failed to load stage:', error);
-            this.stage = this.stageLoader.getHardcodedStage(1);
+            this.stage = this.stageLoader.getHardcodedStage(stageNumber);
+            
+            // Set timeLimit from fallback stage data
+            const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
+            gameStore.getState().setTimeLimit(fallbackTimeLimit);
         }
     }
 
@@ -146,9 +160,11 @@ export class GameManager {
 
         const physicsConstants = this.physicsSystem.getPhysicsConstants();
         this.playerSystem.update(deltaTime, physicsConstants);
-        this.playerSystem.clampSpeed(physicsConstants.moveSpeed);
 
-        this.physicsSystem.update(getGameStore().getPlayer(), deltaTime);
+        this.physicsSystem.update(deltaTime);
+        
+        // Use store action for clamping speed
+        getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
@@ -160,24 +176,31 @@ export class GameManager {
         const player = getGameStore().getPlayer();
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
-        const platformCollision = this.collisionSystem.handlePlatformCollisions(
-            player,
+        const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
             this.stage.platforms,
             prevPlayerFootY
         );
 
-        if (platformCollision) {
-            this.playerSystem.resetJumpTimer();
-            // Add landing history marker
-            this.renderSystem.addLandingHistory(player.x, player.y + player.radius);
+        if (platformCollisionUpdate) {
+            // GameManager is responsible for updating the store
+            getGameStore().updatePlayer(platformCollisionUpdate);
+            
+            if (platformCollisionUpdate.grounded) {
+                this.playerSystem.resetJumpTimer();
+                // Get updated player state from store after collision
+                const updatedPlayer = getGameStore().getPlayer();
+                this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+            }
         }
 
-        if (this.collisionSystem.checkSpikeCollisions(player, this.stage.spikes)) {
+        // Get latest player state from store for other collision checks
+        const latestPlayer = getGameStore().getPlayer();
+        if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
             this.handlePlayerDeath('Hit by spike! Press R to restart');
             return;
         }
 
-        if (this.collisionSystem.checkGoalCollision(player, this.stage.goal)) {
+        if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
             this.handleGoalReached();
             return;
         }
@@ -339,7 +362,7 @@ export class GameManager {
     /**
      * Render the game
      */
-    render(): void {
+    render(ui?: GameUI): void {
         const renderer = this.renderSystem;
 
         renderer.clearCanvas();
@@ -374,13 +397,23 @@ export class GameManager {
 
         renderer.restoreCameraTransform();
 
-        if (!getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
+        // UI state-based rendering - consolidated in GameManager
+        if (getGameStore().isGameOver()) {
+            if (ui) {
+                const menuData = ui.getGameOverMenuData();
+                renderer.renderGameOverMenu(
+                    menuData.options,
+                    menuData.selectedIndex,
+                    getGameStore().getFinalScore()
+                );
+            }
+        } else if (!getGameStore().isGameRunning()) {
             renderer.renderStartInstruction();
         }
 
         renderer.renderCredits();
 
-        // Fabric.js specific update
+        // All rendering commands completed, now render everything
         renderer.renderAll();
     }
 

@@ -128,31 +128,17 @@ export class JumpingDotGame {
         }
     }
 
-    private renderGameOverMenu(): void {
-        const menuData = this.gameUI.getGameOverMenuData();
-        this.gameManager.renderGameOverMenu(
-            menuData.options,
-            menuData.selectedIndex,
-            getGameStore().getFinalScore()
-        );
-    }
-
     private render(): void {
         // Prevent rendering if game loop has been cleaned up
         if (this.gameLoop.isCleanedUpState()) {
             return;
         }
 
-        // Delegate main rendering to GameManager
-        this.gameManager.render();
+        // Delegate all rendering to GameManager, including UI state management
+        this.gameManager.render(this.gameUI);
 
-        // Handle UI state and game over menu
-        if (!getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
-            // Start screen is handled by render system
-        } else if (getGameStore().isGameOver()) {
-            this.renderGameOverMenu();
-        } else {
-            // Update UI visibility during gameplay
+        // Update UI visibility during gameplay
+        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
             this.gameUI.updateUIVisibility(true, false);
         }
     }

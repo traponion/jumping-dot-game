@@ -1,9 +1,10 @@
 import type { Goal, Platform, Spike } from '../core/StageLoader.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from '../utils/GameUtils.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 export class CollisionSystem {
-    checkPlatformCollision(player: Player, platform: Platform, prevPlayerFootY: number): boolean {
+    checkPlatformCollision(player: Player, platform: Platform, prevPlayerFootY: number): Partial<Player> | null {
         const currentPlayerFootY = player.y + player.radius;
 
         // Basic horizontal overlap check
@@ -12,7 +13,7 @@ export class CollisionSystem {
             player.x - player.radius >= platform.x2 ||
             player.vy < 0 // Don't collide when moving upward
         ) {
-            return false;
+            return null;
         }
 
         // Enhanced collision detection for high-speed movement
@@ -21,29 +22,32 @@ export class CollisionSystem {
         const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
 
         if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
-            // Player crossed the platform - snap to surface
-            player.y = platform.y1 - player.radius;
-            player.vy = 0;
-            player.grounded = true;
-            return true;
+            // Return collision update object instead of directly modifying player
+            return {
+                y: platform.y1 - player.radius,
+                vy: 0,
+                grounded: true,
+            };
         }
 
-        return false;
+        return null;
     }
 
-    handlePlatformCollisions(
-        player: Player,
-        platforms: Platform[],
-        prevPlayerFootY: number
-    ): boolean {
-        player.grounded = false;
+    handlePlatformCollisions(platforms: Platform[], prevPlayerFootY: number): Partial<Player> | null {
+        const player = getGameStore().getPlayer(); // Get latest player state from store
+        let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
 
         for (const platform of platforms) {
-            if (this.checkPlatformCollision(player, platform, prevPlayerFootY)) {
-                return true;
+            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
+            if (collisionUpdate) {
+                // Merge the collision update with the grounded reset
+                collisionResult = { ...collisionResult, ...collisionUpdate };
+                return collisionResult; // Return the first collision found
             }
         }
-        return false;
+
+        // If no collision found, return just the grounded reset
+        return collisionResult;
     }
 
     checkSpikeCollision(player: Player, spike: Spike): boolean {

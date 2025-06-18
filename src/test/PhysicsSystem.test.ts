@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import type { PhysicsConstants, Player } from '../types/GameTypes.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('PhysicsSystem', () => {
     let player: Player;
@@ -8,6 +9,9 @@ describe('PhysicsSystem', () => {
     let constants: PhysicsConstants;
 
     beforeEach(() => {
+        // Reset store to clean state
+        getGameStore().reset();
+        
         player = {
             x: 100,
             y: 400,
@@ -16,6 +20,9 @@ describe('PhysicsSystem', () => {
             radius: 3,
             grounded: false
         };
+        
+        // Set up initial player state in store
+        getGameStore().updatePlayer(player);
 
         constants = {
             gravity: 0.6,
@@ -30,22 +37,28 @@ describe('PhysicsSystem', () => {
 
     describe('gravity application', () => {
         it('should apply gravity when player is not grounded', () => {
-            player.grounded = false;
-            const initialVy = player.vy;
+            // Set player as not grounded in store
+            getGameStore().updatePlayer({ grounded: false });
+            const initialPlayer = getGameStore().getPlayer();
+            const initialVy = initialPlayer.vy;
 
-            physicsSystem.update(player, 16.67); // 60fps frame
+            physicsSystem.update(16.67); // 60fps frame
 
             // Gravity should increase downward velocity
-            expect(player.vy).toBeGreaterThan(initialVy);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vy).toBeGreaterThan(initialVy);
         });
 
         it('should not apply gravity when player is grounded', () => {
-            player.grounded = true;
-            const initialVy = player.vy;
+            // Set player as grounded in store
+            getGameStore().updatePlayer({ grounded: true });
+            const initialPlayer = getGameStore().getPlayer();
+            const initialVy = initialPlayer.vy;
 
-            physicsSystem.update(player, 16.67);
+            physicsSystem.update(16.67);
 
-            expect(player.vy).toBe(initialVy);
+            const updatedPlayer = getGameStore().getPlayer();
+            expect(updatedPlayer.vy).toBe(initialVy);
         });
     });
 
@@ -54,11 +67,14 @@ describe('PhysicsSystem', () => {
             const initialX = player.x;
             const initialY = player.y;
 
-            physicsSystem.update(player, 16.67);
+            physicsSystem.update(16.67);
 
+            // Get updated player from store
+            const updatedPlayer = getGameStore().getPlayer();
+            
             // Position should change based on velocity and game speed
-            expect(player.x).not.toBe(initialX);
-            expect(player.y).not.toBe(initialY);
+            expect(updatedPlayer.x).not.toBe(initialX);
+            expect(updatedPlayer.y).not.toBe(initialY);
         });
 
         it('should account for game speed in position updates', () => {
@@ -68,15 +84,24 @@ describe('PhysicsSystem', () => {
             const slowPhysics = new PhysicsSystem(slowConstants);
             const fastPhysics = new PhysicsSystem(fastConstants);
 
-            const slowPlayer = { ...player };
-            const fastPlayer = { ...player };
+            // Reset store and set up initial player for slow test
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+            const initialX = player.x;
+            
+            slowPhysics.update(16.67);
+            const slowPlayer = getGameStore().getPlayer();
+            const slowDistance = Math.abs(slowPlayer.x - initialX);
 
-            slowPhysics.update(slowPlayer, 16.67);
-            fastPhysics.update(fastPlayer, 16.67);
+            // Reset store and set up initial player for fast test  
+            getGameStore().reset();
+            getGameStore().updatePlayer(player);
+            
+            fastPhysics.update(16.67);
+            const fastPlayer = getGameStore().getPlayer();
+            const fastDistance = Math.abs(fastPlayer.x - initialX);
 
             // Fast physics should move player further
-            const slowDistance = Math.abs(slowPlayer.x - player.x);
-            const fastDistance = Math.abs(fastPlayer.x - player.x);
             expect(fastDistance).toBeGreaterThan(slowDistance);
         });
     });
@@ -117,11 +142,11 @@ describe('PhysicsSystem', () => {
             const player2 = { ...player };
 
             // Simulate 30fps (33.33ms per frame)
-            physicsSystem.update(player1, 33.33);
+            physicsSystem.update(33.33);
 
             // Simulate 60fps (16.67ms per frame) x2
-            physicsSystem.update(player2, 16.67);
-            physicsSystem.update(player2, 16.67);
+            physicsSystem.update(16.67);
+            physicsSystem.update(16.67);
 
             // Results should be reasonably close (allowing for gravity accumulation)
             expect(Math.abs(player1.x - player2.x)).toBeLessThan(1.0);
