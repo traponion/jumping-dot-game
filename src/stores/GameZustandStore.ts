@@ -1,9 +1,5 @@
 /**
- * @fileoverview Refactored Zustand-based game state management store
- * @module GameZustandStore
- * @description Centralized state management for the game using Zustand library.
- * Refactored to separate business logic from state management.
- * Pure state management with domain services for complex logic.
+ * @fileoverview Refactored Zustand game state store - pure state management only
  */
 
 import { devtools } from 'zustand/middleware';
@@ -20,9 +16,6 @@ import type {
 import { getCurrentTime } from '../utils/GameUtils.js';
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 
-/**
- * Game Runtime State interface - Manages dynamic game entities and runtime data
- */
 interface GameRuntimeState {
     player: Player;
     camera: Camera;
@@ -33,9 +26,6 @@ interface GameRuntimeState {
     lastUpdateTime: number;
 }
 
-/**
- * Game Performance State interface - Tracks performance metrics and profiling data
- */
 interface GamePerformanceState {
     frameRate: number;
     renderTime: number;
@@ -43,17 +33,11 @@ interface GamePerformanceState {
     operationTime: number;
 }
 
-/**
- * Refactored Game Store interface - Pure state management only
- * Business logic moved to domain services
- */
 export interface GameStore {
-    /** Core state */
     game: GameState;
     runtime: GameRuntimeState;
     performance: GamePerformanceState;
 
-    // Pure State Management Actions
     startGame: () => void;
     pauseGame: () => void;
     resumeGame: () => void;
@@ -61,14 +45,12 @@ export interface GameStore {
     gameOver: () => void;
     restartGame: () => void;
 
-    // Stage Management (Simple State Updates)
     setCurrentStage: (stageId: number) => void;
     setTimeLimit: (limit: number) => void;
     updateTimeRemaining: (time: number) => void;
     setFinalScore: (score: number) => void;
     markPlayerMoved: () => void;
 
-    // Runtime State Actions (Simple State Updates)
     updatePlayer: (player: Partial<Player>) => void;
     updateCamera: (camera: Partial<Camera>) => void;
     addParticle: (particle: Particle) => void;
@@ -78,10 +60,8 @@ export interface GameStore {
     addTrailPoint: (point: TrailPoint) => void;
     setInitialized: (initialized: boolean) => void;
 
-    // Performance Actions
     updatePerformance: (updates: Partial<GamePerformanceState>) => void;
 
-    // Computed Getters (for compatibility)
     getGameState: () => GameState;
     getPlayer: () => Player;
     getCamera: () => Camera;
@@ -92,13 +72,9 @@ export interface GameStore {
     getFinalScore: () => number;
     hasPlayerMoved: () => boolean;
 
-    // Utility Actions
     reset: () => void;
 }
 
-/**
- * Create initial state for the game store
- */
 const createInitialState = () => ({
     game: {
         gameRunning: false,
@@ -137,17 +113,11 @@ const createInitialState = () => ({
     } as GamePerformanceState
 });
 
-/**
- * Refactored game store with pure state management
- * Business logic moved to PlayerUpdateService and GameLogicService
- */
 const gameStore = createStore<GameStore>()(
     devtools(
         immer((set, get) => ({
-            // Initial State
             ...createInitialState(),
 
-            // Core Game Actions - Pure State Management
             startGame: () =>
                 set((state) => {
                     state.game.gameRunning = true;
@@ -190,13 +160,11 @@ const gameStore = createStore<GameStore>()(
                     state.game.gameStartTime = null;
                     state.game.finalScore = 0;
                     state.game.hasMovedOnce = false;
-                    // Reset runtime state
                     state.runtime.particles = [];
                     state.runtime.deathMarks = [];
                     state.runtime.trail = [];
                 }),
 
-            // Stage Management - Simple State Updates
             setCurrentStage: (stageId: number) =>
                 set((state) => {
                     state.game.currentStage = stageId;
@@ -223,7 +191,6 @@ const gameStore = createStore<GameStore>()(
                     state.game.hasMovedOnce = true;
                 }),
 
-            // Runtime State Actions - Simple State Updates
             updatePlayer: (playerUpdates: Partial<Player>) =>
                 set((state) => {
                     Object.assign(state.runtime.player, playerUpdates);
@@ -268,13 +235,11 @@ const gameStore = createStore<GameStore>()(
                     state.runtime.isInitialized = initialized;
                 }),
 
-            // Performance Actions
             updatePerformance: (updates: Partial<GamePerformanceState>) =>
                 set((state) => {
                     Object.assign(state.performance, updates);
                 }),
 
-            // Computed Getters (for compatibility)
             getGameState: () => ({ ...get().game }),
             getPlayer: () => ({ ...get().runtime.player }),
             getCamera: () => ({ ...get().runtime.camera }),
@@ -285,35 +250,17 @@ const gameStore = createStore<GameStore>()(
             getFinalScore: () => get().game.finalScore,
             hasPlayerMoved: () => get().game.hasMovedOnce,
 
-            // Utility Actions
             reset: () => set(() => createInitialState())
         })),
         {
-            name: 'game-store' // For Redux DevTools
+            name: 'game-store'
         }
     )
 );
 
-/**
- * Get the singleton game store instance
- */
 export const getGameStore = () => gameStore.getState();
-
-/**
- * Subscribe to game store changes
- */
 export const subscribeGameStore = (listener: (state: GameStore) => void) => 
     gameStore.subscribe(listener);
-
-/**
- * Game store state type for external usage
- */
 export type GameStoreState = typeof gameStore extends { getState(): infer T } ? T : never;
-
-/**
- * React hook for using game store (if needed in React components)
- */
 export const useGameStore = () => gameStore.getState();
-
-// Export the store instance
 export { gameStore };
