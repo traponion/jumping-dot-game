@@ -9,6 +9,7 @@ import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 import type { InputManager } from './InputManager.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
+import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 
 /**
  * Player system responsible for handling player movement, input processing, auto-jump mechanics, and trail management
@@ -19,6 +20,8 @@ export class PlayerSystem {
     /** @private {InputManager | null} Input manager instance for handling user input */
     private inputManager: InputManager | null = null;
     
+        /** @private {PlayerUpdateService | null} Player update service for velocity logic */
+        private playerUpdateService: PlayerUpdateService | null = null;    
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
     
@@ -32,10 +35,18 @@ export class PlayerSystem {
      * @constructor
      * @param {InputManager} [inputManager] - Optional input manager for handling user input
      */
-    constructor(inputManager?: InputManager) {
-        // Use Zustand store for all state management
-        this.inputManager = inputManager || null;
-    }
+        /**
+         * Creates a new PlayerSystem instance
+         * @constructor
+         * @param {InputManager} [inputManager] - Optional input manager for handling user input
+         * @param {PlayerUpdateService} [playerUpdateService] - Optional player update service for velocity logic
+         */
+        constructor(inputManager?: InputManager, playerUpdateService?: PlayerUpdateService) {
+            // Use Zustand store for all state management
+            this.inputManager = inputManager || null;
+            this.playerUpdateService = playerUpdateService || null;
+        }
+
 
     /**
      * Sets the input manager for handling user input
@@ -74,9 +85,22 @@ export class PlayerSystem {
         const gameStore = getGameStore();
 
         if (leftInput || rightInput) {
-            // Use Zustand store actions to update player state
-            gameStore.updatePlayerVelocity(leftInput ? 'left' : 'right', dtFactor);
-            gameStore.markPlayerMoved();
+            // Use PlayerUpdateService for velocity updates
+            if (this.playerUpdateService) {
+                this.playerUpdateService.updatePlayerVelocity(leftInput ? 'left' : 'right', dtFactor);
+            } else {
+                // Fallback to direct store access if service not available
+                const currentPlayer = gameStore.getPlayer();
+                const acceleration = 0.3; // GAME_CONFIG.player.acceleration fallback
+                let newVx = currentPlayer.vx;
+                if (leftInput) {
+                    newVx -= acceleration * dtFactor;
+                } else {
+                    newVx += acceleration * dtFactor;
+                }
+                gameStore.updatePlayer({ vx: newVx });
+                gameStore.markPlayerMoved();
+            }
             this.hasMovedOnce = true;
         }
 

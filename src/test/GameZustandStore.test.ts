@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
+import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 
 describe('GameZustandStore', () => {
     beforeEach(() => {
@@ -155,8 +156,9 @@ describe('GameZustandStore', () => {
             const initialVx = player.vx;
             const dtFactor = 1.0;
             
-            // Act: Move right
-            getGameStore().updatePlayerVelocity('right', dtFactor);
+            // Act: Move right (using PlayerUpdateService)
+            const playerUpdateService = new PlayerUpdateService(getGameStore());
+            playerUpdateService.updatePlayerVelocity('right', dtFactor);
             
             // Assert
             const updatedPlayer = getGameStore().getPlayer();

@@ -68,6 +68,7 @@ export class EditorControllerBuilder {
         // Initialize UI-related managers
         uiManager.initialize();
         toolManager.initialize();
+        keyboardHandler.initialize();
         
         // Inject all dependencies into controller
         controller.setManagers(fileManager, keyboardHandler, drawingManager, uiManager, toolManager);

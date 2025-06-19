@@ -6,6 +6,7 @@
 
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
+import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
@@ -51,7 +52,9 @@ export class GameManager {
         | import('../systems/MockRenderSystem.js').MockRenderSystem;
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
-
+    
+        /** @private {PlayerUpdateService} Player update logic service */
+        private playerUpdateService!: PlayerUpdateService;
     // Stage
     /** @private {StageLoader} Stage data loading system */
     private stageLoader!: StageLoader;
@@ -104,8 +107,11 @@ export class GameManager {
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.canvas, gameController);
 
-        // Initialize PlayerSystem with InputManager
-        this.playerSystem = new PlayerSystem(this.inputManager);
+        // Initialize PlayerUpdateService with store
+        this.playerUpdateService = new PlayerUpdateService(getGameStore());
+        
+        // Initialize PlayerSystem with InputManager and PlayerUpdateService
+        this.playerSystem = new PlayerSystem(this.inputManager, this.playerUpdateService);
     }
 
     /**
@@ -187,8 +193,8 @@ export class GameManager {
 
         this.physicsSystem.update(deltaTime);
         
-        // Use store action for clamping speed
-        getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
+        // Use PlayerUpdateService for clamping speed
+        this.playerUpdateService.clampPlayerSpeed(physicsConstants.moveSpeed);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
