@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Game manager for coordinating all game systems and state
+ * @module core/GameManager
+ * @description Application Layer - Game systems coordination and state management
+ */
+
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
@@ -14,6 +20,8 @@ import { type StageData, StageLoader } from './StageLoader.js';
 
 /**
  * GameManager - Manages game state, systems coordination, and game logic
+ * @class GameManager
+ * @description Application Layer - Orchestrates all game systems and manages game state
  *
  * Responsibilities:
  * - Game state management and transitions
@@ -25,25 +33,41 @@ import { type StageData, StageLoader } from './StageLoader.js';
  * This class follows Single Responsibility Principle by handling only game logic and state management.
  */
 export class GameManager {
+    /** @private {HTMLCanvasElement} The main game canvas */
     private canvas: HTMLCanvasElement;
 
     // Systems
+    /** @private {PlayerSystem} Player input and movement system */
     private playerSystem!: PlayerSystem;
+    /** @private {PhysicsSystem} Physics calculations system */
     private physicsSystem!: PhysicsSystem;
+    /** @private {CollisionSystem} Collision detection system */
     private collisionSystem!: CollisionSystem;
+    /** @private {AnimationSystem} Animation and visual effects system */
     private animationSystem!: AnimationSystem;
+    /** @private {FabricRenderSystem | MockRenderSystem} Rendering system */
     private renderSystem!:
         | FabricRenderSystem
         | import('../systems/MockRenderSystem.js').MockRenderSystem;
+    /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
 
     // Stage
+    /** @private {StageLoader} Stage data loading system */
     private stageLoader!: StageLoader;
+    /** @private {StageData | null} Current stage data */
     private stage: StageData | null = null;
 
     // Game state tracking
+    /** @private {number} Previous player Y position for collision detection */
     private prevPlayerY = 0;
 
+    /**
+     * Creates a new GameManager instance
+     * @constructor
+     * @param {HTMLCanvasElement} canvas - The game canvas element
+     * @param {any} gameController - Game controller instance for UI integration
+     */
     constructor(canvas: HTMLCanvasElement, gameController: any) {
         this.canvas = canvas;
         this.initializeEntities();

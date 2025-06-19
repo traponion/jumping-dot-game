@@ -1,4 +1,10 @@
-// エディターメインファイル - MVCアーキテクチャ統合版
+/**
+ * @fileoverview Stage editor main entry point with MVC architecture integration
+ * @module editor
+ * @description Application Layer - Main entry point for the stage editor application.
+ * Implements MVC pattern with comprehensive error handling and lifecycle management.
+ */
+
 import { EditorController } from './controllers/EditorController.js';
 import { EditorModel } from './models/EditorModel.js';
 import { ERROR_CODES, ERROR_TYPES, EditorError } from './types/EditorTypes.js';
@@ -7,15 +13,26 @@ import { globalErrorHandler } from './utils/ErrorHandler.js';
 import { EditorView } from './views/EditorView.js';
 
 /**
- * エディターアプリケーションのメインクラス
- * MVCパターンによる構成で各コンポーネントを統合
+ * Main editor application class
+ * @class EditorApplication 
+ * @description Integrates MVC components for stage editor functionality.
+ * Manages application lifecycle, error handling, and component coordination.
  */
 class EditorApplication {
+    /** @private {EditorController} MVC Controller component */
     private controller!: EditorController;
+    /** @private {EditorView} MVC View component */
     private view!: EditorView;
+    /** @private {EditorModel} MVC Model component */
     private model!: EditorModel;
+    /** @private {HTMLCanvasElement} Main editor canvas element */
     private canvas!: HTMLCanvasElement;
 
+    /**
+     * Creates a new EditorApplication instance
+     * @constructor
+     * @description Initializes the editor application with error handling
+     */
     constructor() {
         DebugHelper.log('Initializing Editor Application...');
         this.initialize().catch((error) => {
@@ -25,7 +42,11 @@ class EditorApplication {
     }
 
     /**
-     * エディターアプリケーションを初期化
+     * Initialize the editor application
+     * @private
+     * @async
+     * @returns {Promise<void>} Promise that resolves when initialization is complete
+     * @description Sets up canvas, MVC components, and error handling
      */
     private async initialize(): Promise<void> {
         try {
@@ -62,7 +83,10 @@ class EditorApplication {
     }
 
     /**
-     * MVCコンポーネントを初期化
+     * Initialize MVC components
+     * @private
+     * @returns {void}
+     * @description Creates and connects Model, View, and Controller components
      */
     private initializeMVCComponents(): void {
         try {
@@ -92,7 +116,10 @@ class EditorApplication {
     }
 
     /**
-     * グローバルエラーハンドリングを設定
+     * Setup global error handling
+     * @private
+     * @returns {void}
+     * @description Configures window error events and editor-specific error reporting
      */
     private setupGlobalErrorHandling(): void {
         // 未処理のエラーをキャッチ
@@ -131,7 +158,11 @@ class EditorApplication {
     }
 
     /**
-     * 成功メッセージを表示
+     * Show success message
+     * @private
+     * @param {string} message - Success message to display
+     * @returns {void}
+     * @description Displays success message in console and UI
      */
     private showSuccessMessage(message: string): void {
         // コンソールに表示
@@ -144,7 +175,10 @@ class EditorApplication {
     }
 
     /**
-     * アプリケーションをクリーンアップ
+     * Cleanup the application
+     * @public
+     * @returns {void}
+     * @description Disposes of MVC components and cleans up resources
      */
     public dispose(): void {
         try {
@@ -159,7 +193,10 @@ class EditorApplication {
 }
 
 /**
- * エディターアプリケーションの初期化と起動
+ * Initialize and launch the editor application
+ * @function initializeEditor
+ * @returns {void}
+ * @description Entry point function that sets up DOM loading and error handling
  */
 function initializeEditor(): void {
     try {
@@ -201,12 +238,18 @@ function initializeEditor(): void {
     }
 }
 
-// デバッグ情報の出力
+/**
+ * Debug information output
+ * @description Logs editor module loading information for debugging
+ */
 DebugHelper.log('Editor module loaded', {
     timestamp: new Date().toISOString(),
     userAgent: navigator.userAgent,
     url: window.location.href
 });
 
-// エディター初期化を実行
+/**
+ * Execute editor initialization
+ * @description Starts the editor application initialization process
+ */
 initializeEditor();

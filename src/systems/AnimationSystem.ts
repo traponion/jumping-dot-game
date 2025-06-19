@@ -1,12 +1,32 @@
+/**
+ * @fileoverview Animation system for particle effects and visual feedback
+ * @module systems/AnimationSystem
+ * @description Domain Layer - Manages particle-based animations for game events.
+ * Handles stage clear celebrations and death effect animations with physics simulation.
+ */
+
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { AnimationSystem as AnimationData, DeathMark, Player } from '../types/GameTypes.js';
 import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
 
+/**
+ * Animation system for particle effects and visual feedback
+ * @class AnimationSystem
+ * @description Manages particle-based animations for stage clear and death events
+ */
 export class AnimationSystem {
+    /** @private {AnimationData} Stage clear celebration animation */
     private clearAnimation: AnimationData;
+    /** @private {AnimationData} Player death explosion animation */
     private deathAnimation: AnimationData;
+    /** @private {DeathMark[]} Array of death location markers */
     private deathMarks: DeathMark[] = [];
 
+    /**
+     * Creates a new AnimationSystem instance
+     * @constructor
+     * @description Initializes clear and death animation configurations
+     */
     constructor() {
         this.clearAnimation = {
             active: false,
@@ -23,6 +43,12 @@ export class AnimationSystem {
         };
     }
 
+    /**
+     * Start stage clear celebration animation
+     * @param {Player} player - Player object for particle spawn position
+     * @returns {void}
+     * @description Creates celebratory particles around player position when stage is cleared
+     */
     startClearAnimation(player: Player): void {
         this.clearAnimation.active = true;
         this.clearAnimation.startTime = getCurrentTime();
@@ -40,6 +66,11 @@ export class AnimationSystem {
         }
     }
 
+    /**
+     * Update stage clear animation particles
+     * @returns {void}
+     * @description Updates particle physics and removes expired particles
+     */
     updateClearAnimation(): void {
         if (!this.clearAnimation.active || this.clearAnimation.startTime === null) return;
 
@@ -64,6 +95,12 @@ export class AnimationSystem {
         }
     }
 
+    /**
+     * Start player death explosion animation
+     * @param {Player} player - Player object for explosion center position
+     * @returns {void}
+     * @description Creates radial explosion particles when player dies
+     */
     startDeathAnimation(player: Player): void {
         this.deathAnimation.active = true;
         this.deathAnimation.startTime = getCurrentTime();
@@ -85,6 +122,11 @@ export class AnimationSystem {
         }
     }
 
+    /**
+     * Update death animation particles
+     * @returns {void}
+     * @description Updates explosion particle physics and removes expired particles
+     */
     updateDeathAnimation(): void {
         if (!this.deathAnimation.active || this.deathAnimation.startTime === null) return;
 
@@ -109,6 +151,13 @@ export class AnimationSystem {
         }
     }
 
+    /**
+     * Add death marker at specified location
+     * @param {number} x - X coordinate of death location
+     * @param {number} y - Y coordinate of death location
+     * @returns {void}
+     * @description Records death location for visual feedback
+     */
     addDeathMark(x: number, y: number): void {
         this.deathMarks.push({
             x,
@@ -117,18 +166,35 @@ export class AnimationSystem {
         });
     }
 
+    /**
+     * Get stage clear animation data
+     * @returns {AnimationData} Current clear animation state
+     */
     getClearAnimation(): AnimationData {
         return this.clearAnimation;
     }
 
+    /**
+     * Get death animation data
+     * @returns {AnimationData} Current death animation state
+     */
     getDeathAnimation(): AnimationData {
         return this.deathAnimation;
     }
 
+    /**
+     * Get copy of death marks array
+     * @returns {DeathMark[]} Array of death location markers
+     */
     getDeathMarks(): DeathMark[] {
         return [...this.deathMarks];
     }
 
+    /**
+     * Reset all animations to initial state
+     * @returns {void}
+     * @description Stops all animations and clears particles
+     */
     reset(): void {
         this.clearAnimation.active = false;
         this.clearAnimation.startTime = null;
@@ -139,6 +205,10 @@ export class AnimationSystem {
         this.deathAnimation.particles = [];
     }
 
+    /**
+     * Check if any animation is currently active
+     * @returns {boolean} True if any animation is running
+     */
     isAnyAnimationActive(): boolean {
         return this.clearAnimation.active || this.deathAnimation.active;
     }

@@ -1,4 +1,17 @@
-// Type definitions for stage system
+/**
+ * @fileoverview Stage data loading and management system
+ * @module core/StageLoader
+ * @description Domain Layer - Stage data loading with JSON support and fallback mechanisms
+ */
+
+/**
+ * Platform interface representing a static platform in the game
+ * @interface Platform
+ * @property {number} x1 - Starting x coordinate
+ * @property {number} y1 - Starting y coordinate  
+ * @property {number} x2 - Ending x coordinate
+ * @property {number} y2 - Ending y coordinate
+ */
 export interface Platform {
     x1: number;
     y1: number;
@@ -6,6 +19,15 @@ export interface Platform {
     y2: number;
 }
 
+/**
+ * Moving platform interface extending static platform with movement properties
+ * @interface MovingPlatform
+ * @extends Platform
+ * @property {number} startX - Starting x position for movement
+ * @property {number} endX - Ending x position for movement
+ * @property {number} speed - Movement speed in pixels per frame
+ * @property {number} direction - Movement direction (1 or -1)
+ */
 export interface MovingPlatform extends Platform {
     startX: number;
     endX: number;
@@ -13,6 +35,14 @@ export interface MovingPlatform extends Platform {
     direction: number;
 }
 
+/**
+ * Spike interface representing a dangerous spike obstacle
+ * @interface Spike
+ * @property {number} x - X coordinate of spike
+ * @property {number} y - Y coordinate of spike
+ * @property {number} width - Width of spike hitbox
+ * @property {number} height - Height of spike hitbox
+ */
 export interface Spike {
     x: number;
     y: number;
@@ -20,11 +50,25 @@ export interface Spike {
     height: number;
 }
 
+/**
+ * Hole interface representing a pit or gap in the stage
+ * @interface Hole
+ * @property {number} x1 - Starting x coordinate of hole
+ * @property {number} x2 - Ending x coordinate of hole
+ */
 export interface Hole {
     x1: number;
     x2: number;
 }
 
+/**
+ * Goal interface representing the target area to reach
+ * @interface Goal
+ * @property {number} x - X coordinate of goal
+ * @property {number} y - Y coordinate of goal
+ * @property {number} width - Width of goal area
+ * @property {number} height - Height of goal area
+ */
 export interface Goal {
     x: number;
     y: number;
@@ -32,12 +76,36 @@ export interface Goal {
     height: number;
 }
 
+/**
+ * Text element interface for stage UI text
+ * @interface TextElement
+ * @property {number} x - X coordinate for text display
+ * @property {number} y - Y coordinate for text display
+ * @property {string} text - Text content to display
+ */
 export interface TextElement {
     x: number;
     y: number;
     text: string;
 }
 
+/**
+ * Complete stage data interface containing all stage elements
+ * @interface StageData
+ * @property {number} id - Unique stage identifier
+ * @property {string} name - Human-readable stage name
+ * @property {number} [timeLimit] - Optional time limit in seconds for this stage
+ * @property {Platform[]} platforms - Array of static platforms
+ * @property {MovingPlatform[]} [movingPlatforms] - Optional array of moving platforms
+ * @property {Hole[]} [holes] - Optional array of holes/pits
+ * @property {Spike[]} spikes - Array of spike obstacles
+ * @property {Spike[]} [movingSpikes] - Optional array of moving spikes
+ * @property {Goal} goal - Goal area to reach
+ * @property {TextElement} startText - Text shown at stage start
+ * @property {TextElement} goalText - Text shown at goal
+ * @property {TextElement} [leftEdgeMessage] - Optional message at left edge
+ * @property {TextElement} [leftEdgeSubMessage] - Optional sub-message at left edge
+ */
 export interface StageData {
     id: number;
     name: string;
@@ -54,9 +122,19 @@ export interface StageData {
     leftEdgeSubMessage?: TextElement;
 }
 
+/**
+ * Stage data loader with caching and fallback mechanisms
+ * @class StageLoader
+ * @description Handles loading stage data from JSON files with validation and error recovery
+ */
 export class StageLoader {
+    /** @private {Map<number, StageData>} Cached stage data for performance */
     private cache: Map<number, StageData>;
 
+    /**
+     * Creates a new StageLoader instance
+     * @constructor
+     */
     constructor() {
         this.cache = new Map();
     }
@@ -113,53 +191,11 @@ export class StageLoader {
     }
 
     /**
-     * Validate stage data structure
-     * @param stageData - Stage data to validate
-     * @throws If stage data is invalid
+     * Validate stage data structure and throw error if invalid
+     * @param {unknown} stageData - Stage data to validate
+     * @throws {Error} If stage data is invalid
+     * @returns {asserts stageData is StageData} Type assertion for valid stage data
      */
-    private isValidStageData(data: unknown): data is Record<string, unknown> {
-        return typeof data === 'object' && data !== null;
-    }
-
-    private hasRequiredFields(data: Record<string, unknown>): boolean {
-        const requiredFields = [
-            'id',
-            'name',
-            'platforms',
-            'spikes',
-            'goal',
-            'startText',
-            'goalText'
-        ];
-
-        return requiredFields.every((field) => field in data);
-    }
-
-    private isValidGoal(
-        goal: unknown
-    ): goal is { x: number; y: number; width: number; height: number } {
-        return (
-            typeof goal === 'object' &&
-            goal !== null &&
-            typeof (goal as any).x === 'number' &&
-            typeof (goal as any).y === 'number' &&
-            typeof (goal as any).width === 'number' &&
-            typeof (goal as any).height === 'number'
-        );
-    }
-
-    private isValidTextElement(
-        textObj: unknown
-    ): textObj is { x: number; y: number; text: string } {
-        return (
-            typeof textObj === 'object' &&
-            textObj !== null &&
-            typeof (textObj as any).x === 'number' &&
-            typeof (textObj as any).y === 'number' &&
-            typeof (textObj as any).text === 'string'
-        );
-    }
-
     validateStage(stageData: unknown): asserts stageData is StageData {
         if (!this.isValidStageData(stageData)) {
             throw new Error('Invalid stage data: must be an object');
@@ -216,6 +252,73 @@ export class StageLoader {
     }
 
     /**
+     * Checks if data is a valid stage data object
+     * @private
+     * @param {unknown} data - Data to check
+     * @returns {boolean} True if data is a valid object
+     */
+    private isValidStageData(data: unknown): data is Record<string, unknown> {
+        return typeof data === 'object' && data !== null;
+    }
+
+    /**
+     * Checks if stage data has all required fields
+     * @private
+     * @param {Record<string, unknown>} data - Stage data object to check
+     * @returns {boolean} True if all required fields are present
+     */
+    private hasRequiredFields(data: Record<string, unknown>): boolean {
+        const requiredFields = [
+            'id',
+            'name',
+            'platforms',
+            'spikes',
+            'goal',
+            'startText',
+            'goalText'
+        ];
+
+        return requiredFields.every((field) => field in data);
+    }
+
+    /**
+     * Validates goal object structure
+     * @private
+     * @param {unknown} goal - Goal object to validate
+     * @returns {boolean} True if goal has valid structure
+     */
+    private isValidGoal(
+        goal: unknown
+    ): goal is { x: number; y: number; width: number; height: number } {
+        return (
+            typeof goal === 'object' &&
+            goal !== null &&
+            typeof (goal as any).x === 'number' &&
+            typeof (goal as any).y === 'number' &&
+            typeof (goal as any).width === 'number' &&
+            typeof (goal as any).height === 'number'
+        );
+    }
+
+    /**
+     * Validates text element object structure
+     * @private
+     * @param {unknown} textObj - Text element to validate
+     * @returns {boolean} True if text element has valid structure
+     */
+    private isValidTextElement(
+        textObj: unknown
+    ): textObj is { x: number; y: number; text: string } {
+        return (
+            typeof textObj === 'object' &&
+            textObj !== null &&
+            typeof (textObj as any).x === 'number' &&
+            typeof (textObj as any).y === 'number' &&
+            typeof (textObj as any).text === 'string'
+        );
+    }
+
+    /**
      * Get hardcoded stage data as fallback
      * @param stageId - Stage ID
      * @returns Hardcoded stage data
@@ -226,6 +329,11 @@ export class StageLoader {
         return this.createMinimalFallbackStage();
     }
 
+    /**
+     * Creates a minimal fallback stage for error recovery
+     * @private
+     * @returns {StageData} Safe fallback stage with minimal obstacles
+     */
     private createMinimalFallbackStage(): StageData {
         console.warn('Creating a minimal fallback stage. Stage data might be incomplete.');
         return {

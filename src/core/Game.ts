@@ -1,17 +1,36 @@
+/**
+ * @fileoverview Main game class orchestrating all game components
+ * @module core/Game
+ * @description Application Layer - Main game orchestrator and entry point
+ */
+
 import { getGameStore } from '../stores/GameZustandStore.js';
 import type { GameState } from '../types/GameTypes.js';
 import { GameLoop } from './GameLoop.js';
 import { GameManager } from './GameManager.js';
 import { GameUI } from './GameUI.js';
 
+/**
+ * Main game class that orchestrates all game components
+ * @class JumpingDotGame
+ * @description Entry point for the jumping dot game, coordinates UI, loop, and manager
+ */
 export class JumpingDotGame {
+    /** @private {HTMLCanvasElement} Main game canvas */
     private canvas: HTMLCanvasElement;
 
     // Component classes following Single Responsibility Principle
+    /** @private {GameUI} UI management component */
     private gameUI: GameUI;
+    /** @private {GameLoop} Game loop timing component */
     private gameLoop: GameLoop;
+    /** @private {GameManager} Game logic management component */
     private gameManager: GameManager;
 
+    /**
+     * Creates a new JumpingDotGame instance
+     * @constructor
+     */
     constructor() {
         this.canvas = this.getRequiredElement('gameCanvas') as HTMLCanvasElement;
 
@@ -28,6 +47,13 @@ export class JumpingDotGame {
         this.setupGameManagerCallbacks();
     }
 
+    /**
+     * Gets a required DOM element by ID, throws error if not found
+     * @private
+     * @param {string} id - DOM element ID to find
+     * @returns {HTMLElement} The found DOM element
+     * @throws {Error} If element is not found
+     */
     private getRequiredElement(id: string): HTMLElement {
         const element = document.getElementById(id);
         if (!element) {
@@ -36,6 +62,11 @@ export class JumpingDotGame {
         return element;
     }
 
+    /**
+     * Initializes the game and loads the first stage
+     * @async
+     * @returns {Promise<void>} Promise that resolves when initialization is complete
+     */
     async init(): Promise<void> {
         this.gameLoop.resetCleanupState(); // Reset cleanup flag
         this.gameUI.showLoading();

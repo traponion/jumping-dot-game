@@ -73,3 +73,9 @@ jspm_packages/
 # Review files (should not be committed)
 review.md
 *_review.md
+
+# claude settings
+.mcp.json
+
+# serena
+.serena/

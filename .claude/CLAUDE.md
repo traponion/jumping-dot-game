@@ -193,6 +193,122 @@ If issues are found in production:
 - **Request format**: When server testing is needed, ask user to start the server and provide feedback
 - **Alternative testing**: Use unit tests and build verification instead of live server testing when possible
 
+## Serena MCP Code Intelligence Tool
+
+### Overview
+Serena is an advanced code intelligence tool that provides semantic understanding of the codebase through symbol-based analysis. It serves as a powerful alternative to LSP (Language Server Protocol) with additional project memory capabilities.
+
+### Essential Serena Commands
+
+#### Code Discovery & Analysis
+```typescript
+// Find symbols (classes, methods, etc.) with optional body content
+mcp__serena__find_symbol({
+    name_path: "GameManager",           // Symbol name or path
+    relative_path: "src/core",          // Restrict to file/directory
+    include_body: false,                // Include source code
+    depth: 1                            // Include children (methods, properties)
+})
+
+// Find all references to a symbol
+mcp__serena__find_referencing_symbols({
+    name_path: "GameManager",
+    relative_path: "src/core/GameManager.ts"
+})
+
+// Get overview of symbols in a file/directory
+mcp__serena__get_symbols_overview({
+    relative_path: "src/core"
+})
+
+// Search for patterns in code
+mcp__serena__search_for_pattern({
+    pattern: "function.*calculate.*",    // Regex pattern
+    only_in_code_files: true
+})
+```
+
+#### Code Editing
+```typescript
+// Replace entire symbol body
+mcp__serena__replace_symbol_body({
+    name_path: "GameManager/update",
+    relative_path: "src/core/GameManager.ts",
+    body: "update(deltaTime: number): void {\n    // New implementation\n}"
+})
+
+// Insert code before/after symbols
+mcp__serena__insert_after_symbol({
+    name_path: "GameManager",
+    relative_path: "src/core/GameManager.ts",
+    body: "// New method implementation"
+})
+
+// Regex-based replacements for complex edits
+mcp__serena__replace_regex({
+    relative_path: "src/core/GameManager.ts",
+    regex: "const.*oldVariable.*=.*",
+    repl: "const newVariable = newValue;"
+})
+```
+
+#### Project Memory & Context
+```typescript
+// Write project knowledge to memory
+mcp__serena__write_memory({
+    memory_name: "architecture_patterns.md",
+    content: "# Project uses MVC pattern with Adapter design..."
+})
+
+// Read existing memories
+mcp__serena__read_memory({
+    memory_file_name: "suggested_commands.md"
+})
+
+// List all available memories
+mcp__serena__list_memories()
+```
+
+### Serena Workflow Best Practices
+
+#### Before Starting Work
+1. Call `mcp__serena__initial_instructions()` to understand context
+2. Check if onboarding is complete with `mcp__serena__check_onboarding_performed()`
+3. Read relevant memories to understand project structure
+
+#### Code Analysis Workflow
+1. **High-level overview**: Use `get_symbols_overview()` for directory structure
+2. **Find specific symbols**: Use `find_symbol()` with appropriate `name_path`
+3. **Understand relationships**: Use `find_referencing_symbols()` to see usage
+4. **Think about information**: Always call `think_about_collected_information()`
+
+#### Editing Workflow
+1. **Before editing**: Call `think_about_task_adherence()` to stay on track
+2. **Choose editing method**:
+   - Symbol-level: Use `replace_symbol_body()` for whole functions/classes
+   - Precise edits: Use `replace_regex()` for smaller changes
+3. **After editing**: Call `think_about_whether_you_are_done()`
+4. **Summarize changes**: Use `summarize_changes()` when task is complete
+
+### Symbol Name Path Patterns
+- **Simple name**: `"GameManager"` - matches any symbol with this name
+- **Relative path**: `"GameManager/update"` - method within class
+- **Absolute path**: `"/GameManager"` - only top-level symbols
+- **Depth parameter**: Include child symbols (methods, properties)
+
+### Memory Management
+- Store project-specific knowledge in memory files
+- Use descriptive memory names (e.g., `"testing_patterns.md"`)
+- Read memories that are relevant to current task
+- Update memories when project structure changes
+
+### Advantages over Traditional LSP
+- **Project context awareness**: Remembers project structure and patterns
+- **Robust symbol resolution**: Works reliably across complex codebases  
+- **Advanced editing capabilities**: Symbol-level and regex-based modifications
+- **Integrated thinking**: Built-in analysis and reflection tools
+- **Memory persistence**: Maintains project knowledge across sessions
+
 ---
-*Last updated: 2025-06-18*
-*Updated to simplified GitHub Flow (removed dev branch) for cleaner development workflow*
+*Last updated: 2025-06-19*
+*Added Serena MCP code intelligence tool documentation*
