@@ -6,6 +6,7 @@
  */
 
 import { EditorController } from './controllers/EditorController.js';
+import { EditorControllerBuilder } from './controllers/EditorControllerBuilder.js';
 import { EditorModel } from './models/EditorModel.js';
 import { ERROR_CODES, ERROR_TYPES, EditorError } from './types/EditorTypes.js';
 import { DOMHelper, DebugHelper } from './utils/EditorUtils.js';
@@ -98,8 +99,9 @@ class EditorApplication {
             this.view = new EditorView(this.canvas);
             DebugHelper.log('EditorView initialized');
 
-            // Controller - ビジネスロジック制御
-            this.controller = new EditorController(this.canvas, this.view, this.model);
+            // Controller - ビジネスロジック制御 (using Builder pattern)
+            const builder = new EditorControllerBuilder(this.canvas, this.view, this.model);
+            this.controller = builder.build();
 
             // View にController参照を設定
             this.view.setController(this.controller);

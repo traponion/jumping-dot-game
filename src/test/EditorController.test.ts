@@ -122,7 +122,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Initialization', () => {
         it('should initialize controller successfully', async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
 
             await expect(controller.initialize()).resolves.toBeUndefined();
 
@@ -132,7 +132,7 @@ describe('EditorController (Adapter Pattern)', () => {
         });
 
         it('should create new stage on initialization', async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
 
             expect(mockModel.setCurrentStage).toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('EditorController (Adapter Pattern)', () => {
         });
 
         it('should setup Zustand store connection', async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
 
             const store = getEditorStore();
@@ -150,7 +150,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Tool Management', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset(); // Reset counters after initialization
         });
@@ -179,7 +179,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Object Operations', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
 
@@ -214,7 +214,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Grid and Snap Operations', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
         });
@@ -240,7 +240,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Stage Management', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
         });
@@ -274,13 +274,13 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Event Handling', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
         });
 
         it('should handle object selection callback', async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
 
             const mockObject = { id: 'test-object', type: 'goal' };
@@ -293,7 +293,7 @@ describe('EditorController (Adapter Pattern)', () => {
         });
 
         it('should handle stage modification callback', async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset(); // Reset after initialization
 
@@ -315,7 +315,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Keyboard Shortcuts', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
 
@@ -362,7 +362,7 @@ describe('EditorController (Adapter Pattern)', () => {
                 throw new Error('Test initialization error');
             });
 
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
 
             await expect(controller.initialize()).rejects.toThrow();
         });
@@ -370,7 +370,7 @@ describe('EditorController (Adapter Pattern)', () => {
         it('should handle missing DOM elements', async () => {
             document.body.innerHTML = ''; // Remove messageContainer
 
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
 
             // Should not throw even without messageContainer
             await expect(controller.initialize()).resolves.toBeUndefined();
@@ -379,7 +379,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Performance and Cleanup', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
         });
 
@@ -406,7 +406,7 @@ describe('EditorController (Adapter Pattern)', () => {
 
     describe('Legacy API Compatibility', () => {
         beforeEach(async () => {
-            controller = new EditorController(mockCanvas, mockView, mockModel);
+            controller = new EditorController(mockView, mockModel);
             await controller.initialize();
             mockAdapter.reset();
         });
