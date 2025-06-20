@@ -15,6 +15,7 @@ import type {
 import { EditorInputHandler } from './EditorInputHandler.js';
 import { StageDataConverter } from './StageDataConverter.js';
 import { ObjectDrawer } from './ObjectDrawer.js';
+import { GridManager } from './GridManager.js';
 
 /**
  * FabricRenderAdapter (v2) - Pure adapter implementation following Nana-chan's guidance
@@ -42,6 +43,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
     private inputHandler: EditorInputHandler;
     private stageConverter: StageDataConverter;
     private objectDrawer: ObjectDrawer;
+    private gridManager: GridManager;
 
     constructor(canvasElement: HTMLCanvasElement, callbacks: EditorCallbacks = {}) {
         this.callbacks = callbacks;
@@ -58,6 +60,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
         
         // Create component instances (delegation pattern)
         this.objectDrawer = new ObjectDrawer(this.canvas);
+        this.gridManager = new GridManager(this.canvas, this.objectDrawer);
         this.inputHandler = new EditorInputHandler(this, this.objectDrawer);
         this.stageConverter = new StageDataConverter(this, this.objectDrawer);
 
@@ -106,6 +109,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
     dispose(): void {
         try {
             this.removeEventListeners();
+            this.gridManager.dispose();
             this.canvas.dispose();
             DebugHelper.log('Canvas disposed');
         } catch (error) {
@@ -127,17 +131,11 @@ export class FabricRenderAdapter implements IRenderAdapter {
         try {
             this.editorState.gridEnabled = enabled;
             
-            // Remove existing grid objects
-            this.removeGridObjects();
-            
-            if (!enabled) {
-                this.renderAll();
-                return;
+            if (enabled) {
+                this.gridManager.showGrid();
+            } else {
+                this.gridManager.hideGrid();
             }
-
-            // Draw new grid
-            this.drawGrid();
-            this.renderAll();
             
             DebugHelper.log('Grid rendered', { enabled });
         } catch (error) {
@@ -353,44 +351,6 @@ export class FabricRenderAdapter implements IRenderAdapter {
     }
 
     /**
-     * Remove grid objects from canvas
-     */
-    private removeGridObjects(): void {
-        const objects = this.canvas.getObjects();
-        const gridObjects = objects.filter(obj => {
-            const data = this.objectDrawer.getObjectData(obj);
-            return data?.isGrid === true;
-        });
-        
-        gridObjects.forEach(obj => this.canvas.remove(obj));
-    }
-
-    /**
-     * Draw grid lines
-     */
-    private drawGrid(): void {
-        const canvasWidth = this.canvas.width!;
-        const canvasHeight = this.canvas.height!;
-        const gridSize = EDITOR_CONFIG.GRID_SIZE;
-
-        // Draw vertical lines
-        for (let x = 0; x <= canvasWidth; x += gridSize) {
-            this.objectDrawer.createGridLine(
-                { x, y: 0 },
-                { x, y: canvasHeight }
-            );
-        }
-
-        // Draw horizontal lines
-        for (let y = 0; y <= canvasHeight; y += gridSize) {
-            this.objectDrawer.createGridLine(
-                { x: 0, y },
-                { x: canvasWidth, y }
-            );
-        }
-    }
-
-    /**
      * Notify that stage has been modified
      */
     private notifyStageModified(): void {
@@ -405,49 +365,6 @@ export class FabricRenderAdapter implements IRenderAdapter {
     // ===== Legacy Compatibility Methods =====
     // These methods maintain compatibility with EditorRenderSystem
     // They delegate to appropriate component classes
-
-    /**
-     * Create spike at position (legacy compatibility)
-     */
-    createSpike(x: number, y: number): void {
-        const position = { x, y };
-        const spike = this.objectDrawer.createSpike(position);
-        if (spike instanceof fabric.Object) {
-            this.canvas.add(spike);
-            this.notifyStageModified();
-            this.renderAll();
-        }
-        DebugHelper.log('Legacy createSpike called', { x, y });
-    }
-
-    /**
-     * Create goal at position (legacy compatibility)
-     */
-    createGoal(x: number, y: number, width: number = 40, height: number = 50): void {
-        const position = { x, y };
-        const size = { width, height };
-        const goal = this.objectDrawer.createGoal(position, size);
-        if (goal instanceof fabric.Object) {
-            this.canvas.add(goal);
-            this.notifyStageModified();
-            this.renderAll();
-        }
-        DebugHelper.log('Legacy createGoal called', { x, y, width, height });
-    }
-
-    /**
-     * Create text at position (legacy compatibility)
-     */
-    createText(x: number, y: number, text: string): void {
-        const position = { x, y };
-        const textObject = this.objectDrawer.createText(position, text);
-        if (textObject instanceof fabric.Object) {
-            this.canvas.add(textObject);
-            this.notifyStageModified();
-            this.renderAll();
-        }
-        DebugHelper.log('Legacy createText called', { x, y, text });
-    }
 
     /**
      * Start platform drawing (legacy compatibility)
@@ -484,23 +401,6 @@ export class FabricRenderAdapter implements IRenderAdapter {
         this.renderAll();
         this.inputHandler.setSelectedTool(tool);
         DebugHelper.log('Legacy setSelectedTool called', { tool });
-    }
-
-    /**
-     * Toggle grid (legacy compatibility)
-     */
-    toggleGrid(): void {
-        this.inputHandler.toggleGrid();
-        DebugHelper.log('Legacy toggleGrid called');
-    }
-
-    /**
-     * Toggle snap to grid (legacy compatibility)
-     */
-    toggleSnapToGrid(): void {
-        this.editorState.snapToGrid = !this.editorState.snapToGrid;
-        this.inputHandler.toggleSnapToGrid();
-        DebugHelper.log('Legacy toggleSnapToGrid called');
     }
 
     /**

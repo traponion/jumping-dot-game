@@ -12,7 +12,7 @@
     "test:coverage:open": "vitest --coverage && open coverage/index.html",
     "lint": "biome check src",
     "lint:fix": "biome check src --write",
-    "lint:lines": "timeout 300s eslint src || echo 'ESLint timeout - checking individually'",
+    "lint:lines": "find src -name '*.ts' ! -path '*/test/*' ! -name '*.test.ts' ! -name '*.spec.ts' -print0 | xargs -0 -n 1 eslint --cache",
     "lint:lines:safe": "find src -name '*.ts' ! -path '*/test/*' ! -name '*.test.ts' ! -name '*.spec.ts' -exec wc -l {} + | awk '$1 > 300 {print $2 \" has \" $1 \" lines (exceeds 300)\"}'",
     "lint:all": "npm run lint && npm run lint:lines",
     "format": "biome format src --write",
