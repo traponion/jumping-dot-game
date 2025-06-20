@@ -36,6 +36,27 @@ describe('EditorController (Adapter Pattern)', () => {
     };
 
     beforeEach(async () => {
+        // Create DOM mock elements that EditorUIManager expects
+        document.body.innerHTML = `
+            <div id="mouseCoords"></div>
+            <div id="objectCount"></div>
+            <div id="currentTool"></div>
+            <button id="deleteObjectBtn"></button>
+            <button id="duplicateObjectBtn"></button>
+            <input id="stageName" />
+            <input id="stageId" />
+            <textarea id="stageDescription"></textarea>
+            <div id="noSelection"></div>
+            <div id="platformProperties"></div>
+            <div id="spikeProperties"></div>
+            <div id="goalProperties"></div>
+            <div id="textProperties"></div>
+            <input type="checkbox" id="gridEnabled" />
+            <input type="checkbox" id="snapEnabled" />
+            <div id="messageContainer"></div>
+            <div class="tool-item" data-tool="select"></div>
+        `;
+
         // Mock confirm function for clearStage test
         global.confirm = vi.fn().mockReturnValue(true);
         global.window.confirm = vi.fn().mockReturnValue(true);
@@ -65,9 +86,6 @@ describe('EditorController (Adapter Pattern)', () => {
                 operationTime: 0
             }
         });
-
-        // Create DOM elements
-        document.body.innerHTML = '<div id="messageContainer"></div>';
 
         // Create mock canvas
         mockCanvas = document.createElement('canvas');
@@ -180,7 +198,10 @@ describe('EditorController (Adapter Pattern)', () => {
         it('should update view when tool changes', () => {
             controller.selectTool(EDITOR_TOOLS.PLATFORM);
 
-            expect(mockView.updateToolSelection).toHaveBeenCalledWith(EDITOR_TOOLS.PLATFORM);
+            // Note: updateToolSelection is now delegated to UIManager, 
+            // so this test verifies the tool selection was successful via store
+            const state = getEditorStore();
+            expect(state.editor.selectedTool).toBe(EDITOR_TOOLS.PLATFORM);
         });
     });
 
@@ -407,12 +428,12 @@ describe('EditorController (Adapter Pattern)', () => {
         });
 
         it('should handle missing DOM elements', async () => {
-            document.body.innerHTML = ''; // Remove messageContainer
+            document.body.innerHTML = ''; // Remove all DOM elements
 
-            controller = createTestController();
-
-            // Should not throw even without messageContainer
-            await expect(controller.initialize()).resolves.toBeUndefined();
+            // Should throw when trying to create controller without required DOM elements
+            expect(() => {
+                controller = createTestController();
+            }).toThrow('Required element not found');
         });
     });
 

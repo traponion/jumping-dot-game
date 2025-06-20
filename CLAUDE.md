@@ -321,6 +321,67 @@ mcp__serena__list_memories()
 - **Integrated thinking**: Built-in analysis and reflection tools
 - **Memory persistence**: Maintains project knowledge across sessions
 
+## Tool Selection Decision Matrix
+
+### When to Use Serena vs Claude Code
+
+#### **Use Serena for:**
+- **Large-scale refactoring** (splitting files, moving code, architectural changes)
+- **Structural analysis** (understanding dependencies, finding references)
+- **Symbol-level operations** (renaming classes, moving methods)
+- **Test pattern discovery** (understanding existing test structures)
+- **Code organization tasks** (extracting classes, creating new modules)
+
+#### **Use Claude Code for:**
+- **Individual file editing** (bug fixes, small features)
+- **Sequential file operations** (batch editing multiple files)
+- **Documentation updates** (README, comments, etc.)
+- **Simple test additions** (adding individual test cases)
+- **Direct file manipulation** (file creation, deletion, simple edits)
+
+### Lessons from File Size Reduction Project
+
+#### **Pre-Refactoring Checklist**
+- [ ] Check test coverage requirements in `CLAUDE.md`
+- [ ] Create feature branch: `git checkout -b feature/task-description`
+- [ ] Understand current architecture with Serena's `get_symbols_overview`
+- [ ] Plan test maintenance strategy for coverage preservation
+
+#### **During Large Refactoring**
+- **Expected Issues:**
+  - Test coverage will drop when extracting new classes/modules
+  - New files need dedicated unit tests
+  - Integration tests may need updates for new architecture
+- **Mitigation Strategy:**
+  - Plan test additions alongside code extraction
+  - Use Serena to understand existing test patterns
+  - Prioritize high-impact, low-dependency modules for testing first
+
+#### **Post-Refactoring Recovery**
+- **Test Priority Order** (based on impact and complexity):
+  1. New utility classes (`ObjectDrawer`, `GridManager`) - standalone, easy to test
+  2. New service layers (`PlayerUpdateService`, `GameLogicService`) - pure logic
+  3. New renderers (`HUDRenderer`, `OverlayRenderer`) - UI components
+  4. Enhanced validation (`EditorModel` improvements)
+  5. Integration test updates for controllers/managers
+
+#### **Coverage Recovery Strategy**
+```bash
+# Check specific module coverage
+npm run test:coverage -- src/adapters/ObjectDrawer.ts
+
+# Add unit tests for extracted modules first
+# They have fewer dependencies and higher impact on coverage
+```
+
+#### **Common Pitfalls**
+- ❌ **Don't** start refactoring on main branch
+- ❌ **Don't** assume existing tests will cover extracted code
+- ❌ **Don't** leave coverage below project requirements (utils: 95%, systems: 90%, core: 80%)
+- ✅ **Do** use Serena for structural understanding before editing
+- ✅ **Do** plan test additions as part of refactoring scope
+- ✅ **Do** create PR even for architectural changes
+
 ---
-*Last updated: 2025-06-19*
-*Added Serena MCP code intelligence tool documentation*
+*Last updated: 2025-06-20*
+*Added tool selection matrix and refactoring lessons learned*

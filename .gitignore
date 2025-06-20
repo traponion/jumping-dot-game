@@ -79,4 +79,4 @@ review.md
 .claude/settings.local.json
 
 # serena
-.serena/.tsbuildinfo
+.serena/

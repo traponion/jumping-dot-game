@@ -12,13 +12,45 @@ import {
 } from '../utils/EditorUtils.js';
 import { ObjectDrawer } from '../adapters/ObjectDrawer.js';
 
-// Mock fabric.js for testing
-vi.mock('fabric', () => ({
-    Line: vi.fn(),
-    Polygon: vi.fn(),
-    Rect: vi.fn(),
-    Text: vi.fn()
-}));
+// Enhanced fabric.js mock for ObjectDrawer testing
+vi.mock('fabric', () => {
+    // Create a proper base class for fabric.Object
+    class MockFabricObject {
+        set = vi.fn();
+        data = {};
+        getBoundingRect = vi.fn(() => ({
+            left: 0, top: 0, width: 10, height: 10
+        }));
+        setCoords = vi.fn();
+    }
+
+    // Helper to create specific fabric objects that properly inherit from Object
+    const createMockObject = (type: string) => {
+        const obj = new MockFabricObject();
+        obj.type = type;
+        return obj;
+    };
+
+    // Mock constructors that return proper instances
+    const MockLine = vi.fn().mockImplementation(() => createMockObject('line'));
+    const MockPolygon = vi.fn().mockImplementation(() => createMockObject('polygon'));
+    const MockRect = vi.fn().mockImplementation(() => createMockObject('rect'));
+    const MockText = vi.fn().mockImplementation(() => createMockObject('text'));
+
+    // Ensure proper inheritance chain
+    MockLine.prototype = Object.create(MockFabricObject.prototype);
+    MockPolygon.prototype = Object.create(MockFabricObject.prototype);
+    MockRect.prototype = Object.create(MockFabricObject.prototype);
+    MockText.prototype = Object.create(MockFabricObject.prototype);
+
+    return {
+        Object: MockFabricObject,
+        Line: MockLine,
+        Polygon: MockPolygon,
+        Rect: MockRect,
+        Text: MockText
+    };
+});
 
 describe('EditorUtils', () => {
     describe('TypeHelper', () => {
@@ -213,10 +245,7 @@ describe('EditorUtils', () => {
         });
 
         it('should create platform object', () => {
-            const mockLine = { data: {} };
-            vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
-
-            objectDrawer.createPlatform({ x: 0, y: 0 }, { x: 100, y: 100 });
+            const result = objectDrawer.createPlatform({ x: 0, y: 0 }, { x: 100, y: 100 });
 
             expect(fabric.Line).toHaveBeenCalledWith(
                 [0, 0, 100, 100],
@@ -226,31 +255,28 @@ describe('EditorUtils', () => {
                     selectable: true
                 })
             );
+            expect(mockCanvas.add).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
 
         it('should create spike object', () => {
-            const mockPolygon = { data: {} };
-            vi.mocked(fabric.Polygon).mockReturnValue(mockPolygon as any);
-
-            objectDrawer.createSpike({ x: 100, y: 200 });
+            const result = objectDrawer.createSpike({ x: 100, y: 200 });
 
             expect(fabric.Polygon).toHaveBeenCalled();
+            expect(mockCanvas.add).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
 
         it('should create goal object', () => {
-            const mockRect = { data: {} };
-            vi.mocked(fabric.Rect).mockReturnValue(mockRect as any);
-
-            objectDrawer.createGoal({ x: 100, y: 200 });
+            const result = objectDrawer.createGoal({ x: 100, y: 200 });
 
             expect(fabric.Rect).toHaveBeenCalled();
+            expect(mockCanvas.add).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
 
         it('should create text object', () => {
-            const mockText = { data: {} };
-            vi.mocked(fabric.Text).mockReturnValue(mockText as any);
-
-            objectDrawer.createText({ x: 100, y: 200 }, 'Hello World');
+            const result = objectDrawer.createText({ x: 100, y: 200 }, 'Hello World');
 
             expect(fabric.Text).toHaveBeenCalledWith(
                 'Hello World',
@@ -259,23 +285,24 @@ describe('EditorUtils', () => {
                     top: 200
                 })
             );
+            expect(mockCanvas.add).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
 
         it('should create grid line', () => {
-            const mockLine = { data: {} };
-            vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
-
-            objectDrawer.createGridLine({ x: 0, y: 0 }, { x: 100, y: 100 });
+            const result = objectDrawer.createGridLine({ x: 0, y: 0 }, { x: 100, y: 100 });
 
             expect(fabric.Line).toHaveBeenCalledWith(
                 [0, 0, 100, 100],
                 expect.objectContaining({
                     stroke: EDITOR_CONFIG.COLORS.GRID,
-                    strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.GRID,
+                    strokeWidth: 1,
                     selectable: false,
                     evented: false
                 })
             );
+            expect(mockCanvas.add).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
     });
 

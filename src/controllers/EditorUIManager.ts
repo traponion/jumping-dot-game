@@ -234,9 +234,11 @@ export class EditorUIManager {
      */
     public updateObjectCount(count: number): void {
         if (!this.isInitialized) return;
-
-        this.uiElements.objectCount.textContent = count.toString();
-        this.uiElements.objectCount.className = count > 0 ? 'object-count active' : 'object-count';
+        
+        // Safeguard against undefined/null count
+        const safeCount = count ?? 0;
+        this.uiElements.objectCount.textContent = safeCount.toString();
+        this.uiElements.objectCount.className = safeCount > 0 ? 'object-count active' : 'object-count';
     }
 
     /**
