@@ -29,6 +29,12 @@ jobs:
       - name: TypeScript type checking
         run: npm run typecheck
         
+      - name: Code style check (Biome)
+        run: npm run lint
+        
+      - name: Line limit check (ESLint)
+        run: npm run lint:lines
+        
       - name: Run tests
         run: npm test
 

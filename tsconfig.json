@@ -6,6 +6,8 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,

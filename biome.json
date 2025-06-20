@@ -31,9 +31,25 @@
 			},
 			"style": {
 				"useConsistentArrayType": "error"
+			},
+			"complexity": {
+				"noExcessiveCognitiveComplexity": "error"
 			}
 		}
 	},
+	"overrides": [
+		{
+			"include": ["src/**/*.ts", "src/**/*.js"],
+			"ignore": ["src/test/**", "src/**/*.test.ts", "src/**/*.spec.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
+					}
+				}
+			}
+		}
+	],
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "single",

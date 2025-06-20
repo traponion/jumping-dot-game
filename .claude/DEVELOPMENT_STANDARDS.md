@@ -31,8 +31,8 @@
   - Systems: 90%+ (critical systems)
   - Core: 80%+ (considering Facade pattern)
   - Utils: 95%+ (utility functions)
-- **Architecture**: SOLID principles + ECS-inspired design
-- **File Size**: Consider splitting files exceeding 150 lines
+- **Architecture**: SOLID principles + OOP design (ECS approach abandoned)
+- **File Size**: **STRICT 300-line limit enforced by ESLint** (test files excluded)
 - **Responsibility**: Separate concerns when handling 3+ responsibilities
 
 ### 4. Test-Driven Development (TDD)
@@ -50,7 +50,8 @@
 ## Development Tools and Environment
 
 ### Required Tools
-- **Biome**: ESLint + Prettier integration (auto-formatting and linting)
+- **Biome**: Code style and linting (auto-formatting)
+- **ESLint**: 300-line limit enforcement (complementary to Biome)
 - **TypeScript**: Latest version with strict configuration
 - **Vitest**: Test execution and coverage measurement
 - **GitHub Actions**: CI/CD pipeline and quality gates
@@ -61,16 +62,20 @@ npm run typecheck    # TypeScript type checking (mandatory)
 npm run build        # Type checking + build (stops on type errors)
 npm run test         # Test execution
 npm run test:coverage # Coverage measurement
-npm run lint         # Biome linting
+npm run lint         # Biome code style check
+npm run lint:lines   # ESLint 300-line limit check
+npm run lint:all     # Both Biome + ESLint checks
 npm run format       # Biome formatting
 ```
 
 ### CI/CD Pipeline
 1. TypeScript type checking (`npx tsc --noEmit`)
-2. Test execution (`npm test`)
-3. Coverage measurement (`npm run test:coverage`)
-4. Build process (`npm run build`)
-5. Deployment (GitHub Pages)
+2. Code style check (`npm run lint`)
+3. **Line limit check (`npm run lint:lines`) - ENFORCED**
+4. Test execution (`npm test`)
+5. Coverage measurement (`npm run test:coverage`)
+6. Build process (`npm run build`)
+7. Deployment (GitHub Pages)
 
 ## Coding Standards
 
@@ -86,7 +91,9 @@ npm run format       # Biome formatting
 - **Relative Paths**: `../` with mandatory `.js` extension
 
 ### Documentation Standards
-- **JSDoc**: Required for all public methods
+- **JSDoc**: Required for all public methods - **functional description only**
+  - ✅ **Good**: `/** Updates player position based on input */`
+  - ❌ **Bad**: `/** @param {number} x - Position @returns {void} */` (redundant with TypeScript)
 - **Inline Comments**: Only for complex logic
 - **TODO Comments**: Include clear deadlines and assignees
 

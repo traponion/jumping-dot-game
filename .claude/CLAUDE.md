@@ -1,6 +1,7 @@
 # Development Guidelines for jumping-dot-game
 
 > **Note**: This document focuses on development workflow and GitHub Flow processes.  
+> **For development standards and coding rules**, see `DEVELOPMENT_STANDARDS.md`.  
 > For technical architecture and project overview, see `DEVELOPMENT_GUIDE.md` and `ARCHITECTURE.md`.
 
 ## Branch Strategy (GitHub Flow - Simplified)
@@ -72,11 +73,16 @@ git remote prune origin
 
 ## Code Quality Standards
 
-### Testing Requirements
-- **utils module**: 95% lines, 100% functions coverage
-- **systems module**: 90% lines, 95% functions coverage
-- **core module**: 80% lines, 90% functions coverage
-- All new code must include tests
+> **For detailed coding standards and rules**, see `DEVELOPMENT_STANDARDS.md`
+
+### Key Quality Requirements
+- **300-line limit**: STRICT enforcement via ESLint (CI blocking)
+- **TypeScript strict mode**: Zero type errors required
+- **Testing Requirements**:
+  - utils module: 95% lines, 100% functions coverage
+  - systems module: 90% lines, 95% functions coverage
+  - core module: 80% lines, 90% functions coverage
+- **JSDoc**: Functional description only (no redundant type info)
 
 ### Commit Message Format
 Follow conventional commits:
@@ -87,6 +93,7 @@ Follow conventional commits:
 - `docs:` - Documentation updates
 
 ### Architecture Guidelines
+- **OOP-based design** (ECS approach abandoned)
 - Use dependency inversion (adapter pattern) for external libraries
 - Maintain separation of concerns (MVC pattern)
 - Write testable code with proper mocking
@@ -96,14 +103,17 @@ Follow conventional commits:
 
 ### Essential Commands
 ```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
+# Code quality checks
+npm run lint         # Biome code style check
+npm run lint:lines   # ESLint 300-line limit check
+npm run lint:all     # Both Biome + ESLint checks
 
 # Type checking
 npm run typecheck
+
+# Run tests
+npm test
+npm run test:coverage
 
 # Build project
 npm run build
@@ -116,9 +126,11 @@ gh run list
 ```
 
 ### Pre-push Checklist
+- [ ] Code style passes: `npm run lint`
+- [ ] **300-line limit passes: `npm run lint:lines`**
+- [ ] TypeScript compiles: `npm run typecheck`
 - [ ] Tests pass locally: `npm test`
 - [ ] Coverage meets requirements: `npm run test:coverage`
-- [ ] TypeScript compiles: `npm run typecheck`
 - [ ] Build succeeds: `npm run build`
 
 ## Emergency Procedures
