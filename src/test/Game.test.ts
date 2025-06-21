@@ -658,37 +658,23 @@ describe('JumpingDotGame', () => {
     });
 
     describe('resource management', () => {
-        it('should not leak objects on multiple restarts', async () => {
-            // First initialization and render
+        it('should not leak resources on multiple restarts', async () => {
+            // First initialization
             await game.init();
-            game.testRender();
             
-            // Access the render system through GameManager
-            const firstRenderSystem = (game as any).gameManager.renderSystem;
-            
-            // Get initial object count
-            let initialObjectCount = 0;
-            if (firstRenderSystem && typeof firstRenderSystem.getMockCanvas === 'function') {
-                initialObjectCount = firstRenderSystem.getMockCanvas().getObjects().length;
-            }
-            
-            expect(initialObjectCount).toBeGreaterThan(0);
+            const gameManager = (game as any).gameManager;
+            const initialInputManager = gameManager.inputManager;
+            const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
 
-            // Second initialization (restart) and render  
+            // Second initialization (restart)
             await game.init();
-            game.testRender();
-            
-            // Access the render system again (it might be recreated)
-            const secondRenderSystem = (game as any).gameManager.renderSystem;
-            
-            // Get object count after restart
-            let secondObjectCount = 0;
-            if (secondRenderSystem && typeof secondRenderSystem.getMockCanvas === 'function') {
-                secondObjectCount = secondRenderSystem.getMockCanvas().getObjects().length;
-            }
 
-            // Object count should be the same (no leaks)
-            expect(secondObjectCount).toBe(initialObjectCount);
+            // Assert - old InputManager's cleanup should have been called
+            expect(cleanupSpy).toHaveBeenCalledOnce();
+            
+            // Verify that we get a new InputManager instance (proper system recreation)
+            const newInputManager = gameManager.inputManager;
+            expect(newInputManager).not.toBe(initialInputManager);
         });
     });
 });

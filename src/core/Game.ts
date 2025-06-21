@@ -68,22 +68,23 @@ export class JumpingDotGame {
      * @returns {Promise<void>} Promise that resolves when initialization is complete
      */
     async init(): Promise<void> {
-        this.gameLoop.resetCleanupState(); // Reset cleanup flag
-        this.gameUI.showLoading();
+            this.gameLoop.resetCleanupState(); // Reset cleanup flag
+            this.gameUI.showLoading();
+    
+            await this.gameManager.loadStage(getGameStore().getCurrentStage());
+    
+            this.gameUI.showReadyToStart();
+            await this.gameManager.resetGameState();
+            this.gameUI.updateInitialUI();
+    
+            // Clear inputs after a short delay
+            setTimeout(() => {
+                this.gameManager.getInputManager().clearInputs();
+            }, 0);
+    
+            this.gameLoop.start();
+        }
 
-        await this.gameManager.loadStage(getGameStore().getCurrentStage());
-
-        this.gameUI.showReadyToStart();
-        this.gameManager.resetGameState();
-        this.gameUI.updateInitialUI();
-
-        // Clear inputs after a short delay
-        setTimeout(() => {
-            this.gameManager.getInputManager().clearInputs();
-        }, 0);
-
-        this.gameLoop.start();
-    }
 
     async initWithStage(stageId: number): Promise<void> {
         getGameStore().setCurrentStage(stageId);

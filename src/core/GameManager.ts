@@ -36,6 +36,8 @@ import { type StageData, StageLoader } from './StageLoader.js';
 export class GameManager {
     /** @private {HTMLCanvasElement} The main game canvas */
     private canvas: HTMLCanvasElement;
+    /** @private {any} Game controller reference for system initialization */
+    private gameController: any;
 
     // Systems
     /** @private {PlayerSystem} Player input and movement system */
@@ -72,10 +74,12 @@ export class GameManager {
      * @param {any} gameController - Game controller instance for UI integration
      */
     constructor(canvas: HTMLCanvasElement, gameController: any) {
-        this.canvas = canvas;
-        this.initializeEntities();
-        this.initializeSystems(gameController);
-    }
+            this.canvas = canvas;
+            this.gameController = gameController;
+            this.initializeEntities();
+            this.initializeSystems(gameController);
+        }
+
 
     private initializeEntities(): void {
         // Initialize Zustand store with default values
@@ -140,18 +144,16 @@ export class GameManager {
     /**
      * Reset game state to initial values
      */
-    resetGameState(): void {
+    async resetGameState(): Promise<void> {
             gameStore.getState().stopGame();
             gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
             gameStore.getState().restartGame();
     
-            // Clean up existing render system before reinitializing
-            if (this.renderSystem && 'cleanup' in this.renderSystem) {
-                (this.renderSystem as any).cleanup();
-            }
+            // Clean up all existing systems
+            await this.cleanupSystems();
     
-            // Recreate render system to prevent object accumulation
-            this.renderSystem = createRenderSystem(this.canvas);
+            // Reinitialize all systems with fresh instances
+            this.initializeSystems(this.gameController);
     
             this.playerSystem.reset(100, 400);
             this.animationSystem.reset();
@@ -162,6 +164,7 @@ export class GameManager {
             this.inputManager.clearInputs();
             this.prevPlayerY = 0;
         }
+
 
 
     /**
@@ -545,7 +548,16 @@ export class GameManager {
 
         gameStore.getState().gameOver();
     }
-
+    
+        /**
+         * Clean up all systems properly
+         */
+        private async cleanupSystems(): Promise<void> {
+            this.inputManager.cleanup();
+            if (this.renderSystem && 'cleanup' in this.renderSystem) {
+                await (this.renderSystem as any).cleanup();
+            }
+        }
     /**
      * Get animation system (for external access)
      */
