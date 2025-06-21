@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
-// Mock Fabric Canvas for tracking objects  
+// Mock Fabric Canvas for tracking objects
 export interface MockFabricCanvas {
     add: (obj: any) => void;
     clear: () => void;
@@ -23,11 +23,15 @@ export class MockRenderSystem {
         const objects: any[] = [];
         return {
             objects: objects,
-            clear: () => { objects.length = 0; },
-            add: (obj: any) => { objects.push(obj); },
+            clear: () => {
+                objects.length = 0;
+            },
+            add: (obj: any) => {
+                objects.push(obj);
+            },
             getObjects: () => objects,
             dispose: vi.fn().mockResolvedValue(void 0),
-            getElement: () => ({} as HTMLCanvasElement),
+            getElement: () => ({}) as HTMLCanvasElement,
             remove: (obj: any) => {
                 const index = objects.indexOf(obj);
                 if (index > -1) objects.splice(index, 1);
@@ -59,7 +63,7 @@ export class MockRenderSystem {
     enableEditorMode = vi.fn();
     disableEditorMode = vi.fn();
     dispose = vi.fn();
-    
+
     // Additional methods found in FabricRenderSystem
     renderDeathMarks = vi.fn();
     renderTrail = vi.fn();
@@ -70,7 +74,7 @@ export class MockRenderSystem {
     addLandingHistory = vi.fn();
     cleanupLandingHistory = vi.fn();
     updateLandingPredictionAnimations = vi.fn();
-    
+
     cleanup = vi.fn(async () => {
         this.mockCanvas.clear();
     });
@@ -647,7 +651,7 @@ describe('JumpingDotGame', () => {
         it('should not leak resources on multiple restarts', async () => {
             // First initialization
             await game.init();
-            
+
             const gameManager = (game as any).gameManager;
             const initialInputManager = gameManager.inputManager;
             const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
@@ -657,7 +661,7 @@ describe('JumpingDotGame', () => {
 
             // Assert - old InputManager's cleanup should have been called
             expect(cleanupSpy).toHaveBeenCalledOnce();
-            
+
             // Verify that we get a new InputManager instance (proper system recreation)
             const newInputManager = gameManager.inputManager;
             expect(newInputManager).not.toBe(initialInputManager);

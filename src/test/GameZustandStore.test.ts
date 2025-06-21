@@ -56,7 +56,7 @@ describe('GameZustandStore', () => {
             getGameStore().startGame();
             getGameStore().gameOver();
             getGameStore().setFinalScore(100);
-            
+
             // Add death marks before restart
             const deathMark1 = { x: 100, y: 200, timestamp: 1000 };
             const deathMark2 = { x: 150, y: 250, timestamp: 2000 };
@@ -72,7 +72,7 @@ describe('GameZustandStore', () => {
             expect(gameState.gameOver).toBe(false);
             expect(gameState.finalScore).toBe(0);
             expect(gameState.hasMovedOnce).toBe(false);
-            
+
             // Death marks should persist across restarts for learning purposes
             const deathMarks = getGameStore().runtime.deathMarks;
             expect(deathMarks).toHaveLength(2);

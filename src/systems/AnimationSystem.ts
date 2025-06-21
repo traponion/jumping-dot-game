@@ -21,7 +21,6 @@ export class AnimationSystem {
     /** @private {AnimationData} Player death explosion animation */
     private deathAnimation: AnimationData;
 
-
     /**
      * Creates a new AnimationSystem instance
      * @constructor
@@ -181,7 +180,6 @@ export class AnimationSystem {
     getDeathAnimation(): AnimationData {
         return this.deathAnimation;
     }
-
 
     /**
      * Reset all animations to initial state
