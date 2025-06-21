@@ -193,10 +193,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
      * Duplicate currently selected object
      */
     duplicateSelectedObject(): void {
-        if (
-            !this.editorState.selectedObject ||
-            !(this.editorState.selectedObject instanceof fabric.Object)
-        ) {
+        if (!(this.editorState.selectedObject && (this.editorState.selectedObject instanceof fabric.Object))) {
             return;
         }
 
