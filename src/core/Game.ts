@@ -86,22 +86,41 @@ export class JumpingDotGame {
     }
 
     async initWithStage(stageId: number): Promise<void> {
-        getGameStore().setCurrentStage(stageId);
-        this.gameUI.showLoading();
+            try {
+                console.log(`🎮 Initializing game with stage ${stageId}...`);
+                
+                getGameStore().setCurrentStage(stageId);
+                console.log('✅ Game store updated');
+                
+                this.gameUI.showLoading();
+                console.log('✅ Loading UI shown');
+    
+                await this.gameManager.loadStage(stageId);
+                console.log('✅ Stage loaded');
+    
+                this.gameUI.showReadyToStart();
+                console.log('✅ Ready UI shown');
+                
+                this.gameManager.resetGameState();
+                console.log('✅ Game state reset');
+                
+                this.gameUI.updateInitialUI();
+                console.log('✅ Initial UI updated');
+    
+                // Clear inputs after a short delay
+                setTimeout(() => {
+                    this.gameManager.getInputManager().clearInputs();
+                    console.log('✅ Inputs cleared');
+                }, 0);
+    
+                this.gameLoop.start();
+                console.log('✅ Game loop started');
+            } catch (error) {
+                console.error(`❌ Failed to initialize game with stage ${stageId}:`, error);
+                throw error;
+            }
+        }
 
-        await this.gameManager.loadStage(stageId);
-
-        this.gameUI.showReadyToStart();
-        this.gameManager.resetGameState();
-        this.gameUI.updateInitialUI();
-
-        // Clear inputs after a short delay
-        setTimeout(() => {
-            this.gameManager.getInputManager().clearInputs();
-        }, 0);
-
-        this.gameLoop.start();
-    }
 
     public startGame(): void {
         this.gameManager.startGame();

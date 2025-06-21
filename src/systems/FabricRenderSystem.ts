@@ -39,18 +39,26 @@ export class FabricRenderSystem {
 
 
     constructor(canvasElement: HTMLCanvasElement) {
-        this.canvas = new fabric.Canvas(canvasElement, {
-            backgroundColor: '#87CEEB',
-            selection: false,
-            preserveObjectStacking: true
-        });
+            try {
+                this.canvas = new fabric.Canvas(canvasElement, {
+                    backgroundColor: '#87CEEB',
+                    selection: false,
+                    preserveObjectStacking: true,
+                    renderOnAddRemove: false, // Optimize performance
+                    stateful: false // Optimize performance
+                });
+    
+                // Initialize specialized renderers
+                this.stageRenderer = new StageRenderer(this.canvas);
+                this.playerRenderer = new PlayerRenderer(this.canvas);
+                this.effectRenderer = new EffectRenderer(this.canvas);
+                this.uiRenderer = new UIRenderer(this.canvas);
+            } catch (error) {
+                console.error('Failed to initialize FabricRenderSystem:', error);
+                throw new Error(`FabricRenderSystem initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
 
-        // Initialize specialized renderers
-        this.stageRenderer = new StageRenderer(this.canvas);
-        this.playerRenderer = new PlayerRenderer(this.canvas);
-        this.effectRenderer = new EffectRenderer(this.canvas);
-        this.uiRenderer = new UIRenderer(this.canvas);
-    }
 
     // === Core Canvas Operations ===
 

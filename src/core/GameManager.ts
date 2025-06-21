@@ -71,10 +71,22 @@ export class GameManager {
      * @param {any} gameController - Game controller instance for UI integration
      */
     constructor(canvas: HTMLCanvasElement, gameController: any) {
-        this.canvas = canvas;
-        this.initializeEntities();
-        this.initializeSystems(gameController);
-    }
+            try {
+                console.log('🔧 Initializing GameManager...');
+                this.canvas = canvas;
+                console.log('✅ Canvas assigned');
+                
+                this.initializeEntities();
+                console.log('✅ Entities initialized');
+                
+                this.initializeSystems(gameController);
+                console.log('✅ Systems initialized');
+            } catch (error) {
+                console.error('❌ GameManager initialization failed:', error);
+                throw error;
+            }
+        }
+
 
     private initializeEntities(): void {
         // Initialize Zustand store with default values
@@ -95,23 +107,46 @@ export class GameManager {
     }
 
     private initializeSystems(gameController: any): void {
-        const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
+            try {
+                console.log('🔧 Initializing systems...');
+                
+                const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
+    
+                this.physicsSystem = new PhysicsSystem(physicsConstants);
+                console.log('✅ PhysicsSystem initialized');
+                
+                this.collisionSystem = new CollisionSystem();
+                console.log('✅ CollisionSystem initialized');
+                
+                this.animationSystem = new AnimationSystem();
+                console.log('✅ AnimationSystem initialized');
+                
+                // Use adapter pattern for rendering system
+                console.log('🎨 Creating render adapter...');
+                this.renderAdapter = gameRenderAdapterFactory.createGameRenderAdapter(this.canvas);
+                console.log('✅ Render adapter created');
+    
+                // Initialize InputManager with canvas and game controller
+                this.inputManager = new InputManager(this.canvas, gameController);
+                console.log('✅ InputManager initialized');
+    
+                // Initialize PlayerUpdateService with store
+                this.playerUpdateService = new PlayerUpdateService(getGameStore());
+                console.log('✅ PlayerUpdateService initialized');
+                
+                // Initialize PlayerSystem with InputManager and PlayerUpdateService
+                this.playerSystem = new PlayerSystem(this.inputManager, this.playerUpdateService);
+                console.log('✅ PlayerSystem initialized');
+                
+                // Initialize StageLoader
+                this.stageLoader = new StageLoader();
+                console.log('✅ StageLoader initialized');
+            } catch (error) {
+                console.error('❌ Systems initialization failed:', error);
+                throw error;
+            }
+        }
 
-        this.physicsSystem = new PhysicsSystem(physicsConstants);
-        this.collisionSystem = new CollisionSystem();
-        this.animationSystem = new AnimationSystem();
-        // Use adapter pattern for rendering system
-        this.renderAdapter = gameRenderAdapterFactory.createGameRenderAdapter(this.canvas);
-
-        // Initialize InputManager with canvas and game controller
-        this.inputManager = new InputManager(this.canvas, gameController);
-
-        // Initialize PlayerUpdateService with store
-        this.playerUpdateService = new PlayerUpdateService(getGameStore());
-        
-        // Initialize PlayerSystem with InputManager and PlayerUpdateService
-        this.playerSystem = new PlayerSystem(this.inputManager, this.playerUpdateService);
-    }
 
     /**
      * Load a stage by number

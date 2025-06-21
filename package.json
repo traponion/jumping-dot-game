@@ -33,6 +33,7 @@
     "vitest": "^3.2.3"
   },
   "dependencies": {
+    "@playwright/test": "^1.53.1",
     "@types/fabric": "^5.3.10",
     "fabric": "^6.7.0",
     "game-inputs": "^0.8.0",
