@@ -212,25 +212,7 @@ export class GameManager {
             const player = getGameStore().getPlayer();
             const prevPlayerFootY = this.prevPlayerY + player.radius;
     
-            // Handle static platform collisions (existing logic)
-            const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
-                this.stage.platforms,
-                prevPlayerFootY
-            );
-    
-            if (platformCollisionUpdate) {
-                // GameManager is responsible for updating the store
-                getGameStore().updatePlayer(platformCollisionUpdate);
-                
-                if (platformCollisionUpdate.grounded) {
-                    this.playerSystem.resetJumpTimer();
-                    // Get updated player state from store after collision
-                    const updatedPlayer = getGameStore().getPlayer();
-                    this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
-                }
-            }
-    
-            // Handle moving platform collisions (new logic)
+            // Handle moving platform collisions first (higher priority)
             if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
                 const movingPlatformCollisionUpdate = this.collisionSystem.handleMovingPlatformCollisions(
                     this.stage.movingPlatforms,
@@ -259,6 +241,27 @@ export class GameManager {
                         const finalPlayer = getGameStore().getPlayer();
                         this.renderSystem.addLandingHistory(finalPlayer.x, finalPlayer.y + finalPlayer.radius);
                     }
+                    
+                    // Skip static platform collision check if moving platform collision found
+                    return;
+                }
+            }
+    
+            // Handle static platform collisions (only if no moving platform collision)
+            const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
+                this.stage.platforms,
+                prevPlayerFootY
+            );
+    
+            if (platformCollisionUpdate) {
+                // GameManager is responsible for updating the store
+                getGameStore().updatePlayer(platformCollisionUpdate);
+                
+                if (platformCollisionUpdate.grounded) {
+                    this.playerSystem.resetJumpTimer();
+                    // Get updated player state from store after collision
+                    const updatedPlayer = getGameStore().getPlayer();
+                    this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
                 }
             }
     
@@ -274,6 +277,7 @@ export class GameManager {
                 return;
             }
         }
+
 
 
     private updateCamera(): void {
