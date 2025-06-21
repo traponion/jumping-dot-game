@@ -53,7 +53,11 @@ class StageSelect {
      */
     constructor() {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-        this.ctx = this.canvas.getContext('2d')!;
+        const context = this.canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2D rendering context from canvas');
+        }
+        this.ctx = context;
         this.boundHandleKeyboard = this.handleKeyboard.bind(this);
 
         // Listen for custom event from Game
@@ -133,13 +137,14 @@ class StageSelect {
                 break;
 
             case ' ':
-            case 'Enter':
+            case 'Enter': {
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
                 if (selectedStage) {
                     this.startStage(selectedStage.id);
                 }
                 break;
+            }
 
             case 'e':
             case 'E':
