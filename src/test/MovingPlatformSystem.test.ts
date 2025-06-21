@@ -16,7 +16,7 @@ describe('MovingPlatformSystem', () => {
                 startX: 350, endX: 450, speed: 1, direction: 1
             },
             {
-                x1: 750, y1: 430, x2: 850, y2: 430,
+                x1: 800, y1: 430, x2: 900, y2: 430,
                 startX: 750, endX: 850, speed: 1.5, direction: -1
             }
         ];
