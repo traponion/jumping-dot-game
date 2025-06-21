@@ -74,7 +74,7 @@ export class JumpingDotGame {
             await this.gameManager.loadStage(getGameStore().getCurrentStage());
     
             this.gameUI.showReadyToStart();
-            await this.gameManager.resetGameState();
+            await await this.gameManager.resetGameState();
             this.gameUI.updateInitialUI();
     
             // Clear inputs after a short delay
@@ -93,7 +93,7 @@ export class JumpingDotGame {
         await this.gameManager.loadStage(stageId);
 
         this.gameUI.showReadyToStart();
-        this.gameManager.resetGameState();
+        await this.gameManager.resetGameState();
         this.gameUI.updateInitialUI();
 
         // Clear inputs after a short delay

@@ -155,6 +155,10 @@ export class GameManager {
             // Reinitialize all systems with fresh instances
             this.initializeSystems(this.gameController);
     
+            // Reload stage to get clean initial data
+            const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
+            this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
+    
             this.playerSystem.reset(100, 400);
             this.animationSystem.reset();
     
@@ -164,6 +168,7 @@ export class GameManager {
             this.inputManager.clearInputs();
             this.prevPlayerY = 0;
         }
+
 
 
 
