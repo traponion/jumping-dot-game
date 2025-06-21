@@ -103,7 +103,6 @@ export class StageDataConverter implements IStageDataConverter {
                 const textData = this.extractTextData(obj);
                 if (textData) {
                     texts.push(textData);
-                    continue;
                 }
             }
 
@@ -234,7 +233,7 @@ export class StageDataConverter implements IStageDataConverter {
             return null;
         }
 
-        if (!isFabricObjectWithData(canvasObject) || !isPlatformObject(canvasObject)) {
+        if (!(isFabricObjectWithData(canvasObject) && isPlatformObject(canvasObject))) {
             return null;
         }
 
@@ -261,7 +260,7 @@ export class StageDataConverter implements IStageDataConverter {
             return null;
         }
 
-        if (!isFabricObjectWithData(canvasObject) || !isSpikeObject(canvasObject)) {
+        if (!(isFabricObjectWithData(canvasObject) && isSpikeObject(canvasObject))) {
             return null;
         }
 
@@ -287,7 +286,7 @@ export class StageDataConverter implements IStageDataConverter {
             return null;
         }
 
-        if (!isFabricObjectWithData(canvasObject) || !isGoalObject(canvasObject)) {
+        if (!(isFabricObjectWithData(canvasObject) && isGoalObject(canvasObject))) {
             return null;
         }
 
@@ -313,7 +312,7 @@ export class StageDataConverter implements IStageDataConverter {
             return null;
         }
 
-        if (!isFabricObjectWithData(canvasObject) || !isTextObject(canvasObject)) {
+        if (!(isFabricObjectWithData(canvasObject) && isTextObject(canvasObject))) {
             return null;
         }
 
