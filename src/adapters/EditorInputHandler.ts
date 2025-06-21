@@ -40,8 +40,8 @@ export class EditorInputHandler implements IEditorInputHandler {
      */
     setSelectedTool(tool: string): void {
         // Validate tool
-        const validTools = Object.values(EDITOR_TOOLS);
-        if (!validTools.includes(tool as any)) {
+        const validTools = Object.values(EDITOR_TOOLS) as readonly string[];
+        if (!validTools.includes(tool)) {
             throw new EditorError(
                 `Invalid tool: ${tool}`,
                 ERROR_CODES.INVALID_TOOL,
