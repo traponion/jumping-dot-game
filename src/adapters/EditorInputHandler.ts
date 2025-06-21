@@ -8,20 +8,20 @@ import {
 import { DebugHelper } from '../utils/EditorUtils.js';
 import type {
     IEditorInputHandler,
-    IRenderAdapter,
     IObjectDrawer,
+    IRenderAdapter,
     Position
 } from './IRenderAdapter.js';
 
 /**
  * EditorInputHandler - Handles editor-specific input processing
- * 
+ *
  * Responsibilities:
  * - Tool selection and mode management
  * - Mouse event processing
  * - Drawing state management (platform drawing, object placement)
  * - Grid and snap functionality
- * 
+ *
  * This class follows Single Responsibility Principle by handling only input concerns.
  */
 export class EditorInputHandler implements IEditorInputHandler {
@@ -53,7 +53,7 @@ export class EditorInputHandler implements IEditorInputHandler {
         // Update state (this will be handled by the adapter)
         // For now, we'll need a way to update the adapter's state
         // This might require extending the IRenderAdapter interface
-        
+
         DebugHelper.log('Tool selected', { tool });
     }
 
@@ -63,9 +63,9 @@ export class EditorInputHandler implements IEditorInputHandler {
     toggleGrid(): void {
         const editorState = this.adapter.getEditorState();
         const newGridState = !editorState.gridEnabled;
-        
+
         this.adapter.renderGrid(newGridState);
-        
+
         DebugHelper.log('Grid toggled', { enabled: newGridState });
     }
 
@@ -75,10 +75,10 @@ export class EditorInputHandler implements IEditorInputHandler {
     toggleSnapToGrid(): void {
         const editorState = this.adapter.getEditorState();
         const newSnapState = !editorState.snapToGrid;
-        
+
         // Update state - this requires adapter state update capability
         // Will need to extend IRenderAdapter interface
-        
+
         DebugHelper.log('Snap to grid toggled', { enabled: newSnapState });
     }
 
@@ -87,7 +87,7 @@ export class EditorInputHandler implements IEditorInputHandler {
      */
     handleMouseDown(position: Position): void {
         const editorState = this.adapter.getEditorState();
-        
+
         if (editorState.selectedTool === EDITOR_TOOLS.SELECT) {
             return; // Selection is handled by canvas event system
         }
@@ -165,13 +165,13 @@ export class EditorInputHandler implements IEditorInputHandler {
         try {
             // Create initial platform line from position to position
             const platformObject = this.objectDrawer.createPlatform(position, position);
-            this.objectDrawer.setObjectData(platformObject, { 
-                type: EDITOR_TOOLS.PLATFORM, 
-                isDrawing: true 
+            this.objectDrawer.setObjectData(platformObject, {
+                type: EDITOR_TOOLS.PLATFORM,
+                isDrawing: true
             });
-            
+
             this.drawingObject = platformObject;
-            
+
             DebugHelper.log('Started platform drawing', { position });
         } catch (error) {
             throw new EditorError(
@@ -195,7 +195,7 @@ export class EditorInputHandler implements IEditorInputHandler {
             // Update the end position of the drawing platform
             // This is platform-specific and needs to be handled by ObjectDrawer
             // For now, we'll need to add a method to ObjectDrawer for updating platforms
-            
+
             DebugHelper.log('Updated platform drawing', { position });
         } catch (error) {
             DebugHelper.log('Error updating platform drawing', { position, error });
@@ -212,13 +212,13 @@ export class EditorInputHandler implements IEditorInputHandler {
 
         try {
             // Mark the platform as finished drawing
-            this.objectDrawer.setObjectData(this.drawingObject, { 
-                type: EDITOR_TOOLS.PLATFORM, 
-                isDrawing: false 
+            this.objectDrawer.setObjectData(this.drawingObject, {
+                type: EDITOR_TOOLS.PLATFORM,
+                isDrawing: false
             });
-            
+
             this.drawingObject = null;
-            
+
             DebugHelper.log('Finished platform drawing');
         } catch (error) {
             DebugHelper.log('Error finishing platform drawing', error);
@@ -232,7 +232,7 @@ export class EditorInputHandler implements IEditorInputHandler {
         try {
             const spike = this.objectDrawer.createSpike(position);
             this.objectDrawer.applySpikeStyle(spike);
-            
+
             DebugHelper.log('Placed spike', { position });
         } catch (error) {
             throw new EditorError(
@@ -251,7 +251,7 @@ export class EditorInputHandler implements IEditorInputHandler {
         try {
             const goal = this.objectDrawer.createGoal(position);
             this.objectDrawer.applyGoalStyle(goal);
-            
+
             DebugHelper.log('Placed goal', { position });
         } catch (error) {
             throw new EditorError(
@@ -270,7 +270,7 @@ export class EditorInputHandler implements IEditorInputHandler {
         try {
             const textObject = this.objectDrawer.createText(position, text);
             this.objectDrawer.applyTextStyle(textObject);
-            
+
             DebugHelper.log('Placed text', { position, text });
         } catch (error) {
             throw new EditorError(
@@ -287,11 +287,11 @@ export class EditorInputHandler implements IEditorInputHandler {
      */
     private getSnappedPosition(position: Position): Position {
         const editorState = this.adapter.getEditorState();
-        
+
         if (!editorState.snapToGrid) {
             return position;
         }
-        
+
         return this.objectDrawer.snapToGrid(position, EDITOR_CONFIG.GRID_SIZE);
     }
 }

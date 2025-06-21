@@ -8,7 +8,7 @@
  * Platform interface representing a static platform in the game
  * @interface Platform
  * @property {number} x1 - Starting x coordinate
- * @property {number} y1 - Starting y coordinate  
+ * @property {number} y1 - Starting y coordinate
  * @property {number} x2 - Ending x coordinate
  * @property {number} y2 - Ending y coordinate
  */
@@ -350,4 +350,3 @@ export class StageLoader {
         };
     }
 }
-

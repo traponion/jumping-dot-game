@@ -5,10 +5,10 @@
  */
 
 import { GAME_CONFIG } from '../constants/GameConstants.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 import type { InputManager } from './InputManager.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
 
 /**
  * Player system responsible for handling player movement, input processing, auto-jump mechanics, and trail management
@@ -18,13 +18,13 @@ import { getGameStore } from '../stores/GameZustandStore.js';
 export class PlayerSystem {
     /** @private {InputManager | null} Input manager instance for handling user input */
     private inputManager: InputManager | null = null;
-    
+
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
-    
+
     /** @private {number | null} Timestamp of the last auto-jump execution */
     private lastJumpTime: number | null = null;
-    
+
     // Trail is now managed by Zustand store
 
     /**

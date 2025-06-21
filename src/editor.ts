@@ -14,7 +14,7 @@ import { EditorView } from './views/EditorView.js';
 
 /**
  * Main editor application class
- * @class EditorApplication 
+ * @class EditorApplication
  * @description Integrates MVC components for stage editor functionality.
  * Manages application lifecycle, error handling, and component coordination.
  */

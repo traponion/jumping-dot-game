@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 
@@ -32,13 +32,13 @@ describe('GameManager', () => {
         // Create canvas and GameManager
         canvas = document.createElement('canvas');
         gameManager = new GameManager(canvas, {});
-        
+
         // Get mock instances
         mockCollisionSystem = (gameManager as any).collisionSystem;
         mockAnimationSystem = (gameManager as any).animationSystem;
         mockPlayerSystem = (gameManager as any).playerSystem;
         mockPhysicsSystem = (gameManager as any).physicsSystem;
-        
+
         // Setup InputManager mock
         const mockInputManager = (gameManager as any).inputManager;
         mockInputManager.getMovementState = vi.fn().mockReturnValue({
@@ -52,7 +52,7 @@ describe('GameManager', () => {
         mockCollisionSystem.checkHoleCollision = vi.fn().mockReturnValue(false);
         mockCollisionSystem.checkBoundaryCollision = vi.fn().mockReturnValue(false);
         mockCollisionSystem.handlePlatformCollisions = vi.fn().mockReturnValue(null);
-        
+
         mockPlayerSystem.resetJumpTimer = vi.fn();
         mockPlayerSystem.update = vi.fn();
         mockPlayerSystem.clearTrail = vi.fn();
@@ -84,10 +84,10 @@ describe('GameManager', () => {
             // Arrange: Game is stopped
             getGameStore().stopGame();
             const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(updateSystemsSpy).not.toHaveBeenCalled();
         });
@@ -97,10 +97,10 @@ describe('GameManager', () => {
             getGameStore().startGame();
             getGameStore().gameOver();
             const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(updateSystemsSpy).not.toHaveBeenCalled();
         });
@@ -109,10 +109,10 @@ describe('GameManager', () => {
             // Arrange: Game is running
             getGameStore().startGame();
             const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(updateSystemsSpy).toHaveBeenCalledWith(16.67);
         });
@@ -133,10 +133,10 @@ describe('GameManager', () => {
             // Arrange
             mockCollisionSystem.checkSpikeCollisions.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(handlePlayerDeathSpy).toHaveBeenCalledWith('Hit by spike! Press R to restart');
         });
@@ -145,21 +145,24 @@ describe('GameManager', () => {
             // Arrange
             mockCollisionSystem.checkGoalCollision.mockReturnValue(true);
             const handleGoalReachedSpy = vi.spyOn(gameManager as any, 'handleGoalReached');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(handleGoalReachedSpy).toHaveBeenCalled();
         });
 
         it('should reset jump timer when platform collision occurs', () => {
             // Arrange
-            mockCollisionSystem.handlePlatformCollisions.mockReturnValue({ grounded: true, y: 400 });
-            
+            mockCollisionSystem.handlePlatformCollisions.mockReturnValue({
+                grounded: true,
+                y: 400
+            });
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(mockPlayerSystem.resetJumpTimer).toHaveBeenCalled();
         });
@@ -167,10 +170,10 @@ describe('GameManager', () => {
         it('should not reset jump timer when no platform collision', () => {
             // Arrange
             mockCollisionSystem.handlePlatformCollisions.mockReturnValue(null);
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(mockPlayerSystem.resetJumpTimer).not.toHaveBeenCalled();
         });
@@ -185,24 +188,30 @@ describe('GameManager', () => {
             // Arrange
             mockCollisionSystem.checkHoleCollision.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
-            expect(handlePlayerDeathSpy).toHaveBeenCalledWith('Fell into hole! Press R to restart', 'fall');
+            expect(handlePlayerDeathSpy).toHaveBeenCalledWith(
+                'Fell into hole! Press R to restart',
+                'fall'
+            );
         });
 
         it('should handle player death when hitting boundary', () => {
             // Arrange
             mockCollisionSystem.checkBoundaryCollision.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
-            expect(handlePlayerDeathSpy).toHaveBeenCalledWith('Game Over - Press R to restart', 'fall');
+            expect(handlePlayerDeathSpy).toHaveBeenCalledWith(
+                'Game Over - Press R to restart',
+                'fall'
+            );
         });
 
         it('should not handle death when no boundary collision', () => {
@@ -210,10 +219,10 @@ describe('GameManager', () => {
             mockCollisionSystem.checkHoleCollision.mockReturnValue(false);
             mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(handlePlayerDeathSpy).not.toHaveBeenCalled();
         });
@@ -229,14 +238,14 @@ describe('GameManager', () => {
             getGameStore().startGame();
             getGameStore().updateTimeRemaining(0);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act: Test checkTimeUp method indirectly through update
             gameManager.update(16.67);
-            
+
             // Since checkTimeUp only triggers when gameStartTime exists and elapsed time exceeds limit,
             // let's test the boundary condition by calling checkTimeUp directly with mocked conditions
             // For now, we'll skip this specific test and focus on other coverage
-            
+
             // Assert - This test needs more complex time mocking, let's simplify
             expect(handlePlayerDeathSpy).toHaveBeenCalledTimes(0); // No death called in this simple case
         });
@@ -245,10 +254,10 @@ describe('GameManager', () => {
             // Arrange: Set time to positive value
             getGameStore().updateTimeRemaining(10);
             const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(handlePlayerDeathSpy).not.toHaveBeenCalled();
         });
@@ -260,10 +269,10 @@ describe('GameManager', () => {
             getGameStore().startGame();
             const startDeathAnimationSpy = vi.fn();
             mockAnimationSystem.startDeathAnimation = startDeathAnimationSpy;
-            
+
             // Act
             (gameManager as any).handlePlayerDeath('Test death message');
-            
+
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
             expect(startDeathAnimationSpy).toHaveBeenCalled();
@@ -276,10 +285,10 @@ describe('GameManager', () => {
             getGameStore().startGame();
             const startClearAnimationSpy = vi.fn();
             mockAnimationSystem.startClearAnimation = startClearAnimationSpy;
-            
+
             // Act
             (gameManager as any).handleGoalReached();
-            
+
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
             expect(startClearAnimationSpy).toHaveBeenCalled();
@@ -301,10 +310,10 @@ describe('GameManager', () => {
             };
             const mockStageLoader = (gameManager as any).stageLoader;
             mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
-            
+
             // Act
             await gameManager.loadStage(1);
-            
+
             // Assert
             expect(getGameStore().game.timeLimit).toBe(15);
             expect(getGameStore().getTimeRemaining()).toBe(15);
@@ -325,10 +334,10 @@ describe('GameManager', () => {
             const mockStageLoader = (gameManager as any).stageLoader;
             mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
             const defaultTimeLimit = getGameStore().game.timeLimit;
-            
+
             // Act
             await gameManager.loadStage(1);
-            
+
             // Assert
             expect(getGameStore().game.timeLimit).toBe(defaultTimeLimit);
         });
@@ -347,10 +356,10 @@ describe('GameManager', () => {
         it('should update all systems in correct order', () => {
             // Arrange
             const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
-            
+
             // Act
             gameManager.update(16.67);
-            
+
             // Assert
             expect(updateSystemsSpy).toHaveBeenCalledWith(16.67);
             expect(mockPhysicsSystem.update).toHaveBeenCalledWith(16.67);
@@ -364,7 +373,7 @@ describe('GameManager', () => {
             // Arrange
             (gameManager as any).stage = null;
             getGameStore().startGame();
-            
+
             // Act & Assert - should not throw
             expect(() => gameManager.update(16.67)).not.toThrow();
         });
@@ -377,7 +386,7 @@ describe('GameManager', () => {
                 spikes: [],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
             };
-            
+
             // Act & Assert - should not throw
             expect(() => gameManager.update(0)).not.toThrow();
         });
@@ -390,7 +399,7 @@ describe('GameManager', () => {
                 spikes: [],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
             };
-            
+
             // Act & Assert - should not throw
             expect(() => gameManager.update(-5)).not.toThrow();
         });

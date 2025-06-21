@@ -5,8 +5,8 @@
  */
 
 import { DEFAULT_PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
-import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
+import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 
 /**
  * Physics system responsible for applying gravity and movement calculations
@@ -33,7 +33,7 @@ export class PhysicsSystem {
      */
     update(deltaTime: number): void {
         const dtFactor = (deltaTime / (1000 / 60)) * this.constants.gameSpeed;
-        
+
         // Get current player state from store
         const player = getGameStore().getPlayer();
 
@@ -44,7 +44,7 @@ export class PhysicsSystem {
         // Update store with new state
         getGameStore().updatePlayer({
             ...newPosition,
-            vy: newVy,
+            vy: newVy
         });
     }
 
@@ -70,7 +70,11 @@ export class PhysicsSystem {
      * @param {number} dtFactor - Delta time factor for frame-rate independent calculations
      * @returns {{ x: number, y: number }} New position coordinates
      */
-    private calculatePosition(player: Player, newVy: number, dtFactor: number): { x: number, y: number } {
+    private calculatePosition(
+        player: Player,
+        newVy: number,
+        dtFactor: number
+    ): { x: number; y: number } {
         return {
             x: player.x + player.vx * dtFactor,
             y: player.y + newVy * dtFactor

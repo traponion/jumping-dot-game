@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { getGameStore } from '../stores/GameZustandStore.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import type { PhysicsConstants, Player } from '../types/GameTypes.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('PhysicsSystem', () => {
     let player: Player;
@@ -11,7 +11,7 @@ describe('PhysicsSystem', () => {
     beforeEach(() => {
         // Reset store to clean state
         getGameStore().reset();
-        
+
         player = {
             x: 100,
             y: 400,
@@ -20,7 +20,7 @@ describe('PhysicsSystem', () => {
             radius: 3,
             grounded: false
         };
-        
+
         // Set up initial player state in store
         getGameStore().updatePlayer(player);
 
@@ -71,7 +71,7 @@ describe('PhysicsSystem', () => {
 
             // Get updated player from store
             const updatedPlayer = getGameStore().getPlayer();
-            
+
             // Position should change based on velocity and game speed
             expect(updatedPlayer.x).not.toBe(initialX);
             expect(updatedPlayer.y).not.toBe(initialY);
@@ -88,15 +88,15 @@ describe('PhysicsSystem', () => {
             getGameStore().reset();
             getGameStore().updatePlayer(player);
             const initialX = player.x;
-            
+
             slowPhysics.update(16.67);
             const slowPlayer = getGameStore().getPlayer();
             const slowDistance = Math.abs(slowPlayer.x - initialX);
 
-            // Reset store and set up initial player for fast test  
+            // Reset store and set up initial player for fast test
             getGameStore().reset();
             getGameStore().updatePlayer(player);
-            
+
             fastPhysics.update(16.67);
             const fastPlayer = getGameStore().getPlayer();
             const fastDistance = Math.abs(fastPlayer.x - initialX);

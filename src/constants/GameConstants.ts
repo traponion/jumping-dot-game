@@ -17,7 +17,7 @@
  * @example
  * // Apply gravity to player
  * player.vy += DEFAULT_PHYSICS_CONSTANTS.gravity * dtFactor;
- * 
+ *
  * // Trigger jump
  * player.vy = DEFAULT_PHYSICS_CONSTANTS.jumpForce;
  */
@@ -48,13 +48,13 @@ export const DEFAULT_PHYSICS_CONSTANTS = {
  * // Initialize canvas
  * canvas.width = GAME_CONFIG.canvas.defaultWidth;
  * canvas.height = GAME_CONFIG.canvas.defaultHeight;
- * 
+ *
  * // Create player with default settings
  * const player = {
  *   radius: GAME_CONFIG.player.defaultRadius,
  *   acceleration: GAME_CONFIG.player.acceleration
  * };
- * 
+ *
  * // Configure particle system
  * const particleSystem = new ParticleSystem(GAME_CONFIG.animation.particleCount);
  */

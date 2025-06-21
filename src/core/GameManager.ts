@@ -10,12 +10,13 @@ import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
+import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
-import type { GameUI } from './GameUI.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
+import type { GameUI } from './GameUI.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
 /**
@@ -45,6 +46,8 @@ export class GameManager {
     private collisionSystem!: CollisionSystem;
     /** @private {AnimationSystem} Animation and visual effects system */
     private animationSystem!: AnimationSystem;
+    /** @private {MovingPlatformSystem} Moving platform management system */
+    private movingPlatformSystem!: MovingPlatformSystem;
     /** @private {FabricRenderSystem | MockRenderSystem} Rendering system */
     private renderSystem!:
         | FabricRenderSystem
@@ -98,6 +101,7 @@ export class GameManager {
         this.physicsSystem = new PhysicsSystem(physicsConstants);
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
+        this.movingPlatformSystem = new MovingPlatformSystem();
         // Environment-aware rendering system
         this.renderSystem = createRenderSystem(this.canvas);
 
@@ -123,11 +127,10 @@ export class GameManager {
                 const defaultTimeLimit = getGameStore().game.timeLimit;
                 gameStore.getState().setTimeLimit(defaultTimeLimit);
             }
-
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
-            
+
             // Set timeLimit from fallback stage data
             const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
             gameStore.getState().setTimeLimit(fallbackTimeLimit);
@@ -186,7 +189,16 @@ export class GameManager {
         this.playerSystem.update(deltaTime, physicsConstants);
 
         this.physicsSystem.update(deltaTime);
-        
+
+        // Update moving platforms if stage has them
+        if (this.stage?.movingPlatforms) {
+            // Overwrite the old array with the new, updated array
+            this.stage.movingPlatforms = this.movingPlatformSystem.update(
+                this.stage.movingPlatforms,
+                deltaTime
+            );
+        }
+
         // Use store action for clamping speed
         getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
 
@@ -200,6 +212,50 @@ export class GameManager {
         const player = getGameStore().getPlayer();
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
+        // Handle moving platform collisions first (higher priority)
+        if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
+            const movingPlatformCollisionUpdate =
+                this.collisionSystem.handleMovingPlatformCollisions(
+                    this.stage.movingPlatforms,
+                    prevPlayerFootY
+                );
+
+            if (movingPlatformCollisionUpdate) {
+                // Apply collision update to player
+                getGameStore().updatePlayer(movingPlatformCollisionUpdate);
+
+                if (
+                    movingPlatformCollisionUpdate.grounded &&
+                    movingPlatformCollisionUpdate.platform
+                ) {
+                    this.playerSystem.resetJumpTimer();
+
+                    // IMPORTANT: Move player with the platform!
+                    const movingPlatform = movingPlatformCollisionUpdate.platform;
+                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime (should use actual deltaTime)
+                    const platformMovement =
+                        movingPlatform.speed * movingPlatform.direction * dtFactor;
+
+                    // Get current player and apply platform movement
+                    const currentPlayer = getGameStore().getPlayer();
+                    getGameStore().updatePlayer({
+                        x: currentPlayer.x + platformMovement
+                    });
+
+                    // Add landing history with updated position
+                    const finalPlayer = getGameStore().getPlayer();
+                    this.renderSystem.addLandingHistory(
+                        finalPlayer.x,
+                        finalPlayer.y + finalPlayer.radius
+                    );
+                }
+
+                // Skip static platform collision check if moving platform collision found
+                return;
+            }
+        }
+
+        // Handle static platform collisions (only if no moving platform collision)
         const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
             this.stage.platforms,
             prevPlayerFootY
@@ -208,12 +264,15 @@ export class GameManager {
         if (platformCollisionUpdate) {
             // GameManager is responsible for updating the store
             getGameStore().updatePlayer(platformCollisionUpdate);
-            
+
             if (platformCollisionUpdate.grounded) {
                 this.playerSystem.resetJumpTimer();
                 // Get updated player state from store after collision
                 const updatedPlayer = getGameStore().getPlayer();
-                this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+                this.renderSystem.addLandingHistory(
+                    updatedPlayer.x,
+                    updatedPlayer.y + updatedPlayer.radius
+                );
             }
         }
 

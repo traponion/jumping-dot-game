@@ -1,8 +1,8 @@
 /**
  * @fileoverview Game utility functions for common operations and calculations
  * @module GameUtils
- * @description Provides utility functions for time management, collision detection, 
- * and mathematical operations used throughout the game. This module belongs to the 
+ * @description Provides utility functions for time management, collision detection,
+ * and mathematical operations used throughout the game. This module belongs to the
  * Domain layer and contains pure functions with no side effects.
  */
 

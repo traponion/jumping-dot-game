@@ -7,37 +7,33 @@ import {
     EditorError
 } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
-import type {
-    IRenderAdapter,
-    EditorState,
-    EditorCallbacks
-} from './IRenderAdapter.js';
 import { EditorInputHandler } from './EditorInputHandler.js';
-import { StageDataConverter } from './StageDataConverter.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter } from './IRenderAdapter.js';
 import { ObjectDrawer } from './ObjectDrawer.js';
+import { StageDataConverter } from './StageDataConverter.js';
 
 /**
  * FabricRenderAdapter (v2) - Pure adapter implementation following Nana-chan's guidance
- * 
+ *
  * Key Changes from v1:
  * - NO INHERITANCE from FabricRenderSystem (composition over inheritance)
  * - Uses delegation pattern with focused component classes
  * - Cleaner separation of concerns
  * - Follows Dependency Inversion Principle
- * 
+ *
  * Architecture:
  * - FabricRenderAdapter: Core adapter orchestration
  * - EditorInputHandler: Input processing
  * - StageDataConverter: Data conversion
  * - ObjectDrawer: Drawing operations
- * 
+ *
  * This follows the "Adapter should make A usable as B" principle correctly.
  */
 export class FabricRenderAdapter implements IRenderAdapter {
     private canvas: fabric.Canvas;
     private editorState: EditorState;
     private callbacks: EditorCallbacks;
-    
+
     // Component delegation (composition over inheritance)
     private inputHandler: EditorInputHandler;
     private stageConverter: StageDataConverter;
@@ -55,7 +51,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
 
         // Initialize Fabric.js canvas
         this.canvas = this.initializeFabricCanvas(canvasElement);
-        
+
         // Create component instances (delegation pattern)
         this.objectDrawer = new ObjectDrawer(this.canvas);
         this.inputHandler = new EditorInputHandler(this, this.objectDrawer);
@@ -126,10 +122,10 @@ export class FabricRenderAdapter implements IRenderAdapter {
     renderGrid(enabled: boolean): void {
         try {
             this.editorState.gridEnabled = enabled;
-            
+
             // Remove existing grid objects
             this.removeGridObjects();
-            
+
             if (!enabled) {
                 this.renderAll();
                 return;
@@ -138,7 +134,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
             // Draw new grid
             this.drawGrid();
             this.renderAll();
-            
+
             DebugHelper.log('Grid rendered', { enabled });
         } catch (error) {
             throw new EditorError(
@@ -162,16 +158,16 @@ export class FabricRenderAdapter implements IRenderAdapter {
      */
     selectObject(object: unknown | null): void {
         this.editorState.selectedObject = object;
-        
+
         if (object && object instanceof fabric.Object) {
             this.canvas.setActiveObject(object);
         } else {
             this.canvas.discardActiveObject();
         }
-        
+
         this.callbacks.onObjectSelected?.(object);
         this.renderAll();
-        
+
         DebugHelper.log('Object selected', { hasObject: !!object });
     }
 
@@ -179,13 +175,16 @@ export class FabricRenderAdapter implements IRenderAdapter {
      * Delete currently selected object
      */
     deleteSelectedObject(): void {
-        if (this.editorState.selectedObject && this.editorState.selectedObject instanceof fabric.Object) {
+        if (
+            this.editorState.selectedObject &&
+            this.editorState.selectedObject instanceof fabric.Object
+        ) {
             this.canvas.remove(this.editorState.selectedObject);
             this.editorState.selectedObject = null;
             this.callbacks.onObjectSelected?.(null);
             this.notifyStageModified();
             this.renderAll();
-            
+
             DebugHelper.log('Object deleted');
         }
     }
@@ -194,7 +193,10 @@ export class FabricRenderAdapter implements IRenderAdapter {
      * Duplicate currently selected object
      */
     duplicateSelectedObject(): void {
-        if (!this.editorState.selectedObject || !(this.editorState.selectedObject instanceof fabric.Object)) {
+        if (
+            !this.editorState.selectedObject ||
+            !(this.editorState.selectedObject instanceof fabric.Object)
+        ) {
             return;
         }
 
@@ -203,17 +205,17 @@ export class FabricRenderAdapter implements IRenderAdapter {
             const bounds = this.objectDrawer.getObjectBounds(original);
             const offset = { x: 20, y: 20 };
             const newPosition = { x: bounds.x + offset.x, y: bounds.y + offset.y };
-            
+
             // Get object type from data
             const objectData = this.objectDrawer.getObjectData(original);
             const objectType = objectData?.type;
 
             switch (objectType) {
                 case EDITOR_TOOLS.PLATFORM:
-                    this.objectDrawer.createPlatform(
-                        newPosition,
-                        { x: newPosition.x + bounds.width, y: newPosition.y }
-                    );
+                    this.objectDrawer.createPlatform(newPosition, {
+                        x: newPosition.x + bounds.width,
+                        y: newPosition.y
+                    });
                     break;
                 case EDITOR_TOOLS.SPIKE:
                     this.objectDrawer.createSpike(newPosition, {
@@ -241,7 +243,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
 
             this.notifyStageModified();
             this.renderAll();
-            
+
             DebugHelper.log('Object duplicated', { objectType, newPosition });
         } catch (error) {
             throw new EditorError(
@@ -258,7 +260,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
      */
     setupEventListeners(callbacks: EditorCallbacks): void {
         this.callbacks = { ...this.callbacks, ...callbacks };
-        
+
         // Selection events
         this.canvas.on('selection:created', (e: any) => {
             const selectedObject = e.selected?.[0] || null;
@@ -308,7 +310,6 @@ export class FabricRenderAdapter implements IRenderAdapter {
 
     // ===== Public API for Editor Integration =====
 
-
     // ===== Private Implementation Methods =====
 
     /**
@@ -345,8 +346,8 @@ export class FabricRenderAdapter implements IRenderAdapter {
     private handleObjectSelection(object: fabric.Object | null): void {
         this.editorState.selectedObject = object;
         this.callbacks.onObjectSelected?.(object);
-        
-        DebugHelper.log('Object selection changed', { 
+
+        DebugHelper.log('Object selection changed', {
             hasObject: !!object,
             objectType: object ? this.objectDrawer.getObjectData(object)?.type : null
         });
@@ -357,12 +358,12 @@ export class FabricRenderAdapter implements IRenderAdapter {
      */
     private removeGridObjects(): void {
         const objects = this.canvas.getObjects();
-        const gridObjects = objects.filter(obj => {
+        const gridObjects = objects.filter((obj) => {
             const data = this.objectDrawer.getObjectData(obj);
             return data?.isGrid === true;
         });
-        
-        gridObjects.forEach(obj => this.canvas.remove(obj));
+
+        gridObjects.forEach((obj) => this.canvas.remove(obj));
     }
 
     /**
@@ -375,18 +376,12 @@ export class FabricRenderAdapter implements IRenderAdapter {
 
         // Draw vertical lines
         for (let x = 0; x <= canvasWidth; x += gridSize) {
-            this.objectDrawer.createGridLine(
-                { x, y: 0 },
-                { x, y: canvasHeight }
-            );
+            this.objectDrawer.createGridLine({ x, y: 0 }, { x, y: canvasHeight });
         }
 
         // Draw horizontal lines
         for (let y = 0; y <= canvasHeight; y += gridSize) {
-            this.objectDrawer.createGridLine(
-                { x: 0, y },
-                { x: canvasWidth, y }
-            );
+            this.objectDrawer.createGridLine({ x: 0, y }, { x: canvasWidth, y });
         }
     }
 
@@ -423,7 +418,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
     /**
      * Create goal at position (legacy compatibility)
      */
-    createGoal(x: number, y: number, width: number = 40, height: number = 50): void {
+    createGoal(x: number, y: number, width = 40, height = 50): void {
         const position = { x, y };
         const size = { width, height };
         const goal = this.objectDrawer.createGoal(position, size);
@@ -472,7 +467,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
      */
     setSelectedTool(tool: string): void {
         this.editorState.selectedTool = tool as any;
-        
+
         // Update canvas interaction mode
         if (tool === EDITOR_TOOLS.SELECT) {
             this.canvas.selection = true;
@@ -480,7 +475,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
             this.canvas.discardActiveObject();
             this.canvas.selection = false;
         }
-        
+
         this.renderAll();
         this.inputHandler.setSelectedTool(tool);
         DebugHelper.log('Legacy setSelectedTool called', { tool });
@@ -519,22 +514,22 @@ export class FabricRenderAdapter implements IRenderAdapter {
         DebugHelper.log('Legacy exportStageData called');
         return stageData;
     }
-    
+
     // ===== Public API for Components =====
     // These methods allow component classes to access canvas state
-    
+
     /**
      * Get all editable objects from canvas (excluding grid objects)
      * Used by StageDataConverter to export stage data
      */
     public getEditableObjects(): fabric.Object[] {
         const allObjects = this.canvas.getObjects();
-        return allObjects.filter(obj => {
+        return allObjects.filter((obj) => {
             const data = this.objectDrawer.getObjectData(obj);
             return !data?.isGrid; // Exclude grid objects
         });
     }
-    
+
     /**
      * Get canvas reference for advanced operations
      * Used by component classes when needed

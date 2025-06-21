@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
 import type { GameUI } from '../core/GameUI.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 
 // Mock dependencies
 vi.mock('../ui/GameUI.js');
@@ -16,12 +16,12 @@ describe('GameManager render with GameUI integration', () => {
     beforeEach(() => {
         // Reset store to clean state
         getGameStore().reset();
-        
+
         // Create canvas
         canvas = document.createElement('canvas');
         canvas.width = 800;
         canvas.height = 600;
-        
+
         // Create mock GameUI
         mockGameUI = {
             getGameOverMenuData: vi.fn().mockReturnValue({
@@ -60,7 +60,7 @@ describe('GameManager render with GameUI integration', () => {
             // Setup: Set game to over state
             getGameStore().gameOver();
             getGameStore().setFinalScore(150);
-            
+
             // Act: Call render with GameUI
             (gameManager as any).render(mockGameUI);
 
@@ -71,10 +71,10 @@ describe('GameManager render with GameUI integration', () => {
                 0,
                 150
             );
-            
+
             // Assert: renderAll should be called after renderGameOverMenu
             expect(mockRenderSystem.renderAll).toHaveBeenCalled();
-            
+
             // Verify call order: renderGameOverMenu before renderAll
             const renderMenuCall = mockRenderSystem.renderGameOverMenu.mock.invocationCallOrder[0];
             const renderAllCall = mockRenderSystem.renderAll.mock.invocationCallOrder[0];
@@ -84,7 +84,7 @@ describe('GameManager render with GameUI integration', () => {
         it('should not render start instruction when game is over', () => {
             // Setup: Set game to over state
             getGameStore().gameOver();
-            
+
             // Act: Call render with GameUI
             (gameManager as any).render(mockGameUI);
 
@@ -97,7 +97,7 @@ describe('GameManager render with GameUI integration', () => {
         it('should call renderStartInstruction and not renderGameOverMenu', () => {
             // Setup: Game not running, not over (initial state)
             getGameStore().stopGame();
-            
+
             // Act: Call render with GameUI
             (gameManager as any).render(mockGameUI);
 
@@ -112,7 +112,7 @@ describe('GameManager render with GameUI integration', () => {
         it('should not call renderGameOverMenu or renderStartInstruction', () => {
             // Setup: Game running
             getGameStore().startGame();
-            
+
             // Act: Call render with GameUI
             (gameManager as any).render(mockGameUI);
 
@@ -134,7 +134,7 @@ describe('GameManager render with GameUI integration', () => {
         it('should handle missing GameUI gracefully', () => {
             // Setup: Game over state
             getGameStore().gameOver();
-            
+
             // Act: Call render without GameUI (should not crash)
             expect(() => {
                 (gameManager as any).render();
