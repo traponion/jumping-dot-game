@@ -128,8 +128,7 @@ describe('EditorView', () => {
         mockController = createMockController();
         mockUIManager = createMockUIManager();
         
-        view.setController(mockController);
-        view.setUIManager(mockUIManager);
+view.setUIManager(mockUIManager);
     });
 
     afterEach(() => {
@@ -144,10 +143,6 @@ describe('EditorView', () => {
 
         it('should complete initialization successfully', () => {
             expect(() => view.initialize()).not.toThrow();
-        });
-
-        it('should set controller successfully', () => {
-            expect(() => view.setController(mockController)).not.toThrow();
         });
 
         it('should handle method calls safely before initialization', () => {
@@ -461,7 +456,6 @@ describe('EditorView', () => {
             document.getElementById('mouseCoords')?.remove();
 
             const newView = new EditorView(canvas);
-            newView.setController(mockController);
 
             // New architecture should handle missing elements gracefully
             expect(() => newView.initialize()).not.toThrow();

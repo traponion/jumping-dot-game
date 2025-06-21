@@ -298,15 +298,7 @@ describe('EditorController (Adapter Pattern)', () => {
             mockAdapter.reset();
             
             // Mock StageLoader to return valid stage data
-            const mockStageData = {
-                id: 1,
-                name: 'Test Stage',
-                platforms: [],
-                spikes: [],
-                goal: { x: 400, y: 200, width: 40, height: 50 },
-                startText: { x: 50, y: 450, text: 'START' },
-                goalText: { x: 420, y: 180, text: 'GOAL' }
-            };
+            // StageLoader will handle returning proper stage data
             
             await controller.loadStage(1);
 

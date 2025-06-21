@@ -6,7 +6,7 @@
 
 import { DEFAULT_PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
 import type { PhysicsConstants, Player } from '../types/GameTypes.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+
 
 /**
  * Physics system responsible for applying gravity and movement calculations
@@ -31,22 +31,28 @@ export class PhysicsSystem {
      * @param {number} deltaTime - Time elapsed since last update in milliseconds
      * @returns {void}
      */
-    update(deltaTime: number): void {
+    /**
+     * Updates physics calculations for the current frame
+     * @param {Player} player - Current player state
+     * @param {number} deltaTime - Time elapsed since last update in milliseconds
+     * @returns {{ player: Partial<Player> }} Updated player state
+     */
+    update(player: Player, deltaTime: number): { player: Partial<Player> } {
         const dtFactor = (deltaTime / (1000 / 60)) * this.constants.gameSpeed;
-        
-        // Get current player state from store
-        const player = getGameStore().getPlayer();
-
+    
         // Calculate physics updates
         const newVy = this.calculateGravity(player, dtFactor);
         const newPosition = this.calculatePosition(player, newVy, dtFactor);
-
-        // Update store with new state
-        getGameStore().updatePlayer({
-            ...newPosition,
-            vy: newVy,
-        });
+    
+        // Return updated state instead of modifying store directly
+        return {
+            player: {
+                ...newPosition,
+                vy: newVy,
+            }
+        };
     }
+
 
     /**
      * Calculates gravity effect on player velocity

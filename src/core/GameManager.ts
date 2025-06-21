@@ -9,11 +9,11 @@ import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
 import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
-import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
-import { createRenderSystem } from '../systems/RenderSystemFactory.js';
+import type { IGameRenderAdapter } from '../adapters/IGameRenderAdapter.js';
+import { gameRenderAdapterFactory } from '../adapters/GameRenderAdapterFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
 import type { GameUI } from './GameUI.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
@@ -46,10 +46,9 @@ export class GameManager {
     private collisionSystem!: CollisionSystem;
     /** @private {AnimationSystem} Animation and visual effects system */
     private animationSystem!: AnimationSystem;
-    /** @private {FabricRenderSystem | MockRenderSystem} Rendering system */
-    private renderSystem!:
-        | FabricRenderSystem
-        | import('../systems/MockRenderSystem.js').MockRenderSystem;
+    /** @private {IGameRenderAdapter} Game rendering adapter */
+    private renderAdapter!: IGameRenderAdapter;
+
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
     
@@ -101,8 +100,8 @@ export class GameManager {
         this.physicsSystem = new PhysicsSystem(physicsConstants);
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
-        // Environment-aware rendering system
-        this.renderSystem = createRenderSystem(this.canvas);
+        // Use adapter pattern for rendering system
+        this.renderAdapter = gameRenderAdapterFactory.createGameRenderAdapter(this.canvas);
 
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.canvas, gameController);
@@ -185,20 +184,26 @@ export class GameManager {
     }
 
     private updateSystems(deltaTime: number): void {
-        // Update input manager
-        this.inputManager.update();
+            // Update input manager
+            this.inputManager.update();
+    
+            const physicsConstants = this.physicsSystem.getPhysicsConstants();
+            this.playerSystem.update(deltaTime, physicsConstants);
+    
+            // Get current player state and apply physics
+            const currentPlayer = getGameStore().getPlayer();
+            const physicsResult = this.physicsSystem.update(currentPlayer, deltaTime);
+            
+            // Update store with physics result
+            getGameStore().updatePlayer(physicsResult.player);
+            
+            // Use PlayerUpdateService for clamping speed
+            this.playerUpdateService.clampPlayerSpeed(physicsConstants.moveSpeed);
+    
+            this.animationSystem.updateClearAnimation();
+            this.animationSystem.updateDeathAnimation();
+        }
 
-        const physicsConstants = this.physicsSystem.getPhysicsConstants();
-        this.playerSystem.update(deltaTime, physicsConstants);
-
-        this.physicsSystem.update(deltaTime);
-        
-        // Use PlayerUpdateService for clamping speed
-        this.playerUpdateService.clampPlayerSpeed(physicsConstants.moveSpeed);
-
-        this.animationSystem.updateClearAnimation();
-        this.animationSystem.updateDeathAnimation();
-    }
 
     private handleCollisions(): void {
         if (!this.stage) return;
@@ -219,7 +224,7 @@ export class GameManager {
                 this.playerSystem.resetJumpTimer();
                 // Get updated player state from store after collision
                 const updatedPlayer = getGameStore().getPlayer();
-                this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+                this.renderAdapter.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
             }
         }
 
@@ -272,9 +277,9 @@ export class GameManager {
                     jumpNumber: 1
                 }
             ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
+            this.renderAdapter.setLandingPredictions(simplePrediction);
         } else {
-            this.renderSystem.setLandingPredictions([]);
+            this.renderAdapter.setLandingPredictions([]);
         }
     }
 
@@ -393,7 +398,7 @@ export class GameManager {
      * Render the game
      */
     render(ui?: GameUI): void {
-        const renderer = this.renderSystem;
+        const renderer = this.renderAdapter;
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();
@@ -451,9 +456,7 @@ export class GameManager {
      * Render game over menu
      */
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
-            (this.renderSystem as any).renderGameOverMenu(options, selectedIndex, finalScore);
-        }
+        this.renderAdapter.renderGameOverMenu(options, selectedIndex, finalScore);
     }
 
     /**
@@ -476,10 +479,8 @@ export class GameManager {
     async cleanup(): Promise<void> {
         this.inputManager.cleanup();
 
-        // Cleanup render system to prevent canvas reinitialization issues
-        if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as any).cleanup();
-        }
+        // Cleanup render adapter
+        await this.renderAdapter.cleanup();
 
         gameStore.getState().gameOver();
     }
@@ -505,3 +506,4 @@ export class GameManager {
         return this.inputManager;
     }
 }
+

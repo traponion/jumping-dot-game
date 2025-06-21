@@ -229,8 +229,9 @@ export class EffectRenderer {
             case TransitionType.FADE_IN:
                 overlay.set({ opacity: 1 });
                 this.canvas.add(overlay);
-                overlay.animate('opacity', 0, {
+                overlay.animate({ opacity: 0 }, {
                     duration,
+                    onChange: this.canvas.renderAll.bind(this.canvas),
                     onComplete: () => {
                         this.canvas.remove(overlay);
                         onComplete?.();
@@ -241,8 +242,9 @@ export class EffectRenderer {
             case TransitionType.FADE_OUT:
                 overlay.set({ opacity: 0 });
                 this.canvas.add(overlay);
-                overlay.animate('opacity', 1, {
+                overlay.animate({ opacity: 1 }, {
                     duration,
+                    onChange: this.canvas.renderAll.bind(this.canvas),
                     onComplete: () => onComplete?.()
                 });
                 break;
@@ -250,8 +252,9 @@ export class EffectRenderer {
             case TransitionType.SLIDE_UP:
                 overlay.set({ top: this.canvas.getHeight() });
                 this.canvas.add(overlay);
-                overlay.animate('top', 0, {
+                overlay.animate({ top: 0 }, {
                     duration,
+                    onChange: this.canvas.renderAll.bind(this.canvas),
                     onComplete: () => onComplete?.()
                 });
                 break;
@@ -259,8 +262,9 @@ export class EffectRenderer {
             case TransitionType.SLIDE_DOWN:
                 overlay.set({ top: -this.canvas.getHeight() });
                 this.canvas.add(overlay);
-                overlay.animate('top', 0, {
+                overlay.animate({ top: 0 }, {
                     duration,
+                    onChange: this.canvas.renderAll.bind(this.canvas),
                     onComplete: () => onComplete?.()
                 });
                 break;
@@ -305,4 +309,15 @@ export class EffectRenderer {
     public dispose(): void {
         this.clearEffects();
     }
+    
+    /**
+         * Render player trail
+         * @param trail - Array of trail points
+         * @param playerRadius - Player radius for trail positioning
+         */
+        public renderTrail(_trail: Array<{x: number; y: number}>, _playerRadius: number): void {
+                // Trail rendering implementation placeholder
+                // See issue #57 for implementation task
+            }
+
 }

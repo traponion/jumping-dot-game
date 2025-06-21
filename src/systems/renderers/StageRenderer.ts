@@ -6,7 +6,7 @@
  */
 
 import * as fabric from 'fabric';
-import type { StageData, Platform, Spike, Goal, StageText } from '../../core/StageLoader.js';
+import type { StageData, Platform, Spike, Goal, TextElement } from '../../core/StageLoader.js';
 
 /**
  * Renderer for stage elements (platforms, spikes, goals, texts)
@@ -150,7 +150,7 @@ export class StageRenderer {
      * @param startText - Start text data
      * @param goalText - Goal text data
      */
-    private renderStageTexts(startText: StageText, goalText: StageText): void {
+    private renderStageTexts(startText: TextElement, goalText: TextElement): void {
         const startTextObj = new fabric.Text(startText.text, {
             left: startText.x,
             top: startText.y,

@@ -58,7 +58,8 @@ export interface GameStore {
     addDeathMark: (deathMark: DeathMark) => void;
     updateTrail: (trail: TrailPoint[]) => void;
     addTrailPoint: (point: TrailPoint) => void;
-    setInitialized: (initialized: boolean) => void;
+    
+    getTrail: () => TrailPoint[];    setInitialized: (initialized: boolean) => void;
 
     updatePerformance: (updates: Partial<GamePerformanceState>) => void;
 
@@ -229,7 +230,8 @@ const gameStore = createStore<GameStore>()(
                         state.runtime.trail.shift();
                     }
                 }),
-
+            
+            getTrail: () => get().runtime.trail,
             setInitialized: (initialized: boolean) =>
                 set((state) => {
                     state.runtime.isInitialized = initialized;

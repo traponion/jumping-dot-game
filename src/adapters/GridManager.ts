@@ -67,7 +67,13 @@ export class GridManager {
     public toggleSnapToGrid(): void {
         this.snapToGridEnabled = !this.snapToGridEnabled;
     }
-
+    
+    /**
+     * Set snap to grid state
+     */
+    public setSnapToGrid(enabled: boolean): void {
+        this.snapToGridEnabled = enabled;
+    }
     /**
      * Check if grid is enabled
      */

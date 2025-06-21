@@ -4,11 +4,11 @@
  * @description Domain Layer - Pure player logic and physics management using Zustand store
  */
 
-import { GAME_CONFIG } from '../constants/GameConstants.js';
+
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 import type { InputManager } from './InputManager.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+
 import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 
 /**
@@ -18,10 +18,12 @@ import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
  */
 export class PlayerSystem {
     /** @private {InputManager | null} Input manager instance for handling user input */
-    private inputManager: InputManager | null = null;
+    private inputManager: InputManager;
+
     
         /** @private {PlayerUpdateService | null} Player update service for velocity logic */
-        private playerUpdateService: PlayerUpdateService | null = null;    
+        private playerUpdateService: PlayerUpdateService;
+    
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
     
@@ -41,11 +43,12 @@ export class PlayerSystem {
          * @param {InputManager} [inputManager] - Optional input manager for handling user input
          * @param {PlayerUpdateService} [playerUpdateService] - Optional player update service for velocity logic
          */
-        constructor(inputManager?: InputManager, playerUpdateService?: PlayerUpdateService) {
-            // Use Zustand store for all state management
-            this.inputManager = inputManager || null;
-            this.playerUpdateService = playerUpdateService || null;
-        }
+        constructor(inputManager: InputManager, playerUpdateService: PlayerUpdateService) {
+                // Use Zustand store for all state management
+                this.inputManager = inputManager;
+                this.playerUpdateService = playerUpdateService;
+            }
+
 
 
     /**
@@ -78,39 +81,18 @@ export class PlayerSystem {
      * @returns {void}
      */
     private handleInput(dtFactor: number): void {
-        if (!this.inputManager) return;
-
+        if (!this.inputManager || !this.playerUpdateService) return;
+    
         const leftInput = this.inputManager.isPressed('move-left');
         const rightInput = this.inputManager.isPressed('move-right');
-        const gameStore = getGameStore();
-
+    
         if (leftInput || rightInput) {
-            // Use PlayerUpdateService for velocity updates
-            if (this.playerUpdateService) {
-                this.playerUpdateService.updatePlayerVelocity(leftInput ? 'left' : 'right', dtFactor);
-            } else {
-                // Fallback to direct store access if service not available
-                const currentPlayer = gameStore.getPlayer();
-                const acceleration = 0.3; // GAME_CONFIG.player.acceleration fallback
-                let newVx = currentPlayer.vx;
-                if (leftInput) {
-                    newVx -= acceleration * dtFactor;
-                } else {
-                    newVx += acceleration * dtFactor;
-                }
-                gameStore.updatePlayer({ vx: newVx });
-                gameStore.markPlayerMoved();
-            }
+            // Delegate all velocity updates to PlayerUpdateService
+            this.playerUpdateService.updatePlayerVelocity(leftInput ? 'left' : 'right', dtFactor);
             this.hasMovedOnce = true;
         }
-
-        // Get updated player state from store
-        const currentPlayer = gameStore.getPlayer();
-        if (this.hasMovedOnce && Math.abs(currentPlayer.vx) < GAME_CONFIG.player.minVelocity) {
-            // Apply minimum velocity (still need to implement this in store)
-            // TODO: Add updatePlayerVelocityDirect action to store for this case
-        }
     }
+
 
     /**
      * Handles automatic jumping mechanism for the player
@@ -120,19 +102,16 @@ export class PlayerSystem {
      */
     private handleAutoJump(physics: PhysicsConstants): void {
         const currentTime = getCurrentTime();
-        if (this.lastJumpTime === null) {
-            this.lastJumpTime = currentTime - physics.autoJumpInterval;
-        }
-
-        const currentPlayer = getGameStore().getPlayer();
-        if (currentPlayer.grounded && currentTime - this.lastJumpTime > physics.autoJumpInterval) {
-            getGameStore().updatePlayer({
-                vy: physics.jumpForce,
-                grounded: false
-            });
+        
+        if (!this.playerUpdateService) return;
+        
+        const currentPlayer = this.playerUpdateService.getPlayer();
+        if (currentPlayer.grounded && (this.lastJumpTime === null || currentTime - this.lastJumpTime > physics.autoJumpInterval)) {
+            this.playerUpdateService.jumpPlayer(physics.jumpForce);
             this.lastJumpTime = currentTime;
         }
     }
+
 
     /**
      * Updates the player's trail by adding current position
@@ -140,9 +119,12 @@ export class PlayerSystem {
      * @returns {void}
      */
     private updateTrail(): void {
-        const currentPlayer = getGameStore().getPlayer();
-        getGameStore().addTrailPoint({ x: currentPlayer.x, y: currentPlayer.y });
+        if (!this.playerUpdateService) return;
+        
+        const currentPlayer = this.playerUpdateService.getPlayer();
+        this.playerUpdateService.addTrailPoint({ x: currentPlayer.x, y: currentPlayer.y });
     }
+
 
     /**
      * Clamps player speed to the specified maximum value
@@ -150,13 +132,12 @@ export class PlayerSystem {
      * @returns {void}
      */
     clampSpeed(maxSpeed: number): void {
-        const currentPlayer = getGameStore().getPlayer();
-        if (Math.abs(currentPlayer.vx) > maxSpeed) {
-            getGameStore().updatePlayer({
-                vx: currentPlayer.vx >= 0 ? maxSpeed : -maxSpeed
-            });
+        // Delegate to PlayerUpdateService for consistent state management
+        if (this.playerUpdateService) {
+            this.playerUpdateService.clampPlayerSpeed(maxSpeed);
         }
     }
+
 
     /**
      * Resets the jump timer to allow immediate auto-jump
@@ -171,16 +152,23 @@ export class PlayerSystem {
      * @returns {void}
      */
     clearTrail(): void {
-        getGameStore().updateTrail([]);
+        if (this.playerUpdateService) {
+            this.playerUpdateService.clearTrail();
+        }
     }
+
 
     /**
      * Gets the current player trail points
      * @returns {TrailPoint[]} Array of trail points representing player's path
      */
     getTrail(): TrailPoint[] {
-        return getGameStore().runtime.trail;
+        if (this.playerUpdateService) {
+            return this.playerUpdateService.getTrail();
+        }
+        return [];
     }
+
 
     /**
      * Resets player to specified position and clears all state
@@ -189,17 +177,14 @@ export class PlayerSystem {
      * @returns {void}
      */
     reset(x: number, y: number): void {
-        getGameStore().updatePlayer({
-            x: x,
-            y: y,
-            vx: 0,
-            vy: 0,
-            grounded: false
-        });
+        if (this.playerUpdateService) {
+            this.playerUpdateService.resetPlayerPosition(x, y);
+            this.playerUpdateService.clearTrail();
+        }
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        getGameStore().updateTrail([]);
     }
+
 
     /**
      * Gets whether the player has moved at least once

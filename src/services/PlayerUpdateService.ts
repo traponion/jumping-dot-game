@@ -6,7 +6,7 @@
  */
 
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import type { Player } from '../types/GameTypes.js';
+import type { Player, TrailPoint } from '../types/GameTypes.js';
 
 /**
  * Store interface for player updates
@@ -15,7 +15,11 @@ export interface PlayerStore {
     updatePlayer(player: Partial<Player>): void;
     getPlayer(): Player;
     markPlayerMoved(): void;
+    addTrailPoint(point: { x: number; y: number }): void;
+    updateTrail(trail: TrailPoint[]): void;
+    getTrail(): TrailPoint[];
 }
+
 
 /**
  * Player update logic service
@@ -65,6 +69,46 @@ export class PlayerUpdateService {
             this.store.updatePlayer({ vx: clampedVx });
         }
     }
+    
+        /**
+         * Makes the player jump with specified force
+         * @param jumpForce - Jump force value
+         */
+        public jumpPlayer(jumpForce: number): void {
+            this.store.updatePlayer({
+                vy: jumpForce,
+                grounded: false
+            });
+        }
+    
+        /**
+         * Adds a trail point for the player
+         * @param point - Trail point to add
+         */
+        public addTrailPoint(point: { x: number; y: number }): void {
+            this.store.addTrailPoint(point);
+        }
+    
+        /**
+         * Clears the player trail
+         */
+        public clearTrail(): void {
+            this.store.updateTrail([]);
+        }
+    
+        /**
+         * Gets the current player state
+         */
+        public getPlayer(): Player {
+            return this.store.getPlayer();
+        }
+    
+        /**
+         * Gets the current trail
+         */
+        public getTrail(): TrailPoint[] {
+            return this.store.getTrail();
+        }
 
     /**
      * Apply friction to player velocity

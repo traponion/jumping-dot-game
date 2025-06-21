@@ -73,16 +73,21 @@ export interface IRenderAdapter {
     setupEventListeners(callbacks: EditorCallbacks): void;
     removeEventListeners(): void;
     
-    // ===== Legacy Compatibility Methods =====
-    // These methods provide backward compatibility with existing EditorRenderSystem
+    // ===== Tool and Editor Operations =====
     setSelectedTool(tool: string): void;
     toggleGrid(): void;
     toggleSnapToGrid(): void;
+    
+    // ===== Stage Management =====
     loadStageForEditing(stageData: StageData): void;
     exportStageData(): StageData;
+    
+    // ===== Object Creation =====
     createSpike(x: number, y: number): void;
     createGoal(x: number, y: number, width?: number, height?: number): void;
     createText(x: number, y: number, text: string): void;
+    
+    // ===== Platform Drawing =====
     startPlatformDrawing(x: number, y: number): void;
     finishPlatformDrawing(x: number, y: number): void;
 }

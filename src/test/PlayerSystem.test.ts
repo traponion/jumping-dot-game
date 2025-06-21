@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
 import type { InputManager } from '../systems/InputManager.js';
+import { PlayerUpdateService } from '../services/PlayerUpdateService.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 
@@ -9,6 +10,7 @@ describe('PlayerSystem', () => {
     let playerSystem: PlayerSystem;
     let physics: PhysicsConstants;
     let mockInputManager: InputManager;
+    let mockPlayerUpdateService: PlayerUpdateService;
 
     beforeEach(() => {
         // Reset store to clean state
@@ -45,7 +47,10 @@ describe('PlayerSystem', () => {
             canvas: null
         } as unknown as InputManager;
 
-        playerSystem = new PlayerSystem(mockInputManager);
+        // Create mock PlayerUpdateService
+        mockPlayerUpdateService = new PlayerUpdateService(getGameStore());
+
+        playerSystem = new PlayerSystem(mockInputManager, mockPlayerUpdateService);
     });
 
     describe('input handling', () => {
@@ -246,8 +251,9 @@ describe('PlayerSystem', () => {
                 isPressed: vi.fn()
             };
             
-            // Create PlayerSystem with InputManager
-            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
+            // Create PlayerSystem with InputManager and PlayerUpdateService
+            const mockService = new PlayerUpdateService(getGameStore());
+            const playerSystemWithInput = new PlayerSystem(mockInputManager as any, mockService);
             
             // Mock left key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-left');
@@ -274,7 +280,8 @@ describe('PlayerSystem', () => {
                 isPressed: vi.fn()
             };
             
-            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
+            const mockService2 = new PlayerUpdateService(getGameStore());
+            const playerSystemWithInput = new PlayerSystem(mockInputManager as any, mockService2);
             
             // Mock right key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-right');

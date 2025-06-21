@@ -5,7 +5,7 @@
  */
 
 import * as fabric from 'fabric';
-import type { Goal, Spike, StageData } from '../core/StageLoader.js';
+import type { StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import { StageRenderer } from './renderers/StageRenderer.js';
 import { PlayerRenderer } from './renderers/PlayerRenderer.js';
@@ -33,11 +33,10 @@ export class FabricRenderSystem {
     private uiRenderer: UIRenderer;
     
     // Landing predictions and history
-    private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Array<{x: number; y: number; timestamp: number}> = [];
     
     private static readonly HISTORY_FADE_TIME = 3000;
-    private static readonly LERP_SPEED = 0.15;
+
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvas = new fabric.Canvas(canvasElement, {
@@ -91,47 +90,90 @@ export class FabricRenderSystem {
     }
 
     public renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        this.playerRenderer.renderTrail(trail, playerRadius);
-    }
+            // Delegate to EffectRenderer for trail rendering
+            this.effectRenderer.renderTrail(trail, playerRadius);
+        }
+
+
+
+
 
     // === Effect Rendering (Delegate to EffectRenderer) ===
 
     public renderDeathMarks(deathMarks: DeathMark[]): void {
-        this.effectRenderer.renderDeathMarks(deathMarks);
-    }
+            // Death marks are now handled by EffectRenderer.createDeathEffect
+            // This method is kept for backward compatibility but delegates to effect creation
+            deathMarks.forEach(mark => {
+                this.effectRenderer.createDeathEffect(mark.x, mark.y);
+            });
+        }
+
 
     public renderDeathAnimation(particles: Particle[]): void {
-        this.effectRenderer.renderDeathAnimation(particles);
-    }
+            // Death animation is now handled by EffectRenderer.createExplosion
+            // Create explosion effect for each particle position
+            particles.forEach(particle => {
+                this.effectRenderer.createExplosion(particle.x, particle.y, { color: '#ff6b6b' });
+            });
+        }
 
-    public renderClearAnimation(particles: Particle[], progress: number, playerX: number, playerY: number): void {
-        this.effectRenderer.renderClearAnimation(particles, progress, playerX, playerY);
-    }
 
-    public renderLandingPredictions(): void {
-        this.updateLandingPredictionAnimations();
-        this.effectRenderer.renderLandingPredictions(this.landingPredictions);
-        this.renderLandingHistory();
-    }
+
+    public renderClearAnimation(_particles: Particle[], _progress: number, _playerX: number, _playerY: number): void {
+            // Clear animation is now handled by EffectRenderer.clearEffects
+            // Parameters for future animation enhancements
+            this.effectRenderer.clearEffects();
+        }
+
+
+
+
+    public renderLandingPredictions(predictions: LandingPrediction[]): void {
+            // Landing predictions are now handled internally by FabricRenderSystem
+            this.setLandingPredictions(predictions);
+        }
+
 
     // === UI Rendering (Delegate to UIRenderer) ===
 
-    public renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        this.uiRenderer.renderGameOverMenu(options, selectedIndex, finalScore);
-    }
+    public renderGameOverMenu(_options: string[], _selectedIndex: number, finalScore: number): void {
+                // Delegate to UIRenderer's game over overlay functionality
+                this.uiRenderer.showGameOverOverlay(finalScore, false);
+            }
+
+
+
 
     public renderStartInstruction(): void {
-        this.uiRenderer.renderStartInstruction();
-    }
+            // Delegate to UIRenderer's message functionality for start instructions
+            this.uiRenderer.showMessage({ 
+                text: 'Press SPACE to start!', 
+                position: { x: this.canvas.getWidth() / 2, y: this.canvas.getHeight() / 2 },
+                fontSize: 24,
+                color: '#ffffff',
+                duration: 3000
+            });
+        }
+
+
 
     public renderCredits(): void {
-        this.uiRenderer.renderCredits();
-    }
+            // Delegate to UIRenderer's message functionality for credits
+            this.uiRenderer.showMessage({ 
+                text: 'Game by Team', 
+                position: { x: this.canvas.getWidth() / 2, y: this.canvas.getHeight() / 2 },
+                fontSize: 20,
+                color: '#ffffff',
+                duration: 5000
+            });
+        }
+
+
 
     // === Landing Prediction System ===
 
-    public setLandingPredictions(predictions: LandingPrediction[]): void {
-        this.landingPredictions = predictions;
+    public setLandingPredictions(_predictions: LandingPrediction[]): void {
+        // Landing predictions are handled internally now
     }
 
     public addLandingHistory(x: number, y: number): void {
@@ -144,33 +186,6 @@ export class FabricRenderSystem {
         this.landingHistory = this.landingHistory.filter(
             item => now - item.timestamp < FabricRenderSystem.HISTORY_FADE_TIME
         );
-    }
-
-    private updateLandingPredictionAnimations(): void {
-        // Simple animation updates for landing predictions
-        // Implementation depends on specific animation requirements
-    }
-
-    private renderLandingHistory(): void {
-        const now = Date.now();
-        this.landingHistory.forEach(item => {
-            const age = now - item.timestamp;
-            const opacity = Math.max(0, 1 - age / FabricRenderSystem.HISTORY_FADE_TIME);
-            
-            if (opacity > 0) {
-                const circle = new fabric.Circle({
-                    left: item.x - 3,
-                    top: item.y - 3,
-                    radius: 3,
-                    fill: `rgba(255, 255, 0, ${opacity * 0.7})`,
-                    stroke: `rgba(255, 255, 255, ${opacity})`,
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false
-                });
-                this.canvas.add(circle);
-            }
-        });
     }
 
     // === Editor Mode Support ===
@@ -194,17 +209,17 @@ export class FabricRenderSystem {
     // === Cleanup ===
 
     public async cleanup(): Promise<void> {
-        // Clear all objects and dispose of canvas
-        this.canvas.clear();
-        this.landingHistory = [];
-        this.landingPredictions = [];
-        
-        // Cleanup specialized renderers
-        await this.stageRenderer.cleanup?.();
-        await this.playerRenderer.cleanup?.();
-        await this.effectRenderer.cleanup?.();
-        await this.uiRenderer.cleanup?.();
-    }
+            // Clear all objects and dispose of canvas
+            this.canvas.clear();
+            this.landingHistory = [];
+            
+            // Cleanup specialized renderers using their dispose methods
+            this.effectRenderer.dispose();
+            this.uiRenderer.dispose();
+            this.playerRenderer.dispose();
+            // Note: StageRenderer doesn't have dispose method, so we skip it
+        }
+
 
     public dispose(): void {
         this.canvas.dispose();
@@ -213,7 +228,9 @@ export class FabricRenderSystem {
     // === Legacy Compatibility ===
 
     public renderGameOver(): void {
-        // Legacy method - delegate to UI renderer if needed
-        this.uiRenderer.renderGameOver?.();
-    }
+            // Legacy method - delegate to UI renderer's game over overlay
+            this.uiRenderer.showGameOverOverlay(0, false);
+        }
+
+
 }

@@ -37,44 +37,36 @@ describe('PhysicsSystem', () => {
 
     describe('gravity application', () => {
         it('should apply gravity when player is not grounded', () => {
-            // Set player as not grounded in store
-            getGameStore().updatePlayer({ grounded: false });
-            const initialPlayer = getGameStore().getPlayer();
-            const initialVy = initialPlayer.vy;
+            const testPlayer = { ...player, grounded: false };
+            const initialVy = testPlayer.vy;
 
-            physicsSystem.update(16.67); // 60fps frame
+            const result = physicsSystem.update(testPlayer, 16.67); // 60fps frame
 
             // Gravity should increase downward velocity
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.vy).toBeGreaterThan(initialVy);
+            expect(result.player.vy).toBeGreaterThan(initialVy);
         });
 
         it('should not apply gravity when player is grounded', () => {
-            // Set player as grounded in store
-            getGameStore().updatePlayer({ grounded: true });
-            const initialPlayer = getGameStore().getPlayer();
-            const initialVy = initialPlayer.vy;
+            const testPlayer = { ...player, grounded: true };
+            const initialVy = testPlayer.vy;
 
-            physicsSystem.update(16.67);
+            const result = physicsSystem.update(testPlayer, 16.67);
 
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.vy).toBe(initialVy);
+            expect(result.player.vy).toBe(initialVy);
         });
     });
 
     describe('position updates', () => {
         it('should update player position based on velocity', () => {
-            const initialX = player.x;
-            const initialY = player.y;
+            const testPlayer = { ...player };
+            const initialX = testPlayer.x;
+            const initialY = testPlayer.y;
 
-            physicsSystem.update(16.67);
+            const result = physicsSystem.update(testPlayer, 16.67);
 
-            // Get updated player from store
-            const updatedPlayer = getGameStore().getPlayer();
-            
             // Position should change based on velocity and game speed
-            expect(updatedPlayer.x).not.toBe(initialX);
-            expect(updatedPlayer.y).not.toBe(initialY);
+            expect(result.player.x).not.toBe(initialX);
+            expect(result.player.y).not.toBe(initialY);
         });
 
         it('should account for game speed in position updates', () => {
@@ -84,22 +76,14 @@ describe('PhysicsSystem', () => {
             const slowPhysics = new PhysicsSystem(slowConstants);
             const fastPhysics = new PhysicsSystem(fastConstants);
 
-            // Reset store and set up initial player for slow test
-            getGameStore().reset();
-            getGameStore().updatePlayer(player);
-            const initialX = player.x;
+            const testPlayer = { ...player };
+            const initialX = testPlayer.x;
             
-            slowPhysics.update(16.67);
-            const slowPlayer = getGameStore().getPlayer();
-            const slowDistance = Math.abs(slowPlayer.x - initialX);
+            const slowResult = slowPhysics.update(testPlayer, 16.67);
+            const slowDistance = Math.abs(slowResult.player.x! - initialX);
 
-            // Reset store and set up initial player for fast test  
-            getGameStore().reset();
-            getGameStore().updatePlayer(player);
-            
-            fastPhysics.update(16.67);
-            const fastPlayer = getGameStore().getPlayer();
-            const fastDistance = Math.abs(fastPlayer.x - initialX);
+            const fastResult = fastPhysics.update(testPlayer, 16.67);
+            const fastDistance = Math.abs(fastResult.player.x! - initialX);
 
             // Fast physics should move player further
             expect(fastDistance).toBeGreaterThan(slowDistance);
@@ -138,19 +122,22 @@ describe('PhysicsSystem', () => {
 
     describe('frame rate independence', () => {
         it('should produce reasonably consistent results with different frame rates', () => {
-            const player1 = { ...player };
-            const player2 = { ...player };
+            const testPlayer1 = { ...player };
+            const testPlayer2 = { ...player };
 
             // Simulate 30fps (33.33ms per frame)
-            physicsSystem.update(33.33);
+            const result30fps = physicsSystem.update(testPlayer1, 33.33);
 
             // Simulate 60fps (16.67ms per frame) x2
-            physicsSystem.update(16.67);
-            physicsSystem.update(16.67);
+            const result60fps_1 = physicsSystem.update(testPlayer2, 16.67);
+            const result60fps_2 = physicsSystem.update({
+                ...testPlayer2,
+                ...result60fps_1.player
+            }, 16.67);
 
             // Results should be reasonably close (allowing for gravity accumulation)
-            expect(Math.abs(player1.x - player2.x)).toBeLessThan(1.0);
-            expect(Math.abs(player1.y - player2.y)).toBeLessThan(3.0);
+            expect(Math.abs(result30fps.player.x! - result60fps_2.player.x!)).toBeLessThan(1.0);
+            expect(Math.abs(result30fps.player.y! - result60fps_2.player.y!)).toBeLessThan(3.0);
         });
     });
 });

@@ -3,8 +3,7 @@ import * as fabric from 'fabric';
 import {
     ERROR_CODES,
     ERROR_TYPES,
-    EditorError,
-    type ObjectCreationParams
+    EditorError
 } from '../types/EditorTypes.js';
 import { EDITOR_CONFIG } from '../types/EditorTypes.js';
 

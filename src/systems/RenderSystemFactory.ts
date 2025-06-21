@@ -11,7 +11,6 @@ import type { EditorCallbacks, IRenderAdapter } from '../adapters/IRenderAdapter
 import { MockRenderAdapter } from '../adapters/MockRenderAdapter.js';
 import { EditorRenderSystem } from './EditorRenderSystem.js';
 import { FabricRenderSystem } from './FabricRenderSystem.js';
-import { MockRenderSystem } from './MockRenderSystem.js';
 
 /**
  * Environment detection utility (matching vitest.setup.ts)
@@ -40,18 +39,13 @@ export function isTestEnvironment(): boolean {
  * Create appropriate render system based on environment
  * @function createRenderSystem
  * @param {HTMLCanvasElement} canvasElement - Canvas element for rendering
- * @returns {FabricRenderSystem | MockRenderSystem} Environment-appropriate render system
- * @description Factory function that returns mock renderer for tests, Fabric.js for production
+ * @returns {FabricRenderSystem} Fabric.js render system
+ * @description Factory function that returns Fabric.js renderer (MockRenderAdapter used for testing)
  */
 export function createRenderSystem(
     canvasElement: HTMLCanvasElement
-): FabricRenderSystem | MockRenderSystem {
-    if (isTestEnvironment()) {
-        // Use mock renderer in test environment
-        return new MockRenderSystem(canvasElement);
-    }
-
-    // Use Fabric.js renderer in production/development
+): FabricRenderSystem {
+    // Always use Fabric.js renderer - MockRenderAdapter is used for testing instead
     return new FabricRenderSystem(canvasElement);
 }
 
@@ -92,16 +86,6 @@ export function createEditorRenderSystem(
     return new EditorRenderSystem(adapter);
 }
 
-/**
- * Type guard for mock render system
- * @function isMockRenderSystem
- * @param {any} renderSystem - Render system to check
- * @returns {boolean} True if render system is MockRenderSystem
- * @description Type guard function for TypeScript type narrowing
- */
-export function isMockRenderSystem(renderSystem: any): renderSystem is MockRenderSystem {
-    return renderSystem instanceof MockRenderSystem;
-}
 
 /**
  * Type guard for Fabric.js render system

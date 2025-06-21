@@ -288,8 +288,10 @@ export class EditorController implements IEditorController {
     }
 
     private hasUnsavedChanges(): boolean {
-        // TODO: Implement - track stage change state
-        return false;
-    }
+            // Unsaved changes tracking placeholder
+            // See issue #58 for implementation task
+            return false;
+        }
+
 }
 

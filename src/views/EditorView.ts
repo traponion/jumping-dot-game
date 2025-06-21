@@ -1,4 +1,3 @@
-import type { IEditorController } from '../controllers/EditorController.js';
 import type { StageData } from '../core/StageLoader.js';
 import type { FabricObjectWithData } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
@@ -10,14 +9,12 @@ import { DebugHelper } from '../utils/EditorUtils.js';
  * - 表示状態の制御
  */
 export class EditorView {
-    private controller!: IEditorController;
     public canvas: HTMLCanvasElement;
     private uiManager!: any; // Will be injected by EditorController
     private isInitialized: boolean = false;
 
     // Throttled event handlers
     private throttledMouseMove: (event: MouseEvent) => void;
-    private debouncedStageInfoUpdate: () => void;
 
     /**
      * Create EditorView instance
@@ -30,17 +27,6 @@ export class EditorView {
         this.throttledMouseMove = this.throttle((event: MouseEvent) => {
             this.handleMouseMove(event);
         }, 16);
-
-        this.debouncedStageInfoUpdate = this.debounce(() => {
-            this.updateStageInfoFromInputs();
-        }, 300);
-    }
-
-    /**
-     * Set controller reference
-     */
-    public setController(controller: IEditorController): void {
-        this.controller = controller;
     }
 
     /**
@@ -209,18 +195,18 @@ export class EditorView {
     /**
      * Load platform object properties
      */
-    private loadPlatformProperties(object: FabricObjectWithData): void {
+    private loadPlatformProperties(_object: FabricObjectWithData): void {
         // Simplified property loading
         DebugHelper.log('Platform properties loaded', {
             objectType: 'platform',
-            position: { x: object.left, y: object.top }
+            position: { x: _object.left, y: _object.top }
         });
     }
 
     /**
      * Load spike object properties
      */
-    private loadSpikeProperties(object: FabricObjectWithData): void {
+    private loadSpikeProperties(_object: FabricObjectWithData): void {
         DebugHelper.log('Spike properties loaded', {
             objectType: 'spike'
         });
@@ -229,7 +215,7 @@ export class EditorView {
     /**
      * Load goal object properties
      */
-    private loadGoalProperties(object: FabricObjectWithData): void {
+    private loadGoalProperties(_object: FabricObjectWithData): void {
         DebugHelper.log('Goal properties loaded', {
             objectType: 'goal'
         });
@@ -238,7 +224,7 @@ export class EditorView {
     /**
      * Load text object properties
      */
-    private loadTextProperties(object: FabricObjectWithData): void {
+    private loadTextProperties(_object: FabricObjectWithData): void {
         DebugHelper.log('Text properties loaded', {
             objectType: 'text'
         });
@@ -255,13 +241,7 @@ export class EditorView {
         this.updateMouseCoordinates(x, y);
     }
 
-    /**
-     * Update stage info from input fields (simplified)
-     */
-    private updateStageInfoFromInputs(): void {
-        // This is now handled by UIManager
-        DebugHelper.log('Stage info update requested');
-    }
+
 
     /**
      * Show message (simplified)
@@ -309,15 +289,6 @@ export class EditorView {
         };
     }
 
-    /**
-     * Debounce function execution
-     */
-    private debounce(func: Function, wait: number): (...args: any[]) => void {
-        let timeout: NodeJS.Timeout;
-        return function(this: any, ...args: any[]) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
+
 }
 

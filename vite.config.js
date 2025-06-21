@@ -35,7 +35,6 @@ export default defineConfig({
         '**/*.d.ts',
         'vite.config.js',
         'src/main.ts',
-        'src/systems/FabricRenderSystem.ts', // Excluded as it's tested in production environment, not test environment
         'src/systems/MockRenderSystem.ts', // Test utility, not production code
         'src/systems/RenderSystemFactory.ts' // Environment detection utility, tested through integration
       ],

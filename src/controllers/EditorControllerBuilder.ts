@@ -66,7 +66,7 @@ export class EditorControllerBuilder {
         const toolManager = new EditorToolManager(store, this.view, editorSystem);
         
         // Initialize UI-related managers
-        uiManager.initialize();
+        uiManager.initialize(controller);
         toolManager.initialize();
         keyboardHandler.initialize();
         

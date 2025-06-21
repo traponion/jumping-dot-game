@@ -15,7 +15,7 @@ vi.mock('fabric', () => {
 
     const createMockObject = (type: string) => {
         const obj = new MockFabricObject();
-        obj.type = type;
+        (obj as any).type = type;
         return obj;
     };
 
@@ -119,7 +119,7 @@ describe('ObjectDrawer', () => {
             expect(mockObject.set).toHaveBeenCalledWith({
                 fill: EDITOR_CONFIG.COLORS.SPIKE,
                 stroke: EDITOR_CONFIG.COLORS.SPIKE_BORDER,
-                strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.SPIKE,
+                strokeWidth: 2,
                 selectable: true,
                 evented: true
             });
@@ -172,7 +172,7 @@ describe('ObjectDrawer', () => {
                 expect.objectContaining({
                     left: 50,
                     top: 75,
-                    fontSize: EDITOR_CONFIG.TEXT.DEFAULT_SIZE,
+                    fontSize: EDITOR_CONFIG.TEXT.FONT_SIZE,
                     fill: EDITOR_CONFIG.COLORS.TEXT
                 })
             );
@@ -187,7 +187,7 @@ describe('ObjectDrawer', () => {
 
             expect(mockObject.set).toHaveBeenCalledWith({
                 fill: EDITOR_CONFIG.COLORS.TEXT,
-                fontSize: EDITOR_CONFIG.TEXT.DEFAULT_SIZE,
+                fontSize: EDITOR_CONFIG.TEXT.FONT_SIZE,
                 fontFamily: EDITOR_CONFIG.TEXT.FONT_FAMILY,
                 selectable: true,
                 evented: true
@@ -269,7 +269,7 @@ describe('ObjectDrawer', () => {
         it('should snap coordinates to grid correctly', () => {
             const position = { x: 23, y: 37 };
 
-            const result = objectDrawer.snapToGrid(position);
+            const result = objectDrawer.snapToGrid(position, 20);
 
             expect(result).toEqual({
                 x: 20, // Snapped to nearest 20
@@ -280,7 +280,7 @@ describe('ObjectDrawer', () => {
         it('should handle exact grid coordinates', () => {
             const position = { x: 40, y: 60 };
 
-            const result = objectDrawer.snapToGrid(position);
+            const result = objectDrawer.snapToGrid(position, 20);
 
             expect(result).toEqual({ x: 40, y: 60 });
         });
@@ -288,7 +288,7 @@ describe('ObjectDrawer', () => {
 
     describe('Platform Drawing State', () => {
         it('should track platform drawing state correctly', () => {
-            expect(objectDrawer.isObjectBeingDrawn()).toBe(false);
+            expect(objectDrawer.isObjectBeingDrawn(null as any)).toBe(false);
         });
 
         it('should update platform end position correctly', () => {
@@ -324,7 +324,7 @@ describe('ObjectDrawer', () => {
         it('should handle invalid coordinates in snap operation', () => {
             const invalidPos = { x: NaN, y: undefined as any };
 
-            const result = objectDrawer.snapToGrid(invalidPos);
+            const result = objectDrawer.snapToGrid(invalidPos, 20);
 
             expect(result.x).toBe(0);
             expect(result.y).toBe(0);

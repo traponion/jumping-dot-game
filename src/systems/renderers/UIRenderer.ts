@@ -333,7 +333,135 @@ export class UIRenderer {
         // Store for cleanup
         this.messageElements.push(overlay, gameOverText, scoreText);
     }
-
+    
+        /**
+         * Show pause overlay with resume instruction
+         */
+        public showPauseOverlay(): void {
+            // Semi-transparent overlay
+            const overlay = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: this.canvas.getWidth(),
+                height: this.canvas.getHeight(),
+                fill: 'rgba(0, 0, 0, 0.5)',
+                selectable: false,
+                evented: false
+            });
+    
+            // Pause text
+            const pauseText = new fabric.Text('PAUSED', {
+                left: this.canvas.getWidth() / 2,
+                top: this.canvas.getHeight() / 2 - 30,
+                fontSize: 48,
+                fill: '#ffffff',
+                fontFamily: 'Arial, sans-serif',
+                selectable: false,
+                evented: false,
+                originX: 'center',
+                originY: 'center'
+            });
+    
+            // Resume instruction
+            const resumeText = new fabric.Text('Press ESC to resume', {
+                left: this.canvas.getWidth() / 2,
+                top: this.canvas.getHeight() / 2 + 20,
+                fontSize: 18,
+                fill: '#cccccc',
+                fontFamily: 'Arial, sans-serif',
+                selectable: false,
+                evented: false,
+                originX: 'center',
+                originY: 'center'
+            });
+    
+            this.canvas.add(overlay);
+            this.canvas.add(pauseText);
+            this.canvas.add(resumeText);
+    
+            // Store for cleanup
+            this.messageElements.push(overlay, pauseText, resumeText);
+        }
+    
+        /**
+         * Show level complete overlay with next level prompt
+         */
+        public showLevelCompleteOverlay(levelNumber: number, score: number, nextLevelAvailable: boolean): void {
+            // Semi-transparent overlay
+            const overlay = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: this.canvas.getWidth(),
+                height: this.canvas.getHeight(),
+                fill: 'rgba(0, 100, 0, 0.8)',
+                selectable: false,
+                evented: false
+            });
+    
+            // Level complete text
+            const completeText = new fabric.Text('LEVEL COMPLETE!', {
+                left: this.canvas.getWidth() / 2,
+                top: this.canvas.getHeight() / 2 - 60,
+                fontSize: 42,
+                fill: '#ffffff',
+                fontFamily: 'Arial, sans-serif',
+                selectable: false,
+                evented: false,
+                originX: 'center',
+                originY: 'center'
+            });
+    
+            // Level info
+            const levelText = new fabric.Text(`Level ${levelNumber}`, {
+                left: this.canvas.getWidth() / 2,
+                top: this.canvas.getHeight() / 2 - 10,
+                fontSize: 24,
+                fill: '#ffffff',
+                fontFamily: 'Arial, sans-serif',
+                selectable: false,
+                evented: false,
+                originX: 'center',
+                originY: 'center'
+            });
+    
+            // Score text
+            const scoreText = new fabric.Text(`Score: ${score}`, {
+                left: this.canvas.getWidth() / 2,
+                top: this.canvas.getHeight() / 2 + 20,
+                fontSize: 18,
+                fill: '#ffffff',
+                fontFamily: 'Arial, sans-serif',
+                selectable: false,
+                evented: false,
+                originX: 'center',
+                originY: 'center'
+            });
+    
+            // Next level instruction
+            const nextText = new fabric.Text(
+                nextLevelAvailable ? 'Press SPACE for next level' : 'All levels complete!',
+                {
+                    left: this.canvas.getWidth() / 2,
+                    top: this.canvas.getHeight() / 2 + 50,
+                    fontSize: 16,
+                    fill: nextLevelAvailable ? '#ccffcc' : '#ffcccc',
+                    fontFamily: 'Arial, sans-serif',
+                    selectable: false,
+                    evented: false,
+                    originX: 'center',
+                    originY: 'center'
+                }
+            );
+    
+            this.canvas.add(overlay);
+            this.canvas.add(completeText);
+            this.canvas.add(levelText);
+            this.canvas.add(scoreText);
+            this.canvas.add(nextText);
+    
+            // Store for cleanup
+            this.messageElements.push(overlay, completeText, levelText, scoreText, nextText);
+        }
     /**
      * Clear all UI elements
      */

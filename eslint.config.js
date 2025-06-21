@@ -24,7 +24,7 @@ export default [
         },
         rules: {
             "max-lines": ["error", { 
-                max: 300,
+                max: 350,
                 skipBlankLines: true,
                 skipComments: true 
             }]

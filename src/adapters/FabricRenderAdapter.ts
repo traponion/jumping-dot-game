@@ -1,6 +1,5 @@
 import * as fabric from 'fabric';
 import {
-    EDITOR_CONFIG,
     EDITOR_TOOLS,
     ERROR_CODES,
     ERROR_TYPES,
@@ -14,6 +13,7 @@ import type {
 } from './IRenderAdapter.js';
 import { EditorInputHandler } from './EditorInputHandler.js';
 import { StageDataConverter } from './StageDataConverter.js';
+import type { StageData } from '../core/StageLoader.js';
 import { ObjectDrawer } from './ObjectDrawer.js';
 import { GridManager } from './GridManager.js';
 
@@ -303,7 +303,54 @@ export class FabricRenderAdapter implements IRenderAdapter {
     removeEventListeners(): void {
         this.canvas.off(); // Remove all event listeners
     }
-
+    
+    /**
+     * Toggle grid visibility
+     */
+    toggleGrid(): void {
+        this.editorState.gridEnabled = !this.editorState.gridEnabled;
+        this.renderGrid(this.editorState.gridEnabled);
+    }
+    
+    /**
+     * Toggle snap to grid functionality
+     */
+    toggleSnapToGrid(): void {
+        this.editorState.snapToGrid = !this.editorState.snapToGrid;
+        this.gridManager.setSnapToGrid(this.editorState.snapToGrid);
+    }
+    
+    /**
+     * Create a spike object
+     */
+    createSpike(x: number, y: number): void {
+        const position = { x, y };
+        const size = { width: 30, height: 30 }; // Default spike size
+        this.objectDrawer.createSpike(position, size);
+        this.notifyStageModified();
+        this.renderAll();
+    }
+    
+    /**
+     * Create a goal object
+     */
+    createGoal(x: number, y: number, width: number = 40, height: number = 40): void {
+        const position = { x, y };
+        const size = { width, height };
+        this.objectDrawer.createGoal(position, size);
+        this.notifyStageModified();
+        this.renderAll();
+    }
+    
+    /**
+     * Create a text object
+     */
+    createText(x: number, y: number, text: string): void {
+        const position = { x, y };
+        this.objectDrawer.createText(position, text);
+        this.notifyStageModified();
+        this.renderAll();
+    }
     // ===== Public API for Editor Integration =====
 
 
@@ -406,19 +453,21 @@ export class FabricRenderAdapter implements IRenderAdapter {
     /**
      * Load stage for editing (legacy compatibility)
      */
-    loadStageForEditing(stageData: any): void {
-        this.stageConverter.loadStageForEditing(stageData);
-        DebugHelper.log('Legacy loadStageForEditing called');
-    }
+    loadStageForEditing(stageData: StageData): void {
+            this.stageConverter.loadStageForEditing(stageData);
+            DebugHelper.log('Legacy loadStageForEditing called');
+        }
+
 
     /**
      * Export stage data (legacy compatibility)
      */
-    exportStageData(): any {
-        const stageData = this.stageConverter.exportStageData();
-        DebugHelper.log('Legacy exportStageData called');
-        return stageData;
-    }
+    exportStageData(): StageData {
+            const stageData = this.stageConverter.exportStageData();
+            DebugHelper.log('Legacy exportStageData called');
+            return stageData;
+        }
+
     
     // ===== Public API for Components =====
     // These methods allow component classes to access canvas state

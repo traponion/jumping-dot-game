@@ -103,8 +103,8 @@ class EditorApplication {
             const builder = new EditorControllerBuilder(this.canvas, this.view, this.model);
             this.controller = builder.build();
 
-            // View にController参照を設定
-            this.view.setController(this.controller);
+            // View initialization is now handled internally
+            // No need to set controller reference
 
             DebugHelper.log('All MVC components initialized');
         } catch (error) {

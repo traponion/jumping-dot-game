@@ -226,7 +226,7 @@ export class EditorUIManager {
         }, 300);
 
         [this.uiElements.stageNameInput, this.uiElements.stageIdInput, this.uiElements.stageDescInput]
-            .forEach(input => input.addEventListener('input', debouncedUpdate));
+            .forEach(input => input.addEventListener('input', debouncedUpdate as EventListener));
     }
 
     /**
