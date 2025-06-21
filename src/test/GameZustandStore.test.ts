@@ -52,20 +52,32 @@ describe('GameZustandStore', () => {
         });
 
         it('should restart game and reset state', () => {
-            // Arrange: Set some game state
+            // Arrange: Set some game state and add death marks
             getGameStore().startGame();
             getGameStore().gameOver();
             getGameStore().setFinalScore(100);
+            
+            // Add death marks before restart
+            const deathMark1 = { x: 100, y: 200, timestamp: 1000 };
+            const deathMark2 = { x: 150, y: 250, timestamp: 2000 };
+            getGameStore().addDeathMark(deathMark1);
+            getGameStore().addDeathMark(deathMark2);
 
             // Act
             getGameStore().restartGame();
 
-            // Assert: restartGame resets state but doesn't auto-start
+            // Assert: restartGame resets game state but preserves death marks
             const gameState = getGameStore().getGameState();
             expect(gameState.gameRunning).toBe(false); // Needs explicit startGame() call
             expect(gameState.gameOver).toBe(false);
             expect(gameState.finalScore).toBe(0);
             expect(gameState.hasMovedOnce).toBe(false);
+            
+            // Death marks should persist across restarts for learning purposes
+            const deathMarks = getGameStore().runtime.deathMarks;
+            expect(deathMarks).toHaveLength(2);
+            expect(deathMarks[0]).toEqual(deathMark1);
+            expect(deathMarks[1]).toEqual(deathMark2);
         });
     });
 

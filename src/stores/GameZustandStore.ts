@@ -433,8 +433,8 @@ export const gameStore = createStore<GameStore>()(
                     state.game.hasMovedOnce = false;
                     // Reset runtime state
                     state.runtime.particles = [];
-                    state.runtime.deathMarks = [];
                     state.runtime.trail = [];
+                    // Note: deathMarks persist across restarts for learning purposes
                 }),
 
             // Stage Management
