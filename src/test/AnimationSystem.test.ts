@@ -2,6 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import type { Player } from '../types/GameTypes.js';
 
+// Mock GameZustandStore
+const mockGameStore = {
+    addDeathMark: vi.fn(),
+    runtime: {
+        deathMarks: [] as any[]
+    }
+};
+
+vi.mock('../stores/GameZustandStore.js', () => ({
+    getGameStore: () => mockGameStore
+}));
+
 describe('AnimationSystem', () => {
     let animationSystem: AnimationSystem;
     let mockPlayer: Player;
@@ -16,6 +28,10 @@ describe('AnimationSystem', () => {
             radius: 3,
             grounded: false
         };
+
+        // Reset mock store state
+        mockGameStore.runtime.deathMarks = [];
+        vi.clearAllMocks();
 
         // Mock performance.now
         vi.spyOn(globalThis.performance, 'now').mockReturnValue(1000);
@@ -134,14 +150,11 @@ describe('AnimationSystem', () => {
     });
 
     describe('death marks', () => {
-        it('should add death mark at player position', () => {
-            const initialCount = animationSystem.getDeathMarks().length;
-
+        it('should add death mark to store', () => {
             animationSystem.addDeathMark(mockPlayer.x, mockPlayer.y);
 
-            const deathMarks = animationSystem.getDeathMarks();
-            expect(deathMarks.length).toBe(initialCount + 1);
-            expect(deathMarks[deathMarks.length - 1]).toEqual({
+            expect(mockGameStore.addDeathMark).toHaveBeenCalledOnce();
+            expect(mockGameStore.addDeathMark).toHaveBeenCalledWith({
                 x: mockPlayer.x,
                 y: mockPlayer.y,
                 timestamp: 1000
@@ -153,20 +166,22 @@ describe('AnimationSystem', () => {
 
             animationSystem.addDeathMark(mockPlayer.x, adjustedY);
 
-            const deathMarks = animationSystem.getDeathMarks();
-            expect(deathMarks[deathMarks.length - 1].y).toBe(adjustedY);
+            expect(mockGameStore.addDeathMark).toHaveBeenCalledWith({
+                x: mockPlayer.x,
+                y: adjustedY,
+                timestamp: 1000
+            });
         });
 
-        it('should maintain multiple death marks', () => {
+        it('should handle multiple death mark calls', () => {
             animationSystem.addDeathMark(100, 200);
             animationSystem.addDeathMark(150, 250);
             animationSystem.addDeathMark(200, 300);
 
-            const deathMarks = animationSystem.getDeathMarks();
-            expect(deathMarks.length).toBe(3);
-            expect(deathMarks[0]).toEqual({ x: 100, y: 200, timestamp: 1000 });
-            expect(deathMarks[1]).toEqual({ x: 150, y: 250, timestamp: 1000 });
-            expect(deathMarks[2]).toEqual({ x: 200, y: 300, timestamp: 1000 });
+            expect(mockGameStore.addDeathMark).toHaveBeenCalledTimes(3);
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, { x: 100, y: 200, timestamp: 1000 });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, { x: 150, y: 250, timestamp: 1000 });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, { x: 200, y: 300, timestamp: 1000 });
         });
     });
 
@@ -174,7 +189,6 @@ describe('AnimationSystem', () => {
         it('should reset all animations', () => {
             animationSystem.startClearAnimation(mockPlayer);
             animationSystem.startDeathAnimation(mockPlayer);
-            animationSystem.addDeathMark(100, 200);
 
             animationSystem.reset();
 
@@ -182,7 +196,7 @@ describe('AnimationSystem', () => {
             expect(animationSystem.getDeathAnimation().active).toBe(false);
             expect(animationSystem.getClearAnimation().particles.length).toBe(0);
             expect(animationSystem.getDeathAnimation().particles.length).toBe(0);
-            // Note: death marks should persist across resets
+            // Note: AnimationSystem no longer manages death marks - they're in the store
         });
 
         it('should check if any animation is active', () => {

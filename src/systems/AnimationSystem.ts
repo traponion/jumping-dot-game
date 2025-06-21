@@ -6,7 +6,8 @@
  */
 
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import type { AnimationSystem as AnimationData, DeathMark, Player } from '../types/GameTypes.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
+import type { AnimationSystem as AnimationData, Player } from '../types/GameTypes.js';
 import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
 
 /**
@@ -19,8 +20,7 @@ export class AnimationSystem {
     private clearAnimation: AnimationData;
     /** @private {AnimationData} Player death explosion animation */
     private deathAnimation: AnimationData;
-    /** @private {DeathMark[]} Array of death location markers */
-    private deathMarks: DeathMark[] = [];
+
 
     /**
      * Creates a new AnimationSystem instance
@@ -159,7 +159,7 @@ export class AnimationSystem {
      * @description Records death location for visual feedback
      */
     addDeathMark(x: number, y: number): void {
-        this.deathMarks.push({
+        getGameStore().addDeathMark({
             x,
             y,
             timestamp: getCurrentTime()
@@ -182,13 +182,6 @@ export class AnimationSystem {
         return this.deathAnimation;
     }
 
-    /**
-     * Get copy of death marks array
-     * @returns {DeathMark[]} Array of death location markers
-     */
-    getDeathMarks(): DeathMark[] {
-        return [...this.deathMarks];
-    }
 
     /**
      * Reset all animations to initial state

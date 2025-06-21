@@ -19,6 +19,7 @@ export class FabricRenderSystem {
     private goalShape: fabric.Rect | null = null;
     private trailShapes: fabric.Circle[] = [];
     private landingPredictions: LandingPrediction[] = [];
+    private textShapes: fabric.Text[] = [];
     private animatedPredictions: {
         x: number;
         y: number;
@@ -251,40 +252,15 @@ export class FabricRenderSystem {
     }
 
     private renderStageTexts(stage: StageData): void {
-        // startTextを描画
-        const startText = new fabric.Text(stage.startText.text, {
-            left: stage.startText.x,
-            top: stage.startText.y,
-            fontSize: 16,
-            fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(startText);
-
-        // goalTextを描画
-        const goalText = new fabric.Text(stage.goalText.text, {
-            left: stage.goalText.x,
-            top: stage.goalText.y,
-            fontSize: 16,
-            fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(goalText);
-
-        // leftEdgeMessageを描画（逆走の皮肉文章）
-        if (stage.leftEdgeMessage) {
-            const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
-                left: stage.leftEdgeMessage.x,
-                top: stage.leftEdgeMessage.y,
-                fontSize: 14,
+            // 古いテキストオブジェクトを削除
+            this.textShapes.forEach(shape => this.canvas.remove(shape));
+            this.textShapes = [];
+    
+            // startTextを描画
+            const startText = new fabric.Text(stage.startText.text, {
+                left: stage.startText.x,
+                top: stage.startText.y,
+                fontSize: 16,
                 fill: 'white',
                 fontFamily: 'monospace',
                 originX: 'center',
@@ -292,15 +268,14 @@ export class FabricRenderSystem {
                 selectable: false,
                 evented: false
             });
-            this.canvas.add(edgeMessage);
-        }
-
-        // leftEdgeSubMessageを描画
-        if (stage.leftEdgeSubMessage) {
-            const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
-                left: stage.leftEdgeSubMessage.x,
-                top: stage.leftEdgeSubMessage.y,
-                fontSize: 12,
+            this.canvas.add(startText);
+            this.textShapes.push(startText);
+    
+            // goalTextを描画
+            const goalText = new fabric.Text(stage.goalText.text, {
+                left: stage.goalText.x,
+                top: stage.goalText.y,
+                fontSize: 16,
                 fill: 'white',
                 fontFamily: 'monospace',
                 originX: 'center',
@@ -308,9 +283,44 @@ export class FabricRenderSystem {
                 selectable: false,
                 evented: false
             });
-            this.canvas.add(edgeSubMessage);
+            this.canvas.add(goalText);
+            this.textShapes.push(goalText);
+    
+            // leftEdgeMessageを描画（逆走の皮肉文章）
+            if (stage.leftEdgeMessage) {
+                const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
+                    left: stage.leftEdgeMessage.x,
+                    top: stage.leftEdgeMessage.y,
+                    fontSize: 14,
+                    fill: 'white',
+                    fontFamily: 'monospace',
+                    originX: 'center',
+                    originY: 'center',
+                    selectable: false,
+                    evented: false
+                });
+                this.canvas.add(edgeMessage);
+                this.textShapes.push(edgeMessage);
+            }
+    
+            // leftEdgeSubMessageを描画
+            if (stage.leftEdgeSubMessage) {
+                const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
+                    left: stage.leftEdgeSubMessage.x,
+                    top: stage.leftEdgeSubMessage.y,
+                    fontSize: 12,
+                    fill: 'white',
+                    fontFamily: 'monospace',
+                    originX: 'center',
+                    originY: 'center',
+                    selectable: false,
+                    evented: false
+                });
+                this.canvas.add(edgeSubMessage);
+                this.textShapes.push(edgeSubMessage);
+            }
         }
-    }
+
 
     renderDeathMarks(deathMarks: DeathMark[]): void {
         deathMarks.forEach((mark) => {
@@ -628,34 +638,38 @@ export class FabricRenderSystem {
     }
 
     async cleanup(): Promise<void> {
-        // Dispose fabric canvas to prevent memory leaks and reinitialization errors
-        if (this.canvas) {
-            try {
-                const canvasElement = this.canvas.getElement();
-
-                // Clean up moving platform shapes before disposing canvas
-                this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
-                this.movingPlatformShapes = [];
-
-                // In fabric.js v6, dispose is async and must be awaited
-                await this.canvas.dispose();
-
-                // Clear canvas element to prevent reinitialization errors
-                if (canvasElement) {
-                    const context = canvasElement.getContext('2d');
-                    if (context) {
-                        context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            // Dispose fabric canvas to prevent memory leaks and reinitialization errors
+            if (this.canvas) {
+                try {
+                    const canvasElement = this.canvas.getElement();
+    
+                    // Clean up all shape arrays before disposing canvas
+                    this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
+                    this.movingPlatformShapes = [];
+                    
+                    this.textShapes.forEach((shape) => this.canvas.remove(shape));
+                    this.textShapes = [];
+    
+                    // In fabric.js v6, dispose is async and must be awaited
+                    await this.canvas.dispose();
+    
+                    // Clear canvas element to prevent reinitialization errors
+                    if (canvasElement) {
+                        const context = canvasElement.getContext('2d');
+                        if (context) {
+                            context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                        }
+                        // Remove fabric-specific properties
+                        delete (canvasElement as any).__fabric;
+                        delete (canvasElement as any)._fabric;
                     }
-                    // Remove fabric-specific properties
-                    delete (canvasElement as any).__fabric;
-                    delete (canvasElement as any)._fabric;
+                } catch (error) {
+                    console.log('⚠️ Canvas cleanup error (already disposed?):', error);
                 }
-            } catch (error) {
-                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
+                this.canvas = null as any;
             }
-            this.canvas = null as any;
         }
-    }
+
 
     // ランディング予測システム
     setLandingPredictions(predictions: LandingPrediction[]): void {

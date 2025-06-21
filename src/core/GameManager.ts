@@ -36,6 +36,8 @@ import { type StageData, StageLoader } from './StageLoader.js';
 export class GameManager {
     /** @private {HTMLCanvasElement} The main game canvas */
     private canvas: HTMLCanvasElement;
+    /** @private {any} Game controller reference for system initialization */
+    private gameController: any;
 
     // Systems
     /** @private {PlayerSystem} Player input and movement system */
@@ -72,10 +74,12 @@ export class GameManager {
      * @param {any} gameController - Game controller instance for UI integration
      */
     constructor(canvas: HTMLCanvasElement, gameController: any) {
-        this.canvas = canvas;
-        this.initializeEntities();
-        this.initializeSystems(gameController);
-    }
+            this.canvas = canvas;
+            this.gameController = gameController;
+            this.initializeEntities();
+            this.initializeSystems(gameController);
+        }
+
 
     private initializeEntities(): void {
         // Initialize Zustand store with default values
@@ -140,20 +144,28 @@ export class GameManager {
     /**
      * Reset game state to initial values
      */
-    resetGameState(): void {
-        gameStore.getState().stopGame();
-        gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-        gameStore.getState().restartGame();
+    async resetGameState(): Promise<void> {
+            gameStore.getState().stopGame();
+            gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
+            gameStore.getState().restartGame();
+    
+            // Clean up all existing systems
+            await this.cleanupSystems();
+    
+            // Reinitialize all systems with fresh instances
+            this.initializeSystems(this.gameController);
+    
+            this.playerSystem.reset(100, 400);
+            this.animationSystem.reset();
+    
+            gameStore.getState().updateCamera({ x: 0, y: 0 });
+    
+            // Clear inputs first before changing game state
+            this.inputManager.clearInputs();
+            this.prevPlayerY = 0;
+        }
 
-        this.playerSystem.reset(100, 400);
-        this.animationSystem.reset();
 
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
-
-        // Clear inputs first before changing game state
-        this.inputManager.clearInputs();
-        this.prevPlayerY = 0;
-    }
 
     /**
      * Start the game
@@ -456,7 +468,7 @@ export class GameManager {
             renderer.renderStage(this.stage);
         }
 
-        renderer.renderDeathMarks(this.animationSystem.getDeathMarks());
+        renderer.renderDeathMarks(getGameStore().runtime.deathMarks);
 
         if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
             const player = getGameStore().getPlayer();
@@ -536,7 +548,16 @@ export class GameManager {
 
         gameStore.getState().gameOver();
     }
-
+    
+        /**
+         * Clean up all systems properly
+         */
+        private async cleanupSystems(): Promise<void> {
+            this.inputManager.cleanup();
+            if (this.renderSystem && 'cleanup' in this.renderSystem) {
+                await (this.renderSystem as any).cleanup();
+            }
+        }
     /**
      * Get animation system (for external access)
      */
