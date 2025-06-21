@@ -148,7 +148,8 @@ export class StageLoader {
         // Check cache first
         const cachedStage = this.cache.get(stageId);
         if (cachedStage) {
-            return cachedStage;
+            // Return a deep copy to avoid reference sharing issues
+            return JSON.parse(JSON.stringify(cachedStage));
         }
 
         try {

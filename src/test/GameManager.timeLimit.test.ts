@@ -153,7 +153,7 @@ describe('GameManager timeLimit integration', () => {
             expect(getGameStore().getTimeRemaining()).toBe(5);
 
             // Act: Reset game state
-            gameManager.resetGameState();
+            await gameManager.resetGameState();
 
             // Assert: timeRemaining should be reset to timeLimit
             expect(getGameStore().getTimeRemaining()).toBe(15);
