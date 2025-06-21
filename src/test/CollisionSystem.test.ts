@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Goal, Platform, Spike } from '../core/StageLoader.js';
+import type { Goal, Platform, Spike, MovingPlatform } from '../core/StageLoader.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { Player } from '../types/GameTypes.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
@@ -460,6 +460,96 @@ describe('CollisionSystem', () => {
             expect(result?.grounded).toBe(true);
             // Should collide with the first valid platform found (y: 410, since 420 is below current position)
             expect(result?.y).toBe(407); // 410 - 3 (radius)
+        });
+    });
+
+    describe('moving platform collision', () => {
+        let movingPlatform: MovingPlatform;
+
+        beforeEach(() => {
+            movingPlatform = {
+                x1: 90, y1: 410, x2: 110, y2: 410,
+                startX: 80, endX: 120, speed: 1, direction: 1
+            };
+        });
+
+        it('should detect collision with moving platform like static platform', () => {
+            const fallingPlayer = { ...player, y: 408, vy: 5 };
+            getGameStore().updatePlayer(fallingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkMovingPlatformCollision(
+                getGameStore().getPlayer(),
+                movingPlatform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBeDefined();
+            expect(result?.y).toBe(407); // 410 - 3 (radius)
+            expect(result?.vy).toBe(0);
+            expect(result?.grounded).toBe(true);
+        });
+
+        it('should return collision info including platform reference', () => {
+            const fallingPlayer = { ...player, y: 408, vy: 5 };
+            getGameStore().updatePlayer(fallingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkMovingPlatformCollision(
+                getGameStore().getPlayer(),
+                movingPlatform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBeDefined();
+            expect(result?.platform).toBe(movingPlatform);
+        });
+
+        it('should handle multiple moving platforms', () => {
+            const movingPlatforms: MovingPlatform[] = [
+                movingPlatform,
+                {
+                    x1: 90, y1: 420, x2: 110, y2: 420,
+                    startX: 80, endX: 120, speed: 1.5, direction: -1
+                }
+            ];
+            const fallingPlayer = { ...player, y: 408, vy: 5 };
+            getGameStore().updatePlayer(fallingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.handleMovingPlatformCollisions(movingPlatforms, prevPlayerFootY);
+
+            expect(result).toBeDefined();
+            expect(result?.grounded).toBe(true);
+            expect(result?.platform).toBeDefined();
+        });
+
+        it('should not collide when moving upward', () => {
+            const jumpingPlayer = { ...player, y: 408, vy: -5 };
+            getGameStore().updatePlayer(jumpingPlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkMovingPlatformCollision(
+                getGameStore().getPlayer(),
+                movingPlatform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBeNull();
+        });
+
+        it('should not collide when outside horizontal bounds', () => {
+            const outsidePlayer = { ...player, x: 150, y: 408, vy: 5 };
+            getGameStore().updatePlayer(outsidePlayer);
+            const prevPlayerFootY = 405;
+
+            const result = collisionSystem.checkMovingPlatformCollision(
+                getGameStore().getPlayer(),
+                movingPlatform,
+                prevPlayerFootY
+            );
+
+            expect(result).toBeNull();
         });
     });
 });
