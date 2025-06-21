@@ -1,31 +1,27 @@
 import * as fabric from 'fabric';
-import type { StageData, Platform, Spike, Goal, TextElement } from '../core/StageLoader.js';
+import type { Goal, Platform, Spike, StageData, TextElement } from '../core/StageLoader.js';
 import {
     ERROR_CODES,
     ERROR_TYPES,
     EditorError,
     isFabricObjectWithData,
+    isGoalObject,
     isPlatformObject,
     isSpikeObject,
-    isGoalObject,
     isTextObject
 } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
-import type {
-    IStageDataConverter,
-    IRenderAdapter,
-    IObjectDrawer
-} from './IRenderAdapter.js';
+import type { IObjectDrawer, IRenderAdapter, IStageDataConverter } from './IRenderAdapter.js';
 
 /**
  * StageDataConverter - Handles Stage Data ↔ Canvas Object conversion
- * 
+ *
  * Responsibilities:
  * - Convert StageData to editable canvas objects
  * - Extract StageData from canvas objects
  * - Individual object data transformations
  * - Data validation and type checking
- * 
+ *
  * This class follows Single Responsibility Principle by handling only data conversion.
  */
 export class StageDataConverter implements IStageDataConverter {
@@ -45,19 +41,19 @@ export class StageDataConverter implements IStageDataConverter {
         try {
             this.currentStageData = stageData;
             this.adapter.clearCanvas();
-            
+
             // Render grid first (as background)
             this.adapter.renderGrid(this.adapter.getEditorState().gridEnabled);
-            
+
             // Convert and add all stage objects
             this.loadPlatforms(stageData.platforms);
             this.loadSpikes(stageData.spikes);
             this.loadGoal(stageData.goal);
             this.loadTextElements(stageData);
-            
+
             this.adapter.renderAll();
-            
-            DebugHelper.log('Stage loaded for editing', { 
+
+            DebugHelper.log('Stage loaded for editing', {
                 stageId: stageData.id,
                 platformCount: stageData.platforms.length,
                 spikeCount: stageData.spikes.length
@@ -78,7 +74,7 @@ export class StageDataConverter implements IStageDataConverter {
     exportStageData(): StageData {
         try {
             const canvasObjects = this.getEditableObjects();
-            
+
             const platforms: Platform[] = [];
             const spikes: Spike[] = [];
             let goal: Goal = { x: 0, y: 0, width: 40, height: 50 }; // Default goal
@@ -150,10 +146,10 @@ export class StageDataConverter implements IStageDataConverter {
         try {
             const start = { x: platform.x1, y: platform.y1 };
             const end = { x: platform.x2, y: platform.y2 };
-            
+
             const platformObject = this.objectDrawer.createPlatform(start, end);
             this.objectDrawer.applyPlatformStyle(platformObject);
-            
+
             return platformObject;
         } catch (error) {
             throw new EditorError(
@@ -172,10 +168,10 @@ export class StageDataConverter implements IStageDataConverter {
         try {
             const position = { x: spike.x, y: spike.y };
             const size = { width: spike.width, height: spike.height };
-            
+
             const spikeObject = this.objectDrawer.createSpike(position, size);
             this.objectDrawer.applySpikeStyle(spikeObject);
-            
+
             return spikeObject;
         } catch (error) {
             throw new EditorError(
@@ -194,10 +190,10 @@ export class StageDataConverter implements IStageDataConverter {
         try {
             const position = { x: goal.x, y: goal.y };
             const size = { width: goal.width, height: goal.height };
-            
+
             const goalObject = this.objectDrawer.createGoal(position, size);
             this.objectDrawer.applyGoalStyle(goalObject);
-            
+
             return goalObject;
         } catch (error) {
             throw new EditorError(
@@ -215,10 +211,10 @@ export class StageDataConverter implements IStageDataConverter {
     convertTextToCanvasObject(text: TextElement): unknown {
         try {
             const position = { x: text.x, y: text.y };
-            
+
             const textObject = this.objectDrawer.createText(position, text.text);
             this.objectDrawer.applyTextStyle(textObject);
-            
+
             return textObject;
         } catch (error) {
             throw new EditorError(
@@ -273,7 +269,7 @@ export class StageDataConverter implements IStageDataConverter {
             const bounds = this.objectDrawer.getObjectBounds(canvasObject);
             return {
                 x: bounds.x + bounds.width / 2, // Center point
-                y: bounds.y + bounds.height,    // Bottom point
+                y: bounds.y + bounds.height, // Bottom point
                 width: bounds.width,
                 height: bounds.height
             };
@@ -401,9 +397,11 @@ export class StageDataConverter implements IStageDataConverter {
         if (this.adapter && 'getEditableObjects' in this.adapter) {
             return (this.adapter as any).getEditableObjects();
         }
-        
+
         // Fallback for adapters that don't implement getEditableObjects
-        DebugHelper.log('Warning: Adapter does not implement getEditableObjects, returning empty array');
+        DebugHelper.log(
+            'Warning: Adapter does not implement getEditableObjects, returning empty array'
+        );
         return [];
     }
 

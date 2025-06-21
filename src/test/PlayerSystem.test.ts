@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_CONFIG } from '../constants/GameConstants.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
+import type { InputManager } from '../systems/InputManager.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
-import type { InputManager } from '../systems/InputManager.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
-import { GAME_CONFIG } from '../constants/GameConstants.js';
 
 describe('PlayerSystem', () => {
     let playerSystem: PlayerSystem;
@@ -13,7 +13,7 @@ describe('PlayerSystem', () => {
     beforeEach(() => {
         // Reset store to clean state
         getGameStore().reset();
-        
+
         // Set up test player state in store
         getGameStore().updatePlayer({
             x: 100,
@@ -122,7 +122,10 @@ describe('PlayerSystem', () => {
 
         it('should get trail from Zustand store, not local state', () => {
             // Arrange: Directly add trail points to store
-            const directTrail = [{ x: 100, y: 200 }, { x: 150, y: 250 }];
+            const directTrail = [
+                { x: 100, y: 200 },
+                { x: 150, y: 250 }
+            ];
             getGameStore().updateTrail(directTrail);
 
             // Act & Assert: PlayerSystem should return the store's trail
@@ -132,7 +135,7 @@ describe('PlayerSystem', () => {
         it('should respect GAME_CONFIG.player.maxTrailLength', () => {
             // Arrange: Use the actual config value
             const maxLength = GAME_CONFIG.player.maxTrailLength;
-            
+
             // Act: Add more points than max
             for (let i = 0; i < maxLength + 3; i++) {
                 getGameStore().updatePlayer({ x: i, y: i });
@@ -154,7 +157,7 @@ describe('PlayerSystem', () => {
             // Assert: Both should return the same trail
             const playerSystemTrail = playerSystem.getTrail();
             const storeTrail = getGameStore().runtime.trail;
-            
+
             expect(playerSystemTrail).toEqual(storeTrail);
             expect(playerSystemTrail.length).toBe(storeTrail.length);
         });
@@ -240,25 +243,25 @@ describe('PlayerSystem', () => {
         it('should update Zustand store when player moves horizontally', () => {
             // Reset store state for clean test
             getGameStore().reset();
-            
+
             // Mock InputManager to simulate key press
             const mockInputManager = {
                 isPressed: vi.fn()
             };
-            
+
             // Create PlayerSystem with InputManager
             const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
-            
+
             // Mock left key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-left');
-            
+
             // Get initial store state
             const initialPlayer = getGameStore().getPlayer();
             expect(initialPlayer.vx).toBe(0);
-            
+
             // Update PlayerSystem (this should update the store, but currently doesn't)
             playerSystemWithInput.update(16.67, physics);
-            
+
             // Check if store was updated (this will fail before fix)
             const updatedPlayer = getGameStore().getPlayer();
             expect(updatedPlayer.vx).toBeLessThan(0); // Should be negative for left movement
@@ -268,24 +271,24 @@ describe('PlayerSystem', () => {
         it('should update Zustand store when player moves right', () => {
             // Reset store state for clean test
             getGameStore().reset();
-            
+
             // Mock InputManager to simulate right key press
             const mockInputManager = {
                 isPressed: vi.fn()
             };
-            
+
             const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
-            
+
             // Mock right key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-right');
-            
+
             // Get initial store state
             const initialPlayer = getGameStore().getPlayer();
             expect(initialPlayer.vx).toBe(0);
-            
+
             // Update PlayerSystem
             playerSystemWithInput.update(16.67, physics);
-            
+
             // Check if store was updated
             const updatedPlayer = getGameStore().getPlayer();
             expect(updatedPlayer.vx).toBeGreaterThan(0); // Should be positive for right movement

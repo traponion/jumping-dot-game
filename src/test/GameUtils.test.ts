@@ -26,13 +26,13 @@ describe('GameUtils', () => {
         it('should demonstrate that using consistent time baseline fixes the bug', () => {
             // After fix: both gameStartTime and currentTime use getCurrentTime()
             const gameStartTime = getCurrentTime(); // Fixed: now uses getCurrentTime()
-            
+
             // Small delay to simulate elapsed time
             const currentTime = getCurrentTime();
-            
+
             // Calculate elapsed time (this should now be reasonable)
             const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            
+
             // Should be a small positive number (< 1 second for this test)
             expect(elapsedSeconds).toBeGreaterThanOrEqual(0);
             expect(elapsedSeconds).toBeLessThan(1);
@@ -41,11 +41,11 @@ describe('GameUtils', () => {
         it('should provide consistent time baseline for game calculations', () => {
             // After fix: both game start time and current time should use same baseline
             const gameStartTime = getCurrentTime();
-            
+
             // Simulate small delay
             const currentTime = getCurrentTime();
             const elapsedMs = currentTime - gameStartTime;
-            
+
             // Elapsed time should be reasonable (< 1000ms for this test)
             expect(elapsedMs).toBeLessThan(1000);
             expect(elapsedMs).toBeGreaterThanOrEqual(0);

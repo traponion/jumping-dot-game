@@ -4,10 +4,10 @@
  * @description Domain Layer - Pure collision detection calculations
  */
 
-import type { Goal, Platform, Spike, MovingPlatform } from '../core/StageLoader.js';
+import type { Goal, MovingPlatform, Platform, Spike } from '../core/StageLoader.js';
+import { getGameStore } from '../stores/GameZustandStore.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from '../utils/GameUtils.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
 
 /**
  * Extended collision result that includes platform reference for moving platforms
@@ -29,7 +29,11 @@ export class CollisionSystem {
      * @param {number} prevPlayerFootY - Previous player foot Y position for movement detection
      * @returns {Partial<Player> | null} Player state updates if collision occurred, null otherwise
      */
-    checkPlatformCollision(player: Player, platform: Platform, prevPlayerFootY: number): Partial<Player> | null {
+    checkPlatformCollision(
+        player: Player,
+        platform: Platform,
+        prevPlayerFootY: number
+    ): Partial<Player> | null {
         const currentPlayerFootY = player.y + player.radius;
 
         // Basic horizontal overlap check
@@ -51,7 +55,7 @@ export class CollisionSystem {
             return {
                 y: platform.y1 - player.radius,
                 vy: 0,
-                grounded: true,
+                grounded: true
             };
         }
 
@@ -64,7 +68,10 @@ export class CollisionSystem {
      * @param {number} prevPlayerFootY - Previous player foot Y position
      * @returns {Partial<Player> | null} Player state updates if any collision occurred
      */
-    handlePlatformCollisions(platforms: Platform[], prevPlayerFootY: number): Partial<Player> | null {
+    handlePlatformCollisions(
+        platforms: Platform[],
+        prevPlayerFootY: number
+    ): Partial<Player> | null {
         const player = getGameStore().getPlayer(); // Get latest player state from store
         let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
 
@@ -155,13 +162,17 @@ export class CollisionSystem {
     /**
      * Checks collision between player and a moving platform
      * Same logic as static platform but returns platform reference
-     * 
+     *
      * @param player - Player object to check collision for
      * @param movingPlatform - Moving platform to check collision against
      * @param prevPlayerFootY - Previous Y position of player's foot
      * @returns Collision result with platform reference or null if no collision
      */
-    checkMovingPlatformCollision(player: Player, movingPlatform: MovingPlatform, prevPlayerFootY: number): MovingPlatformCollisionResult | null {
+    checkMovingPlatformCollision(
+        player: Player,
+        movingPlatform: MovingPlatform,
+        prevPlayerFootY: number
+    ): MovingPlatformCollisionResult | null {
         const currentPlayerFootY = player.y + player.radius;
 
         // Basic horizontal overlap check (same as static platform)
@@ -194,24 +205,30 @@ export class CollisionSystem {
     /**
      * Handles collisions with multiple moving platforms
      * Similar to handlePlatformCollisions but for moving platforms
-     * 
+     *
      * @param movingPlatforms - Array of moving platforms to check
      * @param prevPlayerFootY - Previous Y position of player's foot
      * @returns Collision result with platform reference or grounded reset
      */
-    handleMovingPlatformCollisions(movingPlatforms: MovingPlatform[], prevPlayerFootY: number): MovingPlatformCollisionResult | null {
-            const player = getGameStore().getPlayer(); // Get latest player state from store
-    
-            for (const movingPlatform of movingPlatforms) {
-                const collisionUpdate = this.checkMovingPlatformCollision(player, movingPlatform, prevPlayerFootY);
-                if (collisionUpdate) {
-                    // Return the first collision found
-                    return collisionUpdate;
-                }
+    handleMovingPlatformCollisions(
+        movingPlatforms: MovingPlatform[],
+        prevPlayerFootY: number
+    ): MovingPlatformCollisionResult | null {
+        const player = getGameStore().getPlayer(); // Get latest player state from store
+
+        for (const movingPlatform of movingPlatforms) {
+            const collisionUpdate = this.checkMovingPlatformCollision(
+                player,
+                movingPlatform,
+                prevPlayerFootY
+            );
+            if (collisionUpdate) {
+                // Return the first collision found
+                return collisionUpdate;
             }
-    
-            // If no collision found, return null (don't interfere with other collision systems)
-            return null;
         }
 
+        // If no collision found, return null (don't interfere with other collision systems)
+        return null;
+    }
 }

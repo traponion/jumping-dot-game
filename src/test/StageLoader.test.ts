@@ -250,9 +250,7 @@ describe('StageLoader', () => {
                 id: 1,
                 name: 'Stage 1',
                 timeLimit: 10, // Stage 1 has 10 seconds
-                platforms: [
-                    { x1: 0, y1: 500, x2: 100, y2: 500 }
-                ],
+                platforms: [{ x1: 0, y1: 500, x2: 100, y2: 500 }],
                 spikes: [],
                 goal: { x: 200, y: 450, width: 40, height: 50 },
                 startText: { x: 50, y: 450, text: 'STAGE 1' },
@@ -260,10 +258,13 @@ describe('StageLoader', () => {
             };
 
             // Mock fetch to return our test data
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(mockStageData)
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: () => Promise.resolve(mockStageData)
+                })
+            );
 
             // Act: Load stage
             const result = await stageLoader.loadStageWithFallback(1);
@@ -280,19 +281,20 @@ describe('StageLoader', () => {
                 id: 2,
                 name: 'Stage 2',
                 timeLimit: 45, // Stage 2 has 45 seconds
-                platforms: [
-                    { x1: 0, y1: 500, x2: 100, y2: 500 }
-                ],
+                platforms: [{ x1: 0, y1: 500, x2: 100, y2: 500 }],
                 spikes: [],
                 goal: { x: 200, y: 450, width: 40, height: 50 },
                 startText: { x: 50, y: 450, text: 'STAGE 2' },
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(mockStage2Data)
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: () => Promise.resolve(mockStage2Data)
+                })
+            );
 
             // Act: Load stage 2
             const result = await stageLoader.loadStageWithFallback(2);
@@ -308,19 +310,20 @@ describe('StageLoader', () => {
                 id: 3,
                 name: 'Stage 3',
                 // No timeLimit field
-                platforms: [
-                    { x1: 0, y1: 500, x2: 100, y2: 500 }
-                ],
+                platforms: [{ x1: 0, y1: 500, x2: 100, y2: 500 }],
                 spikes: [],
                 goal: { x: 200, y: 450, width: 40, height: 50 },
                 startText: { x: 50, y: 450, text: 'STAGE 3' },
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(mockStageDataWithoutTimeLimit)
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: () => Promise.resolve(mockStageDataWithoutTimeLimit)
+                })
+            );
 
             // Act: Load stage
             const result = await stageLoader.loadStageWithFallback(3);
@@ -356,7 +359,7 @@ describe('StageLoader', () => {
             expect(fallbackStage1.id).toBe(0); // ID 0 indicates error/fallback stage
             expect(fallbackStage1.name).toBe('Offline Mode');
             expect(fallbackStage1.timeLimit).toBe(99); // Generous time for error recovery
-            
+
             // All IDs should return identical fallback stage
             expect(fallbackStage1).toEqual(fallbackStage2);
             expect(fallbackStage1).toEqual(fallbackStage999);
@@ -369,14 +372,20 @@ describe('StageLoader', () => {
             // Assert: Should have minimal but complete structure
             expect(fallbackStage.platforms).toHaveLength(1); // Just one platform
             expect(fallbackStage.platforms[0]).toEqual({
-                x1: 0, y1: 500, x2: 800, y2: 500
+                x1: 0,
+                y1: 500,
+                x2: 800,
+                y2: 500
             });
-            
+
             expect(fallbackStage.spikes).toEqual([]); // No spikes (safe for error recovery)
             expect(fallbackStage.goal).toEqual({
-                x: 700, y: 450, width: 40, height: 50
+                x: 700,
+                y: 450,
+                width: 40,
+                height: 50
             });
-            
+
             expect(fallbackStage.startText.text).toBe('Network Error');
             expect(fallbackStage.goalText.text).toBe('GOAL');
         });
@@ -394,10 +403,13 @@ describe('StageLoader', () => {
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(mockStageData)
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: () => Promise.resolve(mockStageData)
+                })
+            );
 
             // Act: Load stage
             const result = await stageLoader.loadStageWithFallback(1);
@@ -422,7 +434,7 @@ describe('StageLoader', () => {
             expect(result.id).toBe(0); // Fallback stage ID
             expect(result.name).toBe('Offline Mode');
             expect(result.timeLimit).toBe(99);
-            
+
             // Should log warning about fallback
             expect(consoleSpy).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to load stage 1 from JSON'),

@@ -10,13 +10,13 @@ import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
+import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createRenderSystem } from '../systems/RenderSystemFactory.js';
-import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
-import type { GameUI } from './GameUI.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
+import type { GameUI } from './GameUI.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
 /**
@@ -96,23 +96,21 @@ export class GameManager {
     }
 
     private initializeSystems(gameController: any): void {
-            const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
-    
-            this.physicsSystem = new PhysicsSystem(physicsConstants);
-            this.collisionSystem = new CollisionSystem();
-            this.animationSystem = new AnimationSystem();
-            this.movingPlatformSystem = new MovingPlatformSystem();
-            // Environment-aware rendering system
-            this.renderSystem = createRenderSystem(this.canvas);
-    
-            // Initialize InputManager with canvas and game controller
-            this.inputManager = new InputManager(this.canvas, gameController);
-    
-            // Initialize PlayerSystem with InputManager
-            this.playerSystem = new PlayerSystem(this.inputManager);
-        }
+        const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
+        this.physicsSystem = new PhysicsSystem(physicsConstants);
+        this.collisionSystem = new CollisionSystem();
+        this.animationSystem = new AnimationSystem();
+        this.movingPlatformSystem = new MovingPlatformSystem();
+        // Environment-aware rendering system
+        this.renderSystem = createRenderSystem(this.canvas);
 
+        // Initialize InputManager with canvas and game controller
+        this.inputManager = new InputManager(this.canvas, gameController);
+
+        // Initialize PlayerSystem with InputManager
+        this.playerSystem = new PlayerSystem(this.inputManager);
+    }
 
     /**
      * Load a stage by number
@@ -129,11 +127,10 @@ export class GameManager {
                 const defaultTimeLimit = getGameStore().game.timeLimit;
                 gameStore.getState().setTimeLimit(defaultTimeLimit);
             }
-
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
-            
+
             // Set timeLimit from fallback stage data
             const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
             gameStore.getState().setTimeLimit(fallbackTimeLimit);
@@ -185,105 +182,112 @@ export class GameManager {
     }
 
     private updateSystems(deltaTime: number): void {
-            // Update input manager
-            this.inputManager.update();
-    
-            const physicsConstants = this.physicsSystem.getPhysicsConstants();
-            this.playerSystem.update(deltaTime, physicsConstants);
-    
-            this.physicsSystem.update(deltaTime);
-            
-            // Update moving platforms if stage has them
-            if (this.stage?.movingPlatforms) {
-                // Overwrite the old array with the new, updated array
-                this.stage.movingPlatforms = this.movingPlatformSystem.update(
-                    this.stage.movingPlatforms,
-                    deltaTime
-                );
-            }
-            
-            // Use store action for clamping speed
-            getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
-    
-            this.animationSystem.updateClearAnimation();
-            this.animationSystem.updateDeathAnimation();
+        // Update input manager
+        this.inputManager.update();
+
+        const physicsConstants = this.physicsSystem.getPhysicsConstants();
+        this.playerSystem.update(deltaTime, physicsConstants);
+
+        this.physicsSystem.update(deltaTime);
+
+        // Update moving platforms if stage has them
+        if (this.stage?.movingPlatforms) {
+            // Overwrite the old array with the new, updated array
+            this.stage.movingPlatforms = this.movingPlatformSystem.update(
+                this.stage.movingPlatforms,
+                deltaTime
+            );
         }
 
+        // Use store action for clamping speed
+        getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
 
+        this.animationSystem.updateClearAnimation();
+        this.animationSystem.updateDeathAnimation();
+    }
 
     private handleCollisions(): void {
-            if (!this.stage) return;
-    
-            const player = getGameStore().getPlayer();
-            const prevPlayerFootY = this.prevPlayerY + player.radius;
-    
-            // Handle moving platform collisions first (higher priority)
-            if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
-                const movingPlatformCollisionUpdate = this.collisionSystem.handleMovingPlatformCollisions(
+        if (!this.stage) return;
+
+        const player = getGameStore().getPlayer();
+        const prevPlayerFootY = this.prevPlayerY + player.radius;
+
+        // Handle moving platform collisions first (higher priority)
+        if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
+            const movingPlatformCollisionUpdate =
+                this.collisionSystem.handleMovingPlatformCollisions(
                     this.stage.movingPlatforms,
                     prevPlayerFootY
                 );
-    
-                if (movingPlatformCollisionUpdate) {
-                    // Apply collision update to player
-                    getGameStore().updatePlayer(movingPlatformCollisionUpdate);
-                    
-                    if (movingPlatformCollisionUpdate.grounded && movingPlatformCollisionUpdate.platform) {
-                        this.playerSystem.resetJumpTimer();
-                        
-                        // IMPORTANT: Move player with the platform!
-                        const movingPlatform = movingPlatformCollisionUpdate.platform;
-                        const dtFactor = 16.67 / 16.67; // Normalize deltaTime (should use actual deltaTime)
-                        const platformMovement = movingPlatform.speed * movingPlatform.direction * dtFactor;
-                        
-                        // Get current player and apply platform movement
-                        const currentPlayer = getGameStore().getPlayer();
-                        getGameStore().updatePlayer({
-                            x: currentPlayer.x + platformMovement
-                        });
-                        
-                        // Add landing history with updated position
-                        const finalPlayer = getGameStore().getPlayer();
-                        this.renderSystem.addLandingHistory(finalPlayer.x, finalPlayer.y + finalPlayer.radius);
-                    }
-                    
-                    // Skip static platform collision check if moving platform collision found
-                    return;
-                }
-            }
-    
-            // Handle static platform collisions (only if no moving platform collision)
-            const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
-                this.stage.platforms,
-                prevPlayerFootY
-            );
-    
-            if (platformCollisionUpdate) {
-                // GameManager is responsible for updating the store
-                getGameStore().updatePlayer(platformCollisionUpdate);
-                
-                if (platformCollisionUpdate.grounded) {
+
+            if (movingPlatformCollisionUpdate) {
+                // Apply collision update to player
+                getGameStore().updatePlayer(movingPlatformCollisionUpdate);
+
+                if (
+                    movingPlatformCollisionUpdate.grounded &&
+                    movingPlatformCollisionUpdate.platform
+                ) {
                     this.playerSystem.resetJumpTimer();
-                    // Get updated player state from store after collision
-                    const updatedPlayer = getGameStore().getPlayer();
-                    this.renderSystem.addLandingHistory(updatedPlayer.x, updatedPlayer.y + updatedPlayer.radius);
+
+                    // IMPORTANT: Move player with the platform!
+                    const movingPlatform = movingPlatformCollisionUpdate.platform;
+                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime (should use actual deltaTime)
+                    const platformMovement =
+                        movingPlatform.speed * movingPlatform.direction * dtFactor;
+
+                    // Get current player and apply platform movement
+                    const currentPlayer = getGameStore().getPlayer();
+                    getGameStore().updatePlayer({
+                        x: currentPlayer.x + platformMovement
+                    });
+
+                    // Add landing history with updated position
+                    const finalPlayer = getGameStore().getPlayer();
+                    this.renderSystem.addLandingHistory(
+                        finalPlayer.x,
+                        finalPlayer.y + finalPlayer.radius
+                    );
                 }
-            }
-    
-            // Get latest player state from store for other collision checks
-            const latestPlayer = getGameStore().getPlayer();
-            if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
-                this.handlePlayerDeath('Hit by spike! Press R to restart');
-                return;
-            }
-    
-            if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
-                this.handleGoalReached();
+
+                // Skip static platform collision check if moving platform collision found
                 return;
             }
         }
 
+        // Handle static platform collisions (only if no moving platform collision)
+        const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
+            this.stage.platforms,
+            prevPlayerFootY
+        );
 
+        if (platformCollisionUpdate) {
+            // GameManager is responsible for updating the store
+            getGameStore().updatePlayer(platformCollisionUpdate);
+
+            if (platformCollisionUpdate.grounded) {
+                this.playerSystem.resetJumpTimer();
+                // Get updated player state from store after collision
+                const updatedPlayer = getGameStore().getPlayer();
+                this.renderSystem.addLandingHistory(
+                    updatedPlayer.x,
+                    updatedPlayer.y + updatedPlayer.radius
+                );
+            }
+        }
+
+        // Get latest player state from store for other collision checks
+        const latestPlayer = getGameStore().getPlayer();
+        if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
+            this.handlePlayerDeath('Hit by spike! Press R to restart');
+            return;
+        }
+
+        if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
+            this.handleGoalReached();
+            return;
+        }
+    }
 
     private updateCamera(): void {
         const player = getGameStore().getPlayer();

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { MovingPlatformSystem } from '../systems/MovingPlatformSystem';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { MovingPlatform } from '../core/StageLoader';
+import { MovingPlatformSystem } from '../systems/MovingPlatformSystem';
 
 describe('MovingPlatformSystem', () => {
     let movingPlatformSystem: MovingPlatformSystem;
@@ -8,15 +8,27 @@ describe('MovingPlatformSystem', () => {
 
     beforeEach(() => {
         movingPlatformSystem = new MovingPlatformSystem();
-        
+
         mockMovingPlatforms = [
             {
-                x1: 350, y1: 450, x2: 450, y2: 450,
-                startX: 350, endX: 450, speed: 1, direction: 1
+                x1: 350,
+                y1: 450,
+                x2: 450,
+                y2: 450,
+                startX: 350,
+                endX: 450,
+                speed: 1,
+                direction: 1
             },
             {
-                x1: 800, y1: 430, x2: 900, y2: 430,
-                startX: 750, endX: 850, speed: 1.5, direction: -1
+                x1: 800,
+                y1: 430,
+                x2: 900,
+                y2: 430,
+                startX: 750,
+                endX: 850,
+                speed: 1.5,
+                direction: -1
             }
         ];
     });
@@ -40,15 +52,18 @@ describe('MovingPlatformSystem', () => {
             // 元の配列が変更されていないことを確認
             expect(mockMovingPlatforms).toEqual(originalPlatforms);
         });
-        
+
         it('should move platforms according to speed and direction', () => {
             const deltaTime = 16.67;
             const initialX1_platform1 = mockMovingPlatforms[0].x1;
-            
+
             const updatedPlatforms = movingPlatformSystem.update(mockMovingPlatforms, deltaTime);
-            
+
             // Platform 1 moves right (direction: 1)
-            const expectedMovement1 = mockMovingPlatforms[0].speed * mockMovingPlatforms[0].direction * (deltaTime / 16.67);
+            const expectedMovement1 =
+                mockMovingPlatforms[0].speed *
+                mockMovingPlatforms[0].direction *
+                (deltaTime / 16.67);
             expect(updatedPlatforms[0].x1).toBeCloseTo(initialX1_platform1 + expectedMovement1, 2);
         });
 
@@ -58,9 +73,9 @@ describe('MovingPlatformSystem', () => {
             mockMovingPlatforms[0].x1 = 449.5;
             mockMovingPlatforms[0].x2 = 549.5;
             mockMovingPlatforms[0].direction = 1;
-            
+
             const updatedPlatforms = movingPlatformSystem.update(mockMovingPlatforms, deltaTime);
-            
+
             // Direction should be reversed in the new object
             expect(updatedPlatforms[0].direction).toBe(-1);
             // Original object should not be changed
@@ -73,9 +88,9 @@ describe('MovingPlatformSystem', () => {
             mockMovingPlatforms[0].x1 = 350.5;
             mockMovingPlatforms[0].x2 = 450.5;
             mockMovingPlatforms[0].direction = -1;
-            
+
             const updatedPlatforms = movingPlatformSystem.update(mockMovingPlatforms, deltaTime);
-            
+
             // Direction should be reversed in the new object
             expect(updatedPlatforms[0].direction).toBe(1);
         });
@@ -83,11 +98,11 @@ describe('MovingPlatformSystem', () => {
         it('should maintain platform width during movement', () => {
             const deltaTime = 16.67;
             const originalWidth1 = mockMovingPlatforms[0].x2 - mockMovingPlatforms[0].x1;
-            
+
             const updatedPlatforms = movingPlatformSystem.update(mockMovingPlatforms, deltaTime);
-            
+
             const newWidth1 = updatedPlatforms[0].x2 - updatedPlatforms[0].x1;
-            
+
             expect(newWidth1).toBeCloseTo(originalWidth1, 5);
         });
     });

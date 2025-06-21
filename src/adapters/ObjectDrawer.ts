@@ -7,22 +7,17 @@ import {
     EditorError
 } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
-import type {
-    IObjectDrawer,
-    Position,
-    Size,
-    Bounds
-} from './IRenderAdapter.js';
+import type { Bounds, IObjectDrawer, Position, Size } from './IRenderAdapter.js';
 
 /**
  * ObjectDrawer - Handles individual object drawing details
- * 
+ *
  * Responsibilities:
  * - Create Fabric.js objects for each game element type
  * - Apply consistent styling to objects
  * - Handle object data management
  * - Provide utility functions for object manipulation
- * 
+ *
  * This class follows Single Responsibility Principle by handling only drawing concerns.
  */
 export class ObjectDrawer implements IObjectDrawer {
@@ -37,16 +32,13 @@ export class ObjectDrawer implements IObjectDrawer {
      */
     createPlatform(start: Position, end: Position): fabric.Line {
         try {
-            const line = new fabric.Line(
-                [start.x, start.y, end.x, end.y],
-                {
-                    stroke: EDITOR_CONFIG.COLORS.PLATFORM,
-                    strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
-                    selectable: true,
-                    hoverCursor: 'pointer',
-                    moveCursor: 'pointer'
-                }
-            );
+            const line = new fabric.Line([start.x, start.y, end.x, end.y], {
+                stroke: EDITOR_CONFIG.COLORS.PLATFORM,
+                strokeWidth: EDITOR_CONFIG.STROKE_WIDTH.PLATFORM,
+                selectable: true,
+                hoverCursor: 'pointer',
+                moveCursor: 'pointer'
+            });
 
             this.setObjectData(line, { type: EDITOR_TOOLS.PLATFORM });
             this.canvas.add(line);
@@ -72,7 +64,7 @@ export class ObjectDrawer implements IObjectDrawer {
             const points = [
                 { x: position.x, y: position.y - spikeSize.height / 2 }, // Top point
                 { x: position.x - spikeSize.width / 2, y: position.y + spikeSize.height / 2 }, // Bottom left
-                { x: position.x + spikeSize.width / 2, y: position.y + spikeSize.height / 2 }  // Bottom right
+                { x: position.x + spikeSize.width / 2, y: position.y + spikeSize.height / 2 } // Bottom right
             ];
 
             const spike = new fabric.Polygon(points, {
@@ -170,17 +162,14 @@ export class ObjectDrawer implements IObjectDrawer {
      */
     createGridLine(start: Position, end: Position): fabric.Line {
         try {
-            const gridLine = new fabric.Line(
-                [start.x, start.y, end.x, end.y],
-                {
-                    stroke: EDITOR_CONFIG.COLORS.GRID,
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false, // Don't respond to events
-                    hoverCursor: 'default',
-                    moveCursor: 'default'
-                }
-            );
+            const gridLine = new fabric.Line([start.x, start.y, end.x, end.y], {
+                stroke: EDITOR_CONFIG.COLORS.GRID,
+                strokeWidth: 1,
+                selectable: false,
+                evented: false, // Don't respond to events
+                hoverCursor: 'default',
+                moveCursor: 'default'
+            });
 
             this.setObjectData(gridLine, { type: 'grid', isGrid: true });
             this.canvas.add(gridLine);
@@ -312,7 +301,7 @@ export class ObjectDrawer implements IObjectDrawer {
 
         // Store data in the object
         (object as any).data = { ...(object as any).data, ...data };
-        
+
         DebugHelper.log('Object data set', { objectType: object.type, data });
     }
 
@@ -376,7 +365,7 @@ export class ObjectDrawer implements IObjectDrawer {
 
         const currentData = this.getObjectData(object) || {};
         this.setObjectData(object, { ...currentData, isDrawing: false });
-        
+
         object.set({ selectable: true });
         this.canvas.renderAll();
     }

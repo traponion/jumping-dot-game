@@ -1,5 +1,5 @@
 import * as fabric from 'fabric';
-import type { Goal, Spike, StageData, MovingPlatform } from '../core/StageLoader.js';
+import type { Goal, MovingPlatform, Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
@@ -127,16 +127,15 @@ export class FabricRenderSystem {
     }
 
     renderStage(stage: StageData): void {
-            this.renderPlatforms(stage.platforms);
-            // Render moving platforms if they exist
-            if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
-                this.renderMovingPlatforms(stage.movingPlatforms);
-            }
-            this.renderSpikes(stage.spikes);
-            this.renderGoal(stage.goal);
-            this.renderStageTexts(stage);
+        this.renderPlatforms(stage.platforms);
+        // Render moving platforms if they exist
+        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
+            this.renderMovingPlatforms(stage.movingPlatforms);
         }
-
+        this.renderSpikes(stage.spikes);
+        this.renderGoal(stage.goal);
+        this.renderStageTexts(stage);
+    }
 
     private renderPlatforms(platforms: any[]): void {
         // 既存のプラットフォームを削除
@@ -629,35 +628,34 @@ export class FabricRenderSystem {
     }
 
     async cleanup(): Promise<void> {
-            // Dispose fabric canvas to prevent memory leaks and reinitialization errors
-            if (this.canvas) {
-                try {
-                    const canvasElement = this.canvas.getElement();
-    
-                    // Clean up moving platform shapes before disposing canvas
-                    this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
-                    this.movingPlatformShapes = [];
-    
-                    // In fabric.js v6, dispose is async and must be awaited
-                    await this.canvas.dispose();
-    
-                    // Clear canvas element to prevent reinitialization errors
-                    if (canvasElement) {
-                        const context = canvasElement.getContext('2d');
-                        if (context) {
-                            context.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                        }
-                        // Remove fabric-specific properties
-                        delete (canvasElement as any).__fabric;
-                        delete (canvasElement as any)._fabric;
-                    }
-                } catch (error) {
-                    console.log('⚠️ Canvas cleanup error (already disposed?):', error);
-                }
-                this.canvas = null as any;
-            }
-        }
+        // Dispose fabric canvas to prevent memory leaks and reinitialization errors
+        if (this.canvas) {
+            try {
+                const canvasElement = this.canvas.getElement();
 
+                // Clean up moving platform shapes before disposing canvas
+                this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
+                this.movingPlatformShapes = [];
+
+                // In fabric.js v6, dispose is async and must be awaited
+                await this.canvas.dispose();
+
+                // Clear canvas element to prevent reinitialization errors
+                if (canvasElement) {
+                    const context = canvasElement.getContext('2d');
+                    if (context) {
+                        context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                    }
+                    // Remove fabric-specific properties
+                    delete (canvasElement as any).__fabric;
+                    delete (canvasElement as any)._fabric;
+                }
+            } catch (error) {
+                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
+            }
+            this.canvas = null as any;
+        }
+    }
 
     // ランディング予測システム
     setLandingPredictions(predictions: LandingPrediction[]): void {

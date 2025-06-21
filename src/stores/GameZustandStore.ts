@@ -11,6 +11,7 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 // Zustand-based Game Store - Modern state management for the game
 import { createStore } from 'zustand/vanilla';
+import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type {
     Camera,
     DeathMark,
@@ -20,7 +21,6 @@ import type {
     TrailPoint
 } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
-import { GAME_CONFIG } from '../constants/GameConstants.js';
 
 /**
  * Game Runtime State interface - Manages dynamic game entities and runtime data
@@ -84,7 +84,7 @@ export interface GameStore {
      * @description Initializes game state, sets start time, and begins gameplay
      */
     startGame: () => void;
-    
+
     /**
      * Pause the current game
      * @method pauseGame
@@ -92,7 +92,7 @@ export interface GameStore {
      * @description Stops game loop without ending the game session
      */
     pauseGame: () => void;
-    
+
     /**
      * Resume a paused game
      * @method resumeGame
@@ -100,7 +100,7 @@ export interface GameStore {
      * @description Continues game loop if not in game over state
      */
     resumeGame: () => void;
-    
+
     /**
      * Stop the game without game over
      * @method stopGame
@@ -108,7 +108,7 @@ export interface GameStore {
      * @description Cleanly stops the game without triggering game over state
      */
     stopGame: () => void;
-    
+
     /**
      * Trigger game over state
      * @method gameOver
@@ -116,7 +116,7 @@ export interface GameStore {
      * @description Sets game over flag and stops the game loop
      */
     gameOver: () => void;
-    
+
     /**
      * Restart the current game
      * @method restartGame
@@ -133,7 +133,7 @@ export interface GameStore {
      * @returns {void}
      */
     setCurrentStage: (stageId: number) => void;
-    
+
     /**
      * Set time limit for current stage
      * @method setTimeLimit
@@ -142,7 +142,7 @@ export interface GameStore {
      * @description Also resets remaining time to the new limit
      */
     setTimeLimit: (limit: number) => void;
-    
+
     /**
      * Update remaining time in current stage
      * @method updateTimeRemaining
@@ -150,7 +150,7 @@ export interface GameStore {
      * @returns {void}
      */
     updateTimeRemaining: (time: number) => void;
-    
+
     /**
      * Set final score for completed game
      * @method setFinalScore
@@ -158,7 +158,7 @@ export interface GameStore {
      * @returns {void}
      */
     setFinalScore: (score: number) => void;
-    
+
     /**
      * Mark that player has moved at least once
      * @method markPlayerMoved
@@ -166,7 +166,7 @@ export interface GameStore {
      * @description Used for tracking player engagement and tutorial completion
      */
     markPlayerMoved: () => void;
-    
+
     /**
      * Update player velocity based on input direction
      * @method updatePlayerVelocity
@@ -175,7 +175,7 @@ export interface GameStore {
      * @returns {void}
      */
     updatePlayerVelocity: (direction: 'left' | 'right', dtFactor: number) => void;
-    
+
     /**
      * Clamp player speed to maximum limit
      * @method clampPlayerSpeed
@@ -193,7 +193,7 @@ export interface GameStore {
      * @returns {void}
      */
     updatePlayer: (player: Partial<Player>) => void;
-    
+
     /**
      * Update camera with partial state
      * @method updateCamera
@@ -201,7 +201,7 @@ export interface GameStore {
      * @returns {void}
      */
     updateCamera: (camera: Partial<Camera>) => void;
-    
+
     /**
      * Add new particle to particle system
      * @method addParticle
@@ -209,7 +209,7 @@ export interface GameStore {
      * @returns {void}
      */
     addParticle: (particle: Particle) => void;
-    
+
     /**
      * Replace entire particle array
      * @method updateParticles
@@ -218,7 +218,7 @@ export interface GameStore {
      * @description Typically used after particle system updates
      */
     updateParticles: (particles: Particle[]) => void;
-    
+
     /**
      * Add death mark at specified location
      * @method addDeathMark
@@ -226,7 +226,7 @@ export interface GameStore {
      * @returns {void}
      */
     addDeathMark: (deathMark: DeathMark) => void;
-    
+
     /**
      * Replace entire trail array
      * @method updateTrail
@@ -234,7 +234,7 @@ export interface GameStore {
      * @returns {void}
      */
     updateTrail: (trail: TrailPoint[]) => void;
-    
+
     /**
      * Add single point to player trail
      * @method addTrailPoint
@@ -243,7 +243,7 @@ export interface GameStore {
      * @description Automatically manages trail length using maxTrailLength config
      */
     addTrailPoint: (point: TrailPoint) => void;
-    
+
     /**
      * Set runtime initialization status
      * @method setInitialized
@@ -268,56 +268,56 @@ export interface GameStore {
      * @returns {GameState} Copy of current game state
      */
     getGameState: () => GameState;
-    
+
     /**
      * Get immutable copy of player state
      * @method getPlayer
      * @returns {Player} Copy of current player state
      */
     getPlayer: () => Player;
-    
+
     /**
      * Get immutable copy of camera state
      * @method getCamera
      * @returns {Camera} Copy of current camera state
      */
     getCamera: () => Camera;
-    
+
     /**
      * Check if game is currently running
      * @method isGameRunning
      * @returns {boolean} True if game loop is active
      */
     isGameRunning: () => boolean;
-    
+
     /**
      * Check if game is in game over state
      * @method isGameOver
      * @returns {boolean} True if game has ended
      */
     isGameOver: () => boolean;
-    
+
     /**
      * Get current active stage ID
      * @method getCurrentStage
      * @returns {number} Current stage identifier
      */
     getCurrentStage: () => number;
-    
+
     /**
      * Get remaining time in current stage
      * @method getTimeRemaining
      * @returns {number} Remaining time in seconds
      */
     getTimeRemaining: () => number;
-    
+
     /**
      * Get final score of completed game
      * @method getFinalScore
      * @returns {number} Final score value
      */
     getFinalScore: () => number;
-    
+
     /**
      * Check if player has moved at least once
      * @method hasPlayerMoved
@@ -474,7 +474,8 @@ export const gameStore = createStore<GameStore>()(
             clampPlayerSpeed: (maxSpeed: number) =>
                 set((state) => {
                     if (Math.abs(state.runtime.player.vx) > maxSpeed) {
-                        state.runtime.player.vx = state.runtime.player.vx >= 0 ? maxSpeed : -maxSpeed;
+                        state.runtime.player.vx =
+                            state.runtime.player.vx >= 0 ? maxSpeed : -maxSpeed;
                     }
                 }),
 
@@ -559,7 +560,7 @@ export const gameStore = createStore<GameStore>()(
  * @function useGameStore
  * @throws {Error} Always throws error as this is not implemented for React usage
  * @returns {never} Never returns as it always throws
- * @description Placeholder for potential future React integration. 
+ * @description Placeholder for potential future React integration.
  * Currently throws error directing users to use getGameStore() instead.
  */
 export const useGameStore = () => {

@@ -7,7 +7,7 @@ export class MovingPlatformSystem {
     /**
      * Updates all moving platforms and returns a new array with updated positions.
      * This method is a pure function and does not mutate the input array.
-     * 
+     *
      * @param movingPlatforms - Array of moving platforms to update
      * @param deltaTime - Time elapsed since last update in milliseconds
      * @returns A new array of MovingPlatform objects with updated positions and directions.
@@ -17,7 +17,7 @@ export class MovingPlatformSystem {
 
         return movingPlatforms.map((platform) => {
             const movement = platform.speed * platform.direction * dtFactor;
-            
+
             let newX1 = platform.x1 + movement;
             let newDirection = platform.direction;
             const platformWidth = platform.x2 - platform.x1;
@@ -34,7 +34,7 @@ export class MovingPlatformSystem {
                 const overshoot = platform.startX - newX1;
                 newX1 = platform.startX + overshoot;
             }
-            
+
             const newX2 = newX1 + platformWidth;
 
             // Return a NEW platform object, not a mutated one
