@@ -8,6 +8,17 @@
 import { JumpingDotGame } from './core/Game.js';
 
 /**
+ * Window interface extension for global StageSelect access
+ * @interface Window
+ * @property {StageSelect} stageSelect - Global stage select instance
+ */
+declare global {
+    interface Window {
+        stageSelect: StageSelect;
+    }
+}
+
+/**
  * Stage Selection interface for navigation and display
  * @interface StageSelectItem
  * @property {number} id - Unique stage identifier
@@ -303,5 +314,5 @@ window.addEventListener('load', async () => {
     await stageSelect.init();
 
     // Export for global access
-    (window as any).stageSelect = stageSelect;
+    window.stageSelect = stageSelect;
 });
