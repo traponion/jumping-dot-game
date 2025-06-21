@@ -74,12 +74,11 @@ export class GameManager {
      * @param {any} gameController - Game controller instance for UI integration
      */
     constructor(canvas: HTMLCanvasElement, gameController: any) {
-            this.canvas = canvas;
-            this.gameController = gameController;
-            this.initializeEntities();
-            this.initializeSystems(gameController);
-        }
-
+        this.canvas = canvas;
+        this.gameController = gameController;
+        this.initializeEntities();
+        this.initializeSystems(gameController);
+    }
 
     private initializeEntities(): void {
         // Initialize Zustand store with default values
@@ -145,32 +144,29 @@ export class GameManager {
      * Reset game state to initial values
      */
     async resetGameState(): Promise<void> {
-            gameStore.getState().stopGame();
-            gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-            gameStore.getState().restartGame();
-    
-            // Clean up all existing systems
-            await this.cleanupSystems();
-    
-            // Reinitialize all systems with fresh instances
-            this.initializeSystems(this.gameController);
-    
-            // Reload stage to get clean initial data
-            const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
-            this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
-    
-            this.playerSystem.reset(100, 400);
-            this.animationSystem.reset();
-    
-            gameStore.getState().updateCamera({ x: 0, y: 0 });
-    
-            // Clear inputs first before changing game state
-            this.inputManager.clearInputs();
-            this.prevPlayerY = 0;
-        }
+        gameStore.getState().stopGame();
+        gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
+        gameStore.getState().restartGame();
 
+        // Clean up all existing systems
+        await this.cleanupSystems();
 
+        // Reinitialize all systems with fresh instances
+        this.initializeSystems(this.gameController);
 
+        // Reload stage to get clean initial data
+        const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
+        this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
+
+        this.playerSystem.reset(100, 400);
+        this.animationSystem.reset();
+
+        gameStore.getState().updateCamera({ x: 0, y: 0 });
+
+        // Clear inputs first before changing game state
+        this.inputManager.clearInputs();
+        this.prevPlayerY = 0;
+    }
 
     /**
      * Start the game
@@ -553,16 +549,16 @@ export class GameManager {
 
         gameStore.getState().gameOver();
     }
-    
-        /**
-         * Clean up all systems properly
-         */
-        private async cleanupSystems(): Promise<void> {
-            this.inputManager.cleanup();
-            if (this.renderSystem && 'cleanup' in this.renderSystem) {
-                await (this.renderSystem as any).cleanup();
-            }
+
+    /**
+     * Clean up all systems properly
+     */
+    private async cleanupSystems(): Promise<void> {
+        this.inputManager.cleanup();
+        if (this.renderSystem && 'cleanup' in this.renderSystem) {
+            await (this.renderSystem as any).cleanup();
         }
+    }
     /**
      * Get animation system (for external access)
      */

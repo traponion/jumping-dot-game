@@ -367,56 +367,70 @@ describe('GameManager', () => {
             expect(mockAnimationSystem.updateDeathAnimation).toHaveBeenCalled();
         });
     });
-                                     
-                                         describe('resetGameState method', () => {
-                                             it('should reset moving platforms to their initial positions on game restart', async () => {
-                                                 // Arrange: Load a stage with moving platforms
-                                                 const mockStage = {
-                                                     id: 2,
-                                                     name: 'Test Stage with Moving Platforms',
-                                                     platforms: [],
-                                                     spikes: [],
-                                                     goal: { x: 700, y: 450, width: 40, height: 50 },
-                                                     movingPlatforms: [
-                                                         {
-                                                             x1: 200, x2: 250, y1: 400, y2: 400,
-                                                             startX: 200, endX: 300, speed: 2, direction: 1
-                                                         },
-                                                         {
-                                                             x1: 500, x2: 550, y1: 350, y2: 350,
-                                                             startX: 500, endX: 600, speed: 1.5, direction: -1
-                                                         }
-                                                     ]
-                                                 };
-                                                 const mockStageLoader = (gameManager as any).stageLoader;
-                                                 // Return a deep copy each time to avoid reference sharing
-                                                 mockStageLoader.loadStageWithFallback = vi.fn().mockImplementation(() => 
-                                                     Promise.resolve(JSON.parse(JSON.stringify(mockStage)))
-                                                 );
-                                     
-                                                 await gameManager.loadStage(2);
-                                                 gameManager.startGame();
-                                     
-                                                 // Store initial platform positions
-                                                 const initialPlatforms = JSON.parse(JSON.stringify(gameManager.getCurrentStage()?.movingPlatforms));
-                                     
-                                                 // Act: Simulate time progression to move platforms
-                                                 for (let i = 0; i < 10; i++) {
-                                                     gameManager.update(16.67);
-                                                 }
-                                     
-                                                 // Verify platforms have moved from initial positions
-                                                 const movedPlatforms = gameManager.getCurrentStage()?.movingPlatforms;
-                                                 expect(movedPlatforms?.[0].x1).not.toBe(initialPlatforms[0].x1);
-                                     
-                                                 // Act: Reset game state
-                                                 await gameManager.resetGameState();
-                                     
-                                                 // Assert: Platforms should be back to initial positions
-                                                 const resetPlatforms = gameManager.getCurrentStage()?.movingPlatforms;
-                                                 expect(resetPlatforms).toEqual(initialPlatforms);
-                                             });
-                                         });
+
+    describe('resetGameState method', () => {
+        it('should reset moving platforms to their initial positions on game restart', async () => {
+            // Arrange: Load a stage with moving platforms
+            const mockStage = {
+                id: 2,
+                name: 'Test Stage with Moving Platforms',
+                platforms: [],
+                spikes: [],
+                goal: { x: 700, y: 450, width: 40, height: 50 },
+                movingPlatforms: [
+                    {
+                        x1: 200,
+                        x2: 250,
+                        y1: 400,
+                        y2: 400,
+                        startX: 200,
+                        endX: 300,
+                        speed: 2,
+                        direction: 1
+                    },
+                    {
+                        x1: 500,
+                        x2: 550,
+                        y1: 350,
+                        y2: 350,
+                        startX: 500,
+                        endX: 600,
+                        speed: 1.5,
+                        direction: -1
+                    }
+                ]
+            };
+            const mockStageLoader = (gameManager as any).stageLoader;
+            // Return a deep copy each time to avoid reference sharing
+            mockStageLoader.loadStageWithFallback = vi
+                .fn()
+                .mockImplementation(() => Promise.resolve(JSON.parse(JSON.stringify(mockStage))));
+
+            await gameManager.loadStage(2);
+            gameManager.startGame();
+
+            // Store initial platform positions
+            const initialPlatforms = JSON.parse(
+                JSON.stringify(gameManager.getCurrentStage()?.movingPlatforms)
+            );
+
+            // Act: Simulate time progression to move platforms
+            for (let i = 0; i < 10; i++) {
+                gameManager.update(16.67);
+            }
+
+            // Verify platforms have moved from initial positions
+            const movedPlatforms = gameManager.getCurrentStage()?.movingPlatforms;
+            expect(movedPlatforms?.[0].x1).not.toBe(initialPlatforms[0].x1);
+
+            // Act: Reset game state
+            await gameManager.resetGameState();
+
+            // Assert: Platforms should be back to initial positions
+            const resetPlatforms = gameManager.getCurrentStage()?.movingPlatforms;
+            expect(resetPlatforms).toEqual(initialPlatforms);
+        });
+    });
     describe('edge cases and error handling', () => {
         it('should handle missing stage gracefully', () => {
             // Arrange

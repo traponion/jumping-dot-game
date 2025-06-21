@@ -179,9 +179,21 @@ describe('AnimationSystem', () => {
             animationSystem.addDeathMark(200, 300);
 
             expect(mockGameStore.addDeathMark).toHaveBeenCalledTimes(3);
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, { x: 100, y: 200, timestamp: 1000 });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, { x: 150, y: 250, timestamp: 1000 });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, { x: 200, y: 300, timestamp: 1000 });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, {
+                x: 100,
+                y: 200,
+                timestamp: 1000
+            });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, {
+                x: 150,
+                y: 250,
+                timestamp: 1000
+            });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, {
+                x: 200,
+                y: 300,
+                timestamp: 1000
+            });
         });
     });
 
