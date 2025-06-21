@@ -195,7 +195,11 @@ export class GameManager {
             
             // Update moving platforms if stage has them
             if (this.stage?.movingPlatforms) {
-                this.movingPlatformSystem.update(this.stage.movingPlatforms, deltaTime);
+                // Overwrite the old array with the new, updated array
+                this.stage.movingPlatforms = this.movingPlatformSystem.update(
+                    this.stage.movingPlatforms,
+                    deltaTime
+                );
             }
             
             // Use store action for clamping speed
@@ -204,6 +208,7 @@ export class GameManager {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
         }
+
 
 
     private handleCollisions(): void {
