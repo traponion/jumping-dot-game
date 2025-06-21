@@ -200,19 +200,18 @@ export class CollisionSystem {
      * @returns Collision result with platform reference or grounded reset
      */
     handleMovingPlatformCollisions(movingPlatforms: MovingPlatform[], prevPlayerFootY: number): MovingPlatformCollisionResult | null {
-        const player = getGameStore().getPlayer(); // Get latest player state from store
-        let collisionResult: MovingPlatformCollisionResult | null = { grounded: false }; // Start with grounded reset
-
-        for (const movingPlatform of movingPlatforms) {
-            const collisionUpdate = this.checkMovingPlatformCollision(player, movingPlatform, prevPlayerFootY);
-            if (collisionUpdate) {
-                // Merge the collision update with the grounded reset
-                collisionResult = { ...collisionResult, ...collisionUpdate };
-                return collisionResult; // Return the first collision found
+            const player = getGameStore().getPlayer(); // Get latest player state from store
+    
+            for (const movingPlatform of movingPlatforms) {
+                const collisionUpdate = this.checkMovingPlatformCollision(player, movingPlatform, prevPlayerFootY);
+                if (collisionUpdate) {
+                    // Return the first collision found
+                    return collisionUpdate;
+                }
             }
+    
+            // If no collision found, return null (don't interfere with other collision systems)
+            return null;
         }
 
-        // If no collision found, return just the grounded reset
-        return collisionResult;
-    }
 }
