@@ -141,19 +141,28 @@ export class GameManager {
      * Reset game state to initial values
      */
     resetGameState(): void {
-        gameStore.getState().stopGame();
-        gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-        gameStore.getState().restartGame();
+            gameStore.getState().stopGame();
+            gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
+            gameStore.getState().restartGame();
+    
+            // Clean up existing render system before reinitializing
+            if (this.renderSystem && 'cleanup' in this.renderSystem) {
+                (this.renderSystem as any).cleanup();
+            }
+    
+            // Recreate render system to prevent object accumulation
+            this.renderSystem = createRenderSystem(this.canvas);
+    
+            this.playerSystem.reset(100, 400);
+            this.animationSystem.reset();
+    
+            gameStore.getState().updateCamera({ x: 0, y: 0 });
+    
+            // Clear inputs first before changing game state
+            this.inputManager.clearInputs();
+            this.prevPlayerY = 0;
+        }
 
-        this.playerSystem.reset(100, 400);
-        this.animationSystem.reset();
-
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
-
-        // Clear inputs first before changing game state
-        this.inputManager.clearInputs();
-        this.prevPlayerY = 0;
-    }
 
     /**
      * Start the game

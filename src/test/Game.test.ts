@@ -1,6 +1,86 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
+// Mock Fabric Canvas for tracking objects  
+export interface MockFabricCanvas {
+    add: (obj: any) => void;
+    clear: () => void;
+    getObjects: () => any[];
+    objects: any[];
+    dispose: () => Promise<void>;
+    getElement: () => HTMLCanvasElement;
+    remove: (obj: any) => void;
+}
+
+export class MockRenderSystem {
+    private mockCanvas: MockFabricCanvas;
+
+    constructor(_canvas: HTMLCanvasElement) {
+        this.mockCanvas = this.createMockCanvas();
+    }
+
+    private createMockCanvas(): MockFabricCanvas {
+        const objects: any[] = [];
+        return {
+            objects: objects,
+            clear: () => { objects.length = 0; },
+            add: (obj: any) => { objects.push(obj); },
+            getObjects: () => objects,
+            dispose: vi.fn().mockResolvedValue(void 0),
+            getElement: () => ({} as HTMLCanvasElement),
+            remove: (obj: any) => {
+                const index = objects.indexOf(obj);
+                if (index > -1) objects.splice(index, 1);
+            }
+        };
+    }
+
+    getMockCanvas(): MockFabricCanvas {
+        return this.mockCanvas;
+    }
+
+    // Mock all render system methods to avoid function not found errors
+    clearCanvas = vi.fn();
+    renderPlayer = vi.fn();
+    renderStage = vi.fn(() => {
+        // Simulate adding objects to canvas when rendering stage
+        this.mockCanvas.add({ type: 'text', text: 'START' });
+        this.mockCanvas.add({ type: 'text', text: 'GOAL' });
+    });
+    renderGameOver = vi.fn();
+    renderGameOverMenu = vi.fn();
+    renderStartInstruction = vi.fn();
+    renderCredits = vi.fn();
+    setLandingPredictions = vi.fn();
+    setDrawingStyle = vi.fn();
+    applyCameraTransform = vi.fn();
+    restoreCameraTransform = vi.fn();
+    renderAll = vi.fn();
+    enableEditorMode = vi.fn();
+    disableEditorMode = vi.fn();
+    dispose = vi.fn();
+    
+    // Additional methods found in FabricRenderSystem
+    renderDeathMarks = vi.fn();
+    renderTrail = vi.fn();
+    renderLandingPredictions = vi.fn();
+    renderClearAnimation = vi.fn();
+    renderDeathAnimation = vi.fn();
+    renderLandingHistory = vi.fn();
+    addLandingHistory = vi.fn();
+    cleanupLandingHistory = vi.fn();
+    updateLandingPredictionAnimations = vi.fn();
+    
+    cleanup = vi.fn(async () => {
+        this.mockCanvas.clear();
+    });
+}
+
+// Mock RenderSystemFactory to return MockRenderSystem
+vi.mock('../systems/RenderSystemFactory.js', () => ({
+    createRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
+}));
+
 // Mock window.dispatchEvent for CustomEvent testing
 if (typeof window !== 'undefined' && !window.dispatchEvent) {
     window.dispatchEvent = vi.fn(() => true);
@@ -574,6 +654,41 @@ describe('JumpingDotGame', () => {
 
             // Should fallback gracefully
             expect(true).toBe(true);
+        });
+    });
+
+    describe('resource management', () => {
+        it('should not leak objects on multiple restarts', async () => {
+            // First initialization and render
+            await game.init();
+            game.testRender();
+            
+            // Access the render system through GameManager
+            const firstRenderSystem = (game as any).gameManager.renderSystem;
+            
+            // Get initial object count
+            let initialObjectCount = 0;
+            if (firstRenderSystem && typeof firstRenderSystem.getMockCanvas === 'function') {
+                initialObjectCount = firstRenderSystem.getMockCanvas().getObjects().length;
+            }
+            
+            expect(initialObjectCount).toBeGreaterThan(0);
+
+            // Second initialization (restart) and render  
+            await game.init();
+            game.testRender();
+            
+            // Access the render system again (it might be recreated)
+            const secondRenderSystem = (game as any).gameManager.renderSystem;
+            
+            // Get object count after restart
+            let secondObjectCount = 0;
+            if (secondRenderSystem && typeof secondRenderSystem.getMockCanvas === 'function') {
+                secondObjectCount = secondRenderSystem.getMockCanvas().getObjects().length;
+            }
+
+            // Object count should be the same (no leaks)
+            expect(secondObjectCount).toBe(initialObjectCount);
         });
     });
 });
