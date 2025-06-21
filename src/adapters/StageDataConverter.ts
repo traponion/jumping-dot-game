@@ -4,6 +4,7 @@ import {
     ERROR_CODES,
     ERROR_TYPES,
     EditorError,
+    FabricObjectWithData,
     isFabricObjectWithData,
     isGoalObject,
     isPlatformObject,
@@ -391,18 +392,20 @@ export class StageDataConverter implements IStageDataConverter {
     /**
      * Get all editable objects from canvas (excluding grid)
      */
-    private getEditableObjects(): any[] {
-        // Get editable objects from the adapter (excluding grid objects)
-        if (this.adapter && 'getEditableObjects' in this.adapter) {
-            return (this.adapter as any).getEditableObjects();
+    private getEditableObjects(): FabricObjectWithData[] {
+            // Get editable objects from the adapter (excluding grid objects)
+            if (this.adapter && 'getEditableObjects' in this.adapter) {
+                const adapter = this.adapter as { getEditableObjects(): FabricObjectWithData[] };
+                return adapter.getEditableObjects();
+            }
+    
+            // Fallback for adapters that don't implement getEditableObjects
+            DebugHelper.log(
+                'Warning: Adapter does not implement getEditableObjects, returning empty array'
+            );
+            return [];
         }
 
-        // Fallback for adapters that don't implement getEditableObjects
-        DebugHelper.log(
-            'Warning: Adapter does not implement getEditableObjects, returning empty array'
-        );
-        return [];
-    }
 
     /**
      * Type guard to check if object is a Fabric.js object

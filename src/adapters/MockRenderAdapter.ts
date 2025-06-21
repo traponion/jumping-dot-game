@@ -1,4 +1,5 @@
 import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
+import type { FabricObjectWithData } from '../types/EditorTypes.js';
 
 /**
  * Mock implementation of IRenderAdapter for testing
@@ -208,14 +209,18 @@ export class MockRenderAdapter implements IRenderAdapter {
     /**
      * Get editable objects (mock implementation)
      */
-    public getEditableObjects(): any[] {
-        // Return mock objects for testing
-        return [
-            {
-                type: 'platform',
-                data: { objectType: 'platform', x1: 100, y1: 200, x2: 200, y2: 200 }
-            },
-            { type: 'spike', data: { objectType: 'spike', x: 150, y: 180, width: 20, height: 20 } }
-        ];
-    }
+    public getEditableObjects(): FabricObjectWithData[] {
+            // Return mock objects for testing
+            return [
+                {
+                    type: 'platform',
+                    data: { type: 'platform', objectType: 'platform', x1: 100, y1: 200, x2: 200, y2: 200 }
+                } as FabricObjectWithData,
+                { 
+                    type: 'spike', 
+                    data: { type: 'spike', objectType: 'spike', x: 150, y: 180, width: 20, height: 20 } 
+                } as FabricObjectWithData
+            ];
+        }
+
 }
