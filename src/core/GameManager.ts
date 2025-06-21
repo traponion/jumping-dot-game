@@ -468,7 +468,7 @@ export class GameManager {
             renderer.renderStage(this.stage);
         }
 
-        renderer.renderDeathMarks(this.animationSystem.getDeathMarks());
+        renderer.renderDeathMarks(getGameStore().runtime.deathMarks);
 
         if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
             const player = getGameStore().getPlayer();
