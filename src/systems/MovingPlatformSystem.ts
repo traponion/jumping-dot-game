@@ -12,20 +12,22 @@ export class MovingPlatformSystem {
      * @param deltaTime - Time elapsed since last update in milliseconds
      */
     update(movingPlatforms: MovingPlatform[], deltaTime: number): void {
-        const dtFactor = deltaTime / 16.67; // Normalize to ~60fps
-        
-        for (const platform of movingPlatforms) {
-            // Calculate movement amount
-            const movement = platform.speed * platform.direction * dtFactor;
+            const dtFactor = deltaTime / 16.67; // Normalize to ~60fps
             
-            // Update platform positions
-            platform.x1 += movement;
-            platform.x2 += movement;
-            
-            // Check boundaries and reverse direction if needed
-            this.checkBoundariesAndReverse(platform);
+            for (const platform of movingPlatforms) {
+                // Calculate movement amount
+                const movement = platform.speed * platform.direction * dtFactor;
+                
+                // Update platform positions (cast to mutable to overcome readonly constraints)
+                const mutablePlatform = platform as any;
+                mutablePlatform.x1 += movement;
+                mutablePlatform.x2 += movement;
+                
+                // Check boundaries and reverse direction if needed
+                this.checkBoundariesAndReverse(platform);
+            }
         }
-    }
+
     
     /**
      * Checks if platform has reached its boundaries and reverses direction if needed
@@ -33,23 +35,25 @@ export class MovingPlatformSystem {
      * @param platform - Platform to check
      */
     private checkBoundariesAndReverse(platform: MovingPlatform): void {
-        const platformWidth = platform.x2 - platform.x1;
-        
-        // Check if platform has reached or exceeded endX (moving right)
-        if (platform.direction > 0 && platform.x1 >= platform.endX) {
-            platform.direction = -1;
-            // Ensure platform doesn't go beyond boundary
-            const overshoot = platform.x1 - platform.endX;
-            platform.x1 = platform.endX - overshoot;
-            platform.x2 = platform.x1 + platformWidth;
+            const platformWidth = platform.x2 - platform.x1;
+            const mutablePlatform = platform as any;
+            
+            // Check if platform has reached or exceeded endX (moving right)
+            if (platform.direction > 0 && platform.x1 >= platform.endX) {
+                mutablePlatform.direction = -1;
+                // Ensure platform doesn't go beyond boundary
+                const overshoot = platform.x1 - platform.endX;
+                mutablePlatform.x1 = platform.endX - overshoot;
+                mutablePlatform.x2 = mutablePlatform.x1 + platformWidth;
+            }
+            // Check if platform has reached or exceeded startX (moving left)
+            else if (platform.direction < 0 && platform.x1 <= platform.startX) {
+                mutablePlatform.direction = 1;
+                // Ensure platform doesn't go beyond boundary
+                const overshoot = platform.startX - platform.x1;
+                mutablePlatform.x1 = platform.startX + overshoot;
+                mutablePlatform.x2 = mutablePlatform.x1 + platformWidth;
+            }
         }
-        // Check if platform has reached or exceeded startX (moving left)
-        else if (platform.direction < 0 && platform.x1 <= platform.startX) {
-            platform.direction = 1;
-            // Ensure platform doesn't go beyond boundary
-            const overshoot = platform.startX - platform.x1;
-            platform.x1 = platform.startX + overshoot;
-            platform.x2 = platform.x1 + platformWidth;
-        }
-    }
+
 }
