@@ -1,6 +1,6 @@
-# API Reference - Jumping Dot Game Editor
+# 🔧 API Reference - Jumping Dot Game Editor
 
-## Table of Contents
+## 📋 目次
 - [EditorController](#editorcontroller)
 - [EditorView](#editorview)
 - [EditorModel](#editormodel)
@@ -13,7 +13,7 @@
 
 ## EditorController
 
-Main controller class responsible for coordinating user actions and business logic.
+メインコントローラークラス。ユーザーアクションの調整とビジネスロジックを担当。
 
 ### Constructor
 ```typescript
@@ -27,7 +27,7 @@ constructor(
 ### Public Methods
 
 #### `initialize(): Promise<void>`
-Initializes the editor.
+エディターを初期化します。
 
 ```typescript
 const controller = new EditorController(canvas, view, model);
@@ -35,7 +35,7 @@ await controller.initialize();
 ```
 
 #### `selectTool(tool: string): void`
-Selects an editing tool.
+編集ツールを選択します。
 
 ```typescript
 controller.selectTool(EDITOR_TOOLS.PLATFORM);
@@ -43,70 +43,70 @@ controller.selectTool(EDITOR_TOOLS.SPIKE);
 ```
 
 **Parameters:**
-- `tool`: Tool name (`select` | `platform` | `spike` | `goal` | `text`)
+- `tool`: ツール名（`select` | `platform` | `spike` | `goal` | `text`）
 
 #### `createNewStage(): void`
-Creates a new stage.
+新しいステージを作成します。
 
 ```typescript
 controller.createNewStage();
 ```
 
 #### `loadStage(stageId?: number): Promise<void>`
-Loads a stage with the specified ID.
+指定されたIDのステージを読み込みます。
 
 ```typescript
 await controller.loadStage(1);
-// or interactive selection
+// または対話的に選択
 await controller.loadStage();
 ```
 
 #### `saveStage(): void`
-Saves the current stage as a JSON file.
+現在のステージをJSONファイルとして保存します。
 
 ```typescript
 controller.saveStage();
 ```
 
 #### `testStage(): void`
-Opens the stage in test mode.
+ステージをテストモードで開きます。
 
 ```typescript
 controller.testStage();
 ```
 
 #### `deleteSelectedObject(): void`
-Deletes the selected object.
+選択されたオブジェクトを削除します。
 
 ```typescript
 controller.deleteSelectedObject();
 ```
 
 #### `duplicateSelectedObject(): void`
-Duplicates the selected object.
+選択されたオブジェクトを複製します。
 
 ```typescript
 controller.duplicateSelectedObject();
 ```
 
 #### `toggleGrid(): void`
-Toggles grid display.
+グリッド表示を切り替えます。
 
 ```typescript
 controller.toggleGrid();
 ```
 
 #### `toggleSnap(): void`
-Toggles grid snap functionality.
+グリッドスナップ機能を切り替えます。
 
 ```typescript
 controller.toggleSnap();
 ```
 
-### Extended API (Testing & Integration)
+### Extended API (テスト・統合用)
 
 #### `createObject(event: any): void`
-Creates an object at the specified position.
+指定位置にオブジェクトを作成します。
 
 ```typescript
 const event = {
@@ -117,7 +117,7 @@ controller.createObject(event);
 ```
 
 #### `startPlatformDrawing(event: any): void`
-Starts platform drawing.
+プラットフォーム描画を開始します。
 
 ```typescript
 controller.startPlatformDrawing({
@@ -127,7 +127,7 @@ controller.startPlatformDrawing({
 ```
 
 #### `finishPlatformDrawing(event: any): void`
-Completes platform drawing.
+プラットフォーム描画を完了します。
 
 ```typescript
 controller.finishPlatformDrawing({
@@ -137,7 +137,7 @@ controller.finishPlatformDrawing({
 ```
 
 #### `getFabricCanvas(): fabric.Canvas`
-Gets the Fabric.js canvas instance.
+Fabric.jsキャンバスインスタンスを取得します。
 
 ```typescript
 const fabricCanvas = controller.getFabricCanvas();
@@ -147,7 +147,7 @@ const fabricCanvas = controller.getFabricCanvas();
 
 ## EditorView
 
-View class responsible for UI management.
+UI管理を担当するViewクラス。
 
 ### Constructor
 ```typescript
@@ -157,71 +157,71 @@ constructor(canvas: HTMLCanvasElement)
 ### Public Methods
 
 #### `initialize(): void`
-Initializes the view.
+ビューを初期化します。
 
 ```typescript
 view.initialize();
 ```
 
 #### `setController(controller: IEditorController): void`
-Sets the controller reference.
+コントローラー参照を設定します。
 
 ```typescript
 view.setController(controller);
 ```
 
 #### `updateToolSelection(tool: string): void`
-Updates the tool selection UI.
+ツール選択UIを更新します。
 
 ```typescript
 view.updateToolSelection(EDITOR_TOOLS.SPIKE);
 ```
 
 #### `updateObjectCount(count: number): void`
-Updates the object count display.
+オブジェクト数表示を更新します。
 
 ```typescript
 view.updateObjectCount(15);
 ```
 
 #### `updateMouseCoordinates(x: number, y: number): void`
-Updates the mouse coordinate display.
+マウス座標表示を更新します。
 
 ```typescript
 view.updateMouseCoordinates(120, 340);
 ```
 
 #### `showObjectProperties(object: FabricObjectWithData | null): void`
-Shows the object properties panel.
+オブジェクトプロパティパネルを表示します。
 
 ```typescript
 view.showObjectProperties(selectedObject);
 ```
 
 #### `showErrorMessage(message: string): void`
-Displays an error message.
+エラーメッセージを表示します。
 
 ```typescript
-view.showErrorMessage('Save failed');
+view.showErrorMessage('保存に失敗しました');
 ```
 
 #### `showSuccessMessage(message: string): void`
-Displays a success message.
+成功メッセージを表示します。
 
 ```typescript
-view.showSuccessMessage('Stage saved successfully');
+view.showSuccessMessage('ステージが保存されました');
 ```
 
 ---
 
 ## EditorModel
 
-Model class responsible for data management.
+データ管理を担当するModelクラス。
 
 ### Public Methods
 
 #### `getCurrentStage(): StageData | null`
-Gets the current stage data.
+現在のステージデータを取得します。
 
 ```typescript
 const stage = model.getCurrentStage();
@@ -231,7 +231,7 @@ if (stage) {
 ```
 
 #### `setCurrentStage(stageData: StageData): void`
-Sets the current stage.
+現在のステージを設定します。
 
 ```typescript
 const newStage: StageData = {
@@ -247,7 +247,7 @@ model.setCurrentStage(newStage);
 ```
 
 #### `getEditorState(): EditorState`
-Gets the editor state.
+エディターの状態を取得します。
 
 ```typescript
 const state = model.getEditorState();
@@ -256,7 +256,7 @@ console.log(`Grid enabled: ${state.gridEnabled}`);
 ```
 
 #### `updateEditorState(updates: Partial<EditorState>): void`
-Updates the editor state.
+エディター状態を更新します。
 
 ```typescript
 model.updateEditorState({
@@ -266,7 +266,7 @@ model.updateEditorState({
 ```
 
 #### `validateStageData(stageData: StageData): boolean`
-Validates stage data integrity.
+ステージデータの妥当性を検証します。
 
 ```typescript
 if (model.validateStageData(stageData)) {
@@ -277,7 +277,7 @@ if (model.validateStageData(stageData)) {
 ```
 
 #### `exportStageAsJson(): string`
-Exports the stage as a JSON string.
+ステージをJSON文字列として出力します。
 
 ```typescript
 const json = model.exportStageAsJson();
@@ -285,7 +285,7 @@ localStorage.setItem('savedStage', json);
 ```
 
 #### `importStageFromJson(json: string): StageData`
-Imports a stage from a JSON string.
+JSON文字列からステージをインポートします。
 
 ```typescript
 const json = localStorage.getItem('savedStage');
@@ -299,7 +299,7 @@ if (json) {
 
 ## EditorRenderSystem
 
-Fabric.js integrated rendering system.
+Fabric.js統合レンダリングシステム。
 
 ### Constructor
 ```typescript
@@ -312,49 +312,49 @@ constructor(
 ### Public Methods
 
 #### `loadStageForEditing(stageData: StageData): void`
-Loads a stage in editing mode.
+ステージを編集モードで読み込みます。
 
 ```typescript
 renderSystem.loadStageForEditing(stageData);
 ```
 
 #### `exportStageData(): StageData`
-Exports current editing content as stage data.
+現在の編集内容をステージデータとして出力します。
 
 ```typescript
 const currentStage = renderSystem.exportStageData();
 ```
 
 #### `setSelectedTool(tool: string): void`
-Sets the selected tool.
+選択ツールを設定します。
 
 ```typescript
 renderSystem.setSelectedTool(EDITOR_TOOLS.SPIKE);
 ```
 
 #### `deleteSelectedObject(): void`
-Deletes the selected object.
+選択されたオブジェクトを削除します。
 
 ```typescript
 renderSystem.deleteSelectedObject();
 ```
 
 #### `toggleGrid(): void`
-Toggles grid display.
+グリッド表示を切り替えます。
 
 ```typescript
 renderSystem.toggleGrid();
 ```
 
 #### `toggleSnapToGrid(): void`
-Toggles grid snap.
+グリッドスナップを切り替えます。
 
 ```typescript
 renderSystem.toggleSnapToGrid();
 ```
 
 #### `getEditorState(): EditorState`
-Gets the editor state.
+エディターの状態を取得します。
 
 ```typescript
 const state = renderSystem.getEditorState();
@@ -493,14 +493,14 @@ const EDITOR_CONFIG = {
 ### DebugHelper
 
 #### `log(message: string, data?: any): void`
-Outputs debug logs.
+デバッグログを出力します。
 
 ```typescript
 DebugHelper.log('Operation completed', { count: 5 });
 ```
 
 #### `time<T>(label: string, operation: () => T): T`
-Measures execution time.
+処理時間を計測します。
 
 ```typescript
 const result = DebugHelper.time('heavy-operation', () => {
@@ -511,7 +511,7 @@ const result = DebugHelper.time('heavy-operation', () => {
 ### TypeHelper
 
 #### `safeParseInt(value: string, defaultValue: number): number`
-Performs safe integer conversion.
+安全な整数変換を行います。
 
 ```typescript
 const id = TypeHelper.safeParseInt('123', 1); // 123
@@ -519,11 +519,11 @@ const invalid = TypeHelper.safeParseInt('abc', 1); // 1
 ```
 
 #### `isStageData(data: unknown): data is StageData`
-StageData type guard.
+StageData型ガードです。
 
 ```typescript
 if (TypeHelper.isStageData(data)) {
-    // data can be treated as StageData type
+    // data は StageData 型として扱える
     console.log(data.name);
 }
 ```
@@ -531,7 +531,7 @@ if (TypeHelper.isStageData(data)) {
 ### EventHelper
 
 #### `debounce<T extends (...args: any[]) => any>(func: T, delay: number): T`
-Applies debounce processing.
+デバウンス処理を適用します。
 
 ```typescript
 const debouncedSave = EventHelper.debounce(() => {
@@ -540,7 +540,7 @@ const debouncedSave = EventHelper.debounce(() => {
 ```
 
 #### `throttle<T extends (...args: any[]) => any>(func: T, delay: number): T`
-Applies throttle processing.
+スロットル処理を適用します。
 
 ```typescript
 const throttledUpdate = EventHelper.throttle((e: MouseEvent) => {
@@ -551,14 +551,14 @@ const throttledUpdate = EventHelper.throttle((e: MouseEvent) => {
 ### DOMHelper
 
 #### `getRequiredElement<T extends HTMLElement>(id: string): T`
-Safely gets required DOM elements.
+必須DOM要素を安全に取得します。
 
 ```typescript
 const canvas = DOMHelper.getRequiredElement<HTMLCanvasElement>('editorCanvas');
 ```
 
 #### `getOptionalElement<T extends HTMLElement>(id: string): T | null`
-Gets optional DOM elements.
+オプションDOM要素を取得します。
 
 ```typescript
 const button = DOMHelper.getOptionalElement<HTMLButtonElement>('optionalBtn');
@@ -584,7 +584,7 @@ constructor(
 )
 ```
 
-#### Usage Example
+#### 使用例
 ```typescript
 throw new EditorError(
     'Failed to save stage',
@@ -598,7 +598,7 @@ throw new EditorError(
 ### GlobalErrorHandler
 
 #### `handleError(error: Error | EditorError): void`
-Handles errors.
+エラーを処理します。
 
 ```typescript
 try {
@@ -609,7 +609,7 @@ try {
 ```
 
 #### `addReporter(reporter: ErrorReporter): void`
-Adds error reporters.
+エラーレポーターを追加します。
 
 ```typescript
 globalErrorHandler.addReporter({
@@ -652,26 +652,26 @@ const ERROR_TYPES = {
 
 ---
 
-## Usage Examples
+## 使用例
 
-### Basic Editor Initialization
+### 基本的なエディター初期化
 ```typescript
-// Get DOM elements
+// DOM要素取得
 const canvas = document.getElementById('editorCanvas') as HTMLCanvasElement;
 
-// Create MVC components
+// MVCコンポーネント作成
 const model = new EditorModel();
 const view = new EditorView(canvas);
 const controller = new EditorController(canvas, view, model);
 
-// Initialize
+// 初期化
 await controller.initialize();
 
-// Select tool
+// ツール選択
 controller.selectTool(EDITOR_TOOLS.PLATFORM);
 ```
 
-### Custom Callback Setup
+### カスタムコールバック設定
 ```typescript
 const callbacks: EditorCallbacks = {
     onObjectSelected: (object) => {
@@ -688,7 +688,7 @@ const callbacks: EditorCallbacks = {
 const renderSystem = new EditorRenderSystem(canvas, callbacks);
 ```
 
-### Operations with Error Handling
+### エラーハンドリング付きの操作
 ```typescript
 async function safeStageOperation() {
     try {
@@ -706,7 +706,7 @@ async function safeStageOperation() {
         if (error instanceof EditorError) {
             console.error(`Editor Error [${error.code}]: ${error.message}`);
             if (error.recoverable) {
-                // Retry logic
+                // リトライ処理
             }
         } else {
             console.error('Unexpected error:', error);
@@ -714,3 +714,7 @@ async function safeStageOperation() {
     }
 }
 ```
+
+---
+
+**🎯 このAPIリファレンスで開発がもっと楽になるよ〜♪ ⩌⩊⩌**
