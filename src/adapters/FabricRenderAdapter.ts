@@ -265,12 +265,12 @@ export class FabricRenderAdapter implements IRenderAdapter {
         this.callbacks = { ...this.callbacks, ...callbacks };
 
         // Selection events
-        this.canvas.on('selection:created', (e: any) => {
+        this.canvas.on('selection:created', (e: { selected?: fabric.Object[] }) => {
             const selectedObject = e.selected?.[0] || null;
             this.handleObjectSelection(selectedObject);
         });
 
-        this.canvas.on('selection:updated', (e: any) => {
+        this.canvas.on('selection:updated', (e: { selected?: fabric.Object[] }) => {
             const selectedObject = e.selected?.[0] || null;
             this.handleObjectSelection(selectedObject);
         });
@@ -280,7 +280,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
         });
 
         // Modification events
-        this.canvas.on('object:modified', (e: any) => {
+        this.canvas.on('object:modified', (e: { target?: fabric.Object }) => {
             if (e.target) {
                 this.callbacks.onObjectModified?.(e.target);
                 this.notifyStageModified();
@@ -288,17 +288,17 @@ export class FabricRenderAdapter implements IRenderAdapter {
         });
 
         // Mouse events - delegate to input handler
-        this.canvas.on('mouse:down', (e: any) => {
+        this.canvas.on('mouse:down', (e: { e: Event }) => {
             const pointer = this.canvas.getPointer(e.e);
             this.inputHandler.handleMouseDown(pointer);
         });
 
-        this.canvas.on('mouse:move', (e: any) => {
+        this.canvas.on('mouse:move', (e: { e: Event }) => {
             const pointer = this.canvas.getPointer(e.e);
             this.inputHandler.handleMouseMove(pointer);
         });
 
-        this.canvas.on('mouse:up', (e: any) => {
+        this.canvas.on('mouse:up', (e: { e: Event }) => {
             const pointer = this.canvas.getPointer(e.e);
             this.inputHandler.handleMouseUp(pointer);
         });
