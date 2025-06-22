@@ -175,10 +175,10 @@ export class EditorView implements IEditorView {
             toggleSnapBtn: () => this.controller.toggleSnap()
         };
 
-        Object.entries(toolbarActions).forEach(([id, handler]) => {
+        for (const [id, handler] of Object.entries(toolbarActions)) {
             const element = DOMHelper.getOptionalElement(id);
             element?.addEventListener('click', handler);
-        });
+        }
     }
 
     private setupObjectActionEvents(): void {
@@ -201,13 +201,15 @@ export class EditorView implements IEditorView {
     }
 
     private setupStageInfoEvents(): void {
-        [
+        const stageInputs = [
             this.uiElements.stageNameInput,
             this.uiElements.stageIdInput,
             this.uiElements.stageDescInput
-        ].forEach((input) => {
+        ];
+        
+        for (const input of stageInputs) {
             input.addEventListener('input', this.debouncedStageInfoUpdate);
-        });
+        }
     }
 
     private setupCanvasEvents(): void {
@@ -222,7 +224,9 @@ export class EditorView implements IEditorView {
     public updateToolSelection(tool: string): void {
         if (!this.isInitialized) return;
 
-        this.toolItems.forEach((item) => item.classList.remove('active'));
+        for (const item of this.toolItems) {
+            item.classList.remove('active');
+        }
         const selectedTool = document.querySelector(`[data-tool="${tool}"]`);
         selectedTool?.classList.add('active');
 
@@ -349,15 +353,17 @@ export class EditorView implements IEditorView {
      * すべてのプロパティパネルを非表示
      */
     private hideAllPropertyPanels(): void {
-        [
+        const propertyPanels = [
             this.uiElements.noSelectionDiv,
             this.uiElements.platformPropsDiv,
             this.uiElements.spikePropsDiv,
             this.uiElements.goalPropsDiv,
             this.uiElements.textPropsDiv
-        ].forEach((panel) => {
+        ];
+        
+        for (const panel of propertyPanels) {
             panel.style.display = 'none';
-        });
+        }
     }
 
     /**

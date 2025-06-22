@@ -366,7 +366,9 @@ export class FabricRenderAdapter implements IRenderAdapter {
             return data?.isGrid === true;
         });
 
-        gridObjects.forEach((obj) => this.canvas.remove(obj));
+        for (const obj of gridObjects) {
+            this.canvas.remove(obj);
+        }
     }
 
     /**
