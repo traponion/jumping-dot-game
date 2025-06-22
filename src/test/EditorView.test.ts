@@ -33,13 +33,13 @@ const createMockDOM = (): void => {
     `;
 
     // Add tool items
-    Object.values(EDITOR_TOOLS).forEach((tool) => {
+    for (const tool of Object.values(EDITOR_TOOLS)) {
         const toolElement = document.createElement('div');
         toolElement.className = 'tool-item';
         toolElement.setAttribute('data-tool', tool);
         toolElement.textContent = tool.charAt(0).toUpperCase() + tool.slice(1);
         document.body.appendChild(toolElement);
-    });
+    }
 
     // Add property input elements
     const propertyInputs = [
@@ -52,12 +52,12 @@ const createMockDOM = (): void => {
         'textSize'
     ];
 
-    propertyInputs.forEach((id) => {
+    for (const id of propertyInputs) {
         const input = document.createElement('input');
         input.id = id;
         input.type = 'text';
         document.body.appendChild(input);
-    });
+    }
 
     // Add toolbar buttons
     const toolbarButtons = [
@@ -70,12 +70,12 @@ const createMockDOM = (): void => {
         'toggleSnapBtn'
     ];
 
-    toolbarButtons.forEach((id) => {
+    for (const id of toolbarButtons) {
         const button = document.createElement('button');
         button.id = id;
         button.textContent = id.replace('Btn', '');
         document.body.appendChild(button);
-    });
+    }
 };
 
 const createMockCanvas = (): HTMLCanvasElement => {
@@ -193,7 +193,8 @@ describe('EditorView', () => {
         });
 
         it('should change style based on object count', () => {
-            const objectCountElement = document.getElementById('objectCount')!;
+            const objectCountElement = document.getElementById('objectCount');
+            expect(objectCountElement).toBeTruthy();
 
             view.updateObjectCount(0);
             expect(objectCountElement.className).toBe('object-count');
@@ -291,7 +292,7 @@ describe('EditorView', () => {
         it('should display appropriate panel when nothing is selected', () => {
             view.showObjectProperties(null);
 
-            const noSelectionDiv = document.getElementById('noSelection')!;
+            const noSelectionDiv = document.getElementById('noSelection') as HTMLElement;
             expect(noSelectionDiv.style.display).toBe('block');
 
             // Other panels should be hidden
@@ -301,10 +302,10 @@ describe('EditorView', () => {
                 'goalProperties',
                 'textProperties'
             ];
-            otherPanels.forEach((id) => {
-                const panel = document.getElementById(id)!;
+            for (const id of otherPanels) {
+                const panel = document.getElementById(id) as HTMLElement;
                 expect(panel.style.display).toBe('none');
-            });
+            }
         });
 
         it('should display appropriate panel when platform is selected', () => {
@@ -314,11 +315,11 @@ describe('EditorView', () => {
                 y1: 100,
                 x2: 100,
                 y2: 100
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockPlatform);
 
-            const platformDiv = document.getElementById('platformProperties')!;
+            const platformDiv = document.getElementById('platformProperties') as HTMLElement;
             expect(platformDiv.style.display).toBe('block');
 
             // Other panels should be hidden
@@ -328,10 +329,10 @@ describe('EditorView', () => {
                 'goalProperties',
                 'textProperties'
             ];
-            otherPanels.forEach((id) => {
-                const panel = document.getElementById(id)!;
+            for (const id of otherPanels) {
+                const panel = document.getElementById(id) as HTMLElement;
                 expect(panel.style.display).toBe('none');
-            });
+            }
         });
 
         it('should display appropriate panel when spike is selected', () => {
@@ -347,11 +348,11 @@ describe('EditorView', () => {
                     width: 15,
                     height: 15
                 })
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockSpike);
 
-            const spikeDiv = document.getElementById('spikeProperties')!;
+            const spikeDiv = document.getElementById('spikeProperties') as HTMLElement;
             expect(spikeDiv.style.display).toBe('block');
         });
 
@@ -360,11 +361,11 @@ describe('EditorView', () => {
                 data: { type: EDITOR_TOOLS.GOAL },
                 width: 40,
                 height: 50
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockGoal);
 
-            const goalDiv = document.getElementById('goalProperties')!;
+            const goalDiv = document.getElementById('goalProperties') as HTMLElement;
             expect(goalDiv.style.display).toBe('block');
         });
 
@@ -373,11 +374,11 @@ describe('EditorView', () => {
                 data: { type: EDITOR_TOOLS.TEXT },
                 text: 'Sample Text',
                 fontSize: 16
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockText);
 
-            const textDiv = document.getElementById('textProperties')!;
+            const textDiv = document.getElementById('textProperties') as HTMLElement;
             expect(textDiv.style.display).toBe('block');
         });
     });
@@ -405,14 +406,14 @@ describe('EditorView', () => {
         });
 
         it('should call controller when delete button is clicked', () => {
-            const deleteBtn = document.getElementById('deleteObjectBtn')!;
+            const deleteBtn = document.getElementById('deleteObjectBtn') as HTMLElement;
             deleteBtn.click();
 
             expect(mockController.deleteSelectedObject).toHaveBeenCalledTimes(1);
         });
 
         it('should call controller when duplicate button is clicked', () => {
-            const duplicateBtn = document.getElementById('duplicateObjectBtn')!;
+            const duplicateBtn = document.getElementById('duplicateObjectBtn') as HTMLElement;
             duplicateBtn.click();
 
             expect(mockController.duplicateSelectedObject).toHaveBeenCalledTimes(1);
@@ -435,13 +436,17 @@ describe('EditorView', () => {
                 { id: 'toggleSnapBtn', method: 'toggleSnap' }
             ];
 
-            buttonTests.forEach(({ id, method }) => {
+            for (const { id, method } of buttonTests) {
                 const button = document.getElementById(id);
                 if (button) {
                     button.click();
-                    expect((mockController as any)[method]).toHaveBeenCalled();
+                    expect(
+                        (mockController as unknown as Record<string, ReturnType<typeof vi.fn>>)[
+                            method
+                        ]
+                    ).toHaveBeenCalled();
                 }
-            });
+            }
         });
     });
 
@@ -451,13 +456,13 @@ describe('EditorView', () => {
         });
 
         it('should call controller when tool is clicked', () => {
-            Object.values(EDITOR_TOOLS).forEach((tool) => {
+            for (const tool of Object.values(EDITOR_TOOLS)) {
                 const toolElement = document.querySelector(`[data-tool="${tool}"]`);
                 if (toolElement) {
                     (toolElement as HTMLElement).click();
                     expect(mockController.selectTool).toHaveBeenCalledWith(tool);
                 }
-            });
+            }
         });
 
         it('should not throw error with invalid tool data', () => {
@@ -570,7 +575,7 @@ describe('EditorView', () => {
                 data: { type: EDITOR_TOOLS.GOAL },
                 width: 40,
                 height: 50
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockGoal);
 
@@ -586,7 +591,7 @@ describe('EditorView', () => {
                 data: { type: EDITOR_TOOLS.TEXT },
                 text: 'Sample Text',
                 fontSize: 20
-            } as any;
+            } as unknown;
 
             view.showObjectProperties(mockText);
 
@@ -634,9 +639,11 @@ describe('EditorView', () => {
 
         it('should handle errors in event handlers', () => {
             // Configure controller method to throw error
-            (mockController.selectTool as any).mockImplementation(() => {
-                throw new Error('Controller error');
-            });
+            (mockController.selectTool as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+                () => {
+                    throw new Error('Controller error');
+                }
+            );
 
             const toolElement = document.querySelector(
                 `[data-tool="${EDITOR_TOOLS.PLATFORM}"]`

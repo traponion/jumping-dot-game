@@ -509,7 +509,7 @@ export class FabricRenderSystem {
 
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         // Get current camera position from transform
-        const transform = this.canvas.viewportTransform!;
+        const transform = this.canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
         const cameraX = -transform[4];
         const cameraY = -transform[5];
 
@@ -675,8 +675,18 @@ export class FabricRenderSystem {
                         context.clearRect(0, 0, canvasElement.width, canvasElement.height);
                     }
                     // Remove fabric-specific properties
-                    (canvasElement as HTMLCanvasElement & { __fabric?: unknown; _fabric?: unknown }).__fabric = undefined;
-                    (canvasElement as HTMLCanvasElement & { __fabric?: unknown; _fabric?: unknown })._fabric = undefined;
+                    (
+                        canvasElement as HTMLCanvasElement & {
+                            __fabric?: unknown;
+                            _fabric?: unknown;
+                        }
+                    ).__fabric = undefined;
+                    (
+                        canvasElement as HTMLCanvasElement & {
+                            __fabric?: unknown;
+                            _fabric?: unknown;
+                        }
+                    )._fabric = undefined;
                 }
             } catch (error) {
                 console.log('⚠️ Canvas cleanup error (already disposed?):', error);

@@ -22,10 +22,10 @@ vi.mock('../systems/RenderSystemFactory', () => ({
 
 describe('GameManager', () => {
     let gameManager: GameManager;
-    let mockCollisionSystem: any;
-    let mockAnimationSystem: any;
-    let mockPlayerSystem: any;
-    let mockPhysicsSystem: any;
+    let mockCollisionSystem: unknown;
+    let mockAnimationSystem: unknown;
+    let mockPlayerSystem: unknown;
+    let mockPhysicsSystem: unknown;
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
@@ -34,13 +34,13 @@ describe('GameManager', () => {
         gameManager = new GameManager(canvas, {});
 
         // Get mock instances
-        mockCollisionSystem = (gameManager as any).collisionSystem;
-        mockAnimationSystem = (gameManager as any).animationSystem;
-        mockPlayerSystem = (gameManager as any).playerSystem;
-        mockPhysicsSystem = (gameManager as any).physicsSystem;
+        mockCollisionSystem = (gameManager as unknown as Record<string, unknown>).collisionSystem;
+        mockAnimationSystem = (gameManager as unknown as Record<string, unknown>).animationSystem;
+        mockPlayerSystem = (gameManager as unknown as Record<string, unknown>).playerSystem;
+        mockPhysicsSystem = (gameManager as unknown as Record<string, unknown>).physicsSystem;
 
         // Setup InputManager mock
-        const mockInputManager = (gameManager as any).inputManager;
+        const mockInputManager = (gameManager as unknown as Record<string, unknown>).inputManager;
         mockInputManager.getMovementState = vi.fn().mockReturnValue({
             ArrowLeft: false,
             ArrowRight: false
@@ -83,7 +83,10 @@ describe('GameManager', () => {
         it('should not call updateSystems when game is not running', () => {
             // Arrange: Game is stopped
             getGameStore().stopGame();
-            const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -96,7 +99,10 @@ describe('GameManager', () => {
             // Arrange: Game is over
             getGameStore().startGame();
             getGameStore().gameOver();
-            const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -108,7 +114,10 @@ describe('GameManager', () => {
         it('should call updateSystems when game is running and not over', () => {
             // Arrange: Game is running
             getGameStore().startGame();
-            const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -121,7 +130,7 @@ describe('GameManager', () => {
     describe('handleCollisions method', () => {
         beforeEach(() => {
             // Setup stage for collision tests
-            (gameManager as any).stage = {
+            (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [{ x: 100, y: 400, width: 10, height: 10 }],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
@@ -132,7 +141,12 @@ describe('GameManager', () => {
         it('should handle player death on spike collision', () => {
             // Arrange
             mockCollisionSystem.checkSpikeCollisions.mockReturnValue(true);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -144,7 +158,10 @@ describe('GameManager', () => {
         it('should handle goal reached on goal collision', () => {
             // Arrange
             mockCollisionSystem.checkGoalCollision.mockReturnValue(true);
-            const handleGoalReachedSpy = vi.spyOn(gameManager as any, 'handleGoalReached');
+            const handleGoalReachedSpy = vi.spyOn(
+                gameManager as unknown as { handleGoalReached: () => void },
+                'handleGoalReached'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -187,7 +204,12 @@ describe('GameManager', () => {
         it('should handle player death when falling into hole', () => {
             // Arrange
             mockCollisionSystem.checkHoleCollision.mockReturnValue(true);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -202,7 +224,12 @@ describe('GameManager', () => {
         it('should handle player death when hitting boundary', () => {
             // Arrange
             mockCollisionSystem.checkBoundaryCollision.mockReturnValue(true);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -218,7 +245,12 @@ describe('GameManager', () => {
             // Arrange
             mockCollisionSystem.checkHoleCollision.mockReturnValue(false);
             mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -237,7 +269,12 @@ describe('GameManager', () => {
             // Arrange: Set time remaining to 0 to simulate timeout
             getGameStore().startGame();
             getGameStore().updateTimeRemaining(0);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act: Test checkTimeUp method indirectly through update
             gameManager.update(16.67);
@@ -253,7 +290,12 @@ describe('GameManager', () => {
         it('should not handle death when time remaining', () => {
             // Arrange: Set time to positive value
             getGameStore().updateTimeRemaining(10);
-            const handlePlayerDeathSpy = vi.spyOn(gameManager as any, 'handlePlayerDeath');
+            const handlePlayerDeathSpy = vi.spyOn(
+                gameManager as unknown as {
+                    handlePlayerDeath: (message: string, type?: string) => void;
+                },
+                'handlePlayerDeath'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -271,7 +313,9 @@ describe('GameManager', () => {
             mockAnimationSystem.startDeathAnimation = startDeathAnimationSpy;
 
             // Act
-            (gameManager as any).handlePlayerDeath('Test death message');
+            (gameManager as unknown as Record<string, unknown>).handlePlayerDeath(
+                'Test death message'
+            );
 
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
@@ -287,7 +331,7 @@ describe('GameManager', () => {
             mockAnimationSystem.startClearAnimation = startClearAnimationSpy;
 
             // Act
-            (gameManager as any).handleGoalReached();
+            (gameManager as unknown as Record<string, unknown>).handleGoalReached();
 
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
@@ -308,7 +352,7 @@ describe('GameManager', () => {
                 startText: { x: 50, y: 450, text: 'START' },
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
-            const mockStageLoader = (gameManager as any).stageLoader;
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
 
             // Act
@@ -331,7 +375,7 @@ describe('GameManager', () => {
                 startText: { x: 50, y: 450, text: 'START' },
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
-            const mockStageLoader = (gameManager as any).stageLoader;
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
             const defaultTimeLimit = getGameStore().game.timeLimit;
 
@@ -346,7 +390,7 @@ describe('GameManager', () => {
     describe('updateSystems method', () => {
         beforeEach(() => {
             getGameStore().startGame();
-            (gameManager as any).stage = {
+            (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
@@ -355,7 +399,10 @@ describe('GameManager', () => {
 
         it('should update all systems in correct order', () => {
             // Arrange
-            const updateSystemsSpy = vi.spyOn(gameManager as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -400,7 +447,7 @@ describe('GameManager', () => {
                     }
                 ]
             };
-            const mockStageLoader = (gameManager as any).stageLoader;
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             // Return a deep copy each time to avoid reference sharing
             mockStageLoader.loadStageWithFallback = vi
                 .fn()
@@ -434,7 +481,7 @@ describe('GameManager', () => {
     describe('edge cases and error handling', () => {
         it('should handle missing stage gracefully', () => {
             // Arrange
-            (gameManager as any).stage = null;
+            (gameManager as unknown as Record<string, unknown>).stage = null;
             getGameStore().startGame();
 
             // Act & Assert - should not throw
@@ -444,7 +491,7 @@ describe('GameManager', () => {
         it('should handle zero delta time', () => {
             // Arrange
             getGameStore().startGame();
-            (gameManager as any).stage = {
+            (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
@@ -457,7 +504,7 @@ describe('GameManager', () => {
         it('should handle negative delta time', () => {
             // Arrange
             getGameStore().startGame();
-            (gameManager as any).stage = {
+            (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],
                 goal: { x: 700, y: 450, width: 40, height: 50 }

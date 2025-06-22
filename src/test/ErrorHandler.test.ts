@@ -14,7 +14,7 @@ describe('ErrorHandler', () => {
 
     beforeEach(() => {
         // Clear any existing instance
-        (ErrorHandler as any).instance = undefined;
+        (ErrorHandler as unknown as { instance?: ErrorHandler }).instance = undefined;
 
         errorHandler = ErrorHandler.getInstance();
 
@@ -67,7 +67,7 @@ describe('ErrorHandler', () => {
         it('should handle string errors', () => {
             const errorMessage = 'String error message';
 
-            errorHandler.handleError(errorMessage as any);
+            errorHandler.handleError(errorMessage as unknown);
 
             expect(mockReporter.reportError).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -561,9 +561,9 @@ describe('ErrorHandler', () => {
 
 describe('ConsoleErrorReporter', () => {
     let consoleErrorReporter: ConsoleErrorReporter;
-    let consoleSpy: any;
-    let consoleWarnSpy: any;
-    let consoleInfoSpy: any;
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
+    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+    let consoleInfoSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         consoleErrorReporter = new ConsoleErrorReporter();
@@ -618,7 +618,7 @@ describe('ConsoleErrorReporter', () => {
 
 describe('UIErrorReporter', () => {
     let uiErrorReporter: UIErrorReporter;
-    let mockShowMessage: any;
+    let mockShowMessage: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         mockShowMessage = vi.fn();
@@ -654,7 +654,7 @@ describe('ErrorHandler Additional Coverage', () => {
     let errorHandler: ErrorHandler;
 
     beforeEach(() => {
-        (ErrorHandler as any).instance = undefined;
+        (ErrorHandler as unknown as { instance?: ErrorHandler }).instance = undefined;
         errorHandler = ErrorHandler.getInstance();
     });
 

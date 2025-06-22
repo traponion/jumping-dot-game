@@ -250,7 +250,9 @@ describe('PlayerSystem', () => {
             };
 
             // Create PlayerSystem with InputManager
-            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
+            const playerSystemWithInput = new PlayerSystem(
+                mockInputManager as Partial<InputManager> as InputManager
+            );
 
             // Mock left key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-left');
@@ -277,7 +279,9 @@ describe('PlayerSystem', () => {
                 isPressed: vi.fn()
             };
 
-            const playerSystemWithInput = new PlayerSystem(mockInputManager as any);
+            const playerSystemWithInput = new PlayerSystem(
+                mockInputManager as Partial<InputManager> as InputManager
+            );
 
             // Mock right key press
             mockInputManager.isPressed.mockImplementation((key: string) => key === 'move-right');

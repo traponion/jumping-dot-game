@@ -55,7 +55,7 @@ export interface FabricObjectWithData extends fabric.Object {
     data?: {
         type: EditorTool;
         isDrawing?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     };
 }
 
@@ -280,7 +280,7 @@ export class EditorError extends Error {
         message: string,
         public readonly code: ErrorCode,
         public readonly type: ErrorType = ERROR_TYPES.SYSTEM,
-        public readonly details?: any,
+        public readonly details?: unknown,
         public readonly recoverable: boolean = true
     ) {
         super(message);
@@ -302,7 +302,7 @@ export class EditorError extends Error {
         type: ErrorType;
         timestamp: string;
         recoverable: boolean;
-        details?: any;
+        details?: unknown;
         stack?: string;
     } {
         const result: {
@@ -311,7 +311,7 @@ export class EditorError extends Error {
             type: ErrorType;
             timestamp: string;
             recoverable: boolean;
-            details?: any;
+            details?: unknown;
             stack?: string;
         } = {
             message: this.message,

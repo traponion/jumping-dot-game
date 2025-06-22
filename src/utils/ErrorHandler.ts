@@ -13,8 +13,8 @@ import { DebugHelper } from './EditorUtils.js';
  */
 export interface ErrorReporter {
     reportError(error: EditorError): void;
-    reportWarning(message: string, details?: any): void;
-    reportInfo(message: string, details?: any): void;
+    reportWarning(message: string, details?: Record<string, unknown>): void;
+    reportInfo(message: string, details?: Record<string, unknown>): void;
 }
 
 /**
@@ -84,7 +84,7 @@ export class ErrorHandler {
         message: string,
         code: ErrorCode,
         type: ErrorType = ERROR_TYPES.SYSTEM,
-        details?: any,
+        details?: Record<string, unknown>,
         recoverable = true
     ): EditorError {
         return new EditorError(message, code, type, details, recoverable);
@@ -93,7 +93,10 @@ export class ErrorHandler {
     /**
      * Validationエラーを作成
      */
-    public static createValidationError(message: string, details?: any): EditorError {
+    public static createValidationError(
+        message: string,
+        details?: Record<string, unknown>
+    ): EditorError {
         return new EditorError(
             message,
             ERROR_CODES.INVALID_INPUT,
@@ -119,7 +122,10 @@ export class ErrorHandler {
     /**
      * Fabricエラーを作成
      */
-    public static createFabricError(message: string, details?: any): EditorError {
+    public static createFabricError(
+        message: string,
+        details?: Record<string, unknown>
+    ): EditorError {
         return new EditorError(
             message,
             ERROR_CODES.CANVAS_RENDER_FAILED,
@@ -132,7 +138,7 @@ export class ErrorHandler {
     /**
      * IOエラーを作成
      */
-    public static createIOError(message: string, details?: any): EditorError {
+    public static createIOError(message: string, details?: Record<string, unknown>): EditorError {
         return new EditorError(
             message,
             ERROR_CODES.STAGE_LOAD_FAILED,
@@ -145,7 +151,10 @@ export class ErrorHandler {
     /**
      * パフォーマンスエラーを作成
      */
-    public static createPerformanceError(message: string, details?: any): EditorError {
+    public static createPerformanceError(
+        message: string,
+        details?: Record<string, unknown>
+    ): EditorError {
         return new EditorError(
             message,
             ERROR_CODES.MEMORY_LIMIT_EXCEEDED,
@@ -440,7 +449,7 @@ export class ConsoleErrorReporter implements ErrorReporter {
         console.error(`🚨 ${error.getDeveloperMessage()}`, error.getDetails());
     }
 
-    public reportWarning(message: string, details?: any): void {
+    public reportWarning(message: string, details?: Record<string, unknown>): void {
         if (details) {
             console.warn(`⚠️ ${message}`, details);
         } else {
@@ -448,7 +457,7 @@ export class ConsoleErrorReporter implements ErrorReporter {
         }
     }
 
-    public reportInfo(message: string, details?: any): void {
+    public reportInfo(message: string, details?: Record<string, unknown>): void {
         if (details) {
             console.info(`ℹ️ ${message}`, details);
         } else {
@@ -469,11 +478,11 @@ export class UIErrorReporter implements ErrorReporter {
         this.showMessage(error.getUserMessage(), 'error');
     }
 
-    public reportWarning(message: string, _details?: any): void {
+    public reportWarning(message: string, _details?: Record<string, unknown>): void {
         this.showMessage(message, 'warning');
     }
 
-    public reportInfo(message: string, _details?: any): void {
+    public reportInfo(message: string, _details?: Record<string, unknown>): void {
         this.showMessage(message, 'info');
     }
 }

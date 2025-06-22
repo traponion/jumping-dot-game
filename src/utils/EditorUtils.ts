@@ -101,15 +101,15 @@ export class FabricHelper {
     /**
      * Fabric.jsオブジェクトにデータプロパティを安全に設定
      */
-    static setObjectData(obj: fabric.Object, data: Record<string, any>): void {
-        (obj as any).data = data;
+    static setObjectData(obj: fabric.Object, data: Record<string, unknown>): void {
+        (obj as unknown as { data: Record<string, unknown> }).data = data;
     }
 
     /**
      * Fabric.jsオブジェクトからデータプロパティを安全に取得
      */
-    static getObjectData<T = any>(obj: fabric.Object, key: string, defaultValue: T): T {
-        const data = (obj as any).data;
+    static getObjectData<T = unknown>(obj: fabric.Object, key: string, defaultValue: T): T {
+        const data = (obj as unknown as { data?: Record<string, unknown> }).data;
         if (!data || typeof data !== 'object') return defaultValue;
         return data[key] ?? defaultValue;
     }
@@ -261,7 +261,7 @@ export class EventHelper {
     /**
      * デバウンス関数
      */
-    static debounce<T extends (...args: any[]) => void>(
+    static debounce<T extends (...args: unknown[]) => void>(
         func: T,
         delay: number
     ): (...args: Parameters<T>) => void {
@@ -275,7 +275,7 @@ export class EventHelper {
     /**
      * スロットル関数
      */
-    static throttle<T extends (...args: any[]) => void>(
+    static throttle<T extends (...args: unknown[]) => void>(
         func: T,
         limit: number
     ): (...args: Parameters<T>) => void {
@@ -339,7 +339,7 @@ export class DebugHelper {
     /**
      * デバッグログ出力
      */
-    static log(message: string, data?: any): void {
+    static log(message: string, data?: unknown): void {
         if (this.debugMode) {
             console.log(`[Editor Debug] ${message}`, data);
         }

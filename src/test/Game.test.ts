@@ -2,17 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
 // Mock Fabric Canvas for tracking objects
-export interface MockFabricCanvas {
-    add: (obj: any) => void;
+interface MockFabricCanvas {
+    add: (obj: unknown) => void;
     clear: () => void;
-    getObjects: () => any[];
-    objects: any[];
+    getObjects: () => unknown[];
+    objects: unknown[];
     dispose: () => Promise<void>;
     getElement: () => HTMLCanvasElement;
-    remove: (obj: any) => void;
+    remove: (obj: unknown) => void;
 }
 
-export class MockRenderSystem {
+class MockRenderSystem {
     private mockCanvas: MockFabricCanvas;
 
     constructor(_canvas: HTMLCanvasElement) {
@@ -20,19 +20,19 @@ export class MockRenderSystem {
     }
 
     private createMockCanvas(): MockFabricCanvas {
-        const objects: any[] = [];
+        const objects: unknown[] = [];
         return {
             objects: objects,
             clear: () => {
                 objects.length = 0;
             },
-            add: (obj: any) => {
+            add: (obj: unknown) => {
                 objects.push(obj);
             },
             getObjects: () => objects,
             dispose: vi.fn().mockResolvedValue(void 0),
             getElement: () => ({}) as HTMLCanvasElement,
-            remove: (obj: any) => {
+            remove: (obj: unknown) => {
                 const index = objects.indexOf(obj);
                 if (index > -1) objects.splice(index, 1);
             }
@@ -93,12 +93,12 @@ if (typeof window !== 'undefined' && !window.dispatchEvent) {
 // Mock CustomEvent if not available
 if (typeof globalThis.CustomEvent === 'undefined') {
     globalThis.CustomEvent = class CustomEvent extends Event {
-        detail: any;
+        detail: unknown;
         constructor(type: string, eventInitDict?: CustomEventInit) {
             super(type, eventInitDict);
             this.detail = eventInitDict?.detail;
         }
-    } as any;
+    } as unknown;
 }
 
 // Global type declarations for test environment
@@ -189,7 +189,7 @@ describe('JumpingDotGame', () => {
             if (id === 'timer') return mockTimer;
             if (id === 'score') return mockScore;
             return null;
-        }) as any;
+        }) as unknown;
 
         // Extend existing window instead of replacing it
         global.window = {
@@ -199,7 +199,7 @@ describe('JumpingDotGame', () => {
             requestAnimationFrame: vi.fn(),
             cancelAnimationFrame: vi.fn(),
             document: global.document
-        } as any;
+        } as unknown;
 
         // Mock global requestAnimationFrame and cancelAnimationFrame
         globalThis.requestAnimationFrame = vi.fn();
@@ -213,7 +213,7 @@ describe('JumpingDotGame', () => {
 
         global.performance = {
             now: vi.fn(() => Date.now())
-        } as any;
+        } as unknown;
 
         // Create game instance
         game = new JumpingDotGame();
@@ -652,7 +652,7 @@ describe('JumpingDotGame', () => {
             // First initialization
             await game.init();
 
-            const gameManager = (game as any).gameManager;
+            const gameManager = (game as unknown as { gameManager: unknown }).gameManager;
             const initialInputManager = gameManager.inputManager;
             const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
 

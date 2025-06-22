@@ -46,14 +46,14 @@ describe('InputManager', () => {
         mockCanvas = {
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
-        } as any;
+        } as Partial<HTMLCanvasElement>;
 
         // Reset GameInputs mock
         mockGameInputs.disabled = false;
         mockGameInputs.state = {};
 
         // Create InputManager instance
-        inputManager = new InputManager(mockCanvas, mockGameController as any);
+        inputManager = new InputManager(mockCanvas as HTMLCanvasElement, mockGameController);
     });
 
     afterEach(() => {

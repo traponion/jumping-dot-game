@@ -39,7 +39,9 @@ describe('EditorUtils', () => {
 
             expect(TypeHelper.safeGetProperty(obj, 'name', 'default')).toBe('test');
             expect(TypeHelper.safeGetProperty(obj, 'value', 0)).toBe(42);
-            expect(TypeHelper.safeGetProperty(obj as unknown, 'missing', 'default')).toBe('default');
+            expect(TypeHelper.safeGetProperty(obj as unknown, 'missing', 'default')).toBe(
+                'default'
+            );
         });
     });
 
@@ -153,10 +155,10 @@ describe('EditorUtils', () => {
 
     describe('FabricHelper', () => {
         let mockObject: {
-        set: ReturnType<typeof vi.fn>;
-        data: Record<string, unknown>;
-        getBoundingRect: ReturnType<typeof vi.fn>;
-    };
+            set: ReturnType<typeof vi.fn>;
+            data: Record<string, unknown>;
+            getBoundingRect: ReturnType<typeof vi.fn>;
+        };
 
         beforeEach(() => {
             mockObject = {
@@ -345,10 +347,10 @@ describe('EditorUtils', () => {
                 document.createElement('button')
             ];
 
-            elements.forEach((el) => {
+            for (const el of elements) {
                 el.className = 'test-button';
                 document.body.appendChild(el);
-            });
+            }
 
             const nodeList = document.querySelectorAll('.test-button');
             const handler = vi.fn();
@@ -356,9 +358,9 @@ describe('EditorUtils', () => {
             DOMHelper.addEventListenersToNodeList(nodeList, 'click', handler);
 
             // Simulate click on each element
-            elements.forEach((el) => {
+            for (const el of elements) {
                 el.click();
-            });
+            }
 
             expect(handler).toHaveBeenCalledTimes(3);
         });

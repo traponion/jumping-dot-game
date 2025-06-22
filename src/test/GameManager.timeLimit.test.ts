@@ -35,7 +35,7 @@ describe('GameManager timeLimit integration', () => {
             };
 
             // Mock the stage loader
-            vi.spyOn(gameManager['stageLoader'], 'loadStageWithFallback').mockResolvedValue(
+            vi.spyOn(gameManager.stageLoader, 'loadStageWithFallback').mockResolvedValue(
                 mockStageData
             );
 
@@ -60,7 +60,7 @@ describe('GameManager timeLimit integration', () => {
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.spyOn(gameManager['stageLoader'], 'loadStageWithFallback').mockResolvedValue(
+            vi.spyOn(gameManager.stageLoader, 'loadStageWithFallback').mockResolvedValue(
                 mockStage2Data
             );
 
@@ -85,7 +85,7 @@ describe('GameManager timeLimit integration', () => {
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.spyOn(gameManager['stageLoader'], 'loadStageWithFallback').mockResolvedValue(
+            vi.spyOn(gameManager.stageLoader, 'loadStageWithFallback').mockResolvedValue(
                 mockStageWithoutTimeLimit
             );
 
@@ -99,7 +99,7 @@ describe('GameManager timeLimit integration', () => {
 
         it('should handle fallback to hardcoded stage with timeLimit', async () => {
             // Mock stage loader to throw error, triggering fallback
-            vi.spyOn(gameManager['stageLoader'], 'loadStageWithFallback').mockRejectedValue(
+            vi.spyOn(gameManager.stageLoader, 'loadStageWithFallback').mockRejectedValue(
                 new Error('Network error')
             );
 
@@ -115,7 +115,7 @@ describe('GameManager timeLimit integration', () => {
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.spyOn(gameManager['stageLoader'], 'getHardcodedStage').mockReturnValue(
+            vi.spyOn(gameManager.stageLoader, 'getHardcodedStage').mockReturnValue(
                 hardcodedStageWithTimeLimit
             );
 
@@ -142,7 +142,7 @@ describe('GameManager timeLimit integration', () => {
                 goalText: { x: 220, y: 430, text: 'GOAL' }
             };
 
-            vi.spyOn(gameManager['stageLoader'], 'loadStageWithFallback').mockResolvedValue(
+            vi.spyOn(gameManager.stageLoader, 'loadStageWithFallback').mockResolvedValue(
                 mockStageData
             );
 
