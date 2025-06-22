@@ -675,13 +675,13 @@ export class FabricRenderSystem {
                         context.clearRect(0, 0, canvasElement.width, canvasElement.height);
                     }
                     // Remove fabric-specific properties
-                    (canvasElement as any).__fabric = undefined;
-                    (canvasElement as any)._fabric = undefined;
+                    (canvasElement as HTMLCanvasElement & { __fabric?: unknown; _fabric?: unknown }).__fabric = undefined;
+                    (canvasElement as HTMLCanvasElement & { __fabric?: unknown; _fabric?: unknown })._fabric = undefined;
                 }
             } catch (error) {
                 console.log('⚠️ Canvas cleanup error (already disposed?):', error);
             }
-            this.canvas = null as any;
+            this.canvas = null as unknown as fabric.Canvas;
         }
     }
 

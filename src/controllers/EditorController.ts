@@ -337,7 +337,7 @@ export class EditorController implements IEditorController {
                     // Clear the canvas using the new adapter pattern
                     this.editorSystem.clearCanvas();
                     this.editorSystem.updateStageDataFromCanvas();
-                } catch (error) {
+                } catch (_error) {
                     // Fallback - just update stage data
                     this.editorSystem.updateStageDataFromCanvas();
                 }

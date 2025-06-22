@@ -75,7 +75,7 @@ describe('EditorModel', () => {
                 platforms: [],
                 spikes: [],
                 goal: { x: 100, y: 100 }
-            } as any;
+            } as unknown;
 
             model.setCurrentStage(invalidStageData);
 
@@ -114,7 +114,7 @@ describe('EditorModel', () => {
                 id: 1,
                 name: 'InvalidStage'
                 // platforms, spikes, goalが欠けている
-            } as any;
+            } as unknown;
 
             expect(model.validateStageData(invalidData)).toBe(false);
         });
@@ -161,7 +161,7 @@ describe('EditorModel', () => {
                     goal: { x: 100, y: 100, width: 40, height: 50 },
                     startText: { x: 50, y: 50, text: 'START' },
                     goalText: { x: 150, y: 100, text: 'GOAL' }
-                } as any;
+                } as unknown;
 
                 expect(model.validateStageData(stageData)).toBe(expected);
             }
