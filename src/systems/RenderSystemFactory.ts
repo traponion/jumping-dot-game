@@ -99,7 +99,7 @@ export function createEditorRenderSystem(
  * @returns {boolean} True if render system is MockRenderSystem
  * @description Type guard function for TypeScript type narrowing
  */
-export function isMockRenderSystem(renderSystem: any): renderSystem is MockRenderSystem {
+export function isMockRenderSystem(renderSystem: unknown): renderSystem is MockRenderSystem {
     return renderSystem instanceof MockRenderSystem;
 }
 
@@ -110,7 +110,7 @@ export function isMockRenderSystem(renderSystem: any): renderSystem is MockRende
  * @returns {boolean} True if render system is FabricRenderSystem
  * @description Type guard function for TypeScript type narrowing
  */
-export function isFabricRenderSystem(renderSystem: any): renderSystem is FabricRenderSystem {
+export function isFabricRenderSystem(renderSystem: unknown): renderSystem is FabricRenderSystem {
     return renderSystem instanceof FabricRenderSystem;
 }
 
@@ -121,7 +121,7 @@ export function isFabricRenderSystem(renderSystem: any): renderSystem is FabricR
  * @returns {boolean} True if adapter is MockRenderAdapter
  * @description Type guard function for TypeScript type narrowing
  */
-export function isMockRenderAdapter(adapter: any): adapter is MockRenderAdapter {
+export function isMockRenderAdapter(adapter: unknown): adapter is MockRenderAdapter {
     return adapter instanceof MockRenderAdapter;
 }
 
@@ -132,6 +132,6 @@ export function isMockRenderAdapter(adapter: any): adapter is MockRenderAdapter 
  * @returns {boolean} True if adapter is FabricRenderAdapter
  * @description Type guard function for TypeScript type narrowing
  */
-export function isFabricRenderAdapter(adapter: any): adapter is FabricRenderAdapter {
+export function isFabricRenderAdapter(adapter: unknown): adapter is FabricRenderAdapter {
     return adapter instanceof FabricRenderAdapter;
 }

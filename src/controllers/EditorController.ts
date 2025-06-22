@@ -36,9 +36,9 @@ export interface IEditorController {
     dispose(): void;
 
     // テストや統合用の追加API
-    createObject(event: any): void;
-    startPlatformDrawing(event: any): void;
-    finishPlatformDrawing(event: any): void;
+    createObject(event: MouseEvent): void;
+    startPlatformDrawing(event: MouseEvent): void;
+    finishPlatformDrawing(event: MouseEvent): void;
 }
 
 // View層とModel層のインターフェース
@@ -150,7 +150,7 @@ export class EditorController implements IEditorController {
         };
 
         // Cast to generic adapter callbacks for v2 compatibility
-        const adapterCallbacks = callbacks as any;
+        const adapterCallbacks = callbacks as EditorCallbacks;
         this.editorSystem = createEditorRenderSystem(this.canvas, adapterCallbacks);
         DebugHelper.log('EditorRenderSystem initialized');
     }
@@ -475,7 +475,7 @@ export class EditorController implements IEditorController {
 
         DebugHelper.log('Object selection handled', {
             hasObject: !!object,
-            objectType: object ? (object as any).data?.type : null
+            objectType: object ? (object as FabricObjectWithData).data?.type : null
         });
     }
 
@@ -487,7 +487,7 @@ export class EditorController implements IEditorController {
         this.triggerAutoSave();
 
         DebugHelper.log('Object modification handled', {
-            objectType: (object as any).data?.type
+            objectType: (object as FabricObjectWithData).data?.type
         });
     }
 
@@ -634,7 +634,7 @@ export class EditorController implements IEditorController {
     /**
      * オブジェクトを作成（テスト用API）
      */
-    public createObject(event: any): void {
+    public createObject(event: MouseEvent): void {
         try {
             if (!event?.absolutePointer && !event?.pointer) {
                 DebugHelper.log('Invalid event object for createObject');
@@ -674,7 +674,7 @@ export class EditorController implements IEditorController {
     /**
      * プラットフォーム描画開始（テスト用API）
      */
-    public startPlatformDrawing(event: any): void {
+    public startPlatformDrawing(event: MouseEvent): void {
         try {
             if (!event?.absolutePointer && !event?.pointer) {
                 DebugHelper.log('Invalid event object for startPlatformDrawing');
@@ -693,7 +693,7 @@ export class EditorController implements IEditorController {
     /**
      * プラットフォーム描画終了（テスト用API）
      */
-    public finishPlatformDrawing(event: any): void {
+    public finishPlatformDrawing(event: MouseEvent): void {
         try {
             if (!event?.absolutePointer && !event?.pointer) {
                 DebugHelper.log('Invalid event object for finishPlatformDrawing');
