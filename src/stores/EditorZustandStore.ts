@@ -3,7 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 // Zustand-based Editor Store - Modern state management for the editor
 import { createStore } from 'zustand/vanilla';
 import type { StageData } from '../core/StageLoader.js';
-import type { EditorState, FabricObjectWithData } from '../types/EditorTypes.js';
+import type { EditorState, EditorTool, FabricObjectWithData } from '../types/EditorTypes.js';
 
 // UI State interface
 interface UIState {
@@ -104,7 +104,7 @@ export const editorStore = createStore<EditorStore>()(
             // Core Actions
             selectTool: (tool: string) =>
                 set((state) => {
-                    state.editor.selectedTool = tool as any;
+                    state.editor.selectedTool = tool as EditorTool;
                 }),
 
             setStageData: (stage: StageData | null) =>
@@ -136,7 +136,7 @@ export const editorStore = createStore<EditorStore>()(
 
             setSelectedObject: (object: FabricObjectWithData | null) =>
                 set((state) => {
-                    state.editor.selectedObject = object as any;
+                    state.editor.selectedObject = object;
                 }),
 
             setDrawingState: (isDrawing: boolean) =>
