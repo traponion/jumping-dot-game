@@ -166,7 +166,7 @@ export class InputManager {
      * @description Provides real-time input state checking for continuous actions like movement
      */
     isPressed(action: string): boolean {
-        return this.inputs?.state[action] || false;
+        return this.inputs?.state[action] ?? false;
     }
 
     /**

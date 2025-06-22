@@ -397,10 +397,10 @@ export class EditorModel implements IEditorModel {
         // プラットフォーム座標チェック
         for (const platform of stageData.platforms) {
             if (
-                !this.isValidCoordinate(platform.x1, maxCoord) ||
-                !this.isValidCoordinate(platform.y1, maxCoord) ||
-                !this.isValidCoordinate(platform.x2, maxCoord) ||
-                !this.isValidCoordinate(platform.y2, maxCoord)
+                !(this.isValidCoordinate(platform.x1, maxCoord) &&
+                this.isValidCoordinate(platform.y1, maxCoord) &&
+                this.isValidCoordinate(platform.x2, maxCoord) &&
+                this.isValidCoordinate(platform.y2, maxCoord))
             ) {
                 return false;
             }
@@ -409,8 +409,8 @@ export class EditorModel implements IEditorModel {
         // スパイク座標チェック
         for (const spike of stageData.spikes) {
             if (
-                !this.isValidCoordinate(spike.x, maxCoord) ||
-                !this.isValidCoordinate(spike.y, maxCoord)
+                !(this.isValidCoordinate(spike.x, maxCoord) &&
+                this.isValidCoordinate(spike.y, maxCoord))
             ) {
                 return false;
             }
@@ -418,8 +418,8 @@ export class EditorModel implements IEditorModel {
 
         // ゴール座標チェック
         if (
-            !this.isValidCoordinate(stageData.goal.x, maxCoord) ||
-            !this.isValidCoordinate(stageData.goal.y, maxCoord)
+            !(this.isValidCoordinate(stageData.goal.x, maxCoord) &&
+            this.isValidCoordinate(stageData.goal.y, maxCoord))
         ) {
             return false;
         }

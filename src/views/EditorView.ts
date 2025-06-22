@@ -274,7 +274,7 @@ export class EditorView implements IEditorView {
 
         this.uiElements.stageNameInput.value = stageData.name;
         this.uiElements.stageIdInput.value = stageData.id.toString();
-        this.uiElements.stageDescInput.value = (stageData as any).description || '';
+        this.uiElements.stageDescInput.value = '';
 
         DebugHelper.log('Stage info updated in view', {
             stageId: stageData.id,
@@ -397,7 +397,7 @@ export class EditorView implements IEditorView {
      */
     private loadPlatformProperties(platform: FabricObjectWithData): void {
         const line = platform as unknown as fabric.Line;
-        if (!line.x1 || !line.y1 || !line.x2 || !line.y2) return;
+        if (!(line.x1 && line.y1 && line.x2 && line.y2)) return;
 
         const length = MathHelper.distance({ x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 });
         const angle = MathHelper.angle({ x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 });
