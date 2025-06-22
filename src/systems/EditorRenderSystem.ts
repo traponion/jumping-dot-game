@@ -122,7 +122,7 @@ export class EditorRenderSystem {
     /**
      * Get selected object (for compatibility)
      */
-    public getSelectedObject(): any {
+    public getSelectedObject(): unknown | null {
         const state = this.renderAdapter.getEditorState();
         return state.selectedObject;
     }

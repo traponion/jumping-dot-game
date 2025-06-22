@@ -289,22 +289,21 @@ export class StageLoader {
      * @returns {boolean} True if goal has valid structure
      */
     private isValidGoal(
-            goal: unknown
-        ): goal is { x: number; y: number; width: number; height: number } {
-            return (
-                typeof goal === 'object' &&
-                goal !== null &&
-                'x' in goal &&
-                'y' in goal &&
-                'width' in goal &&
-                'height' in goal &&
-                typeof (goal as Record<string, unknown>).x === 'number' &&
-                typeof (goal as Record<string, unknown>).y === 'number' &&
-                typeof (goal as Record<string, unknown>).width === 'number' &&
-                typeof (goal as Record<string, unknown>).height === 'number'
-            );
-        }
-
+        goal: unknown
+    ): goal is { x: number; y: number; width: number; height: number } {
+        return (
+            typeof goal === 'object' &&
+            goal !== null &&
+            'x' in goal &&
+            'y' in goal &&
+            'width' in goal &&
+            'height' in goal &&
+            typeof (goal as Record<string, unknown>).x === 'number' &&
+            typeof (goal as Record<string, unknown>).y === 'number' &&
+            typeof (goal as Record<string, unknown>).width === 'number' &&
+            typeof (goal as Record<string, unknown>).height === 'number'
+        );
+    }
 
     /**
      * Validates text element object structure
@@ -313,20 +312,19 @@ export class StageLoader {
      * @returns {boolean} True if text element has valid structure
      */
     private isValidTextElement(
-            textObj: unknown
-        ): textObj is { x: number; y: number; text: string } {
-            return (
-                typeof textObj === 'object' &&
-                textObj !== null &&
-                'x' in textObj &&
-                'y' in textObj &&
-                'text' in textObj &&
-                typeof (textObj as Record<string, unknown>).x === 'number' &&
-                typeof (textObj as Record<string, unknown>).y === 'number' &&
-                typeof (textObj as Record<string, unknown>).text === 'string'
-            );
-        }
-
+        textObj: unknown
+    ): textObj is { x: number; y: number; text: string } {
+        return (
+            typeof textObj === 'object' &&
+            textObj !== null &&
+            'x' in textObj &&
+            'y' in textObj &&
+            'text' in textObj &&
+            typeof (textObj as Record<string, unknown>).x === 'number' &&
+            typeof (textObj as Record<string, unknown>).y === 'number' &&
+            typeof (textObj as Record<string, unknown>).text === 'string'
+        );
+    }
 
     /**
      * Get hardcoded stage data as fallback

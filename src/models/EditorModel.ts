@@ -343,10 +343,16 @@ export class EditorModel implements IEditorModel {
     /**
      * 必須フィールドの存在確認
      */
-    private validateRequiredFields(stageData: any): boolean {
+    private validateRequiredFields(stageData: unknown): boolean {
+        if (typeof stageData !== 'object' || stageData === null) {
+            return false;
+        }
+
         const requiredFields = ['id', 'name', 'platforms', 'spikes', 'goal'];
         return requiredFields.every(
-            (field) => stageData.hasOwnProperty(field) && stageData[field] !== undefined
+            (field) =>
+                Object.hasOwn(stageData, field) &&
+                (stageData as Record<string, unknown>)[field] !== undefined
         );
     }
 
@@ -450,11 +456,11 @@ export class EditorModel implements IEditorModel {
      */
     private pickProperties<T extends object>(obj: T, keys: string[]): Partial<T> {
         const result: Partial<T> = {};
-        keys.forEach((key) => {
+        for (const key of keys) {
             if (key in obj) {
-                (result as any)[key] = (obj as any)[key];
+                (result as Record<string, unknown>)[key] = (obj as Record<string, unknown>)[key];
             }
-        });
+        }
         return result;
     }
 }

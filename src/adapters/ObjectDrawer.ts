@@ -5,7 +5,7 @@ import {
     ERROR_CODES,
     ERROR_TYPES,
     EditorError,
-    FabricObjectWithData
+    type FabricObjectWithData
 } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
 import type { Bounds, IObjectDrawer, Position, Size } from './IRenderAdapter.js';
@@ -291,35 +291,33 @@ export class ObjectDrawer implements IObjectDrawer {
      * Set object data
      */
     setObjectData(object: unknown, data: Record<string, unknown>): void {
-            if (!(object instanceof fabric.Object)) {
-                throw new EditorError(
-                    'Object is not a Fabric.js object',
-                    ERROR_CODES.INVALID_OBJECT_TYPE,
-                    ERROR_TYPES.FABRIC,
-                    { object, data }
-                );
-            }
-    
-            // Store data in the object with proper typing
-            const fabricObject = object as FabricObjectWithData;
-            fabricObject.data = { ...fabricObject.data, ...data };
-    
-            DebugHelper.log('Object data set', { objectType: object.type, data });
+        if (!(object instanceof fabric.Object)) {
+            throw new EditorError(
+                'Object is not a Fabric.js object',
+                ERROR_CODES.INVALID_OBJECT_TYPE,
+                ERROR_TYPES.FABRIC,
+                { object, data }
+            );
         }
 
+        // Store data in the object with proper typing
+        const fabricObject = object as FabricObjectWithData;
+        fabricObject.data = { ...fabricObject.data, ...data };
+
+        DebugHelper.log('Object data set', { objectType: object.type, data });
+    }
 
     /**
      * Get object data
      */
     getObjectData(object: unknown): Record<string, unknown> | null {
-            if (!(object instanceof fabric.Object)) {
-                return null;
-            }
-    
-            const fabricObject = object as FabricObjectWithData;
-            return fabricObject.data || null;
+        if (!(object instanceof fabric.Object)) {
+            return null;
         }
 
+        const fabricObject = object as FabricObjectWithData;
+        return fabricObject.data || null;
+    }
 
     /**
      * Snap position to grid
