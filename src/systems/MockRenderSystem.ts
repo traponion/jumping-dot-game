@@ -10,17 +10,17 @@ export interface MockFabricCanvas {
     clear(): void;
     dispose(): void;
     renderAll(): void;
-    getObjects(): any[];
-    add(obj: any): void;
-    remove(obj: any): void;
+    getObjects(): unknown[];
+    add(obj: unknown): void;
+    remove(obj: unknown): void;
     setViewportTransform(transform: number[]): void;
 }
 
 export class MockRenderSystem {
     private canvasElement: HTMLCanvasElement;
     private mockCanvas: MockFabricCanvas;
-    private landingPredictions: any[] = [];
-    private landingHistory: any[] = [];
+    private landingPredictions: unknown[] = [];
+    private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvasElement = canvasElement;
@@ -77,20 +77,20 @@ export class MockRenderSystem {
         // Mock player rendering
     }
 
-    renderTrail(_trail: any[], _playerRadius: number): void {
+    renderTrail(_trail: unknown[], _playerRadius: number): void {
         // Mock trail rendering
     }
 
-    renderDeathMarks(_deathMarks: any[]): void {
+    renderDeathMarks(_deathMarks: unknown[]): void {
         // Mock death marks rendering
     }
 
-    renderDeathAnimation(_particles: any[]): void {
+    renderDeathAnimation(_particles: unknown[]): void {
         // Mock death animation rendering
     }
 
     renderClearAnimation(
-        _particles: any[],
+        _particles: unknown[],
         _progress: number,
         _playerX: number,
         _playerY: number
@@ -122,7 +122,7 @@ export class MockRenderSystem {
         this.mockCanvas.renderAll();
     }
 
-    setLandingPredictions(predictions: any[]): void {
+    setLandingPredictions(predictions: unknown[]): void {
         this.landingPredictions = [...predictions];
     }
 
@@ -141,11 +141,11 @@ export class MockRenderSystem {
         return this.mockCanvas;
     }
 
-    getLandingPredictions(): any[] {
+    getLandingPredictions(): unknown[] {
         return [...this.landingPredictions];
     }
 
-    getLandingHistory(): any[] {
+    getLandingHistory(): Array<{ x: number; y: number; time: number }> {
         return [...this.landingHistory];
     }
 }
