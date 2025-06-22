@@ -39,7 +39,7 @@ describe('EditorUtils', () => {
 
             expect(TypeHelper.safeGetProperty(obj, 'name', 'default')).toBe('test');
             expect(TypeHelper.safeGetProperty(obj, 'value', 0)).toBe(42);
-            expect(TypeHelper.safeGetProperty(obj as any, 'missing', 'default')).toBe('default');
+            expect(TypeHelper.safeGetProperty(obj as unknown, 'missing', 'default')).toBe('default');
         });
     });
 
@@ -106,7 +106,7 @@ describe('EditorUtils', () => {
 
         it('should log messages in development mode', () => {
             // Force debug mode
-            (DebugHelper as any).debugMode = true;
+            (DebugHelper as unknown as { debugMode: boolean }).debugMode = true;
 
             DebugHelper.log('test message', { data: 'test' });
 
@@ -117,7 +117,7 @@ describe('EditorUtils', () => {
 
         it('should not log messages in production mode', () => {
             // Force production mode
-            (DebugHelper as any).debugMode = false;
+            (DebugHelper as unknown as { debugMode: boolean }).debugMode = false;
 
             DebugHelper.log('test message');
 
@@ -126,7 +126,7 @@ describe('EditorUtils', () => {
 
         it('should measure performance in development mode', () => {
             // Force debug mode
-            (DebugHelper as any).debugMode = true;
+            (DebugHelper as unknown as { debugMode: boolean }).debugMode = true;
 
             const mockFn = vi.fn(() => 'result');
             const result = DebugHelper.time('test-operation', mockFn);
@@ -139,7 +139,7 @@ describe('EditorUtils', () => {
 
         it('should not measure performance in production mode', () => {
             // Force production mode
-            (DebugHelper as any).debugMode = false;
+            (DebugHelper as unknown as { debugMode: boolean }).debugMode = false;
 
             const mockFn = vi.fn(() => 'result');
             const result = DebugHelper.time('test-operation', mockFn);
@@ -152,7 +152,11 @@ describe('EditorUtils', () => {
     });
 
     describe('FabricHelper', () => {
-        let mockObject: any;
+        let mockObject: {
+        set: ReturnType<typeof vi.fn>;
+        data: Record<string, unknown>;
+        getBoundingRect: ReturnType<typeof vi.fn>;
+    };
 
         beforeEach(() => {
             mockObject = {
@@ -206,7 +210,7 @@ describe('EditorUtils', () => {
 
         it('should create platform object', () => {
             const mockLine = { data: {} };
-            vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
+            vi.mocked(fabric.Line).mockReturnValue(mockLine as unknown);
 
             ObjectFactory.createPlatform({ x: 0, y: 0 }, { x: 100, y: 100 });
 
@@ -222,7 +226,7 @@ describe('EditorUtils', () => {
 
         it('should create spike object', () => {
             const mockPolygon = { data: {} };
-            vi.mocked(fabric.Polygon).mockReturnValue(mockPolygon as any);
+            vi.mocked(fabric.Polygon).mockReturnValue(mockPolygon as unknown);
 
             ObjectFactory.createSpike({
                 position: { x: 100, y: 200 }
@@ -233,7 +237,7 @@ describe('EditorUtils', () => {
 
         it('should create goal object', () => {
             const mockRect = { data: {} };
-            vi.mocked(fabric.Rect).mockReturnValue(mockRect as any);
+            vi.mocked(fabric.Rect).mockReturnValue(mockRect as unknown);
 
             ObjectFactory.createGoal({
                 position: { x: 100, y: 200 }
@@ -244,7 +248,7 @@ describe('EditorUtils', () => {
 
         it('should create text object', () => {
             const mockText = { data: {} };
-            vi.mocked(fabric.Text).mockReturnValue(mockText as any);
+            vi.mocked(fabric.Text).mockReturnValue(mockText as unknown);
 
             ObjectFactory.createText({
                 position: { x: 100, y: 200 },
@@ -262,7 +266,7 @@ describe('EditorUtils', () => {
 
         it('should create grid line', () => {
             const mockLine = { data: {} };
-            vi.mocked(fabric.Line).mockReturnValue(mockLine as any);
+            vi.mocked(fabric.Line).mockReturnValue(mockLine as unknown);
 
             ObjectFactory.createGridLine({ x: 0, y: 0 }, { x: 100, y: 100 });
 

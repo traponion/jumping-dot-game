@@ -675,8 +675,8 @@ export class FabricRenderSystem {
                         context.clearRect(0, 0, canvasElement.width, canvasElement.height);
                     }
                     // Remove fabric-specific properties
-                    delete (canvasElement as any).__fabric;
-                    delete (canvasElement as any)._fabric;
+                    (canvasElement as any).__fabric = undefined;
+                    (canvasElement as any)._fabric = undefined;
                 }
             } catch (error) {
                 console.log('⚠️ Canvas cleanup error (already disposed?):', error);

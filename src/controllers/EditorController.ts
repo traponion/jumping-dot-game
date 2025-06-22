@@ -636,7 +636,7 @@ export class EditorController implements IEditorController {
      */
     public createObject(event: MouseEvent): void {
         try {
-            if (!event?.absolutePointer && !event?.pointer) {
+            if (!(event?.absolutePointer || event?.pointer)) {
                 DebugHelper.log('Invalid event object for createObject');
                 return;
             }
@@ -676,7 +676,7 @@ export class EditorController implements IEditorController {
      */
     public startPlatformDrawing(event: MouseEvent): void {
         try {
-            if (!event?.absolutePointer && !event?.pointer) {
+            if (!(event?.absolutePointer || event?.pointer)) {
                 DebugHelper.log('Invalid event object for startPlatformDrawing');
                 return;
             }
@@ -695,7 +695,7 @@ export class EditorController implements IEditorController {
      */
     public finishPlatformDrawing(event: MouseEvent): void {
         try {
-            if (!event?.absolutePointer && !event?.pointer) {
+            if (!(event?.absolutePointer || event?.pointer)) {
                 DebugHelper.log('Invalid event object for finishPlatformDrawing');
                 return;
             }
