@@ -89,7 +89,7 @@ describe('EditorController (Adapter Pattern)', () => {
         mockView = new EditorView(document.createElement('canvas'));
         mockView.initialize = vi.fn();
         mockView.updateToolSelection = vi.fn();
-        (mockView as any).showMessage = vi.fn();
+        (mockView as EditorView & { showMessage: vi.Mock }).showMessage = vi.fn();
         mockView.updateStageInfo = vi.fn();
 
         // Mock model
@@ -166,7 +166,9 @@ describe('EditorController (Adapter Pattern)', () => {
 
         it('should handle invalid tool gracefully', () => {
             expect(() => {
-                controller.selectTool('invalid-tool' as any);
+                controller.selectTool(
+                    'invalid-tool' as unknown as (typeof EDITOR_TOOLS)[keyof typeof EDITOR_TOOLS]
+                );
             }).not.toThrow();
         });
 

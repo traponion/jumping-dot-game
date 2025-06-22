@@ -206,7 +206,7 @@ export class EditorView implements IEditorView {
             this.uiElements.stageIdInput,
             this.uiElements.stageDescInput
         ];
-        
+
         for (const input of stageInputs) {
             input.addEventListener('input', this.debouncedStageInfoUpdate);
         }
@@ -360,7 +360,7 @@ export class EditorView implements IEditorView {
             this.uiElements.goalPropsDiv,
             this.uiElements.textPropsDiv
         ];
-        
+
         for (const panel of propertyPanels) {
             panel.style.display = 'none';
         }

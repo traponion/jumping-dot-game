@@ -127,7 +127,7 @@ describe('EditorModel', () => {
                 { name: 'Invalid@Name!', expected: false, description: '無効な文字' }
             ];
 
-            testCases.forEach(({ name, expected }) => {
+            for (const { name, expected } of testCases) {
                 const stageData = {
                     id: 1,
                     name,
@@ -139,7 +139,7 @@ describe('EditorModel', () => {
                 };
 
                 expect(model.validateStageData(stageData)).toBe(expected);
-            });
+            }
         });
 
         it('ステージIDが無効な場合バリデーションが失敗すること', () => {
@@ -152,7 +152,7 @@ describe('EditorModel', () => {
                 { id: 'string', expected: false, description: '文字列' }
             ];
 
-            testCases.forEach(({ id, expected }) => {
+            for (const { id, expected } of testCases) {
                 const stageData = {
                     id,
                     name: 'TestStage',
@@ -164,7 +164,7 @@ describe('EditorModel', () => {
                 } as any;
 
                 expect(model.validateStageData(stageData)).toBe(expected);
-            });
+            }
         });
 
         it('オブジェクト数制限のバリデーションが働くこと', () => {
@@ -303,11 +303,11 @@ describe('EditorModel', () => {
         it('無効なJSONのインポートでエラーが発生すること', () => {
             const invalidJsonCases = ['{ invalid json }', '{ "name": }', '', 'null', '[]'];
 
-            invalidJsonCases.forEach((invalidJson) => {
+            for (const invalidJson of invalidJsonCases) {
                 expect(() => {
                     model.importStageFromJson(invalidJson);
                 }).toThrow();
-            });
+            }
         });
 
         it('エクスポートメタデータが正しく付与されること', () => {

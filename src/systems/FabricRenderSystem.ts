@@ -102,7 +102,9 @@ export class FabricRenderSystem {
 
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
         // オブジェクト作成を最小限に
-        this.trailShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.trailShapes) {
+            this.canvas.remove(shape);
+        }
         this.trailShapes = [];
 
         // トレイルポイント数を制限（元の設定に戻す）
@@ -138,12 +140,16 @@ export class FabricRenderSystem {
         this.renderStageTexts(stage);
     }
 
-    private renderPlatforms(platforms: any[]): void {
+    private renderPlatforms(
+        platforms: Array<{ x1: number; y1: number; x2: number; y2: number }>
+    ): void {
         // 既存のプラットフォームを削除
-        this.platformShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.platformShapes) {
+            this.canvas.remove(shape);
+        }
         this.platformShapes = [];
 
-        platforms.forEach((platform) => {
+        for (const platform of platforms) {
             // レガシーレンダラーに合わせてラインとして描画
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
@@ -157,7 +163,7 @@ export class FabricRenderSystem {
 
             this.platformShapes.push(platformLine);
             this.canvas.add(platformLine);
-        });
+        }
     }
 
     /**
@@ -166,10 +172,12 @@ export class FabricRenderSystem {
      */
     private renderMovingPlatforms(movingPlatforms: MovingPlatform[]): void {
         // Remove existing moving platform shapes
-        this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.movingPlatformShapes) {
+            this.canvas.remove(shape);
+        }
         this.movingPlatformShapes = [];
 
-        movingPlatforms.forEach((platform) => {
+        for (const platform of movingPlatforms) {
             // Render moving platforms with different color to distinguish from static ones
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
@@ -183,15 +191,17 @@ export class FabricRenderSystem {
 
             this.movingPlatformShapes.push(platformLine);
             this.canvas.add(platformLine);
-        });
+        }
     }
 
     private renderSpikes(spikes: Spike[]): void {
         // 既存のスパイクを削除
-        this.spikeShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.spikeShapes) {
+            this.canvas.remove(shape);
+        }
         this.spikeShapes = [];
 
-        spikes.forEach((spike) => {
+        for (const spike of spikes) {
             // 三角形のスパイクを作成
             const points = [
                 { x: spike.x, y: spike.y + spike.height },
@@ -209,7 +219,7 @@ export class FabricRenderSystem {
 
             this.spikeShapes.push(spikeShape);
             this.canvas.add(spikeShape);
-        });
+        }
     }
 
     private renderGoal(goal: Goal): void {
@@ -253,7 +263,9 @@ export class FabricRenderSystem {
 
     private renderStageTexts(stage: StageData): void {
         // 古いテキストオブジェクトを削除
-        this.textShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.textShapes) {
+            this.canvas.remove(shape);
+        }
         this.textShapes = [];
 
         // startTextを描画
@@ -322,7 +334,7 @@ export class FabricRenderSystem {
     }
 
     renderDeathMarks(deathMarks: DeathMark[]): void {
-        deathMarks.forEach((mark) => {
+        for (const mark of deathMarks) {
             const size = 8;
 
             // ×マークを作成（ライン）
@@ -348,7 +360,7 @@ export class FabricRenderSystem {
 
             this.canvas.add(line1);
             this.canvas.add(line2);
-        });
+        }
     }
 
     renderLandingPredictions(): void {
@@ -420,7 +432,7 @@ export class FabricRenderSystem {
             (history) => currentTime - history.timestamp < HISTORY_FADE_TIME
         );
 
-        this.landingHistory.forEach((history) => {
+        for (const history of this.landingHistory) {
             const age = currentTime - history.timestamp;
             const fadeProgress = age / HISTORY_FADE_TIME;
             const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
@@ -437,11 +449,11 @@ export class FabricRenderSystem {
                 }
             );
             this.canvas.add(historyLine);
-        });
+        }
     }
 
     renderDeathAnimation(particles: Particle[]): void {
-        particles.forEach((particle) => {
+        for (const particle of particles) {
             // レガシーレンダラーに合わせてサイズ計算を修正
             const radius = particle.size || 2;
             const particleShape = new fabric.Circle({
@@ -453,7 +465,7 @@ export class FabricRenderSystem {
                 evented: false
             });
             this.canvas.add(particleShape);
-        });
+        }
     }
 
     renderClearAnimation(
@@ -463,7 +475,7 @@ export class FabricRenderSystem {
         playerY: number
     ): void {
         // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
-        particles.forEach((particle) => {
+        for (const particle of particles) {
             const particleShape = new fabric.Circle({
                 left: particle.x - 2,
                 top: particle.y - 2,
@@ -473,7 +485,7 @@ export class FabricRenderSystem {
                 evented: false
             });
             this.canvas.add(particleShape);
-        });
+        }
 
         // "CLEAR!"テキストを描画
         if (progress < 0.8) {
@@ -643,10 +655,14 @@ export class FabricRenderSystem {
                 const canvasElement = this.canvas.getElement();
 
                 // Clean up all shape arrays before disposing canvas
-                this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
+                for (const shape of this.movingPlatformShapes) {
+                    this.canvas.remove(shape);
+                }
                 this.movingPlatformShapes = [];
 
-                this.textShapes.forEach((shape) => this.canvas.remove(shape));
+                for (const shape of this.textShapes) {
+                    this.canvas.remove(shape);
+                }
                 this.textShapes = [];
 
                 // In fabric.js v6, dispose is async and must be awaited

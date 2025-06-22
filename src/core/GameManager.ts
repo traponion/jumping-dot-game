@@ -10,6 +10,7 @@ import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
+import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
@@ -17,7 +18,7 @@ import { createRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
-import { type StageData, StageLoader } from './StageLoader.js';
+import { type Platform, type StageData, StageLoader } from './StageLoader.js';
 
 /**
  * GameManager - Manages game state, systems coordination, and game logic
@@ -37,7 +38,7 @@ export class GameManager {
     /** @private {HTMLCanvasElement} The main game canvas */
     private canvas: HTMLCanvasElement;
     /** @private {any} Game controller reference for system initialization */
-    private gameController: any;
+    private gameController: GameController;
 
     // Systems
     /** @private {PlayerSystem} Player input and movement system */
@@ -71,9 +72,9 @@ export class GameManager {
      * Creates a new GameManager instance
      * @constructor
      * @param {HTMLCanvasElement} canvas - The game canvas element
-     * @param {any} gameController - Game controller instance for UI integration
+     * @param {GameController} gameController - Game controller instance for UI integration
      */
-    constructor(canvas: HTMLCanvasElement, gameController: any) {
+    constructor(canvas: HTMLCanvasElement, gameController: GameController) {
         this.canvas = canvas;
         this.gameController = gameController;
         this.initializeEntities();
@@ -98,7 +99,7 @@ export class GameManager {
         this.stageLoader = new StageLoader();
     }
 
-    private initializeSystems(gameController: any): void {
+    private initializeSystems(gameController: GameController): void {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(physicsConstants);
@@ -344,7 +345,7 @@ export class GameManager {
         }
     }
 
-    private calculateFutureMovement(keys: any): number {
+    private calculateFutureMovement(keys: Record<string, boolean>): number {
         // Estimate future movement for one jump (more realistic timing)
         const jumpDuration = 400; // Shorter, more realistic jump duration
         const baseMovement = getGameStore().getPlayer().vx * (jumpDuration / 16.67); // Movement during jump
@@ -360,7 +361,7 @@ export class GameManager {
         return baseMovement + inputMovement;
     }
 
-    private findNearestPlatform(targetX: number): any {
+    private findNearestPlatform(targetX: number): Platform | null {
         if (!this.stage) return null;
 
         // Find platform that the player would likely land on
@@ -518,7 +519,11 @@ export class GameManager {
      */
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
-            (this.renderSystem as any).renderGameOverMenu(options, selectedIndex, finalScore);
+            (this.renderSystem as FabricRenderSystem).renderGameOverMenu(
+                options,
+                selectedIndex,
+                finalScore
+            );
         }
     }
 
@@ -544,7 +549,7 @@ export class GameManager {
 
         // Cleanup render system to prevent canvas reinitialization issues
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as any).cleanup();
+            await (this.renderSystem as FabricRenderSystem).cleanup();
         }
 
         gameStore.getState().gameOver();
@@ -556,7 +561,7 @@ export class GameManager {
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as any).cleanup();
+            await (this.renderSystem as FabricRenderSystem).cleanup();
         }
     }
     /**

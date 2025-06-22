@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameLoop } from '../core/GameLoop.js';
 
 // Mock requestAnimationFrame and cancelAnimationFrame
-let mockRequestAnimationFrame: any;
-let mockCancelAnimationFrame: any;
+let mockRequestAnimationFrame: vi.Mock;
+let mockCancelAnimationFrame: vi.Mock;
 
 describe('GameLoop', () => {
     let gameLoop: GameLoop;
-    let mockUpdateCallback: any;
-    let mockRenderCallback: any;
+    let mockUpdateCallback: vi.Mock;
+    let mockRenderCallback: vi.Mock;
 
     beforeEach(() => {
         vi.useFakeTimers();

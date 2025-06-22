@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import type { Player } from '../types/GameTypes.js';
+import type { DeathMark, Player } from '../types/GameTypes.js';
 
 // Mock GameZustandStore
 const mockGameStore = {
     addDeathMark: vi.fn(),
     runtime: {
-        deathMarks: [] as any[]
+        deathMarks: [] as DeathMark[]
     }
 };
 

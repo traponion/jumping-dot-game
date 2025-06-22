@@ -270,7 +270,7 @@ export class EditorModel implements IEditorModel {
         // プラットフォームの総長計算
         stats.totalLength = this.currentStage.platforms.reduce((total, platform) => {
             const length = Math.sqrt(
-                Math.pow(platform.x2 - platform.x1, 2) + Math.pow(platform.y2 - platform.y1, 2)
+                (platform.x2 - platform.x1) ** 2 + (platform.y2 - platform.y1) ** 2
             );
             return total + length;
         }, 0);
@@ -397,10 +397,12 @@ export class EditorModel implements IEditorModel {
         // プラットフォーム座標チェック
         for (const platform of stageData.platforms) {
             if (
-                !(this.isValidCoordinate(platform.x1, maxCoord) &&
-                this.isValidCoordinate(platform.y1, maxCoord) &&
-                this.isValidCoordinate(platform.x2, maxCoord) &&
-                this.isValidCoordinate(platform.y2, maxCoord))
+                !(
+                    this.isValidCoordinate(platform.x1, maxCoord) &&
+                    this.isValidCoordinate(platform.y1, maxCoord) &&
+                    this.isValidCoordinate(platform.x2, maxCoord) &&
+                    this.isValidCoordinate(platform.y2, maxCoord)
+                )
             ) {
                 return false;
             }
@@ -409,8 +411,10 @@ export class EditorModel implements IEditorModel {
         // スパイク座標チェック
         for (const spike of stageData.spikes) {
             if (
-                !(this.isValidCoordinate(spike.x, maxCoord) &&
-                this.isValidCoordinate(spike.y, maxCoord))
+                !(
+                    this.isValidCoordinate(spike.x, maxCoord) &&
+                    this.isValidCoordinate(spike.y, maxCoord)
+                )
             ) {
                 return false;
             }
@@ -418,8 +422,10 @@ export class EditorModel implements IEditorModel {
 
         // ゴール座標チェック
         if (
-            !(this.isValidCoordinate(stageData.goal.x, maxCoord) &&
-            this.isValidCoordinate(stageData.goal.y, maxCoord))
+            !(
+                this.isValidCoordinate(stageData.goal.x, maxCoord) &&
+                this.isValidCoordinate(stageData.goal.y, maxCoord)
+            )
         ) {
             return false;
         }
@@ -432,7 +438,10 @@ export class EditorModel implements IEditorModel {
      */
     private isValidCoordinate(coord: number, maxValue: number): boolean {
         return (
-            typeof coord === 'number' && !isNaN(coord) && coord >= -maxValue && coord <= maxValue
+            typeof coord === 'number' &&
+            !Number.isNaN(coord) &&
+            coord >= -maxValue &&
+            coord <= maxValue
         );
     }
 

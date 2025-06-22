@@ -185,7 +185,9 @@ export class ErrorHandler {
      * 複数のエラーを一括処理
      */
     public handleErrors(errors: (Error | EditorError)[]): void {
-        errors.forEach((error) => this.handleError(error));
+        for (const error of errors) {
+            this.handleError(error);
+        }
     }
 
     /**
@@ -401,14 +403,14 @@ export class ErrorHandler {
      * レポーターに通知
      */
     private notifyReporters(error: EditorError): void {
-        this.reporters.forEach((reporter) => {
+        for (const reporter of this.reporters) {
             try {
                 reporter.reportError(error);
             } catch (reporterError) {
                 // レポーター自体のエラーは無限ループを避けるためログのみ
                 DebugHelper.log('Error in error reporter', reporterError);
             }
-        });
+        }
     }
 
     /**
