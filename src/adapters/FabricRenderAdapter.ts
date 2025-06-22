@@ -4,11 +4,12 @@ import {
     EDITOR_TOOLS,
     ERROR_CODES,
     ERROR_TYPES,
-    EditorError
+    EditorError,
+    type EditorTool
 } from '../types/EditorTypes.js';
 import { DebugHelper } from '../utils/EditorUtils.js';
 import { EditorInputHandler } from './EditorInputHandler.js';
-import type { EditorCallbacks, EditorState, IRenderAdapter } from './IRenderAdapter.js';
+import type { EditorCallbacks, EditorState, IRenderAdapter, StageData } from './IRenderAdapter.js';
 import { ObjectDrawer } from './ObjectDrawer.js';
 import { StageDataConverter } from './StageDataConverter.js';
 
@@ -372,8 +373,8 @@ export class FabricRenderAdapter implements IRenderAdapter {
      * Draw grid lines
      */
     private drawGrid(): void {
-        const canvasWidth = this.canvas.width!;
-        const canvasHeight = this.canvas.height!;
+        const canvasWidth = this.canvas.width || EDITOR_CONFIG.CANVAS_SIZE.width;
+        const canvasHeight = this.canvas.height || EDITOR_CONFIG.CANVAS_SIZE.height;
         const gridSize = EDITOR_CONFIG.GRID_SIZE;
 
         // Draw vertical lines
@@ -468,7 +469,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
      * Set selected tool (legacy compatibility)
      */
     setSelectedTool(tool: string): void {
-        this.editorState.selectedTool = tool as any;
+        this.editorState.selectedTool = tool as EditorTool;
 
         // Update canvas interaction mode
         if (tool === EDITOR_TOOLS.SELECT) {
@@ -503,7 +504,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
     /**
      * Load stage for editing (legacy compatibility)
      */
-    loadStageForEditing(stageData: any): void {
+    loadStageForEditing(stageData: StageData): void {
         this.stageConverter.loadStageForEditing(stageData);
         DebugHelper.log('Legacy loadStageForEditing called');
     }
@@ -511,7 +512,7 @@ export class FabricRenderAdapter implements IRenderAdapter {
     /**
      * Export stage data (legacy compatibility)
      */
-    exportStageData(): any {
+    exportStageData(): StageData {
         const stageData = this.stageConverter.exportStageData();
         DebugHelper.log('Legacy exportStageData called');
         return stageData;
