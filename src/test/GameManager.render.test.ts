@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import type { GameUI } from '../core/GameUI.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
+import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
+import type { GameController } from '../systems/InputManager.js';
 
 // Mock dependencies
 vi.mock('../ui/GameUI.js');
@@ -10,7 +12,7 @@ vi.mock('../systems/FabricRenderSystem.js');
 describe('GameManager render with GameUI integration', () => {
     let gameManager: GameManager;
     let mockGameUI: GameUI;
-    let mockRenderSystem: any;
+    let mockRenderSystem: Partial<FabricRenderSystem>;
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
@@ -50,9 +52,10 @@ describe('GameManager render with GameUI integration', () => {
         };
 
         // Create GameManager and inject mock render system
-        const mockGameController = {};
+        const mockGameController = {} as GameController;
         gameManager = new GameManager(canvas, mockGameController);
-        (gameManager as any).renderSystem = mockRenderSystem;
+        (gameManager as unknown as { renderSystem: Partial<FabricRenderSystem> }).renderSystem =
+            mockRenderSystem;
     });
 
     describe('when game is over', () => {
@@ -62,7 +65,7 @@ describe('GameManager render with GameUI integration', () => {
             getGameStore().setFinalScore(150);
 
             // Act: Call render with GameUI
-            (gameManager as any).render(mockGameUI);
+            (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
             // Assert: renderGameOverMenu should be called
             expect(mockGameUI.getGameOverMenuData).toHaveBeenCalled();
@@ -76,8 +79,9 @@ describe('GameManager render with GameUI integration', () => {
             expect(mockRenderSystem.renderAll).toHaveBeenCalled();
 
             // Verify call order: renderGameOverMenu before renderAll
-            const renderMenuCall = mockRenderSystem.renderGameOverMenu.mock.invocationCallOrder[0];
-            const renderAllCall = mockRenderSystem.renderAll.mock.invocationCallOrder[0];
+            const renderMenuCall = (mockRenderSystem.renderGameOverMenu as any).mock
+                .invocationCallOrder[0];
+            const renderAllCall = (mockRenderSystem.renderAll as any).mock.invocationCallOrder[0];
             expect(renderMenuCall).toBeLessThan(renderAllCall);
         });
 
@@ -86,7 +90,7 @@ describe('GameManager render with GameUI integration', () => {
             getGameStore().gameOver();
 
             // Act: Call render with GameUI
-            (gameManager as any).render(mockGameUI);
+            (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
             // Assert: renderStartInstruction should not be called
             expect(mockRenderSystem.renderStartInstruction).not.toHaveBeenCalled();
@@ -99,7 +103,7 @@ describe('GameManager render with GameUI integration', () => {
             getGameStore().stopGame();
 
             // Act: Call render with GameUI
-            (gameManager as any).render(mockGameUI);
+            (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
             // Assert: Should render start instruction, not game over menu
             expect(mockRenderSystem.renderStartInstruction).toHaveBeenCalled();
@@ -114,7 +118,7 @@ describe('GameManager render with GameUI integration', () => {
             getGameStore().startGame();
 
             // Act: Call render with GameUI
-            (gameManager as any).render(mockGameUI);
+            (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
             // Assert: Should not render menus
             expect(mockRenderSystem.renderGameOverMenu).not.toHaveBeenCalled();
@@ -127,7 +131,7 @@ describe('GameManager render with GameUI integration', () => {
         it('should accept GameUI parameter', () => {
             // This test ensures the signature change doesn't break
             expect(() => {
-                (gameManager as any).render(mockGameUI);
+                (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
             }).not.toThrow();
         });
 
@@ -137,7 +141,7 @@ describe('GameManager render with GameUI integration', () => {
 
             // Act: Call render without GameUI (should not crash)
             expect(() => {
-                (gameManager as any).render();
+                (gameManager as unknown as { render: () => void }).render();
             }).not.toThrow();
         });
     });

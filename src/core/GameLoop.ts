@@ -18,10 +18,6 @@ export class GameLoop {
     private updateCallback: ((deltaTime: number) => void) | null = null;
     private renderCallback: (() => void) | null = null;
 
-    constructor() {
-        // Initialize with null callbacks - they must be set before starting
-    }
-
     /**
      * Set the update callback function
      */
@@ -45,7 +41,7 @@ export class GameLoop {
             return;
         }
 
-        if (!this.updateCallback || !this.renderCallback) {
+        if (!(this.updateCallback && this.renderCallback)) {
             throw new Error('Update and render callbacks must be set before starting game loop');
         }
 

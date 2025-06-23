@@ -1,20 +1,20 @@
-# 🎮 Jumping Dot Game with Stage Editor
+# 🎮 Jumping Dot Game
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0+-purple.svg)](https://vitejs.dev/)
 [![Fabric.js](https://img.shields.io/badge/Fabric.js-6.0+-green.svg)](http://fabricjs.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-2.0+-yellow.svg)](https://vitest.dev/)
 
-A 2D platform-style jumping game with a visual stage editor. High-quality web application built with TypeScript + Fabric.js.
+A 2D platform-style jumping game with physics-based gameplay. High-quality web application built with TypeScript + Fabric.js.
 
 ## ✨ Features
 
-- 🎨 **Intuitive Stage Editor**: Create stages with drag & drop
-- 🏗️ **MVC Architecture**: Maintainable and extensible design
-- 🚀 **High Performance**: Optimized with object pooling
+- 🎮 **Physics-Based Jumping**: Realistic jumping mechanics with gravity
+- 🏗️ **Clean Architecture**: MVC pattern with dependency inversion
+- 🚀 **High Performance**: Optimized with object pooling and efficient rendering
 - 🧪 **Comprehensive Testing**: Unit, integration, and performance tests
 - 📱 **Responsive Design**: Desktop and tablet support
-- ⌨️ **Keyboard Shortcuts**: Professional workflow efficiency
+- ⌨️ **Intuitive Controls**: Simple keyboard controls for smooth gameplay
 
 ## 🚀 Quick Start
 
@@ -32,7 +32,6 @@ npm run dev
 
 # Open in browser
 # Game: http://localhost:5173/
-# Editor: http://localhost:5173/editor.html
 ```
 
 ## 🎮 How to Play
@@ -45,30 +44,24 @@ npm run dev
 | Space | Start game |
 | R | Restart |
 
-### Editor Controls
-| Key | Action |
-|-----|--------|
-| 1-5 | Select tool |
-| Delete / Backspace | Delete object |
-| Ctrl+S | Save stage |
-| Ctrl+N | New stage |
-| Ctrl+O | Load stage |
-| Ctrl+G | Toggle grid |
+### Gameplay
+- Navigate through platforms to reach the goal
+- Avoid spikes that will reset your progress
+- Use double/triple jumping to reach higher platforms
+- Time your movements to land on moving platforms
 
 ## 🛠️ Development Guide
 
 ### Project Structure
 ```
 src/
-├── controllers/        # MVC Controller layer
-├── views/             # MVC View layer
-├── models/            # MVC Model layer
-├── systems/           # Rendering systems
+├── core/              # Core game systems (Game, GameLoop, etc.)
+├── systems/           # Rendering and input systems
+├── stores/            # State management (Zustand)
+├── utils/             # Utility functions
 ├── types/             # TypeScript type definitions
-├── utils/             # Utilities
-├── performance/       # Performance optimization
 ├── test/              # Test suite
-└── core/              # Core systems
+└── main.ts           # Application entry point
 ```
 
 ### Main Commands
@@ -119,37 +112,20 @@ gh pr create --base main --title "feat: Your Feature Title"
 
 All pull requests target `main` branch directly. See [Contributing Guide](CONTRIBUTING.md) for detailed guidelines.
 
-## 🎨 Editor Features
+## 🎯 Game Features
 
-### Tool List
-- **🖱️ Select**: Object selection and movement
-- **📏 Platform**: Platform drawing
-- **🔺 Spike**: Spike placement
-- **🎯 Goal**: Goal setting
-- **📝 Text**: Text addition
+### Core Mechanics
+- **Physics Engine**: Realistic gravity and collision detection
+- **Multiple Jump System**: Double and triple jumps for advanced movement
+- **Moving Platforms**: Dynamic platform mechanics for challenging gameplay
+- **Hazards**: Spike traps that reset player position
+- **Goal System**: Reach the goal to complete each stage
+- **Trail Effects**: Visual feedback for player movement
 
-### Editor Interface
-```
-┌─────────────────────────────────────────────────┐
-│ [New] [Load] [Save] [Test] [Clear]              │ ← Toolbar
-├──────────┬──────────────────────┬───────────────┤
-│          │                      │ Stage Info    │
-│ Tools    │                      │ ┌───────────┐ │
-│ ┌──────┐ │      Canvas          │ │Name: Test │ │
-│ │Select│ │                      │ │ID: 1      │ │
-│ │Platf │ │                      │ │Desc: ...  │ │
-│ │Spike │ │                      │ └───────────┘ │
-│ │Goal  │ │                      │               │
-│ │Text  │ │                      │ Object Props  │
-│ └──────┘ │                      │ ┌───────────┐ │
-│          │                      │ │Width: 40  │ │
-│ Actions  │                      │ │Height: 50 │ │
-│ [Delete] │                      │ └───────────┘ │
-│ [Dup]    │                      │               │
-└──────────┴──────────────────────┴───────────────┤
-│ Objects: 15 | Mouse: 120,340 | Tool: Platform  │ ← Status
-└─────────────────────────────────────────────────┘
-```
+### Stage System
+- **Multiple Stages**: Pre-designed levels with increasing difficulty
+- **Stage Selection**: Choose from available stages
+- **Progress Tracking**: Score and time tracking per stage
 
 ## 🧪 Testing
 
@@ -158,8 +134,11 @@ All pull requests target `main` branch directly. See [Contributing Guide](CONTRI
 # All tests
 npm run test
 
-# Specific test
-npm run test EditorController
+# With coverage
+npm run test:coverage
+
+# Specific test file
+npm run test GameLoop
 ```
 
 ## 🚀 Performance
@@ -170,46 +149,50 @@ npm run test EditorController
 | FPS | 60fps | 58-60fps |
 | Initialization Time | <3s | 2.1s |
 | Memory Usage | <50MB | 42MB |
-| Object Creation | <16ms | 12ms |
+| Game Loop Performance | <16ms | 12ms |
 
 ## 🏗️ Architecture
 
-### MVC Design
-- **EditorController**: Business logic control
-- **EditorView**: UI management and event handling
-- **EditorModel**: Data management and persistence
-- **EditorRenderSystem**: Canvas rendering and operations
+### Core Design
+- **Game**: Main game orchestration and lifecycle management
+- **GameLoop**: Fixed timestep game loop with interpolation
+- **GameManager**: Game state and level management
+- **InputManager**: Keyboard input handling
+- **RenderSystem**: Canvas rendering with Fabric.js integration
 
 ## 🔧 Customization
 
-### Adding New Tools
+### Adding New Stages
 ```typescript
-// 1. Define tool
-const CUSTOM_TOOLS = {
-    ENEMY: 'enemy'
-} as const;
-
-// 2. Add to Factory
-class ObjectFactory {
-    static createEnemy(params: ObjectCreationParams): fabric.Object {
-        // Enemy creation logic
-    }
-}
+// Define new stage data
+const customStage: StageData = {
+    id: 3,
+    name: 'Custom Stage',
+    platforms: [
+        { x1: 100, y1: 500, x2: 200, y2: 500 }
+    ],
+    spikes: [
+        { x: 250, y: 485, width: 15, height: 15 }
+    ],
+    goal: { x: 400, y: 450, width: 40, height: 50 },
+    startText: { x: 50, y: 550, text: 'START' },
+    goalText: { x: 420, y: 430, text: 'GOAL' }
+};
 ```
 
 ## 📊 Roadmap
 
 ### Version 2.0
-- [ ] Undo/Redo functionality
-- [ ] Object grouping
-- [ ] Animation features
-- [ ] Sound management
+- [ ] More stages with increasing difficulty
+- [ ] Power-ups and special items
+- [ ] Sound effects and background music
+- [ ] Particle effects for better visual feedback
 
 ### Version 3.0
-- [ ] Plugin system
-- [ ] Real-time collaboration
-- [ ] Cloud storage
-- [ ] Community features
+- [ ] Level progression system
+- [ ] Achievement system
+- [ ] Leaderboards
+- [ ] Custom stage creation tools
 
 ## 📄 License
 
@@ -217,4 +200,4 @@ MIT License
 
 ---
 
-**🎮 Have fun creating stages!**
+**🎮 Have fun jumping and reaching the goal!**

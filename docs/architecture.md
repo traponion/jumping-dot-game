@@ -1,457 +1,288 @@
-# 🏗️ Architecture Guide - Jumping Dot Game Editor
+# 🏗️ Architecture Guide - Jumping Dot Game
 
-## 📋 システム全体設計
+## 📋 System Design Overview
 
-### 🎯 設計原則
+### 🎯 Design Principles
 
-1. **関心の分離**: MVCパターンによる責務分離
-2. **型安全性**: TypeScript厳密モードによる型チェック
-3. **テスタビリティ**: 依存性注入とモッキング対応
-4. **拡張性**: プラグイン・モジュール指向設計
-5. **パフォーマンス**: オブジェクトプールと最適化
-6. **エラー処理**: 統一的エラーハンドリング
+1. **Separation of Concerns**: Clear responsibility separation using MVC-inspired patterns
+2. **Type Safety**: TypeScript strict mode with comprehensive type checking
+3. **Testability**: Dependency injection and comprehensive mocking support
+4. **Extensibility**: Modular design for easy feature additions
+5. **Performance**: Object pooling and optimized rendering
+6. **Error Handling**: Unified error handling and recovery strategies
 
 ---
 
-## 🏛️ アーキテクチャ概要
+## 🏛️ Architecture Overview
 
 ```mermaid
 graph TB
-    UI[User Interface] --> Controller[EditorController]
-    Controller --> Model[EditorModel]
-    Controller --> View[EditorView]
-    Controller --> RenderSystem[EditorRenderSystem]
-    Controller --> ZustandStore[Zustand Store]
+    UI[User Interface] --> StageSelect[StageSelect]
+    StageSelect --> Game[JumpingDotGame]
+    Game --> GameLoop[GameLoop]
+    Game --> GameManager[GameManager]
+    Game --> InputManager[InputManager]
+    Game --> RenderSystem[RenderSystem]
     
-    View --> ZustandStore
-    Model --> ZustandStore
-    ZustandStore --> DevTools[Redux DevTools]
+    GameLoop --> GameManager
+    GameManager --> Player[Player Physics]
+    GameManager --> Stage[Stage Data]
+    GameManager --> Camera[Camera System]
+    
     RenderSystem --> Fabric[Fabric.js Canvas]
+    InputManager --> EventHandlers[Event Handlers]
     
-    Utilities[Utilities] --> Controller
-    Utilities --> Model
-    Utilities --> View
+    Utilities[Utilities] --> Game
+    Utilities --> GameManager
     Utilities --> RenderSystem
     
-    ErrorHandler[GlobalErrorHandler] --> Controller
-    ErrorHandler --> Model
-    ErrorHandler --> View
+    ErrorHandler[ErrorHandler] --> Game
+    ErrorHandler --> GameManager
     ErrorHandler --> RenderSystem
     
-    Performance[PerformanceManager] --> RenderSystem
-    Performance --> ObjectPool[ObjectPool]
-    
-    style ZustandStore fill:#e1f5fe,stroke:#01579b,stroke-width:3px
-    style DevTools fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style Game fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    style GameLoop fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
 ```
 
 ---
 
-## 📱 MVCアーキテクチャ詳細
+## 🎮 Core Game Architecture
 
-### Model Layer - データ管理層
+### Game Layer - Application Orchestration
 
-**責務**: ビジネスデータの管理・永続化・検証
+**Responsibility**: Top-level game lifecycle management and system coordination
 
-#### EditorModel
+#### JumpingDotGame
 ```typescript
-class EditorModel implements IEditorModel {
-    private currentStage: StageData | null = null;
-    private editorState: EditorState;
-    private changeListeners: ChangeListener[] = [];
+class JumpingDotGame {
+    private gameLoop: GameLoop | null = null;
+    private gameManager: GameManager | null = null;
+    private inputManager: InputManager | null = null;
+    private renderSystem: RenderSystem | null = null;
     
-    // データ操作
-    public getCurrentStage(): StageData | null
-    public setCurrentStage(stageData: StageData): void
-    public validateStageData(stageData: StageData): boolean
+    // Lifecycle Management
+    public async initWithStage(stageId: number): Promise<void>
+    public start(): void
+    public pause(): void
+    public resume(): void
+    public async cleanup(): Promise<void>
     
-    // 状態管理
-    public getEditorState(): EditorState
-    public updateEditorState(updates: Partial<EditorState>): void
-    
-    // シリアライゼーション
-    public exportStageAsJson(): string
-    public importStageFromJson(json: string): StageData
+    // Event Coordination
+    private handleGameStateChange(newState: GameState): void
+    private handlePlayerDeath(): void
+    private handleGoalReached(): void
 }
 ```
 
-**特徴**:
-- 不変性を保持したデータ管理
-- リアクティブな変更通知
-- JSON/バイナリシリアライゼーション
-- データ整合性検証
+**Features**:
+- Centralized system initialization and cleanup
+- Game state coordination between systems
+- Event-driven communication between components
+- Resource management and memory cleanup
 
-### View Layer - プレゼンテーション層
+### GameLoop - Fixed Timestep Engine
 
-**責務**: ユーザーインターフェース管理・イベント処理
+**Responsibility**: Consistent game timing and update/render coordination
 
-#### EditorView
+#### GameLoop Implementation
 ```typescript
-class EditorView implements IEditorView {
-    private canvas: HTMLCanvasElement;
-    private controller: IEditorController | null = null;
-    private uiElements: UIElementMap;
+class GameLoop {
+    private targetFPS = 60;
+    private maxFrameTime = 250; // ms
+    private timestep = 1000 / 60; // 16.67ms
     
-    // UI更新
-    public updateToolSelection(tool: string): void
-    public updateObjectCount(count: number): void
-    public showObjectProperties(object: FabricObjectWithData | null): void
+    // Core Loop
+    public start(): void
+    public stop(): void
+    private loop(timestamp: number): void
     
-    // メッセージ表示
-    public showErrorMessage(message: string): void
-    public showSuccessMessage(message: string): void
-    
-    // イベント処理
-    private setupEventListeners(): void
-    private handleToolSelection(tool: string): void
+    // Timing
+    private update(deltaTime: number): void
+    private render(interpolation: number): void
+    private calculateInterpolation(): number
 }
 ```
 
-**特徴**:
-- DOM操作の集約
-- イベントデリゲーション
-- レスポンシブUI対応
-- アクセシビリティ考慮
+**Optimization Features**:
+- **Fixed timestep**: Consistent physics regardless of framerate
+- **Interpolation**: Smooth rendering between physics updates
+- **Frame limiting**: Prevents spiral of death on slow devices
+- **Performance monitoring**: Real-time FPS and timing metrics
 
-### Controller Layer - ビジネスロジック層
+### GameManager - Game State & Logic
 
-**責務**: ユーザーアクション調整・ビジネスルール実装・状態管理統合
+**Responsibility**: Game state management, physics simulation, collision detection
 
-#### EditorController
+#### GameManager Architecture
 ```typescript
-class EditorController implements IEditorController {
-    private editorSystem: EditorRenderSystem;
-    private view: IEditorView;
-    private model: IEditorModel;
-    private store: ReturnType<typeof useEditorStore.getState>;
-    private unsubscribe: () => void;
+class GameManager {
+    private player: Player;
+    private stage: StageData;
+    private camera: Camera;
+    private gameState: GameState;
     
-    constructor(
-        canvas: HTMLCanvasElement,
-        view: IEditorView,
-        model: IEditorModel
-    ) {
-        this.store = useEditorStore.getState();
-        
-        // Zustandストアの購読
-        this.unsubscribe = useEditorStore.subscribe((state) => {
-            this.handleStateChange(state);
-        });
-    }
+    // Core Game Logic
+    public update(deltaTime: number): void
+    public handleInput(inputState: InputState): void
+    public checkCollisions(): void
     
-    // コア機能
-    public async initialize(): Promise<void>
-    public selectTool(tool: string): void {
-        this.store.selectTool(tool);
-        this.editorSystem.selectTool(tool);
-    }
-    public createNewStage(): void {
-        const newStage = this.model.createDefaultStage();
-        this.store.setStageData(newStage);
-    }
-    public saveStage(): void
+    // State Management
+    public getGameState(): GameState
+    public getCurrentStage(): StageData
+    public getPlayer(): Player
+    public getCamera(): Camera
     
-    // オブジェクト操作
-    public deleteSelectedObject(): void
-    public duplicateSelectedObject(): void
-    
-    // 状態管理
-    public toggleGrid(): void {
-        this.store.toggleGrid();
-        this.editorSystem.setGridEnabled(this.store.editor.gridEnabled);
-    }
-    
-    // イベントハンドリング
-    private handleObjectSelection(object: FabricObjectWithData | null): void {
-        this.store.setSelectedObject(object);
-    }
-    private handleKeyboard(e: KeyboardEvent): void
-    private handleStateChange(state: EditorStore): void
-    
-    public dispose(): void {
-        this.unsubscribe?.();
-    }
+    // Game Events
+    private handlePlayerGoalReached(): void
+    private handlePlayerDeath(deathPosition: Point): void
+    private updatePhysics(deltaTime: number): void
 }
 ```
 
-**特徴**:
-- 非同期処理制御
-- 複雑なビジネスルール実装
-- **Zustand統合による統一状態管理**
-- **リアクティブな状態同期**
-- クロスカッティング関心事の調整
-- 外部システムとの統合
+**Core Systems**:
+- **Physics Engine**: Gravity, collision detection, platform mechanics
+- **Player Controller**: Movement, jumping (including multi-jump), state management
+- **Camera System**: Smooth following, boundary constraints
+- **Stage Management**: Level loading, moving platform updates
 
 ---
 
-## 🎨 レンダリングシステム
+## 🎨 Rendering System Architecture
 
-### 階層構造
+### Hierarchy Structure
 
 ```
-RenderSystem (抽象基底)
-├── FabricRenderSystem (Fabric.js統合)
-└── EditorRenderSystem (エディター拡張)
-    ├── Grid Management
-    ├── Object Creation
-    ├── Selection Handling
-    └── Export/Import
+RenderSystem (Abstract Base)
+├── FabricRenderSystem (Fabric.js Integration)
+└── MockRenderSystem (Testing Only)
 ```
 
-### EditorRenderSystem設計
+### FabricRenderSystem Design
 
 ```typescript
-class EditorRenderSystem extends FabricRenderSystem {
-    // 状態管理
-    private editorState: EditorState;
-    private callbacks: EditorCallbacks;
+class FabricRenderSystem {
+    protected canvas: fabric.Canvas;
+    private objectPools: Map<string, ObjectPool>;
     
-    // レンダリング
-    protected renderGrid(): void
-    protected renderEditableObjects(stageData: StageData): void
+    // Core Rendering
+    public renderPlayer(player: Player): void
+    public renderStage(stage: StageData): void
+    public renderTrail(trail: TrailPoint[]): void
+    public applyCameraTransform(camera: Camera): void
     
-    // インタラクション
-    private handleMouseDown(e: fabric.IEvent): void
-    private handleObjectSelection(object: fabric.Object | null): void
+    // Performance Optimization
+    private reuseObjects(type: string): fabric.Object
+    private cleanupUnusedObjects(): void
     
-    // オブジェクト管理
-    public createSpike(x: number, y: number): void
-    public createGoal(x: number, y: number): void
-    public duplicateObject(original: FabricObjectWithData): FabricObjectWithData
+    // Visual Effects
+    public renderDeathAnimation(particles: Particle[]): void
+    public renderClearAnimation(particles: Particle[]): void
+    public renderLandingPredictions(): void
 }
 ```
 
-**最適化ポイント**:
-- **レイヤー分離**: UI/ゲーム要素の描画分離
-- **オブジェクトプール**: 頻繁な作成/削除の最適化
-- **バッチ処理**: 複数オブジェクトの一括操作
-- **差分更新**: 変更部分のみ再描画
+**Optimization Strategies**:
+- **Object Reuse**: Fabric.js object pooling to reduce GC pressure
+- **Batch Updates**: Multiple object updates in single render call
+- **Selective Rendering**: Only update changed objects
+- **Memory Management**: Proper cleanup and disposal patterns
 
 ---
 
-## 🗂️ 状態管理システム
+## 🗂️ State Management System
 
-### Zustand ベース アーキテクチャ
+### Game State Structure
 
 ```typescript
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import { devtools } from 'zustand/middleware';
-
-// State Structure
-interface EditorStore {
-    // State
-    editor: EditorState;
-    stage: StageData | null;
-    ui: UIState;
-    performance: PerformanceState;
+interface GameState {
+    // Core State
+    currentStage: number;
+    playerPosition: Point;
+    playerVelocity: Point;
+    cameraPosition: Point;
     
-    // Actions
-    selectTool: (tool: string) => void;
-    setStageData: (stage: StageData) => void;
-    updateEditorState: (updates: Partial<EditorState>) => void;
-    toggleGrid: () => void;
-    toggleSnap: () => void;
-    setSelectedObject: (object: FabricObjectWithData | null) => void;
+    // Game Flow
+    gamePhase: GamePhase; // 'playing' | 'paused' | 'gameOver' | 'cleared'
+    timeElapsed: number;
+    score: number;
+    deathCount: number;
     
-    // Computed getters
-    getActiveTool: () => string;
-    getCurrentStage: () => StageData | null;
-    getObjectCount: () => number;
+    // Player State
+    jumpCount: number;
+    maxJumps: number;
+    isOnGround: boolean;
+    isMovingPlatform: boolean;
+    
+    // Effects
+    trailPoints: TrailPoint[];
+    particles: Particle[];
+    deathMarks: DeathMark[];
 }
-
-// Store Implementation
-export const useEditorStore = create<EditorStore>()(
-    devtools(
-        immer((set, get) => ({
-            // Initial State
-            editor: {
-                selectedTool: 'select',
-                selectedObject: null,
-                isDrawing: false,
-                gridEnabled: true,
-                snapToGrid: true
-            },
-            stage: null,
-            ui: {
-                isInitialized: false,
-                isLoading: false,
-                lastError: null,
-                lastSuccess: null
-            },
-            performance: {
-                objectCount: 0,
-                renderTime: 0,
-                lastOperation: ''
-            },
-            
-            // Actions
-            selectTool: (tool) => set((state) => {
-                state.editor.selectedTool = tool;
-            }),
-            
-            setStageData: (stage) => set((state) => {
-                state.stage = stage;
-                state.performance.objectCount = 
-                    stage.platforms.length + stage.spikes.length + 1;
-            }),
-            
-            updateEditorState: (updates) => set((state) => {
-                Object.assign(state.editor, updates);
-            }),
-            
-            toggleGrid: () => set((state) => {
-                state.editor.gridEnabled = !state.editor.gridEnabled;
-            }),
-            
-            toggleSnap: () => set((state) => {
-                state.editor.snapToGrid = !state.editor.snapToGrid;
-            }),
-            
-            setSelectedObject: (object) => set((state) => {
-                state.editor.selectedObject = object;
-            }),
-            
-            // Computed Getters
-            getActiveTool: () => get().editor.selectedTool,
-            getCurrentStage: () => get().stage,
-            getObjectCount: () => get().performance.objectCount
-        }))
-    )
-);
 ```
 
-### 状態同期メカニズム
+### State Flow Management
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant View
-    participant Controller
-    participant ZustandStore
-    participant RenderSystem
-    
-    User->>View: Tool Selection
-    View->>Controller: selectTool()
-    Controller->>ZustandStore: store.selectTool(tool)
-    Controller->>RenderSystem: setSelectedTool()
-    ZustandStore-->>View: State Change (Subscribe)
-    View->>View: Update UI
-```
-
-#### Zustand統合の利点
-
-- **ボイラープレート削減**: Redux比で70%コード削減
-- **型安全性**: TypeScript完全対応
-- **デバッグ容易性**: Redux DevTools対応
-- **テスタビリティ**: Simple mock & spy対応
-- **バンドルサイズ**: わずか2.2KB (gzipped)
-- **学習コストの低さ**: シンプルなAPI設計
-
-#### 使用パターン
-
-```typescript
-// Controller内での使用
-class EditorController {
-    constructor(
-        private canvas: HTMLCanvasElement,
-        private view: IEditorView,
-        private model: IEditorModel
-    ) {
-        // Zustand storeを使用
-        this.store = useEditorStore.getState();
-        
-        // 状態変更の購読
-        useEditorStore.subscribe((state) => {
-            this.handleStateChange(state);
-        });
-    }
-    
-    public selectTool(tool: string): void {
-        // 1. Zustandで状態更新
-        this.store.selectTool(tool);
-        
-        // 2. RenderSystemに反映
-        this.editorSystem.selectTool(tool);
-        
-        // 3. Viewは自動更新（subscribe経由）
-    }
-}
-
-// View内での使用
-class EditorView {
-    constructor(canvas: HTMLCanvasElement) {
-        // 状態変更を購読してUI更新
-        useEditorStore.subscribe((state) => {
-            this.updateToolSelection(state.editor.selectedTool);
-            this.updateObjectCount(state.performance.objectCount);
-        });
-    }
-}
-
-// テストでの使用
-describe('EditorController', () => {
-    beforeEach(() => {
-        // Zustandストアのリセット
-        useEditorStore.setState({
-            editor: { selectedTool: 'select', ... },
-            stage: null,
-            ...
-        });
-    });
-    
-    it('should update tool selection', () => {
-        const store = useEditorStore.getState();
-        controller.selectTool('platform');
-        
-        expect(store.getActiveTool()).toBe('platform');
-    });
-});
+stateDiagram-v2
+    [*] --> Initializing
+    Initializing --> StageSelect: initialization complete
+    StageSelect --> Playing: stage selected
+    Playing --> Paused: pause input
+    Paused --> Playing: resume input
+    Playing --> GameOver: player death/timeout
+    Playing --> Cleared: goal reached
+    GameOver --> Playing: restart
+    Cleared --> StageSelect: continue
+    GameOver --> StageSelect: return to menu
+    Cleared --> [*]: quit game
+    GameOver --> [*]: quit game
 ```
 
 ---
 
-## 🛠️ ユーティリティシステム
+## 🛠️ Utility Systems
 
-### 設計パターン
+### Design Patterns
 
 #### Helper Classes
 ```typescript
-// Static Utility Classes
-class TypeHelper {
-    static isStageData(data: unknown): data is StageData
-    static safeParseInt(value: string, defaultValue: number): number
-}
-
-class EventHelper {
-    static debounce<T>(func: T, delay: number): T
-    static throttle<T>(func: T, delay: number): T
-    static normalizeKeyboardEvent(e: KeyboardEvent): string
-}
-
+// Mathematical utilities
 class MathHelper {
     static distance(p1: Point, p2: Point): number
-    static angle(p1: Point, p2: Point): number
-    static snapToGrid(point: Point, gridSize: number): Point
+    static clamp(value: number, min: number, max: number): number
+    static lerp(a: number, b: number, t: number): number
+    static easeInOut(t: number): number
+}
+
+// Collision detection utilities  
+class CollisionHelper {
+    static pointInRect(point: Point, rect: Rectangle): boolean
+    static lineIntersection(line1: Line, line2: Line): Point | null
+    static circleRectCollision(circle: Circle, rect: Rectangle): boolean
+}
+
+// Animation utilities
+class AnimationHelper {
+    static easeInOutCubic(t: number): number
+    static spring(current: number, target: number, velocity: number, damping: number): { position: number, velocity: number }
 }
 ```
 
 #### Factory Pattern
 ```typescript
-class ObjectFactory {
-    static createSpike(params: ObjectCreationParams): fabric.Polygon
-    static createGoal(params: ObjectCreationParams): fabric.Rect
-    static createPlatform(start: Point, end: Point): fabric.Line
-    static createText(params: ObjectCreationParams): fabric.Text
+class ParticleFactory {
+    static createDeathParticle(position: Point): Particle
+    static createClearParticle(position: Point): Particle
+    static createTrailPoint(position: Point, age: number): TrailPoint
     
-    private static applyCommonProperties(object: fabric.Object): void
-    private static generateObjectId(): string
+    private static applyCommonProperties(particle: Particle): void
+    private static randomizeVelocity(): Point
 }
 ```
 
 ---
 
-## 🚀 パフォーマンス最適化
+## 🚀 Performance Optimization
 
 ### Object Pool Pattern
 
@@ -459,269 +290,25 @@ class ObjectFactory {
 class ObjectPool<T> {
     private available: T[] = [];
     private inUse = new Set<T>();
+    private createFn: () => T;
+    private resetFn: (object: T) => void;
     
-    public acquire(): T | null
+    public acquire(): T
     public release(object: T): void
     public getStats(): PoolStats
     
-    private createObject(): T
-    private resetObject(object: T): void
+    private expandPool(): void
+    private validateObject(object: T): boolean
 }
 
-// 特殊化されたプール
-class SpikePool extends ObjectPool<fabric.Polygon> {
-    protected createObject(): fabric.Polygon {
-        return ObjectFactory.createSpike({
-            position: { x: 0, y: 0 }
-        });
+// Specialized pools
+class ParticlePool extends ObjectPool<Particle> {
+    constructor() {
+        super(
+            () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 1, size: 2 }),
+            (particle) => { particle.life = 1; particle.x = particle.y = 0; }
+        );
     }
-}
-```
-
-### Memory Management
-
-```typescript
-class PerformanceManager {
-    private pools: Map<string, ObjectPool<any>>;
-    private memoryUsage: MemoryTracker;
-    
-    public createOptimizedSpike(position: Point): fabric.Polygon
-    public releaseObject(object: fabric.Object): void
-    public getPerformanceStats(): PerformanceStats
-    
-    private monitorMemoryUsage(): void
-    private triggerGarbageCollection(): void
-}
-```
-
-### 最適化指標
-
-| 項目 | 目標値 | 測定方法 |
-|------|--------|----------|
-| FPS | 60fps | `performance.now()` |
-| メモリ使用量 | <50MB | `performance.memory` |
-| オブジェクト作成時間 | <16ms | プロファイラー |
-| 初期化時間 | <3秒 | 時間測定 |
-
----
-
-## 🛡️ エラーハンドリング
-
-### エラー階層
-
-```typescript
-// Base Error Class
-class EditorError extends Error {
-    constructor(
-        message: string,
-        public readonly code: ErrorCode,
-        public readonly type: ErrorType,
-        public readonly details?: any,
-        public readonly recoverable: boolean = true
-    ) {
-        super(message);
-        this.name = 'EditorError';
-    }
-    
-    public getUserMessage(): string
-    public toJSON(): ErrorDetails
-}
-
-// Specialized Errors
-class CanvasError extends EditorError {
-    constructor(message: string, details?: any) {
-        super(message, ERROR_CODES.CANVAS_INIT_FAILED, ERROR_TYPES.FABRIC, details);
-    }
-}
-```
-
-### Global Error Handler
-
-```typescript
-class GlobalErrorHandler {
-    private reporters: ErrorReporter[] = [];
-    private errorStats: ErrorStatistics;
-    
-    public handleError(error: Error | EditorError): void
-    public addReporter(reporter: ErrorReporter): void
-    public getErrorStats(): ErrorStatistics
-    
-    private classifyError(error: Error): EditorError
-    private shouldRetry(error: EditorError): boolean
-}
-```
-
-### エラー復旧戦略
-
-1. **軽微なエラー**: ログ記録のみ
-2. **UI関連エラー**: UI再初期化
-3. **データエラー**: バックアップから復元
-4. **システムエラー**: 安全な状態に巻き戻し
-
----
-
-## 🧪 テストアーキテクチャ
-
-### テスト分類
-
-#### Unit Tests
-```typescript
-describe('EditorModel', () => {
-    let model: EditorModel;
-    
-    beforeEach(() => {
-        model = new EditorModel();
-    });
-    
-    it('should validate stage data correctly', () => {
-        const validData: StageData = createMockStageData();
-        expect(model.validateStageData(validData)).toBe(true);
-    });
-});
-```
-
-#### Integration Tests
-```typescript
-describe('Editor Integration', () => {
-    let controller: EditorController;
-    let view: EditorView;
-    let model: EditorModel;
-    
-    beforeEach(async () => {
-        // Setup full MVC stack
-        const canvas = createMockCanvas();
-        model = new EditorModel();
-        view = new EditorView(canvas);
-        controller = new EditorController(canvas, view, model);
-        
-        await controller.initialize();
-    });
-    
-    it('should complete full workflow', async () => {
-        // Test complete user workflow
-    });
-});
-```
-
-#### Performance Tests
-```typescript
-describe('Performance Tests', () => {
-    it('should create objects within time limit', () => {
-        const startTime = performance.now();
-        
-        for (let i = 0; i < 100; i++) {
-            controller.createObject(mockEvent);
-        }
-        
-        const endTime = performance.now();
-        expect(endTime - startTime).toBeLessThan(1000);
-    });
-});
-```
-
-### モッキング戦略
-
-```typescript
-// Canvas Mocking
-const createMockCanvas = (): HTMLCanvasElement => {
-    const canvas = document.createElement('canvas');
-    canvas.getContext = vi.fn().mockReturnValue({
-        fillRect: vi.fn(),
-        clearRect: vi.fn(),
-        // ... other context methods
-    });
-    return canvas;
-};
-
-// Fabric.js Mocking
-vi.mock('fabric', () => ({
-    Canvas: vi.fn().mockImplementation(() => ({
-        add: vi.fn(),
-        remove: vi.fn(),
-        renderAll: vi.fn(),
-        // ... other fabric methods
-    }))
-}));
-```
-
----
-
-## 🔌 拡張ポイント
-
-### Plugin System設計
-
-```typescript
-interface EditorPlugin {
-    name: string;
-    version: string;
-    initialize(api: EditorAPI): Promise<void>;
-    dispose(): Promise<void>;
-}
-
-class PluginManager {
-    private plugins = new Map<string, EditorPlugin>();
-    
-    public async loadPlugin(plugin: EditorPlugin): Promise<void>
-    public async unloadPlugin(name: string): Promise<void>
-    public getPlugin(name: string): EditorPlugin | undefined
-}
-
-// Plugin API
-interface EditorAPI {
-    // Core functionality exposed to plugins
-    createTool(tool: CustomTool): void;
-    registerEventHandler(event: string, handler: Function): void;
-    accessRenderSystem(): EditorRenderSystem;
-}
-```
-
-### Custom Tool Framework
-
-```typescript
-abstract class CustomTool {
-    abstract name: string;
-    abstract icon: string;
-    
-    abstract onSelected(): void;
-    abstract onDeselected(): void;
-    abstract onMouseDown(event: MouseEvent): void;
-    abstract onMouseMove(event: MouseEvent): void;
-    abstract onMouseUp(event: MouseEvent): void;
-}
-
-// Example: Custom Enemy Tool
-class EnemyTool extends CustomTool {
-    name = 'enemy';
-    icon = '👾';
-    
-    onMouseDown(event: MouseEvent): void {
-        const position = this.getCanvasPosition(event);
-        this.createEnemy(position);
-    }
-    
-    private createEnemy(position: Point): void {
-        // Enemy creation logic
-    }
-}
-```
-
----
-
-## 📊 監視・ログ・メトリクス
-
-### DebugHelper System
-
-```typescript
-class DebugHelper {
-    private static logLevel: LogLevel = LogLevel.INFO;
-    private static metrics = new Map<string, number>();
-    
-    public static log(message: string, data?: any): void
-    public static time<T>(label: string, operation: () => T): T
-    public static recordMetric(name: string, value: number): void
-    public static getMetrics(): Map<string, number>
-    
-    private static formatLogMessage(level: LogLevel, message: string, data?: any): string
 }
 ```
 
@@ -729,78 +316,357 @@ class DebugHelper {
 
 ```typescript
 class PerformanceMonitor {
-    private fpsCounter: FPSCounter;
-    private memoryTracker: MemoryTracker;
-    private operationProfiler: OperationProfiler;
+    private frameTimings: number[] = [];
+    private updateTimings: number[] = [];
+    private renderTimings: number[] = [];
     
-    public startMonitoring(): void
-    public stopMonitoring(): void
-    public getReport(): PerformanceReport
+    public startFrame(): void
+    public endFrame(): void
+    public measureUpdate<T>(operation: () => T): T
+    public measureRender<T>(operation: () => T): T
+    public getStats(): PerformanceStats
     
-    private measureFPS(): number
-    private trackMemoryUsage(): MemoryUsage
-    private profileOperations(): OperationProfile[]
+    private calculateAverages(): TimingAverages
+    private detectPerformanceIssues(): PerformanceWarning[]
+}
+```
+
+### Optimization Metrics
+
+| Metric | Target | Measurement Method |
+|--------|--------|--------------------|
+| FPS | 60fps stable | `requestAnimationFrame` timing |
+| Update Time | <10ms | Performance API profiling |
+| Render Time | <6ms | Canvas operation timing |
+| Memory Usage | <30MB | `performance.memory` |
+| GC Frequency | <1/sec | Memory allocation tracking |
+
+---
+
+## 🛡️ Error Handling & Recovery
+
+### Error Classification
+
+```typescript
+// Base error class
+class GameError extends Error {
+    constructor(
+        message: string,
+        public readonly code: ErrorCode,
+        public readonly recoverable: boolean = true,
+        public readonly details?: any
+    ) {
+        super(message);
+        this.name = 'GameError';
+    }
+}
+
+// Specialized errors
+class RenderError extends GameError {
+    constructor(message: string, details?: any) {
+        super(message, ERROR_CODES.RENDER_FAILED, true, details);
+    }
+}
+
+class PhysicsError extends GameError {
+    constructor(message: string, details?: any) {
+        super(message, ERROR_CODES.PHYSICS_CALCULATION_FAILED, true, details);
+    }
+}
+```
+
+### Recovery Strategies
+
+```typescript
+class ErrorRecoveryManager {
+    private errorHistory: GameError[] = [];
+    private recoveryStrategies: Map<ErrorCode, RecoveryStrategy>;
+    
+    public handleError(error: GameError): boolean
+    public addRecoveryStrategy(code: ErrorCode, strategy: RecoveryStrategy): void
+    public getErrorStats(): ErrorStatistics
+    
+    private attemptRecovery(error: GameError): boolean
+    private logError(error: GameError): void
+    private shouldRetry(error: GameError): boolean
+}
+```
+
+### Recovery Actions
+
+1. **Render Errors**: Reinitialize canvas, fallback to simple shapes
+2. **Physics Errors**: Reset player to safe position, recalculate state
+3. **Input Errors**: Reset input state, ignore malformed events
+4. **Memory Errors**: Force garbage collection, clear object pools
+
+---
+
+## 🧪 Testing Architecture
+
+### Test Organization
+
+#### Unit Tests
+```typescript
+describe('GameManager', () => {
+    let gameManager: GameManager;
+    let mockRenderSystem: MockRenderSystem;
+    
+    beforeEach(() => {
+        mockRenderSystem = new MockRenderSystem();
+        gameManager = new GameManager(mockRenderSystem);
+    });
+    
+    it('should handle player movement correctly', () => {
+        const inputState = { left: false, right: true, jump: false };
+        gameManager.handleInput(inputState);
+        gameManager.update(16.67); // One frame
+        
+        const player = gameManager.getPlayer();
+        expect(player.velocity.x).toBeGreaterThan(0);
+    });
+});
+```
+
+#### Integration Tests
+```typescript
+describe('Game Integration', () => {
+    let game: JumpingDotGame;
+    let mockCanvas: HTMLCanvasElement;
+    
+    beforeEach(async () => {
+        mockCanvas = createMockCanvas();
+        game = new JumpingDotGame();
+        await game.initWithStage(1);
+    });
+    
+    it('should complete full game cycle', async () => {
+        // Test full gameplay loop
+        game.start();
+        
+        // Simulate player reaching goal
+        const gameManager = game.getGameManager();
+        gameManager.testMovePlayerToGoal();
+        
+        // Verify game completion state
+        expect(gameManager.getGameState().gamePhase).toBe('cleared');
+    });
+});
+```
+
+#### Performance Tests
+```typescript
+describe('Performance Tests', () => {
+    it('should maintain stable framerate', async () => {
+        const performanceMonitor = new PerformanceMonitor();
+        const game = new JumpingDotGame();
+        
+        performanceMonitor.startFrame();
+        
+        // Simulate 1 second of gameplay
+        for (let i = 0; i < 60; i++) {
+            game.update(16.67);
+            game.render(1.0);
+        }
+        
+        performanceMonitor.endFrame();
+        const stats = performanceMonitor.getStats();
+        
+        expect(stats.averageFPS).toBeGreaterThanOrEqual(58);
+        expect(stats.averageUpdateTime).toBeLessThan(10);
+    });
+});
+```
+
+### Mocking Strategy
+
+```typescript
+// Canvas mocking for headless testing
+const createMockCanvas = (): HTMLCanvasElement => {
+    const canvas = document.createElement('canvas');
+    canvas.getContext = vi.fn().mockReturnValue({
+        fillRect: vi.fn(),
+        clearRect: vi.fn(),
+        drawImage: vi.fn(),
+        // ... other context methods
+    });
+    return canvas;
+};
+
+// Fabric.js mocking
+vi.mock('fabric', () => ({
+    Canvas: vi.fn().mockImplementation(() => ({
+        add: vi.fn(),
+        remove: vi.fn(),
+        renderAll: vi.fn(),
+        setViewportTransform: vi.fn(),
+        dispose: vi.fn().mockResolvedValue(undefined),
+        // ... other fabric methods
+    })),
+    Circle: vi.fn().mockImplementation(() => ({})),
+    Line: vi.fn().mockImplementation(() => ({})),
+    Polygon: vi.fn().mockImplementation(() => ({}))
+}));
+```
+
+---
+
+## 🔌 Extension Points
+
+### Custom Stage Creation
+
+```typescript
+interface CustomStageLoader {
+    loadStage(id: number): Promise<StageData>;
+    validateStage(stage: StageData): boolean;
+    saveStage(stage: StageData): Promise<void>;
+}
+
+class FileStageLoader implements CustomStageLoader {
+    async loadStage(id: number): Promise<StageData> {
+        const response = await fetch(`/stages/stage${id}.json`);
+        return response.json();
+    }
+    
+    validateStage(stage: StageData): boolean {
+        return stage.id > 0 && stage.platforms.length > 0;
+    }
+    
+    async saveStage(stage: StageData): Promise<void> {
+        // Custom save implementation
+    }
+}
+```
+
+### Custom Physics Behaviors
+
+```typescript
+interface PhysicsBehavior {
+    applyForces(player: Player, deltaTime: number): void;
+    checkCollisions(player: Player, stage: StageData): CollisionResult[];
+}
+
+class CustomGravityBehavior implements PhysicsBehavior {
+    private gravityStrength: number;
+    
+    applyForces(player: Player, deltaTime: number): void {
+        player.velocity.y += this.gravityStrength * deltaTime;
+    }
+    
+    checkCollisions(player: Player, stage: StageData): CollisionResult[] {
+        // Custom collision logic
+        return [];
+    }
 }
 ```
 
 ---
 
-## 🔄 ライフサイクル管理
+## 📊 Monitoring & Metrics
 
-### アプリケーションライフサイクル
+### Real-time Monitoring
+
+```typescript
+class GameMetrics {
+    private metrics = new Map<string, number>();
+    private eventLog: GameEvent[] = [];
+    
+    public recordMetric(name: string, value: number): void
+    public recordEvent(event: GameEvent): void
+    public getMetricSummary(): MetricSummary
+    public getEventHistory(timeRange?: TimeRange): GameEvent[]
+    
+    private aggregateMetrics(): AggregatedMetrics
+    private detectAnomalies(): Anomaly[]
+}
+```
+
+### Debug Information
+
+```typescript
+class DebugOverlay {
+    private isVisible = false;
+    private debugData: DebugData;
+    
+    public toggle(): void
+    public update(gameManager: GameManager): void
+    public render(context: CanvasRenderingContext2D): void
+    
+    private renderFPSGraph(): void
+    private renderPlayerInfo(): void
+    private renderPhysicsDebug(): void
+}
+```
+
+---
+
+## 🔄 Lifecycle Management
+
+### Application Lifecycle
 
 ```mermaid
 stateDiagram-v2
     [*] --> Initializing
-    Initializing --> Ready: initialization complete
-    Ready --> Running: user interaction
-    Running --> Ready: idle state
-    Running --> Error: error occurred
-    Error --> Ready: error recovered
-    Error --> [*]: unrecoverable error
-    Ready --> [*]: dispose called
+    Initializing --> StageSelect: systems ready
+    StageSelect --> GameLoading: stage selected
+    GameLoading --> GameRunning: stage loaded
+    GameRunning --> GamePaused: pause requested
+    GamePaused --> GameRunning: resume requested
+    GameRunning --> GameEnding: game over/cleared
+    GameEnding --> StageSelect: return to menu
+    GameEnding --> [*]: application exit
+    
+    GameRunning --> ErrorState: error occurred
+    ErrorState --> GameRunning: error recovered
+    ErrorState --> StageSelect: unrecoverable error
 ```
 
-### Component Lifecycle
+### Resource Management
 
 ```typescript
 interface Disposable {
-    dispose(): void;
+    dispose(): Promise<void>;
 }
 
-class ComponentManager {
-    private components: Disposable[] = [];
+class ResourceManager {
+    private resources: Disposable[] = [];
     
-    public register(component: Disposable): void
-    public disposeAll(): void
+    public register(resource: Disposable): void
+    public async disposeAll(): Promise<void>
+    public async disposeResource(resource: Disposable): Promise<void>
     
     private setupCleanupHooks(): void
 }
 
 // Automatic cleanup on page unload
-window.addEventListener('beforeunload', () => {
-    globalComponentManager.disposeAll();
+window.addEventListener('beforeunload', async () => {
+    await globalResourceManager.disposeAll();
 });
 ```
 
 ---
 
-## 🎯 まとめ
+## 🎯 Architecture Benefits
 
-### アーキテクチャの利点
+### Maintainability
+- **Clear separation of concerns**: Each system has distinct responsibilities
+- **Dependency inversion**: Systems depend on abstractions, not concretions
+- **Testable design**: Easy to mock and test individual components
 
-1. **保守性**: 明確な責務分離により変更影響を局所化
-2. **テスタビリティ**: 依存性注入により単体テストが容易
-3. **拡張性**: プラグインシステムにより機能追加が安全
-4. **パフォーマンス**: 最適化ポイントが明確で測定可能
-5. **堅牢性**: 包括的エラーハンドリングでシステム安定性向上
+### Performance
+- **Efficient rendering**: Object pooling and selective updates
+- **Fixed timestep**: Consistent physics regardless of framerate
+- **Memory management**: Proactive cleanup and resource management
 
-### 設計判断の根拠
+### Extensibility
+- **Plugin architecture**: Easy to add new behaviors and systems
+- **Event-driven design**: Loose coupling between components
+- **Configuration-driven**: Game parameters easily adjustable
 
-- **MVC選択理由**: UIとビジネスロジックの分離、テストの容易さ
-- **TypeScript採用**: 型安全性によるバグの早期発見
-- **Fabric.js統合**: Canvas操作の複雑さを抽象化
-- **オブジェクトプール**: メモリ効率とGC負荷軽減
-- **イベント駆動**: 疎結合な設計と拡張性確保
+### Reliability
+- **Comprehensive error handling**: Graceful degradation and recovery
+- **Type safety**: TypeScript prevents many runtime errors
+- **Thorough testing**: Unit, integration, and performance tests
 
-この設計により、高品質で保守性の高いエディターシステムを実現している ⩌⩊⩌
+---
+
+This architecture provides a solid foundation for a high-quality, maintainable jumping game while remaining flexible enough for future enhancements and customizations.

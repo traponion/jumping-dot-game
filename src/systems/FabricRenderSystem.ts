@@ -102,7 +102,9 @@ export class FabricRenderSystem {
 
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
         // オブジェクト作成を最小限に
-        this.trailShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.trailShapes) {
+            this.canvas.remove(shape);
+        }
         this.trailShapes = [];
 
         // トレイルポイント数を制限（元の設定に戻す）
@@ -138,12 +140,16 @@ export class FabricRenderSystem {
         this.renderStageTexts(stage);
     }
 
-    private renderPlatforms(platforms: any[]): void {
+    private renderPlatforms(
+        platforms: Array<{ x1: number; y1: number; x2: number; y2: number }>
+    ): void {
         // 既存のプラットフォームを削除
-        this.platformShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.platformShapes) {
+            this.canvas.remove(shape);
+        }
         this.platformShapes = [];
 
-        platforms.forEach((platform) => {
+        for (const platform of platforms) {
             // レガシーレンダラーに合わせてラインとして描画
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
@@ -157,7 +163,7 @@ export class FabricRenderSystem {
 
             this.platformShapes.push(platformLine);
             this.canvas.add(platformLine);
-        });
+        }
     }
 
     /**
@@ -166,10 +172,12 @@ export class FabricRenderSystem {
      */
     private renderMovingPlatforms(movingPlatforms: MovingPlatform[]): void {
         // Remove existing moving platform shapes
-        this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.movingPlatformShapes) {
+            this.canvas.remove(shape);
+        }
         this.movingPlatformShapes = [];
 
-        movingPlatforms.forEach((platform) => {
+        for (const platform of movingPlatforms) {
             // Render moving platforms with different color to distinguish from static ones
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
@@ -183,15 +191,17 @@ export class FabricRenderSystem {
 
             this.movingPlatformShapes.push(platformLine);
             this.canvas.add(platformLine);
-        });
+        }
     }
 
     private renderSpikes(spikes: Spike[]): void {
         // 既存のスパイクを削除
-        this.spikeShapes.forEach((shape) => this.canvas.remove(shape));
+        for (const shape of this.spikeShapes) {
+            this.canvas.remove(shape);
+        }
         this.spikeShapes = [];
 
-        spikes.forEach((spike) => {
+        for (const spike of spikes) {
             // 三角形のスパイクを作成
             const points = [
                 { x: spike.x, y: spike.y + spike.height },
@@ -209,7 +219,7 @@ export class FabricRenderSystem {
 
             this.spikeShapes.push(spikeShape);
             this.canvas.add(spikeShape);
-        });
+        }
     }
 
     private renderGoal(goal: Goal): void {
@@ -252,15 +262,48 @@ export class FabricRenderSystem {
     }
 
     private renderStageTexts(stage: StageData): void {
-            // 古いテキストオブジェクトを削除
-            this.textShapes.forEach(shape => this.canvas.remove(shape));
-            this.textShapes = [];
-    
-            // startTextを描画
-            const startText = new fabric.Text(stage.startText.text, {
-                left: stage.startText.x,
-                top: stage.startText.y,
-                fontSize: 16,
+        // 古いテキストオブジェクトを削除
+        for (const shape of this.textShapes) {
+            this.canvas.remove(shape);
+        }
+        this.textShapes = [];
+
+        // startTextを描画
+        const startText = new fabric.Text(stage.startText.text, {
+            left: stage.startText.x,
+            top: stage.startText.y,
+            fontSize: 16,
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(startText);
+        this.textShapes.push(startText);
+
+        // goalTextを描画
+        const goalText = new fabric.Text(stage.goalText.text, {
+            left: stage.goalText.x,
+            top: stage.goalText.y,
+            fontSize: 16,
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false
+        });
+        this.canvas.add(goalText);
+        this.textShapes.push(goalText);
+
+        // leftEdgeMessageを描画（逆走の皮肉文章）
+        if (stage.leftEdgeMessage) {
+            const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
+                left: stage.leftEdgeMessage.x,
+                top: stage.leftEdgeMessage.y,
+                fontSize: 14,
                 fill: 'white',
                 fontFamily: 'monospace',
                 originX: 'center',
@@ -268,62 +311,30 @@ export class FabricRenderSystem {
                 selectable: false,
                 evented: false
             });
-            this.canvas.add(startText);
-            this.textShapes.push(startText);
-    
-            // goalTextを描画
-            const goalText = new fabric.Text(stage.goalText.text, {
-                left: stage.goalText.x,
-                top: stage.goalText.y,
-                fontSize: 16,
-                fill: 'white',
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(goalText);
-            this.textShapes.push(goalText);
-    
-            // leftEdgeMessageを描画（逆走の皮肉文章）
-            if (stage.leftEdgeMessage) {
-                const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
-                    left: stage.leftEdgeMessage.x,
-                    top: stage.leftEdgeMessage.y,
-                    fontSize: 14,
-                    fill: 'white',
-                    fontFamily: 'monospace',
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false,
-                    evented: false
-                });
-                this.canvas.add(edgeMessage);
-                this.textShapes.push(edgeMessage);
-            }
-    
-            // leftEdgeSubMessageを描画
-            if (stage.leftEdgeSubMessage) {
-                const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
-                    left: stage.leftEdgeSubMessage.x,
-                    top: stage.leftEdgeSubMessage.y,
-                    fontSize: 12,
-                    fill: 'white',
-                    fontFamily: 'monospace',
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false,
-                    evented: false
-                });
-                this.canvas.add(edgeSubMessage);
-                this.textShapes.push(edgeSubMessage);
-            }
+            this.canvas.add(edgeMessage);
+            this.textShapes.push(edgeMessage);
         }
 
+        // leftEdgeSubMessageを描画
+        if (stage.leftEdgeSubMessage) {
+            const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
+                left: stage.leftEdgeSubMessage.x,
+                top: stage.leftEdgeSubMessage.y,
+                fontSize: 12,
+                fill: 'white',
+                fontFamily: 'monospace',
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+            this.canvas.add(edgeSubMessage);
+            this.textShapes.push(edgeSubMessage);
+        }
+    }
 
     renderDeathMarks(deathMarks: DeathMark[]): void {
-        deathMarks.forEach((mark) => {
+        for (const mark of deathMarks) {
             const size = 8;
 
             // ×マークを作成（ライン）
@@ -349,7 +360,7 @@ export class FabricRenderSystem {
 
             this.canvas.add(line1);
             this.canvas.add(line2);
-        });
+        }
     }
 
     renderLandingPredictions(): void {
@@ -421,7 +432,7 @@ export class FabricRenderSystem {
             (history) => currentTime - history.timestamp < HISTORY_FADE_TIME
         );
 
-        this.landingHistory.forEach((history) => {
+        for (const history of this.landingHistory) {
             const age = currentTime - history.timestamp;
             const fadeProgress = age / HISTORY_FADE_TIME;
             const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
@@ -438,11 +449,11 @@ export class FabricRenderSystem {
                 }
             );
             this.canvas.add(historyLine);
-        });
+        }
     }
 
     renderDeathAnimation(particles: Particle[]): void {
-        particles.forEach((particle) => {
+        for (const particle of particles) {
             // レガシーレンダラーに合わせてサイズ計算を修正
             const radius = particle.size || 2;
             const particleShape = new fabric.Circle({
@@ -454,7 +465,7 @@ export class FabricRenderSystem {
                 evented: false
             });
             this.canvas.add(particleShape);
-        });
+        }
     }
 
     renderClearAnimation(
@@ -464,7 +475,7 @@ export class FabricRenderSystem {
         playerY: number
     ): void {
         // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
-        particles.forEach((particle) => {
+        for (const particle of particles) {
             const particleShape = new fabric.Circle({
                 left: particle.x - 2,
                 top: particle.y - 2,
@@ -474,7 +485,7 @@ export class FabricRenderSystem {
                 evented: false
             });
             this.canvas.add(particleShape);
-        });
+        }
 
         // "CLEAR!"テキストを描画
         if (progress < 0.8) {
@@ -498,7 +509,7 @@ export class FabricRenderSystem {
 
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         // Get current camera position from transform
-        const transform = this.canvas.viewportTransform!;
+        const transform = this.canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
         const cameraX = -transform[4];
         const cameraY = -transform[5];
 
@@ -638,38 +649,51 @@ export class FabricRenderSystem {
     }
 
     async cleanup(): Promise<void> {
-            // Dispose fabric canvas to prevent memory leaks and reinitialization errors
-            if (this.canvas) {
-                try {
-                    const canvasElement = this.canvas.getElement();
-    
-                    // Clean up all shape arrays before disposing canvas
-                    this.movingPlatformShapes.forEach((shape) => this.canvas.remove(shape));
-                    this.movingPlatformShapes = [];
-                    
-                    this.textShapes.forEach((shape) => this.canvas.remove(shape));
-                    this.textShapes = [];
-    
-                    // In fabric.js v6, dispose is async and must be awaited
-                    await this.canvas.dispose();
-    
-                    // Clear canvas element to prevent reinitialization errors
-                    if (canvasElement) {
-                        const context = canvasElement.getContext('2d');
-                        if (context) {
-                            context.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                        }
-                        // Remove fabric-specific properties
-                        delete (canvasElement as any).__fabric;
-                        delete (canvasElement as any)._fabric;
-                    }
-                } catch (error) {
-                    console.log('⚠️ Canvas cleanup error (already disposed?):', error);
-                }
-                this.canvas = null as any;
-            }
-        }
+        // Dispose fabric canvas to prevent memory leaks and reinitialization errors
+        if (this.canvas) {
+            try {
+                const canvasElement = this.canvas.getElement();
 
+                // Clean up all shape arrays before disposing canvas
+                for (const shape of this.movingPlatformShapes) {
+                    this.canvas.remove(shape);
+                }
+                this.movingPlatformShapes = [];
+
+                for (const shape of this.textShapes) {
+                    this.canvas.remove(shape);
+                }
+                this.textShapes = [];
+
+                // In fabric.js v6, dispose is async and must be awaited
+                await this.canvas.dispose();
+
+                // Clear canvas element to prevent reinitialization errors
+                if (canvasElement) {
+                    const context = canvasElement.getContext('2d');
+                    if (context) {
+                        context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                    }
+                    // Remove fabric-specific properties
+                    (
+                        canvasElement as HTMLCanvasElement & {
+                            __fabric?: unknown;
+                            _fabric?: unknown;
+                        }
+                    ).__fabric = undefined;
+                    (
+                        canvasElement as HTMLCanvasElement & {
+                            __fabric?: unknown;
+                            _fabric?: unknown;
+                        }
+                    )._fabric = undefined;
+                }
+            } catch (error) {
+                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
+            }
+            this.canvas = null as unknown as fabric.Canvas;
+        }
+    }
 
     // ランディング予測システム
     setLandingPredictions(predictions: LandingPrediction[]): void {
@@ -718,22 +742,7 @@ export class FabricRenderSystem {
         this.canvas.renderAll();
     }
 
-    // エディタモード用メソッド
-    enableEditorMode(): void {
-        this.canvas.selection = true;
-        this.canvas.forEachObject((obj: fabric.Object) => {
-            obj.selectable = true;
-            obj.evented = true;
-        });
-    }
-
-    disableEditorMode(): void {
-        this.canvas.selection = false;
-        this.canvas.forEachObject((obj: fabric.Object) => {
-            obj.selectable = false;
-            obj.evented = false;
-        });
-    }
+    // Editor methods removed - Editor functionality deprecated
 
     // クリーンアップ
     dispose(): void {

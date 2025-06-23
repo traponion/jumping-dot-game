@@ -105,8 +105,9 @@ Follow conventional commits:
 ```bash
 # Code quality checks
 npm run lint         # Biome code style check
-npm run lint:lines   # ESLint 300-line limit check
-npm run lint:all     # Both Biome + ESLint checks
+npm run lint:fix     # Biome code style fix
+npm run format       # Biome code formatting
+npm run quality      # Run format + lint:fix + typecheck in sequence
 
 # Type checking
 npm run typecheck
@@ -126,12 +127,17 @@ gh run list
 ```
 
 ### Pre-push Checklist
-- [ ] Code style passes: `npm run lint`
-- [ ] **300-line limit passes: `npm run lint:lines`**
-- [ ] TypeScript compiles: `npm run typecheck`
+- [ ] Code quality passes: `npm run quality` (format + lint:fix + typecheck)
 - [ ] Tests pass locally: `npm test`
 - [ ] Coverage meets requirements: `npm run test:coverage`
 - [ ] Build succeeds: `npm run build`
+
+### Pre-commit Hooks (Automated)
+The following quality checks run automatically on `git commit`:
+- Code formatting (`npm run format`)
+- Lint fixes (`npm run lint:fix`)
+- TypeScript checking (`npm run typecheck`)
+- Test execution (`npm test`)
 
 ## Emergency Procedures
 
@@ -198,6 +204,68 @@ If issues are found in production:
 - **Task Delegation**: For large file operations, web searches, or complex searches across codebase, consider using the Task tool to delegate work to specialized agents
 - **Review File Cleanup**: Always delete review.md files after processing them completely - this is a mandatory cleanup rule
 - **Library Documentation**: When explaining frameworks, plugins, or libraries, use Context7 (mcp__context7__resolve-library-id and mcp__context7__get-library-docs) to get the most up-to-date and accurate information instead of relying on training data
+
+### Context7 Library Documentation Tool
+
+#### **When to Use Context7**
+- **Framework Configuration**: When setting up or configuring tools like Biome, ESLint, Vite, TypeScript, etc.
+- **API Reference Lookup**: When you need specific API usage examples or parameter details
+- **Version-Specific Features**: When working with specific library versions or checking compatibility
+- **Best Practices**: When implementing patterns recommended by the library maintainers
+- **Troubleshooting**: When debugging tool-specific issues or configuration problems
+
+#### **Usage Pattern**
+```typescript
+// 1. First, resolve the library ID
+mcp__context7__resolve-library-id({ libraryName: "Biome" })
+
+// 2. Then get specific documentation
+mcp__context7__get-library-docs({
+    context7CompatibleLibraryID: "/biomejs/biome",
+    topic: "linter rules configuration",  // Focus on specific topic
+    tokens: 8000  // Adjust based on needs
+})
+```
+
+#### **Benefits Over Training Data**
+- **Up-to-date Information**: Gets latest documentation and changes
+- **Accurate Configuration Examples**: Real, tested configuration snippets
+- **Version-Specific Details**: Handles library version differences
+- **Authoritative Source**: Direct from official documentation
+
+### Handover Documents for ねつき Sessions
+
+#### **Purpose**
+- Maintain continuity between ねつき sessions for complex, multi-session tasks
+- Document progress, learnings, and next steps
+- Share context that might be lost between sessions
+
+#### **Location & Format**
+- **File:** `.claude/handover_document.md`
+- **Status:** Git-ignored (temporary, not committed)
+- **Language:** Mix of Japanese (ねつき voice) and English (technical content)
+
+#### **When to Create**
+- Multi-session tasks (work spanning multiple conversations)
+- Complex bug investigations that require deep context
+- Architectural decisions that need follow-up
+- When discoveries lead to new task identification
+
+#### **Content Structure**
+1. **Completed Tasks** - What was finished, PR status
+2. **Next Priority Task** - Specific next steps with context
+3. **Technical Learnings** - Architecture insights, patterns discovered
+4. **Files Modified** - Specific changes made
+5. **Testing Notes** - Test patterns, coverage status
+6. **Messages from Current ねつき** - Personal notes and encouragement
+
+#### **Best Practices**
+- Be specific about file paths and code locations
+- Include code snippets for important patterns
+- Document WHY decisions were made, not just WHAT
+- Link to related PRs, issues, or documentation
+- Keep technical content in English for clarity
+- Maintain ねつき's friendly tone in personal sections
 
 ### Local Development Server Constraints
 - **Cannot run `npm run dev`**: Claude cannot start or manage local development servers
@@ -362,7 +430,7 @@ mcp__serena__list_memories()
   1. New utility classes (`ObjectDrawer`, `GridManager`) - standalone, easy to test
   2. New service layers (`PlayerUpdateService`, `GameLogicService`) - pure logic
   3. New renderers (`HUDRenderer`, `OverlayRenderer`) - UI components
-  4. Enhanced validation (`EditorModel` improvements)
+  4. Enhanced validation (GameModel improvements)
   5. Integration test updates for controllers/managers
 
 #### **Coverage Recovery Strategy**

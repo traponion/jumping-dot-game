@@ -8,6 +8,17 @@
 import { JumpingDotGame } from './core/Game.js';
 
 /**
+ * Window interface extension for global StageSelect access
+ * @interface Window
+ * @property {StageSelect} stageSelect - Global stage select instance
+ */
+declare global {
+    interface Window {
+        stageSelect: StageSelect;
+    }
+}
+
+/**
  * Stage Selection interface for navigation and display
  * @interface StageSelectItem
  * @property {number} id - Unique stage identifier
@@ -53,7 +64,11 @@ class StageSelect {
      */
     constructor() {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-        this.ctx = this.canvas.getContext('2d')!;
+        const context = this.canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2D rendering context from canvas');
+        }
+        this.ctx = context;
         this.boundHandleKeyboard = this.handleKeyboard.bind(this);
 
         // Listen for custom event from Game
@@ -113,7 +128,7 @@ class StageSelect {
      * @private
      * @param {KeyboardEvent} e - Keyboard event to process
      * @returns {void}
-     * @description Processes arrow keys for navigation, space/enter for selection, E for editor
+     * @description Processes arrow keys for navigation, space/enter for selection
      */
     private handleKeyboard(e: KeyboardEvent): void {
         switch (e.key) {
@@ -133,19 +148,16 @@ class StageSelect {
                 break;
 
             case ' ':
-            case 'Enter':
+            case 'Enter': {
                 e.preventDefault();
                 const selectedStage = this.stages[this.selectedStageIndex];
                 if (selectedStage) {
                     this.startStage(selectedStage.id);
                 }
                 break;
+            }
 
-            case 'e':
-            case 'E':
-                e.preventDefault();
-                window.open('/editor.html', '_blank');
-                break;
+            // Editor functionality removed
         }
     }
 
@@ -223,7 +235,7 @@ class StageSelect {
         this.ctx.fillStyle = '#aaa';
         this.ctx.font = '14px monospace';
         this.ctx.fillText(
-            '↑↓ Navigate  SPACE Select  E Editor',
+            '↑↓ Navigate  SPACE Select',
             this.canvas.width / 2,
             this.canvas.height - 50
         );
@@ -298,5 +310,5 @@ window.addEventListener('load', async () => {
     await stageSelect.init();
 
     // Export for global access
-    (window as any).stageSelect = stageSelect;
+    window.stageSelect = stageSelect;
 });

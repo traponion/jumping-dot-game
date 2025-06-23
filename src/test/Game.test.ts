@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
-// Mock Fabric Canvas for tracking objects  
-export interface MockFabricCanvas {
-    add: (obj: any) => void;
+// Mock Fabric Canvas for tracking objects
+interface MockFabricCanvas {
+    add: (obj: unknown) => void;
     clear: () => void;
-    getObjects: () => any[];
-    objects: any[];
+    getObjects: () => unknown[];
+    objects: unknown[];
     dispose: () => Promise<void>;
     getElement: () => HTMLCanvasElement;
-    remove: (obj: any) => void;
+    remove: (obj: unknown) => void;
 }
 
-export class MockRenderSystem {
+class MockRenderSystem {
     private mockCanvas: MockFabricCanvas;
 
     constructor(_canvas: HTMLCanvasElement) {
@@ -20,15 +20,19 @@ export class MockRenderSystem {
     }
 
     private createMockCanvas(): MockFabricCanvas {
-        const objects: any[] = [];
+        const objects: unknown[] = [];
         return {
             objects: objects,
-            clear: () => { objects.length = 0; },
-            add: (obj: any) => { objects.push(obj); },
+            clear: () => {
+                objects.length = 0;
+            },
+            add: (obj: unknown) => {
+                objects.push(obj);
+            },
             getObjects: () => objects,
             dispose: vi.fn().mockResolvedValue(void 0),
-            getElement: () => ({} as HTMLCanvasElement),
-            remove: (obj: any) => {
+            getElement: () => ({}) as HTMLCanvasElement,
+            remove: (obj: unknown) => {
                 const index = objects.indexOf(obj);
                 if (index > -1) objects.splice(index, 1);
             }
@@ -56,10 +60,9 @@ export class MockRenderSystem {
     applyCameraTransform = vi.fn();
     restoreCameraTransform = vi.fn();
     renderAll = vi.fn();
-    enableEditorMode = vi.fn();
-    disableEditorMode = vi.fn();
+    // Editor methods removed - Editor functionality deprecated
     dispose = vi.fn();
-    
+
     // Additional methods found in FabricRenderSystem
     renderDeathMarks = vi.fn();
     renderTrail = vi.fn();
@@ -70,7 +73,7 @@ export class MockRenderSystem {
     addLandingHistory = vi.fn();
     cleanupLandingHistory = vi.fn();
     updateLandingPredictionAnimations = vi.fn();
-    
+
     cleanup = vi.fn(async () => {
         this.mockCanvas.clear();
     });
@@ -78,7 +81,7 @@ export class MockRenderSystem {
 
 // Mock RenderSystemFactory to return MockRenderSystem
 vi.mock('../systems/RenderSystemFactory.js', () => ({
-    createRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
+    createGameRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
 }));
 
 // Mock window.dispatchEvent for CustomEvent testing
@@ -88,13 +91,13 @@ if (typeof window !== 'undefined' && !window.dispatchEvent) {
 
 // Mock CustomEvent if not available
 if (typeof globalThis.CustomEvent === 'undefined') {
-    globalThis.CustomEvent = class CustomEvent extends Event {
-        detail: any;
+    (globalThis as any).CustomEvent = class CustomEvent extends Event {
+        detail: unknown;
         constructor(type: string, eventInitDict?: CustomEventInit) {
             super(type, eventInitDict);
             this.detail = eventInitDict?.detail;
         }
-    } as any;
+    };
 }
 
 // Global type declarations for test environment
@@ -185,7 +188,7 @@ describe('JumpingDotGame', () => {
             if (id === 'timer') return mockTimer;
             if (id === 'score') return mockScore;
             return null;
-        }) as any;
+        }) as typeof document.getElementById;
 
         // Extend existing window instead of replacing it
         global.window = {
@@ -647,9 +650,9 @@ describe('JumpingDotGame', () => {
         it('should not leak resources on multiple restarts', async () => {
             // First initialization
             await game.init();
-            
+
             const gameManager = (game as any).gameManager;
-            const initialInputManager = gameManager.inputManager;
+            const initialInputManager = (gameManager as any).inputManager;
             const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
 
             // Second initialization (restart)
@@ -657,9 +660,9 @@ describe('JumpingDotGame', () => {
 
             // Assert - old InputManager's cleanup should have been called
             expect(cleanupSpy).toHaveBeenCalledOnce();
-            
+
             // Verify that we get a new InputManager instance (proper system recreation)
-            const newInputManager = gameManager.inputManager;
+            const newInputManager = (gameManager as any).inputManager;
             expect(newInputManager).not.toBe(initialInputManager);
         });
     });

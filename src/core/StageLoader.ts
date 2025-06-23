@@ -294,10 +294,14 @@ export class StageLoader {
         return (
             typeof goal === 'object' &&
             goal !== null &&
-            typeof (goal as any).x === 'number' &&
-            typeof (goal as any).y === 'number' &&
-            typeof (goal as any).width === 'number' &&
-            typeof (goal as any).height === 'number'
+            'x' in goal &&
+            'y' in goal &&
+            'width' in goal &&
+            'height' in goal &&
+            typeof (goal as Record<string, unknown>).x === 'number' &&
+            typeof (goal as Record<string, unknown>).y === 'number' &&
+            typeof (goal as Record<string, unknown>).width === 'number' &&
+            typeof (goal as Record<string, unknown>).height === 'number'
         );
     }
 
@@ -313,9 +317,12 @@ export class StageLoader {
         return (
             typeof textObj === 'object' &&
             textObj !== null &&
-            typeof (textObj as any).x === 'number' &&
-            typeof (textObj as any).y === 'number' &&
-            typeof (textObj as any).text === 'string'
+            'x' in textObj &&
+            'y' in textObj &&
+            'text' in textObj &&
+            typeof (textObj as Record<string, unknown>).x === 'number' &&
+            typeof (textObj as Record<string, unknown>).y === 'number' &&
+            typeof (textObj as Record<string, unknown>).text === 'string'
         );
     }
 

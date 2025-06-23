@@ -12,7 +12,7 @@ import { getGameStore } from '../stores/GameZustandStore.js';
  * @interface GameController
  * @description Defines the methods that a game controller must implement to work with InputManager
  */
-interface GameController {
+export interface GameController {
     /** Start a new game */
     startGame(): void;
     /** Initialize or restart the game */
@@ -166,7 +166,7 @@ export class InputManager {
      * @description Provides real-time input state checking for continuous actions like movement
      */
     isPressed(action: string): boolean {
-        return this.inputs?.state[action] || false;
+        return this.inputs?.state[action] ?? false;
     }
 
     /**

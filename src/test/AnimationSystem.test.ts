@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import type { Player } from '../types/GameTypes.js';
+import type { DeathMark, Player } from '../types/GameTypes.js';
 
 // Mock GameZustandStore
 const mockGameStore = {
     addDeathMark: vi.fn(),
     runtime: {
-        deathMarks: [] as any[]
+        deathMarks: [] as DeathMark[]
     }
 };
 
@@ -179,9 +179,21 @@ describe('AnimationSystem', () => {
             animationSystem.addDeathMark(200, 300);
 
             expect(mockGameStore.addDeathMark).toHaveBeenCalledTimes(3);
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, { x: 100, y: 200, timestamp: 1000 });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, { x: 150, y: 250, timestamp: 1000 });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, { x: 200, y: 300, timestamp: 1000 });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, {
+                x: 100,
+                y: 200,
+                timestamp: 1000
+            });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, {
+                x: 150,
+                y: 250,
+                timestamp: 1000
+            });
+            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, {
+                x: 200,
+                y: 300,
+                timestamp: 1000
+            });
         });
     });
 

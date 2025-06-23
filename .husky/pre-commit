@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run Biome format and lint with auto-fix
+npm run format
+npm run lint:fix
+
+# Stage the automatically fixed files
+git add .
+
+# Run typecheck to ensure no type errors
+npm run typecheck
+
+# Run tests to ensure nothing is broken
+npm test
