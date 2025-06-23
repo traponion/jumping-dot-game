@@ -30,7 +30,7 @@ describe('GameManager render with GameUI integration', () => {
                 options: ['RESTART STAGE', 'STAGE SELECT'],
                 selectedIndex: 0
             })
-        } as GameUI;
+        } as any;
 
         // Create mock render system with all required methods
         mockRenderSystem = {
@@ -79,8 +79,9 @@ describe('GameManager render with GameUI integration', () => {
             expect(mockRenderSystem.renderAll).toHaveBeenCalled();
 
             // Verify call order: renderGameOverMenu before renderAll
-            const renderMenuCall = mockRenderSystem.renderGameOverMenu.mock.invocationCallOrder[0];
-            const renderAllCall = mockRenderSystem.renderAll.mock.invocationCallOrder[0];
+            const renderMenuCall = (mockRenderSystem.renderGameOverMenu as any).mock
+                .invocationCallOrder[0];
+            const renderAllCall = (mockRenderSystem.renderAll as any).mock.invocationCallOrder[0];
             expect(renderMenuCall).toBeLessThan(renderAllCall);
         });
 

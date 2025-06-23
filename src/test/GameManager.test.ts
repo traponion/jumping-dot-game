@@ -12,7 +12,7 @@ vi.mock('../core/StageLoader');
 
 // Mock RenderSystemFactory to return a mock render system
 vi.mock('../systems/RenderSystemFactory', () => ({
-    createRenderSystem: vi.fn(() => ({
+    createGameRenderSystem: vi.fn(() => ({
         addLandingHistory: vi.fn(),
         setLandingPredictions: vi.fn(),
         render: vi.fn(),
@@ -31,45 +31,54 @@ describe('GameManager', () => {
     beforeEach(() => {
         // Create canvas and GameManager
         canvas = document.createElement('canvas');
-        gameManager = new GameManager(canvas, {});
+        gameManager = new GameManager(canvas, {
+            startGame: vi.fn(),
+            init: vi.fn(),
+            returnToStageSelect: vi.fn(),
+            handleGameOverNavigation: vi.fn(),
+            handleGameOverSelection: vi.fn(),
+            getGameState: vi
+                .fn()
+                .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 })
+        });
 
         // Get mock instances
-        mockCollisionSystem = (gameManager as unknown as Record<string, unknown>).collisionSystem;
-        mockAnimationSystem = (gameManager as unknown as Record<string, unknown>).animationSystem;
-        mockPlayerSystem = (gameManager as unknown as Record<string, unknown>).playerSystem;
-        mockPhysicsSystem = (gameManager as unknown as Record<string, unknown>).physicsSystem;
+        mockCollisionSystem = (gameManager as any).collisionSystem;
+        mockAnimationSystem = (gameManager as any).animationSystem;
+        mockPlayerSystem = (gameManager as any).playerSystem;
+        mockPhysicsSystem = (gameManager as any).physicsSystem;
 
         // Setup InputManager mock
-        const mockInputManager = (gameManager as unknown as Record<string, unknown>).inputManager;
-        mockInputManager.getMovementState = vi.fn().mockReturnValue({
+        const mockInputManager = (gameManager as any).inputManager;
+        (mockInputManager as any).getMovementState = vi.fn().mockReturnValue({
             ArrowLeft: false,
             ArrowRight: false
         });
 
         // Setup basic mocks
-        mockCollisionSystem.checkSpikeCollisions = vi.fn().mockReturnValue(false);
-        mockCollisionSystem.checkGoalCollision = vi.fn().mockReturnValue(false);
-        mockCollisionSystem.checkHoleCollision = vi.fn().mockReturnValue(false);
-        mockCollisionSystem.checkBoundaryCollision = vi.fn().mockReturnValue(false);
-        mockCollisionSystem.handlePlatformCollisions = vi.fn().mockReturnValue(null);
+        (mockCollisionSystem as any).checkSpikeCollisions = vi.fn().mockReturnValue(false);
+        (mockCollisionSystem as any).checkGoalCollision = vi.fn().mockReturnValue(false);
+        (mockCollisionSystem as any).checkHoleCollision = vi.fn().mockReturnValue(false);
+        (mockCollisionSystem as any).checkBoundaryCollision = vi.fn().mockReturnValue(false);
+        (mockCollisionSystem as any).handlePlatformCollisions = vi.fn().mockReturnValue(null);
 
-        mockPlayerSystem.resetJumpTimer = vi.fn();
-        mockPlayerSystem.update = vi.fn();
-        mockPlayerSystem.clearTrail = vi.fn();
-        mockPhysicsSystem.update = vi.fn();
-        mockPhysicsSystem.getPhysicsConstants = vi.fn().mockReturnValue({
+        (mockPlayerSystem as any).resetJumpTimer = vi.fn();
+        (mockPlayerSystem as any).update = vi.fn();
+        (mockPlayerSystem as any).clearTrail = vi.fn();
+        (mockPhysicsSystem as any).update = vi.fn();
+        (mockPhysicsSystem as any).getPhysicsConstants = vi.fn().mockReturnValue({
             gravity: 0.5,
             jumpForce: -10,
             autoJumpInterval: 10,
             moveSpeed: 5,
             gameSpeed: 1
         });
-        mockAnimationSystem.update = vi.fn();
-        mockAnimationSystem.updateClearAnimation = vi.fn();
-        mockAnimationSystem.updateDeathAnimation = vi.fn();
-        mockAnimationSystem.addDeathMark = vi.fn();
-        mockAnimationSystem.startDeathAnimation = vi.fn();
-        mockAnimationSystem.startClearAnimation = vi.fn();
+        (mockAnimationSystem as any).update = vi.fn();
+        (mockAnimationSystem as any).updateClearAnimation = vi.fn();
+        (mockAnimationSystem as any).updateDeathAnimation = vi.fn();
+        (mockAnimationSystem as any).addDeathMark = vi.fn();
+        (mockAnimationSystem as any).startDeathAnimation = vi.fn();
+        (mockAnimationSystem as any).startClearAnimation = vi.fn();
 
         // Reset store
         getGameStore().reset();
@@ -140,7 +149,7 @@ describe('GameManager', () => {
 
         it('should handle player death on spike collision', () => {
             // Arrange
-            mockCollisionSystem.checkSpikeCollisions.mockReturnValue(true);
+            (mockCollisionSystem as any).checkSpikeCollisions.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -157,7 +166,7 @@ describe('GameManager', () => {
 
         it('should handle goal reached on goal collision', () => {
             // Arrange
-            mockCollisionSystem.checkGoalCollision.mockReturnValue(true);
+            (mockCollisionSystem as any).checkGoalCollision.mockReturnValue(true);
             const handleGoalReachedSpy = vi.spyOn(
                 gameManager as unknown as { handleGoalReached: () => void },
                 'handleGoalReached'
@@ -172,7 +181,7 @@ describe('GameManager', () => {
 
         it('should reset jump timer when platform collision occurs', () => {
             // Arrange
-            mockCollisionSystem.handlePlatformCollisions.mockReturnValue({
+            (mockCollisionSystem as any).handlePlatformCollisions.mockReturnValue({
                 grounded: true,
                 y: 400
             });
@@ -181,18 +190,18 @@ describe('GameManager', () => {
             gameManager.update(16.67);
 
             // Assert
-            expect(mockPlayerSystem.resetJumpTimer).toHaveBeenCalled();
+            expect((mockPlayerSystem as any).resetJumpTimer).toHaveBeenCalled();
         });
 
         it('should not reset jump timer when no platform collision', () => {
             // Arrange
-            mockCollisionSystem.handlePlatformCollisions.mockReturnValue(null);
+            (mockCollisionSystem as any).handlePlatformCollisions.mockReturnValue(null);
 
             // Act
             gameManager.update(16.67);
 
             // Assert
-            expect(mockPlayerSystem.resetJumpTimer).not.toHaveBeenCalled();
+            expect((mockPlayerSystem as any).resetJumpTimer).not.toHaveBeenCalled();
         });
     });
 
@@ -203,7 +212,7 @@ describe('GameManager', () => {
 
         it('should handle player death when falling into hole', () => {
             // Arrange
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(true);
+            (mockCollisionSystem as any).checkHoleCollision.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -223,7 +232,7 @@ describe('GameManager', () => {
 
         it('should handle player death when hitting boundary', () => {
             // Arrange
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(true);
+            (mockCollisionSystem as any).checkBoundaryCollision.mockReturnValue(true);
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -243,8 +252,8 @@ describe('GameManager', () => {
 
         it('should not handle death when no boundary collision', () => {
             // Arrange
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(false);
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
+            (mockCollisionSystem as any).checkHoleCollision.mockReturnValue(false);
+            (mockCollisionSystem as any).checkBoundaryCollision.mockReturnValue(false);
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -310,12 +319,10 @@ describe('GameManager', () => {
             // Arrange
             getGameStore().startGame();
             const startDeathAnimationSpy = vi.fn();
-            mockAnimationSystem.startDeathAnimation = startDeathAnimationSpy;
+            (mockAnimationSystem as any).startDeathAnimation = startDeathAnimationSpy;
 
             // Act
-            (gameManager as unknown as Record<string, unknown>).handlePlayerDeath(
-                'Test death message'
-            );
+            (gameManager as any).handlePlayerDeath('Test death message');
 
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
@@ -328,10 +335,10 @@ describe('GameManager', () => {
             // Arrange
             getGameStore().startGame();
             const startClearAnimationSpy = vi.fn();
-            mockAnimationSystem.startClearAnimation = startClearAnimationSpy;
+            (mockAnimationSystem as any).startClearAnimation = startClearAnimationSpy;
 
             // Act
-            (gameManager as unknown as Record<string, unknown>).handleGoalReached();
+            (gameManager as any).handleGoalReached();
 
             // Assert
             expect(getGameStore().isGameOver()).toBe(true);
@@ -353,7 +360,7 @@ describe('GameManager', () => {
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
             const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
-            mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
+            (mockStageLoader as any).loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
 
             // Act
             await gameManager.loadStage(1);
@@ -376,7 +383,7 @@ describe('GameManager', () => {
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
             const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
-            mockStageLoader.loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
+            (mockStageLoader as any).loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
             const defaultTimeLimit = getGameStore().game.timeLimit;
 
             // Act
@@ -409,9 +416,9 @@ describe('GameManager', () => {
 
             // Assert
             expect(updateSystemsSpy).toHaveBeenCalledWith(16.67);
-            expect(mockPhysicsSystem.update).toHaveBeenCalledWith(16.67);
-            expect(mockAnimationSystem.updateClearAnimation).toHaveBeenCalled();
-            expect(mockAnimationSystem.updateDeathAnimation).toHaveBeenCalled();
+            expect((mockPhysicsSystem as any).update).toHaveBeenCalledWith(16.67);
+            expect((mockAnimationSystem as any).updateClearAnimation).toHaveBeenCalled();
+            expect((mockAnimationSystem as any).updateDeathAnimation).toHaveBeenCalled();
         });
     });
 
@@ -449,7 +456,7 @@ describe('GameManager', () => {
             };
             const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             // Return a deep copy each time to avoid reference sharing
-            mockStageLoader.loadStageWithFallback = vi
+            (mockStageLoader as any).loadStageWithFallback = vi
                 .fn()
                 .mockImplementation(() => Promise.resolve(JSON.parse(JSON.stringify(mockStage))));
 

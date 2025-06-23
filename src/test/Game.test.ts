@@ -60,8 +60,7 @@ class MockRenderSystem {
     applyCameraTransform = vi.fn();
     restoreCameraTransform = vi.fn();
     renderAll = vi.fn();
-    enableEditorMode = vi.fn();
-    disableEditorMode = vi.fn();
+    // Editor methods removed - Editor functionality deprecated
     dispose = vi.fn();
 
     // Additional methods found in FabricRenderSystem
@@ -82,7 +81,7 @@ class MockRenderSystem {
 
 // Mock RenderSystemFactory to return MockRenderSystem
 vi.mock('../systems/RenderSystemFactory.js', () => ({
-    createRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
+    createGameRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
 }));
 
 // Mock window.dispatchEvent for CustomEvent testing
@@ -92,13 +91,13 @@ if (typeof window !== 'undefined' && !window.dispatchEvent) {
 
 // Mock CustomEvent if not available
 if (typeof globalThis.CustomEvent === 'undefined') {
-    globalThis.CustomEvent = class CustomEvent extends Event {
+    (globalThis as any).CustomEvent = class CustomEvent extends Event {
         detail: unknown;
         constructor(type: string, eventInitDict?: CustomEventInit) {
             super(type, eventInitDict);
             this.detail = eventInitDict?.detail;
         }
-    } as unknown;
+    };
 }
 
 // Global type declarations for test environment
@@ -189,7 +188,7 @@ describe('JumpingDotGame', () => {
             if (id === 'timer') return mockTimer;
             if (id === 'score') return mockScore;
             return null;
-        }) as unknown;
+        }) as typeof document.getElementById;
 
         // Extend existing window instead of replacing it
         global.window = {
@@ -199,7 +198,7 @@ describe('JumpingDotGame', () => {
             requestAnimationFrame: vi.fn(),
             cancelAnimationFrame: vi.fn(),
             document: global.document
-        } as unknown;
+        } as any;
 
         // Mock global requestAnimationFrame and cancelAnimationFrame
         globalThis.requestAnimationFrame = vi.fn();
@@ -213,7 +212,7 @@ describe('JumpingDotGame', () => {
 
         global.performance = {
             now: vi.fn(() => Date.now())
-        } as unknown;
+        } as any;
 
         // Create game instance
         game = new JumpingDotGame();
@@ -652,8 +651,8 @@ describe('JumpingDotGame', () => {
             // First initialization
             await game.init();
 
-            const gameManager = (game as unknown as { gameManager: unknown }).gameManager;
-            const initialInputManager = gameManager.inputManager;
+            const gameManager = (game as any).gameManager;
+            const initialInputManager = (gameManager as any).inputManager;
             const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
 
             // Second initialization (restart)
@@ -663,7 +662,7 @@ describe('JumpingDotGame', () => {
             expect(cleanupSpy).toHaveBeenCalledOnce();
 
             // Verify that we get a new InputManager instance (proper system recreation)
-            const newInputManager = gameManager.inputManager;
+            const newInputManager = (gameManager as any).inputManager;
             expect(newInputManager).not.toBe(initialInputManager);
         });
     });

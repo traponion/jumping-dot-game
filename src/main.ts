@@ -128,7 +128,7 @@ class StageSelect {
      * @private
      * @param {KeyboardEvent} e - Keyboard event to process
      * @returns {void}
-     * @description Processes arrow keys for navigation, space/enter for selection, E for editor
+     * @description Processes arrow keys for navigation, space/enter for selection
      */
     private handleKeyboard(e: KeyboardEvent): void {
         switch (e.key) {
@@ -157,11 +157,7 @@ class StageSelect {
                 break;
             }
 
-            case 'e':
-            case 'E':
-                e.preventDefault();
-                window.open('/editor.html', '_blank');
-                break;
+            // Editor functionality removed
         }
     }
 
@@ -239,7 +235,7 @@ class StageSelect {
         this.ctx.fillStyle = '#aaa';
         this.ctx.font = '14px monospace';
         this.ctx.fillText(
-            '↑↓ Navigate  SPACE Select  E Editor',
+            '↑↓ Navigate  SPACE Select',
             this.canvas.width / 2,
             this.canvas.height - 50
         );

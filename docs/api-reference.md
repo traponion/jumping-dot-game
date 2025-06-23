@@ -1,370 +1,405 @@
-# 🔧 API Reference - Jumping Dot Game Editor
+# 🔧 API Reference - Jumping Dot Game
 
-## 📋 目次
-- [EditorController](#editorcontroller)
-- [EditorView](#editorview)
-- [EditorModel](#editormodel)
-- [EditorRenderSystem](#editorrendersystem)
+## 📋 Table of Contents
+- [JumpingDotGame](#jumpingdotgame)
+- [GameManager](#gamemanager)
+- [GameLoop](#gameloop)
+- [InputManager](#inputmanager)
+- [FabricRenderSystem](#fabricrendersystem)
 - [Types & Interfaces](#types--interfaces)
 - [Utilities](#utilities)
 - [Error Handling](#error-handling)
 
 ---
 
-## EditorController
+## JumpingDotGame
 
-メインコントローラークラス。ユーザーアクションの調整とビジネスロジックを担当。
+Main game class responsible for high-level game orchestration and lifecycle management.
+
+### Constructor
+```typescript
+constructor()
+```
+
+### Public Methods
+
+#### `initWithStage(stageId: number): Promise<void>`
+Initializes the game with a specific stage.
+
+```typescript
+const game = new JumpingDotGame();
+await game.initWithStage(1);
+```
+
+**Parameters:**
+- `stageId`: Stage identifier (1 for basic tutorial, 2 for moving platforms)
+
+#### `start(): void`
+Starts the game loop and gameplay.
+
+```typescript
+game.start();
+```
+
+#### `pause(): void`
+Pauses the game while preserving state.
+
+```typescript
+game.pause();
+```
+
+#### `resume(): void`
+Resumes the game from paused state.
+
+```typescript
+game.resume();
+```
+
+#### `cleanup(): Promise<void>`
+Cleans up resources and disposes of systems.
+
+```typescript
+await game.cleanup();
+```
+
+### Extended API (Internal/Testing)
+
+#### `getGameManager(): GameManager`
+Returns the game manager instance.
+
+```typescript
+const gameManager = game.getGameManager();
+const player = gameManager.getPlayer();
+```
+
+#### `getInputManager(): InputManager`
+Returns the input manager instance.
+
+```typescript
+const inputManager = game.getInputManager();
+const currentInput = inputManager.getCurrentInputState();
+```
+
+---
+
+## GameManager
+
+Core game logic and state management system.
+
+### Public Methods
+
+#### `update(deltaTime: number): void`
+Updates game physics and logic for one frame.
+
+```typescript
+gameManager.update(16.67); // ~60 FPS frame time
+```
+
+**Parameters:**
+- `deltaTime`: Time elapsed since last update in milliseconds
+
+#### `handleInput(inputState: InputState): void`
+Processes input state and updates player accordingly.
+
+```typescript
+const inputState = {
+    left: false,
+    right: true,
+    jump: true,
+    restart: false
+};
+gameManager.handleInput(inputState);
+```
+
+#### `getPlayer(): Player`
+Returns current player state.
+
+```typescript
+const player = gameManager.getPlayer();
+console.log(`Player position: ${player.x}, ${player.y}`);
+console.log(`Player velocity: ${player.velocity.x}, ${player.velocity.y}`);
+```
+
+#### `getCurrentStage(): StageData`
+Returns current stage configuration.
+
+```typescript
+const stage = gameManager.getCurrentStage();
+console.log(`Stage: ${stage.name} (${stage.platforms.length} platforms)`);
+```
+
+#### `getCamera(): Camera`
+Returns current camera state.
+
+```typescript
+const camera = gameManager.getCamera();
+console.log(`Camera position: ${camera.x}, ${camera.y}`);
+```
+
+#### `getGameState(): GameState`
+Returns comprehensive game state.
+
+```typescript
+const gameState = gameManager.getGameState();
+console.log(`Score: ${gameState.score}, Deaths: ${gameState.deathCount}`);
+```
+
+### Testing Methods
+
+#### `testMovePlayerToGoal(): void`
+Instantly moves player to goal position (testing only).
+
+```typescript
+gameManager.testMovePlayerToGoal();
+```
+
+#### `testResetPlayer(): void`
+Resets player to starting position (testing only).
+
+```typescript
+gameManager.testResetPlayer();
+```
+
+---
+
+## GameLoop
+
+Fixed timestep game loop with interpolation for smooth rendering.
 
 ### Constructor
 ```typescript
 constructor(
-    canvas: HTMLCanvasElement,
-    view: IEditorView,
-    model: IEditorModel
+    updateCallback: (deltaTime: number) => void,
+    renderCallback: (interpolation: number) => void
 )
 ```
 
 ### Public Methods
 
-#### `initialize(): Promise<void>`
-エディターを初期化します。
+#### `start(): void`
+Starts the game loop.
 
 ```typescript
-const controller = new EditorController(canvas, view, model);
-await controller.initialize();
+const loop = new GameLoop(
+    (dt) => gameManager.update(dt),
+    (interp) => renderSystem.render(interp)
+);
+loop.start();
 ```
 
-#### `selectTool(tool: string): void`
-編集ツールを選択します。
+#### `stop(): void`
+Stops the game loop.
 
 ```typescript
-controller.selectTool(EDITOR_TOOLS.PLATFORM);
-controller.selectTool(EDITOR_TOOLS.SPIKE);
+loop.stop();
 ```
 
-**Parameters:**
-- `tool`: ツール名（`select` | `platform` | `spike` | `goal` | `text`）
-
-#### `createNewStage(): void`
-新しいステージを作成します。
+#### `getStats(): LoopStats`
+Returns performance statistics.
 
 ```typescript
-controller.createNewStage();
+const stats = loop.getStats();
+console.log(`FPS: ${stats.fps}, Frame time: ${stats.frameTime}ms`);
 ```
 
-#### `loadStage(stageId?: number): Promise<void>`
-指定されたIDのステージを読み込みます。
+### Loop Configuration
+
+#### `setTargetFPS(fps: number): void`
+Sets target frame rate (default: 60).
 
 ```typescript
-await controller.loadStage(1);
-// または対話的に選択
-await controller.loadStage();
+loop.setTargetFPS(30); // Lower FPS for battery saving
 ```
 
-#### `saveStage(): void`
-現在のステージをJSONファイルとして保存します。
+#### `setMaxFrameTime(ms: number): void`
+Sets maximum allowed frame time to prevent spiral of death.
 
 ```typescript
-controller.saveStage();
-```
-
-#### `testStage(): void`
-ステージをテストモードで開きます。
-
-```typescript
-controller.testStage();
-```
-
-#### `deleteSelectedObject(): void`
-選択されたオブジェクトを削除します。
-
-```typescript
-controller.deleteSelectedObject();
-```
-
-#### `duplicateSelectedObject(): void`
-選択されたオブジェクトを複製します。
-
-```typescript
-controller.duplicateSelectedObject();
-```
-
-#### `toggleGrid(): void`
-グリッド表示を切り替えます。
-
-```typescript
-controller.toggleGrid();
-```
-
-#### `toggleSnap(): void`
-グリッドスナップ機能を切り替えます。
-
-```typescript
-controller.toggleSnap();
-```
-
-### Extended API (テスト・統合用)
-
-#### `createObject(event: any): void`
-指定位置にオブジェクトを作成します。
-
-```typescript
-const event = {
-    absolutePointer: { x: 100, y: 200 },
-    pointer: { x: 100, y: 200 }
-};
-controller.createObject(event);
-```
-
-#### `startPlatformDrawing(event: any): void`
-プラットフォーム描画を開始します。
-
-```typescript
-controller.startPlatformDrawing({
-    absolutePointer: { x: 50, y: 100 },
-    pointer: { x: 50, y: 100 }
-});
-```
-
-#### `finishPlatformDrawing(event: any): void`
-プラットフォーム描画を完了します。
-
-```typescript
-controller.finishPlatformDrawing({
-    absolutePointer: { x: 150, y: 100 },
-    pointer: { x: 150, y: 100 }
-});
-```
-
-#### `getFabricCanvas(): fabric.Canvas`
-Fabric.jsキャンバスインスタンスを取得します。
-
-```typescript
-const fabricCanvas = controller.getFabricCanvas();
+loop.setMaxFrameTime(250); // 250ms max
 ```
 
 ---
 
-## EditorView
+## InputManager
 
-UI管理を担当するViewクラス。
+Keyboard input handling and state management.
 
 ### Constructor
 ```typescript
-constructor(canvas: HTMLCanvasElement)
+constructor()
 ```
 
 ### Public Methods
 
 #### `initialize(): void`
-ビューを初期化します。
+Sets up event listeners for keyboard input.
 
 ```typescript
-view.initialize();
+const inputManager = new InputManager();
+inputManager.initialize();
 ```
 
-#### `setController(controller: IEditorController): void`
-コントローラー参照を設定します。
+#### `getCurrentInputState(): InputState`
+Returns current input state.
 
 ```typescript
-view.setController(controller);
-```
-
-#### `updateToolSelection(tool: string): void`
-ツール選択UIを更新します。
-
-```typescript
-view.updateToolSelection(EDITOR_TOOLS.SPIKE);
-```
-
-#### `updateObjectCount(count: number): void`
-オブジェクト数表示を更新します。
-
-```typescript
-view.updateObjectCount(15);
-```
-
-#### `updateMouseCoordinates(x: number, y: number): void`
-マウス座標表示を更新します。
-
-```typescript
-view.updateMouseCoordinates(120, 340);
-```
-
-#### `showObjectProperties(object: FabricObjectWithData | null): void`
-オブジェクトプロパティパネルを表示します。
-
-```typescript
-view.showObjectProperties(selectedObject);
-```
-
-#### `showErrorMessage(message: string): void`
-エラーメッセージを表示します。
-
-```typescript
-view.showErrorMessage('保存に失敗しました');
-```
-
-#### `showSuccessMessage(message: string): void`
-成功メッセージを表示します。
-
-```typescript
-view.showSuccessMessage('ステージが保存されました');
-```
-
----
-
-## EditorModel
-
-データ管理を担当するModelクラス。
-
-### Public Methods
-
-#### `getCurrentStage(): StageData | null`
-現在のステージデータを取得します。
-
-```typescript
-const stage = model.getCurrentStage();
-if (stage) {
-    console.log(`Stage: ${stage.name} (ID: ${stage.id})`);
+const input = inputManager.getCurrentInputState();
+if (input.jump) {
+    console.log('Jump key is pressed');
 }
 ```
 
-#### `setCurrentStage(stageData: StageData): void`
-現在のステージを設定します。
+#### `dispose(): void`
+Removes event listeners and cleans up.
 
 ```typescript
-const newStage: StageData = {
-    id: 1,
-    name: 'Test Stage',
-    platforms: [],
-    spikes: [],
-    goal: { x: 400, y: 300, width: 40, height: 50 },
-    startText: { x: 50, y: 450, text: 'START' },
-    goalText: { x: 420, y: 280, text: 'GOAL' }
-};
-model.setCurrentStage(newStage);
+inputManager.dispose();
 ```
 
-#### `getEditorState(): EditorState`
-エディターの状態を取得します。
+### Input State Structure
 
 ```typescript
-const state = model.getEditorState();
-console.log(`Selected tool: ${state.selectedTool}`);
-console.log(`Grid enabled: ${state.gridEnabled}`);
-```
-
-#### `updateEditorState(updates: Partial<EditorState>): void`
-エディター状態を更新します。
-
-```typescript
-model.updateEditorState({
-    selectedTool: EDITOR_TOOLS.PLATFORM,
-    gridEnabled: false
-});
-```
-
-#### `validateStageData(stageData: StageData): boolean`
-ステージデータの妥当性を検証します。
-
-```typescript
-if (model.validateStageData(stageData)) {
-    console.log('Valid stage data');
-} else {
-    console.error('Invalid stage data');
-}
-```
-
-#### `exportStageAsJson(): string`
-ステージをJSON文字列として出力します。
-
-```typescript
-const json = model.exportStageAsJson();
-localStorage.setItem('savedStage', json);
-```
-
-#### `importStageFromJson(json: string): StageData`
-JSON文字列からステージをインポートします。
-
-```typescript
-const json = localStorage.getItem('savedStage');
-if (json) {
-    const stage = model.importStageFromJson(json);
-    model.setCurrentStage(stage);
+interface InputState {
+    left: boolean;      // A or ← arrow key
+    right: boolean;     // D or → arrow key  
+    jump: boolean;      // W, ↑ arrow, or Space key
+    restart: boolean;   // R key
 }
 ```
 
 ---
 
-## EditorRenderSystem
+## FabricRenderSystem
 
-Fabric.js統合レンダリングシステム。
+Fabric.js-based rendering system for game graphics.
 
 ### Constructor
 ```typescript
-constructor(
-    canvasElement: HTMLCanvasElement,
-    callbacks: EditorCallbacks = {}
-)
+constructor(canvasElement: HTMLCanvasElement)
 ```
 
 ### Public Methods
 
-#### `loadStageForEditing(stageData: StageData): void`
-ステージを編集モードで読み込みます。
+#### `renderPlayer(player: Player): void`
+Renders the player character.
 
 ```typescript
-renderSystem.loadStageForEditing(stageData);
+renderSystem.renderPlayer({
+    x: 100,
+    y: 200,
+    radius: 10,
+    velocity: { x: 5, y: -2 }
+});
 ```
 
-#### `exportStageData(): StageData`
-現在の編集内容をステージデータとして出力します。
+#### `renderStage(stage: StageData): void`
+Renders all stage elements (platforms, spikes, goal).
 
 ```typescript
-const currentStage = renderSystem.exportStageData();
+renderSystem.renderStage(stageData);
 ```
 
-#### `setSelectedTool(tool: string): void`
-選択ツールを設定します。
+#### `renderTrail(trail: TrailPoint[], playerRadius: number): void`
+Renders player movement trail.
 
 ```typescript
-renderSystem.setSelectedTool(EDITOR_TOOLS.SPIKE);
+renderSystem.renderTrail([
+    { x: 95, y: 205, age: 0.1 },
+    { x: 90, y: 210, age: 0.2 },
+    // ... more trail points
+], 10);
 ```
 
-#### `deleteSelectedObject(): void`
-選択されたオブジェクトを削除します。
+#### `applyCameraTransform(camera: Camera): void`
+Applies camera transformation to the canvas.
 
 ```typescript
-renderSystem.deleteSelectedObject();
+renderSystem.applyCameraTransform({
+    x: 200,
+    y: 100
+});
 ```
 
-#### `toggleGrid(): void`
-グリッド表示を切り替えます。
+#### `clearCanvas(): void`
+Clears the entire canvas.
 
 ```typescript
-renderSystem.toggleGrid();
+renderSystem.clearCanvas();
 ```
 
-#### `toggleSnapToGrid(): void`
-グリッドスナップを切り替えます。
+### Effect Rendering
+
+#### `renderDeathAnimation(particles: Particle[]): void`
+Renders death particle effects.
 
 ```typescript
-renderSystem.toggleSnapToGrid();
+renderSystem.renderDeathAnimation([
+    { x: 100, y: 200, vx: 5, vy: -10, life: 1.0, size: 3 },
+    // ... more particles
+]);
 ```
 
-#### `getEditorState(): EditorState`
-エディターの状態を取得します。
+#### `renderClearAnimation(particles: Particle[], progress: number, playerX: number, playerY: number): void`
+Renders stage clear effects.
 
 ```typescript
-const state = renderSystem.getEditorState();
+renderSystem.renderClearAnimation(
+    clearParticles,
+    0.5, // 50% animation progress
+    playerX,
+    playerY
+);
+```
+
+#### `renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void`
+Renders game over menu interface.
+
+```typescript
+renderSystem.renderGameOverMenu(
+    ['Restart', 'Return to Menu'],
+    0, // First option selected
+    1250 // Final score
+);
+```
+
+### Landing Prediction System
+
+#### `setLandingPredictions(predictions: LandingPrediction[]): void`
+Sets trajectory predictions for player landing points.
+
+```typescript
+renderSystem.setLandingPredictions([
+    { x: 150, y: 400, confidence: 0.9, jumpNumber: 1 },
+    { x: 200, y: 350, confidence: 0.7, jumpNumber: 2 }
+]);
+```
+
+#### `addLandingHistory(x: number, y: number): void`
+Adds a point to landing history visualization.
+
+```typescript
+renderSystem.addLandingHistory(playerX, playerY);
 ```
 
 ---
 
 ## Types & Interfaces
 
-### Core Types
+### Core Game Types
+
+#### `Player`
+```typescript
+interface Player {
+    x: number;
+    y: number;
+    radius: number;
+    velocity: { x: number; y: number };
+    jumpCount: number;
+    maxJumps: number;
+    isOnGround: boolean;
+    isOnMovingPlatform: boolean;
+}
+```
 
 #### `StageData`
 ```typescript
@@ -372,6 +407,7 @@ interface StageData {
     id: number;
     name: string;
     platforms: Platform[];
+    movingPlatforms?: MovingPlatform[];
     spikes: Spike[];
     goal: Goal;
     startText: TextElement;
@@ -388,6 +424,22 @@ interface Platform {
     y1: number;
     x2: number;
     y2: number;
+}
+```
+
+#### `MovingPlatform`
+```typescript
+interface MovingPlatform extends Platform {
+    startX1: number;
+    startY1: number;
+    startX2: number;
+    startY2: number;
+    endX1: number;
+    endY1: number;
+    endX2: number;
+    endY2: number;
+    speed: number;
+    direction: 1 | -1;
 }
 ```
 
@@ -420,209 +472,209 @@ interface TextElement {
 }
 ```
 
-### Editor Types
+### Game State Types
 
-#### `EditorState`
+#### `GameState`
 ```typescript
-interface EditorState {
-    selectedTool: string;
-    selectedObject: FabricObjectWithData | null;
-    isDrawing: boolean;
-    gridEnabled: boolean;
-    snapToGrid: boolean;
+interface GameState {
+    currentStage: number;
+    gamePhase: 'playing' | 'paused' | 'gameOver' | 'cleared';
+    score: number;
+    timeElapsed: number;
+    deathCount: number;
+    player: Player;
+    camera: Camera;
+    deathMarks: DeathMark[];
 }
 ```
 
-#### `EditorCallbacks`
+#### `Camera`
 ```typescript
-interface EditorCallbacks {
-    onObjectSelected?: (object: FabricObjectWithData | null) => void;
-    onObjectModified?: (object: FabricObjectWithData) => void;
-    onStageModified?: (stageData: StageData) => void;
+interface Camera {
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    smoothing: number;
 }
 ```
 
-#### `FabricObjectWithData`
+### Visual Effect Types
+
+#### `Particle`
 ```typescript
-interface FabricObjectWithData extends fabric.Object {
-    data?: {
-        type: string;
-        [key: string]: any;
-    };
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;  // velocity x
+    vy: number;  // velocity y
+    life: number; // 0.0 to 1.0
+    size: number;
 }
 ```
 
-### Constants
-
-#### `EDITOR_TOOLS`
+#### `TrailPoint`
 ```typescript
-const EDITOR_TOOLS = {
-    SELECT: 'select',
-    PLATFORM: 'platform',
-    SPIKE: 'spike',
-    GOAL: 'goal',
-    TEXT: 'text'
-} as const;
+interface TrailPoint {
+    x: number;
+    y: number;
+    age: number; // time since creation
+}
 ```
 
-#### `EDITOR_CONFIG`
+#### `DeathMark`
 ```typescript
-const EDITOR_CONFIG = {
-    GRID_SIZE: 20,
-    CANVAS_SIZE: {
-        width: 800,
-        height: 600
-    },
-    COLORS: {
-        PLATFORM: '#00ff00',
-        SPIKE: '#ff0000',
-        GOAL: '#ffff00',
-        GRID: '#333333'
-    },
-    OBJECT_SIZES: {
-        SPIKE: { width: 15, height: 15 },
-        GOAL: { width: 40, height: 50 }
-    }
-} as const;
+interface DeathMark {
+    x: number;
+    y: number;
+    timestamp: number;
+}
+```
+
+#### `LandingPrediction`
+```typescript
+interface LandingPrediction {
+    x: number;
+    y: number;
+    confidence: number; // 0-1, prediction accuracy
+    jumpNumber: number; // Which jump (1, 2, 3...)
+}
+```
+
+### Performance Types
+
+#### `LoopStats`
+```typescript
+interface LoopStats {
+    fps: number;
+    frameTime: number;
+    updateTime: number;
+    renderTime: number;
+    frameCount: number;
+}
 ```
 
 ---
 
 ## Utilities
 
-### DebugHelper
+### MathHelper
 
-#### `log(message: string, data?: any): void`
-デバッグログを出力します。
+#### `distance(p1: Point, p2: Point): number`
+Calculates distance between two points.
 
 ```typescript
-DebugHelper.log('Operation completed', { count: 5 });
+const dist = MathHelper.distance(
+    { x: 0, y: 0 },
+    { x: 3, y: 4 }
+); // Returns 5
 ```
 
-#### `time<T>(label: string, operation: () => T): T`
-処理時間を計測します。
+#### `clamp(value: number, min: number, max: number): number`
+Constrains value within range.
 
 ```typescript
-const result = DebugHelper.time('heavy-operation', () => {
-    return heavyCalculation();
-});
+const clamped = MathHelper.clamp(150, 0, 100); // Returns 100
+```
+
+#### `lerp(a: number, b: number, t: number): number`
+Linear interpolation between two values.
+
+```typescript
+const result = MathHelper.lerp(0, 100, 0.5); // Returns 50
+```
+
+### CollisionHelper
+
+#### `pointInRect(point: Point, rect: Rectangle): boolean`
+Tests if point is inside rectangle.
+
+```typescript
+const isInside = CollisionHelper.pointInRect(
+    { x: 50, y: 50 },
+    { x: 0, y: 0, width: 100, height: 100 }
+); // Returns true
+```
+
+#### `circleRectCollision(circle: Circle, rect: Rectangle): boolean`
+Tests collision between circle and rectangle.
+
+```typescript
+const collision = CollisionHelper.circleRectCollision(
+    { x: 50, y: 50, radius: 10 },
+    { x: 45, y: 45, width: 20, height: 20 }
+); // Returns true
+```
+
+### TimingHelper
+
+#### `debounce<T>(func: T, delay: number): T`
+Creates debounced version of function.
+
+```typescript
+const debouncedSave = TimingHelper.debounce(() => {
+    saveGameState();
+}, 300);
+```
+
+#### `throttle<T>(func: T, delay: number): T`
+Creates throttled version of function.
+
+```typescript
+const throttledUpdate = TimingHelper.throttle((pos: Point) => {
+    updatePosition(pos);
+}, 16); // ~60 FPS
 ```
 
 ### TypeHelper
 
-#### `safeParseInt(value: string, defaultValue: number): number`
-安全な整数変換を行います。
-
-```typescript
-const id = TypeHelper.safeParseInt('123', 1); // 123
-const invalid = TypeHelper.safeParseInt('abc', 1); // 1
-```
-
 #### `isStageData(data: unknown): data is StageData`
-StageData型ガードです。
+Type guard for StageData validation.
 
 ```typescript
-if (TypeHelper.isStageData(data)) {
-    // data は StageData 型として扱える
-    console.log(data.name);
+if (TypeHelper.isStageData(loadedData)) {
+    // loadedData is safely typed as StageData
+    gameManager.loadStage(loadedData);
 }
 ```
 
-### EventHelper
-
-#### `debounce<T extends (...args: any[]) => any>(func: T, delay: number): T`
-デバウンス処理を適用します。
+#### `safeParseFloat(value: string, defaultValue: number): number`
+Safe float parsing with fallback.
 
 ```typescript
-const debouncedSave = EventHelper.debounce(() => {
-    saveData();
-}, 300);
-```
-
-#### `throttle<T extends (...args: any[]) => any>(func: T, delay: number): T`
-スロットル処理を適用します。
-
-```typescript
-const throttledUpdate = EventHelper.throttle((e: MouseEvent) => {
-    updatePosition(e);
-}, 16);
-```
-
-### DOMHelper
-
-#### `getRequiredElement<T extends HTMLElement>(id: string): T`
-必須DOM要素を安全に取得します。
-
-```typescript
-const canvas = DOMHelper.getRequiredElement<HTMLCanvasElement>('editorCanvas');
-```
-
-#### `getOptionalElement<T extends HTMLElement>(id: string): T | null`
-オプションDOM要素を取得します。
-
-```typescript
-const button = DOMHelper.getOptionalElement<HTMLButtonElement>('optionalBtn');
-if (button) {
-    button.click();
-}
+const speed = TypeHelper.safeParseFloat('2.5', 1.0); // Returns 2.5
+const invalid = TypeHelper.safeParseFloat('abc', 1.0); // Returns 1.0
 ```
 
 ---
 
 ## Error Handling
 
-### EditorError
+### GameError
 
 #### Constructor
 ```typescript
 constructor(
     message: string,
     code: ErrorCode,
-    type: ErrorType = ERROR_TYPES.SYSTEM,
-    details?: any,
-    recoverable: boolean = true
+    recoverable: boolean = true,
+    details?: any
 )
 ```
 
-#### 使用例
-```typescript
-throw new EditorError(
-    'Failed to save stage',
-    ERROR_CODES.STAGE_SAVE_FAILED,
-    ERROR_TYPES.IO,
-    { stageId: 1 },
-    true
-);
-```
-
-### GlobalErrorHandler
-
-#### `handleError(error: Error | EditorError): void`
-エラーを処理します。
-
+#### Usage Example
 ```typescript
 try {
-    riskyOperation();
+    gameManager.loadStage(invalidStageData);
 } catch (error) {
-    globalErrorHandler.handleError(error);
-}
-```
-
-#### `addReporter(reporter: ErrorReporter): void`
-エラーレポーターを追加します。
-
-```typescript
-globalErrorHandler.addReporter({
-    async reportError(error) {
-        console.error('Custom error handling:', error);
-    },
-    async reportWarning(warning) {
-        console.warn('Custom warning:', warning);
-    },
-    async reportInfo(info) {
-        console.info('Custom info:', info);
+    if (error instanceof GameError) {
+        console.error(`Game Error [${error.code}]: ${error.message}`);
+        if (error.recoverable) {
+            // Attempt recovery
+            gameManager.resetToSafeState();
+        }
     }
-});
+}
 ```
 
 ### Error Constants
@@ -630,91 +682,119 @@ globalErrorHandler.addReporter({
 #### `ERROR_CODES`
 ```typescript
 const ERROR_CODES = {
-    CANVAS_INIT_FAILED: 'CANVAS_INIT_FAILED',
-    OBJECT_CREATION_FAILED: 'OBJECT_CREATION_FAILED',
-    STAGE_SAVE_FAILED: 'STAGE_SAVE_FAILED',
     STAGE_LOAD_FAILED: 'STAGE_LOAD_FAILED',
-    STAGE_VALIDATION_FAILED: 'STAGE_VALIDATION_FAILED'
+    RENDER_SYSTEM_FAILED: 'RENDER_SYSTEM_FAILED',
+    PHYSICS_CALCULATION_ERROR: 'PHYSICS_CALCULATION_ERROR',
+    INPUT_SYSTEM_ERROR: 'INPUT_SYSTEM_ERROR',
+    CANVAS_INITIALIZATION_FAILED: 'CANVAS_INITIALIZATION_FAILED'
 } as const;
 ```
 
-#### `ERROR_TYPES`
+### ErrorHandler
+
+#### `handleError(error: Error | GameError): void`
+Global error handling.
+
 ```typescript
-const ERROR_TYPES = {
-    VALIDATION: 'VALIDATION_ERROR',
-    IO: 'IO_ERROR',
-    FABRIC: 'FABRIC_ERROR',
-    PERFORMANCE: 'PERFORMANCE_ERROR',
-    DOM: 'DOM_ERROR',
-    SYSTEM: 'SYSTEM_ERROR'
-} as const;
-```
-
----
-
-## 使用例
-
-### 基本的なエディター初期化
-```typescript
-// DOM要素取得
-const canvas = document.getElementById('editorCanvas') as HTMLCanvasElement;
-
-// MVCコンポーネント作成
-const model = new EditorModel();
-const view = new EditorView(canvas);
-const controller = new EditorController(canvas, view, model);
-
-// 初期化
-await controller.initialize();
-
-// ツール選択
-controller.selectTool(EDITOR_TOOLS.PLATFORM);
-```
-
-### カスタムコールバック設定
-```typescript
-const callbacks: EditorCallbacks = {
-    onObjectSelected: (object) => {
-        console.log('Object selected:', object?.data?.type);
-    },
-    onObjectModified: (object) => {
-        console.log('Object modified:', object.data?.type);
-    },
-    onStageModified: (stageData) => {
-        console.log('Stage modified, objects:', stageData.platforms.length);
-    }
-};
-
-const renderSystem = new EditorRenderSystem(canvas, callbacks);
-```
-
-### エラーハンドリング付きの操作
-```typescript
-async function safeStageOperation() {
-    try {
-        controller.selectTool(EDITOR_TOOLS.SPIKE);
-        
-        const event = {
-            absolutePointer: { x: 100, y: 200 },
-            pointer: { x: 100, y: 200 }
-        };
-        controller.createObject(event);
-        
-        controller.saveStage();
-        
-    } catch (error) {
-        if (error instanceof EditorError) {
-            console.error(`Editor Error [${error.code}]: ${error.message}`);
-            if (error.recoverable) {
-                // リトライ処理
-            }
-        } else {
-            console.error('Unexpected error:', error);
-        }
-    }
+try {
+    riskyGameOperation();
+} catch (error) {
+    globalErrorHandler.handleError(error);
 }
 ```
 
+#### `addErrorReporter(reporter: ErrorReporter): void`
+Add custom error reporting.
+
+```typescript
+globalErrorHandler.addErrorReporter({
+    reportError: async (error) => {
+        console.error('Custom error handling:', error);
+        // Send to analytics service
+    },
+    reportWarning: async (warning) => {
+        console.warn('Custom warning:', warning);
+    }
+});
+```
+
 ---
 
-**🎯 このAPIリファレンスで開発がもっと楽になるよ〜♪ ⩌⩊⩌**
+## Usage Examples
+
+### Basic Game Setup
+```typescript
+// Create and initialize game
+const game = new JumpingDotGame();
+await game.initWithStage(1);
+
+// Start gameplay
+game.start();
+
+// Handle errors
+try {
+    await game.initWithStage(2);
+} catch (error) {
+    console.error('Failed to load stage:', error);
+}
+```
+
+### Custom Input Handling
+```typescript
+const inputManager = new InputManager();
+inputManager.initialize();
+
+// Custom input processing
+setInterval(() => {
+    const input = inputManager.getCurrentInputState();
+    
+    if (input.jump && input.right) {
+        console.log('Jump-right combo detected');
+    }
+}, 16); // ~60 FPS
+```
+
+### Performance Monitoring
+```typescript
+const gameLoop = new GameLoop(
+    (deltaTime) => gameManager.update(deltaTime),
+    (interpolation) => renderSystem.render(interpolation)
+);
+
+gameLoop.start();
+
+// Monitor performance
+setInterval(() => {
+    const stats = gameLoop.getStats();
+    if (stats.fps < 55) {
+        console.warn('Low FPS detected:', stats.fps);
+    }
+}, 1000);
+```
+
+### Advanced Rendering
+```typescript
+const renderSystem = new FabricRenderSystem(canvas);
+
+// Set up landing predictions
+renderSystem.setLandingPredictions([
+    { x: 200, y: 400, confidence: 0.95, jumpNumber: 1 },
+    { x: 350, y: 300, confidence: 0.8, jumpNumber: 2 }
+]);
+
+// Custom particle effects
+const deathParticles = Array.from({ length: 20 }, (_, i) => ({
+    x: playerX + Math.random() * 20 - 10,
+    y: playerY + Math.random() * 20 - 10,
+    vx: Math.random() * 10 - 5,
+    vy: Math.random() * 10 - 15,
+    life: 1.0,
+    size: Math.random() * 3 + 1
+}));
+
+renderSystem.renderDeathAnimation(deathParticles);
+```
+
+---
+
+**🎮 This API reference provides comprehensive documentation for building and extending the Jumping Dot Game!**

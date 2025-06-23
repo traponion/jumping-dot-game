@@ -742,22 +742,7 @@ export class FabricRenderSystem {
         this.canvas.renderAll();
     }
 
-    // エディタモード用メソッド
-    enableEditorMode(): void {
-        this.canvas.selection = true;
-        this.canvas.forEachObject((obj: fabric.Object) => {
-            obj.selectable = true;
-            obj.evented = true;
-        });
-    }
-
-    disableEditorMode(): void {
-        this.canvas.selection = false;
-        this.canvas.forEachObject((obj: fabric.Object) => {
-            obj.selectable = false;
-            obj.evented = false;
-        });
-    }
+    // Editor methods removed - Editor functionality deprecated
 
     // クリーンアップ
     dispose(): void {

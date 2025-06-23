@@ -12,7 +12,7 @@ import { getGameStore } from '../stores/GameZustandStore.js';
  * @interface GameController
  * @description Defines the methods that a game controller must implement to work with InputManager
  */
-interface GameController {
+export interface GameController {
     /** Start a new game */
     startGame(): void;
     /** Initialize or restart the game */

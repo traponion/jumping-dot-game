@@ -46,7 +46,7 @@ describe('InputManager', () => {
         mockCanvas = {
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
-        } as Partial<HTMLCanvasElement>;
+        } as any;
 
         // Reset GameInputs mock
         mockGameInputs.disabled = false;

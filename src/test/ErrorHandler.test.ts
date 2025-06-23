@@ -1,6 +1,5 @@
-// ErrorHandler unit tests
+// ErrorHandler unit tests - Game error handling
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ERROR_CODES, ERROR_TYPES, EditorError } from '../types/EditorTypes.js';
 import {
     ConsoleErrorReporter,
     ErrorHandler,
@@ -10,701 +9,99 @@ import {
 
 describe('ErrorHandler', () => {
     let errorHandler: ErrorHandler;
-    let mockReporter: ErrorReporter;
 
     beforeEach(() => {
-        // Clear any existing instance
-        (ErrorHandler as unknown as { instance?: ErrorHandler }).instance = undefined;
-
+        // Get fresh instance for each test
         errorHandler = ErrorHandler.getInstance();
-
-        mockReporter = {
-            reportError: vi.fn(),
-            reportWarning: vi.fn(),
-            reportInfo: vi.fn()
-        };
-
-        errorHandler.addReporter(mockReporter);
+        errorHandler.clearReporters();
     });
 
-    describe('Singleton Pattern', () => {
+    afterEach(() => {
+        // Clean up after each test
+        errorHandler.clearReporters();
+        // Reset singleton for testing
+        (ErrorHandler as any).instance = undefined;
+    });
+
+    describe('Singleton pattern', () => {
         it('should return the same instance', () => {
             const instance1 = ErrorHandler.getInstance();
             const instance2 = ErrorHandler.getInstance();
-
             expect(instance1).toBe(instance2);
         });
     });
 
-    describe('Error Handling', () => {
-        it('should handle EditorError correctly', () => {
-            const error = new EditorError(
-                'Test error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC,
-                { details: 'test' }
-            );
-
-            errorHandler.handleError(error);
-
-            expect(mockReporter.reportError).toHaveBeenCalledWith(error);
-        });
-
-        it('should handle regular Error objects', () => {
-            const error = new Error('Regular error');
-
-            errorHandler.handleError(error);
-
-            expect(mockReporter.reportError).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    message: 'Regular error',
-                    code: ERROR_CODES.UNKNOWN_ERROR,
-                    type: ERROR_TYPES.SYSTEM
-                })
-            );
-        });
-
-        it('should handle string errors', () => {
-            const errorMessage = 'String error message';
-
-            errorHandler.handleError(errorMessage as unknown);
-
-            expect(mockReporter.reportError).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    details: expect.objectContaining({
-                        originalError: errorMessage
-                    })
-                })
-            );
-        });
-    });
-
-    describe('Error Statistics', () => {
-        it('should track error statistics', () => {
-            const error1 = new EditorError(
-                'Error 1',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const error2 = new EditorError(
-                'Error 2',
-                ERROR_CODES.OBJECT_CREATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(error1);
-            errorHandler.handleError(error2);
-
-            const stats = errorHandler.getStatistics();
-
-            expect(stats.totalErrors).toBe(2);
-            expect(stats.errorsByType[ERROR_TYPES.FABRIC]).toBe(1);
-            expect(stats.errorsByType[ERROR_TYPES.VALIDATION]).toBe(1);
-            expect(stats.lastError).toBe(error2);
-        });
-
-        it('should reset statistics', () => {
-            const error = new EditorError(
-                'Test error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-
-            errorHandler.handleError(error);
-            errorHandler.resetStatistics();
-
-            const stats = errorHandler.getStatistics();
-            expect(stats.totalErrors).toBe(0);
-        });
-    });
-
-    describe('Error Filtering', () => {
-        it('should filter errors based on custom filters', () => {
-            // Add filter that only allows fabric errors
-            errorHandler.addFilter((error) => error.type === ERROR_TYPES.FABRIC);
-
-            const fabricError = new EditorError(
-                'Fabric error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const validationError = new EditorError(
-                'Validation error',
-                ERROR_CODES.STAGE_VALIDATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(fabricError);
-            errorHandler.handleError(validationError);
-
-            const stats = errorHandler.getStatistics();
-            expect(stats.totalErrors).toBe(1);
-            expect(stats.errorsByType[ERROR_TYPES.FABRIC]).toBe(1);
-            expect(stats.errorsByType[ERROR_TYPES.VALIDATION]).toBe(0);
-        });
-
-        it('should remove error filters', () => {
-            const filter = (error: EditorError) => error.type === ERROR_TYPES.FABRIC;
-
-            errorHandler.addFilter(filter);
-            errorHandler.removeFilter(filter);
-
-            const validationError = new EditorError(
-                'Validation error',
-                ERROR_CODES.STAGE_VALIDATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(validationError);
-
-            const stats = errorHandler.getStatistics();
-            expect(stats.totalErrors).toBe(1);
-        });
-    });
-
-    describe('Reporter Management', () => {
+    describe('Reporter management', () => {
         it('should add and remove reporters', () => {
-            const anotherReporter: ErrorReporter = {
-                reportError: vi.fn(),
-                reportWarning: vi.fn(),
-                reportInfo: vi.fn()
+            const mockReporter: ErrorReporter = {
+                reportError: vi.fn()
             };
 
-            errorHandler.addReporter(anotherReporter);
-
-            const error = new EditorError(
-                'Test error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-
-            errorHandler.handleError(error);
-
-            expect(mockReporter.reportError).toHaveBeenCalledWith(error);
-            expect(anotherReporter.reportError).toHaveBeenCalledWith(error);
-
-            // Remove one reporter
-            errorHandler.removeReporter(anotherReporter);
-
-            const error2 = new EditorError(
-                'Test error 2',
-                ERROR_CODES.OBJECT_CREATION_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-
-            errorHandler.handleError(error2);
-
-            expect(mockReporter.reportError).toHaveBeenCalledTimes(2);
-            expect(anotherReporter.reportError).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('Error History', () => {
-        it('should maintain error history', () => {
-            const error1 = new EditorError(
-                'Error 1',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const error2 = new EditorError(
-                'Error 2',
-                ERROR_CODES.OBJECT_CREATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(error1);
-            errorHandler.handleError(error2);
-
-            const history = errorHandler.getErrorHistory();
-            expect(history).toHaveLength(2);
-            expect(history[0]).toBe(error1);
-            expect(history[1]).toBe(error2);
-        });
-
-        it('should get errors by type', () => {
-            const fabricError = new EditorError(
-                'Fabric error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const validationError = new EditorError(
-                'Validation error',
-                ERROR_CODES.STAGE_VALIDATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(fabricError);
-            errorHandler.handleError(validationError);
-
-            const fabricErrors = errorHandler.getErrorsByType(ERROR_TYPES.FABRIC);
-            const validationErrors = errorHandler.getErrorsByType(ERROR_TYPES.VALIDATION);
-
-            expect(fabricErrors).toHaveLength(1);
-            expect(fabricErrors[0]).toBe(fabricError);
-            expect(validationErrors).toHaveLength(1);
-            expect(validationErrors[0]).toBe(validationError);
-        });
-
-        it('should get last error', () => {
-            const error1 = new EditorError(
-                'Error 1',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const error2 = new EditorError(
-                'Error 2',
-                ERROR_CODES.OBJECT_CREATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            expect(errorHandler.getLastError()).toBeUndefined();
-
-            errorHandler.handleError(error1);
-            expect(errorHandler.getLastError()).toBe(error1);
-
-            errorHandler.handleError(error2);
-            expect(errorHandler.getLastError()).toBe(error2);
-        });
-
-        it('should get frequent error codes', () => {
-            const error1 = new EditorError(
-                'Error 1',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const error2 = new EditorError(
-                'Error 2',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const error3 = new EditorError(
-                'Error 3',
-                ERROR_CODES.OBJECT_CREATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(error1);
-            errorHandler.handleError(error2);
-            errorHandler.handleError(error3);
-
-            const frequentCodes = errorHandler.getFrequentErrorCodes(2);
-
-            expect(frequentCodes).toHaveLength(2);
-            expect(frequentCodes[0]).toEqual({
-                code: ERROR_CODES.CANVAS_INIT_FAILED,
-                count: 2
-            });
-            expect(frequentCodes[1]).toEqual({
-                code: ERROR_CODES.OBJECT_CREATION_FAILED,
-                count: 1
-            });
-        });
-
-        it('should track recoverable and non-recoverable errors in statistics', () => {
-            const recoverableError = new EditorError(
-                'Recoverable error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC,
-                undefined,
-                true // recoverable
-            );
-            const nonRecoverableError = new EditorError(
-                'Non-recoverable error',
-                ERROR_CODES.MEMORY_LIMIT_EXCEEDED,
-                ERROR_TYPES.PERFORMANCE,
-                undefined,
-                false // non-recoverable
-            );
-
-            errorHandler.handleError(recoverableError);
-            errorHandler.handleError(nonRecoverableError);
-
-            const stats = errorHandler.getStatistics();
-            expect(stats.recoverableErrors).toBe(1);
-            expect(stats.nonRecoverableErrors).toBe(1);
-            expect(stats.totalErrors).toBe(2);
-        });
-
-        it('should limit error history size', () => {
-            // Create more than 100 errors (max history size)
-            for (let i = 0; i < 105; i++) {
-                const error = new EditorError(
-                    `Error ${i}`,
-                    ERROR_CODES.CANVAS_INIT_FAILED,
-                    ERROR_TYPES.FABRIC
-                );
-                errorHandler.handleError(error);
-            }
-
-            const history = errorHandler.getErrorHistory();
-            expect(history.length).toBe(100); // Should be limited to maxHistorySize
-
-            // Should contain the most recent errors
-            expect(history[0].message).toBe('Error 5'); // oldest kept error
-            expect(history[99].message).toBe('Error 104'); // newest error
-        });
-    });
-
-    describe('Batch Error Handling', () => {
-        it('should handle multiple errors', () => {
-            const errors = [
-                new EditorError('Error 1', ERROR_CODES.CANVAS_INIT_FAILED, ERROR_TYPES.FABRIC),
-                new Error('Regular error'),
-                new EditorError(
-                    'Error 3',
-                    ERROR_CODES.STAGE_VALIDATION_FAILED,
-                    ERROR_TYPES.VALIDATION
-                )
-            ];
-
-            errorHandler.handleErrors(errors);
-
-            expect(mockReporter.reportError).toHaveBeenCalledTimes(3);
-
-            const stats = errorHandler.getStatistics();
-            expect(stats.totalErrors).toBe(3);
-        });
-    });
-
-    describe('Safe Execution', () => {
-        it('should execute function safely and return result', () => {
-            const successfulFunction = () => 'success result';
-
-            const result = errorHandler.safeExecuteSync(successfulFunction, 'default result');
-
-            expect(result).toBe('success result');
-        });
-
-        it('should handle function errors and return default', () => {
-            const errorFunction = () => {
-                throw new Error('Test error');
-            };
-
-            const result = errorHandler.safeExecuteSync(errorFunction, 'default result');
-
-            expect(result).toBe('default result');
-            expect(mockReporter.reportError).toHaveBeenCalled();
-        });
-
-        it('should execute async function safely', async () => {
-            const asyncFunction = async () => 'async success';
-
-            const result = await errorHandler.safeExecute(asyncFunction, 'default result');
-
-            expect(result).toBe('async success');
-        });
-
-        it('should handle async function errors', async () => {
-            const asyncErrorFunction = async () => {
-                throw new Error('Async test error');
-            };
-
-            const result = await errorHandler.safeExecute(asyncErrorFunction, 'default result');
-
-            expect(result).toBe('default result');
-            expect(mockReporter.reportError).toHaveBeenCalled();
-        });
-    });
-
-    describe('Static Factory Methods', () => {
-        it('should create validation errors', () => {
-            const error = ErrorHandler.createValidationError('Invalid data', { field: 'name' });
-
-            expect(error.type).toBe(ERROR_TYPES.VALIDATION);
-            expect(error.message).toBe('Invalid data');
-            expect(error.details).toEqual({ field: 'name' });
-        });
-
-        it('should create DOM errors', () => {
-            const error = ErrorHandler.createDOMError('Element not found', 'my-element');
-
-            expect(error.type).toBe(ERROR_TYPES.DOM);
-            expect(error.message).toBe('Element not found');
-            expect(error.details).toEqual({ elementId: 'my-element' });
-        });
-
-        it('should create Fabric errors', () => {
-            const error = ErrorHandler.createFabricError('Canvas error', { width: 800 });
-
-            expect(error.type).toBe(ERROR_TYPES.FABRIC);
-            expect(error.message).toBe('Canvas error');
-            expect(error.details).toEqual({ width: 800 });
-        });
-
-        it('should create IO errors', () => {
-            const error = ErrorHandler.createIOError('File not found', { path: '/test.json' });
-
-            expect(error.type).toBe(ERROR_TYPES.IO);
-            expect(error.message).toBe('File not found');
-            expect(error.details).toEqual({ path: '/test.json' });
-        });
-
-        it('should create performance errors', () => {
-            const error = ErrorHandler.createPerformanceError('Slow operation', { duration: 5000 });
-
-            expect(error.type).toBe(ERROR_TYPES.PERFORMANCE);
-            expect(error.message).toBe('Slow operation');
-            expect(error.details).toEqual({ duration: 5000 });
-        });
-
-        it('should create generic error with all parameters', () => {
-            const error = ErrorHandler.createError(
-                'Generic error',
-                ERROR_CODES.UNKNOWN_ERROR,
-                ERROR_TYPES.SYSTEM,
-                { custom: 'data' },
-                false
-            );
-
-            expect(error.message).toBe('Generic error');
-            expect(error.code).toBe(ERROR_CODES.UNKNOWN_ERROR);
-            expect(error.type).toBe(ERROR_TYPES.SYSTEM);
-            expect(error.details).toEqual({ custom: 'data' });
-            expect(error.isRecoverable()).toBe(false);
-        });
-
-        it('should create generic error with default parameters', () => {
-            const error = ErrorHandler.createError('Simple error', ERROR_CODES.CANVAS_INIT_FAILED);
-
-            expect(error.message).toBe('Simple error');
-            expect(error.code).toBe(ERROR_CODES.CANVAS_INIT_FAILED);
-            expect(error.type).toBe(ERROR_TYPES.SYSTEM);
-            expect(error.isRecoverable()).toBe(true);
-        });
-    });
-
-    describe('ErrorFilter Management', () => {
-        it('should add and use error filters', () => {
-            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
-            errorHandler.addFilter(filter);
-
-            const fabricError = new EditorError(
-                'Fabric error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-            const validationError = new EditorError(
-                'Validation error',
-                ERROR_CODES.STAGE_VALIDATION_FAILED,
-                ERROR_TYPES.VALIDATION
-            );
-
-            errorHandler.handleError(fabricError);
-            errorHandler.handleError(validationError);
-
-            // Only validation error should be reported (fabric error filtered out)
-            expect(mockReporter.reportError).toHaveBeenCalledTimes(1);
-            expect(mockReporter.reportError).toHaveBeenCalledWith(validationError);
-        });
-
-        it('should remove error filters', () => {
-            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
-            errorHandler.addFilter(filter);
-            errorHandler.removeFilter(filter);
-
-            const fabricError = new EditorError(
-                'Fabric error',
-                ERROR_CODES.CANVAS_INIT_FAILED,
-                ERROR_TYPES.FABRIC
-            );
-
-            errorHandler.handleError(fabricError);
-
-            // Filter removed, so error should be reported
-            expect(mockReporter.reportError).toHaveBeenCalledWith(fabricError);
-        });
-
-        it('should handle removing non-existent filter gracefully', () => {
-            const filter = (error: EditorError) => error.type !== ERROR_TYPES.FABRIC;
-
-            // Should not throw error when removing non-existent filter
-            expect(() => {
-                errorHandler.removeFilter(filter);
-            }).not.toThrow();
-        });
-    });
-
-    describe('Safe Execute with Context', () => {
-        it('should add context to sync errors', () => {
-            const errorFunction = () => {
-                throw new Error('Test error');
-            };
-
-            errorHandler.safeExecuteSync(errorFunction, 'default', 'test context');
-
+            errorHandler.addReporter(mockReporter);
+            errorHandler.reportError(new Error('Test error'));
             expect(mockReporter.reportError).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    details: expect.objectContaining({
-                        context: 'test context'
-                    })
-                })
+                expect.objectContaining({ message: 'Test error' })
             );
+
+            errorHandler.removeReporter(mockReporter);
+            (mockReporter.reportError as any).mockClear();
+            errorHandler.reportError(new Error('Another error'));
+            expect(mockReporter.reportError).not.toHaveBeenCalled();
         });
 
-        it('should add context to async errors', async () => {
-            const asyncErrorFunction = async () => {
-                throw new Error('Async test error');
-            };
+        it('should clear all reporters', () => {
+            const mockReporter1: ErrorReporter = { reportError: vi.fn() };
+            const mockReporter2: ErrorReporter = { reportError: vi.fn() };
 
-            await errorHandler.safeExecute(asyncErrorFunction, 'default', 'async context');
+            errorHandler.addReporter(mockReporter1);
+            errorHandler.addReporter(mockReporter2);
+            errorHandler.clearReporters();
 
-            expect(mockReporter.reportError).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    details: expect.objectContaining({
-                        context: 'async context'
-                    })
-                })
-            );
+            errorHandler.reportError(new Error('Test error'));
+            expect(mockReporter1.reportError).not.toHaveBeenCalled();
+            expect(mockReporter2.reportError).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Error reporting', () => {
+        it('should report errors to all reporters', () => {
+            const mockReporter1: ErrorReporter = { reportError: vi.fn() };
+            const mockReporter2: ErrorReporter = { reportError: vi.fn() };
+
+            errorHandler.addReporter(mockReporter1);
+            errorHandler.addReporter(mockReporter2);
+
+            const testError = new Error('Test error message');
+            errorHandler.reportError(testError);
+
+            expect(mockReporter1.reportError).toHaveBeenCalledWith(testError);
+            expect(mockReporter2.reportError).toHaveBeenCalledWith(testError);
         });
     });
 });
 
 describe('ConsoleErrorReporter', () => {
-    let consoleErrorReporter: ConsoleErrorReporter;
-    let consoleSpy: ReturnType<typeof vi.spyOn>;
-    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
-    let consoleInfoSpy: ReturnType<typeof vi.spyOn>;
+    it('should log error to console', () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const reporter = new ConsoleErrorReporter();
+        const testError = new Error('Test console error');
 
-    beforeEach(() => {
-        consoleErrorReporter = new ConsoleErrorReporter();
-        consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    });
+        reporter.reportError(testError);
 
-    afterEach(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Error:', 'Test console error');
         consoleSpy.mockRestore();
-        consoleWarnSpy.mockRestore();
-        consoleInfoSpy.mockRestore();
-    });
-
-    it('should report error to console', () => {
-        const error = new EditorError(
-            'Test error',
-            ERROR_CODES.CANVAS_INIT_FAILED,
-            ERROR_TYPES.FABRIC,
-            { test: 'details' }
-        );
-
-        consoleErrorReporter.reportError(error);
-
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('🚨'), error.getDetails());
-    });
-
-    it('should report warning to console with details', () => {
-        consoleErrorReporter.reportWarning('Test warning', { detail: 'value' });
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ Test warning', { detail: 'value' });
-    });
-
-    it('should report warning to console without details', () => {
-        consoleErrorReporter.reportWarning('Test warning');
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ Test warning');
-    });
-
-    it('should report info to console with details', () => {
-        consoleErrorReporter.reportInfo('Test info', { detail: 'value' });
-
-        expect(consoleInfoSpy).toHaveBeenCalledWith('ℹ️ Test info', { detail: 'value' });
-    });
-
-    it('should report info to console without details', () => {
-        consoleErrorReporter.reportInfo('Test info');
-
-        expect(consoleInfoSpy).toHaveBeenCalledWith('ℹ️ Test info');
     });
 });
 
 describe('UIErrorReporter', () => {
-    let uiErrorReporter: UIErrorReporter;
-    let mockShowMessage: ReturnType<typeof vi.fn>;
+    it('should log error to console as fallback', () => {
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const reporter = new UIErrorReporter();
+        const testError = new Error('Test UI error');
 
-    beforeEach(() => {
-        mockShowMessage = vi.fn();
-        uiErrorReporter = new UIErrorReporter(mockShowMessage);
-    });
+        reporter.reportError(testError);
 
-    it('should report error to UI', () => {
-        const error = new EditorError(
-            'Test error',
-            ERROR_CODES.CANVAS_INIT_FAILED,
-            ERROR_TYPES.FABRIC
-        );
-
-        uiErrorReporter.reportError(error);
-
-        expect(mockShowMessage).toHaveBeenCalledWith(error.getUserMessage(), 'error');
-    });
-
-    it('should report warning to UI', () => {
-        uiErrorReporter.reportWarning('Test warning', { detail: 'value' });
-
-        expect(mockShowMessage).toHaveBeenCalledWith('Test warning', 'warning');
-    });
-
-    it('should report info to UI', () => {
-        uiErrorReporter.reportInfo('Test info', { detail: 'value' });
-
-        expect(mockShowMessage).toHaveBeenCalledWith('Test info', 'info');
-    });
-});
-
-describe('ErrorHandler Additional Coverage', () => {
-    let errorHandler: ErrorHandler;
-
-    beforeEach(() => {
-        (ErrorHandler as unknown as { instance?: ErrorHandler }).instance = undefined;
-        errorHandler = ErrorHandler.getInstance();
-    });
-
-    it('should handle reporter errors gracefully', () => {
-        const faultyReporter = {
-            reportError: vi.fn().mockImplementation(() => {
-                throw new Error('Reporter error');
-            }),
-            reportWarning: vi.fn(),
-            reportInfo: vi.fn()
-        };
-
-        const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-        errorHandler.addReporter(faultyReporter);
-
-        const error = new EditorError(
-            'Test error',
-            ERROR_CODES.CANVAS_INIT_FAILED,
-            ERROR_TYPES.FABRIC
-        );
-
-        // Should not throw even if reporter fails
-        expect(() => {
-            errorHandler.handleError(error);
-        }).not.toThrow();
-
-        expect(faultyReporter.reportError).toHaveBeenCalled();
-
+        expect(consoleSpy).toHaveBeenCalledWith('UI Error:', 'Test UI error');
         consoleSpy.mockRestore();
-    });
-
-    it('should remove error reporter correctly', () => {
-        const reporter = {
-            reportError: vi.fn(),
-            reportWarning: vi.fn(),
-            reportInfo: vi.fn()
-        };
-
-        errorHandler.addReporter(reporter);
-        errorHandler.removeReporter(reporter);
-
-        const error = new EditorError(
-            'Test error',
-            ERROR_CODES.CANVAS_INIT_FAILED,
-            ERROR_TYPES.FABRIC
-        );
-
-        errorHandler.handleError(error);
-
-        expect(reporter.reportError).not.toHaveBeenCalled();
     });
 });

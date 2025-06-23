@@ -430,7 +430,7 @@ mcp__serena__list_memories()
   1. New utility classes (`ObjectDrawer`, `GridManager`) - standalone, easy to test
   2. New service layers (`PlayerUpdateService`, `GameLogicService`) - pure logic
   3. New renderers (`HUDRenderer`, `OverlayRenderer`) - UI components
-  4. Enhanced validation (`EditorModel` improvements)
+  4. Enhanced validation (GameModel improvements)
   5. Integration test updates for controllers/managers
 
 #### **Coverage Recovery Strategy**

@@ -96,7 +96,7 @@ beforeAll(() => {
       } as any;
     }
     
-    // Mock window.confirm for EditorController tests
+    // Mock window.confirm for game tests
     if (!window.confirm) {
       window.confirm = () => true; // Default to confirm for tests
     }

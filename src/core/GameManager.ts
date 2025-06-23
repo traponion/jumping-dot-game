@@ -14,7 +14,7 @@ import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
-import { createRenderSystem } from '../systems/RenderSystemFactory.js';
+import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
@@ -107,7 +107,7 @@ export class GameManager {
         this.animationSystem = new AnimationSystem();
         this.movingPlatformSystem = new MovingPlatformSystem();
         // Environment-aware rendering system
-        this.renderSystem = createRenderSystem(this.canvas);
+        this.renderSystem = createGameRenderSystem(this.canvas);
 
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.canvas, gameController);
