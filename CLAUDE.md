@@ -22,13 +22,42 @@ This project follows a **simplified GitHub Flow** with direct main-branch develo
 
 ## Development Workflow
 
+### 0. Task Planning and Issue Creation (MANDATORY)
+**Before any development work begins, create a GitHub issue to track the task:**
+
+```bash
+# Create issue for the task (use descriptive title and body)
+gh issue create --title "Performance: Fix death marker rendering bottleneck" --body "
+## Problem
+Describe the issue or feature request
+
+## Expected Solution
+Outline the expected approach or solution
+
+## Acceptance Criteria
+- [ ] Specific deliverable 1
+- [ ] Specific deliverable 2
+- [ ] Tests added/updated
+- [ ] Performance benchmarks if applicable
+"
+```
+
+**Why this step is mandatory:**
+- Ensures task tracking and documentation
+- Provides clear scope and acceptance criteria
+- Enables progress tracking through issue comments
+- Supports GitHub Flow workflow with issue-to-PR linking
+
 ### 1. Starting New Development
 ```bash
 # Always start from the latest main branch
 git checkout main
 git pull origin main
+
+# Branch name should reference the issue number when possible
+git checkout -b feature/fix-death-marker-performance-#123
+# or use descriptive names
 git checkout -b feature/your-feature-name
-# or
 git checkout -b bugfix/issue-description
 ```
 

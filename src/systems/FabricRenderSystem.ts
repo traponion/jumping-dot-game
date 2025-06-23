@@ -1,4 +1,6 @@
 import * as fabric from 'fabric';
+import { FabricDeathMarkRenderer } from '../adapters/FabricDeathMarkRenderer.js';
+import { DeathMarkManager } from '../core/DeathMarkManager.js';
 import type { Goal, MovingPlatform, Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
@@ -30,6 +32,8 @@ export class FabricRenderSystem {
     }[] = [];
     private landingHistory: { x: number; y: number; timestamp: number }[] = [];
     private readonly LERP_SPEED = 0.1;
+
+    private deathMarkManager: DeathMarkManager;
     private readonly HISTORY_FADE_TIME = 3000;
 
     constructor(canvasElement: HTMLCanvasElement) {
@@ -50,6 +54,10 @@ export class FabricRenderSystem {
         if (upperCanvas) {
             upperCanvas.style.backgroundColor = 'transparent';
         }
+
+        // Initialize death mark manager
+        const deathMarkRenderer = new FabricDeathMarkRenderer(this.canvas);
+        this.deathMarkManager = new DeathMarkManager(deathMarkRenderer);
 
         // 初期描画を実行
         this.canvas.renderAll();
@@ -334,32 +342,12 @@ export class FabricRenderSystem {
     }
 
     renderDeathMarks(deathMarks: DeathMark[]): void {
+        // Clear existing death marks
+        this.deathMarkManager.clearDeathMarks();
+
+        // Add new death marks
         for (const mark of deathMarks) {
-            const size = 8;
-
-            // ×マークを作成（ライン）
-            const line1 = new fabric.Line(
-                [mark.x - size, mark.y - size, mark.x + size, mark.y + size],
-                {
-                    stroke: 'rgba(255, 0, 0, 0.8)',
-                    strokeWidth: 3,
-                    selectable: false,
-                    evented: false
-                }
-            );
-
-            const line2 = new fabric.Line(
-                [mark.x + size, mark.y - size, mark.x - size, mark.y + size],
-                {
-                    stroke: 'rgba(255, 0, 0, 0.8)',
-                    strokeWidth: 3,
-                    selectable: false,
-                    evented: false
-                }
-            );
-
-            this.canvas.add(line1);
-            this.canvas.add(line2);
+            this.deathMarkManager.addDeathMark(mark.x, mark.y);
         }
     }
 
@@ -664,6 +652,9 @@ export class FabricRenderSystem {
                     this.canvas.remove(shape);
                 }
                 this.textShapes = [];
+
+                // Clean up death mark manager
+                await this.deathMarkManager.cleanup();
 
                 // In fabric.js v6, dispose is async and must be awaited
                 await this.canvas.dispose();
