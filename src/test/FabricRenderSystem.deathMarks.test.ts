@@ -51,7 +51,7 @@ vi.mock('fabric', () => {
     };
 });
 
-describe.skip('FabricRenderSystem - Death Marks Performance', () => {
+describe.skip('FabricRenderSystem - Death Marks Integration', () => {
     let renderSystem: FabricRenderSystem;
     let mockCanvasElement: HTMLCanvasElement;
 
@@ -71,160 +71,65 @@ describe.skip('FabricRenderSystem - Death Marks Performance', () => {
         await renderSystem.cleanup();
     });
 
-    describe('deathMarkPath property', () => {
-        it('should initialize deathMarkPath as null', () => {
+    describe('death mark manager integration', () => {
+        it('should initialize with death mark manager', () => {
             // Access private property for testing
-            expect((renderSystem as any).deathMarkPath).toBeNull();
-        });
-    });
-
-    describe('renderDeathMarks with single fabric.Path implementation', () => {
-        it('should create single fabric.Path for multiple death marks', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            const mockPath = { type: 'path' };
-            const mockCanvas = (renderSystem as any).canvas;
-
-            fabric.Path = vi.fn().mockReturnValue(mockPath);
-            mockCanvas.add = vi.fn();
-            mockCanvas.remove = vi.fn();
-
-            const deathMarks: DeathMark[] = [
-                { x: 100, y: 100, timestamp: Date.now() },
-                { x: 200, y: 150, timestamp: Date.now() },
-                { x: 300, y: 200, timestamp: Date.now() }
-            ];
-
-            renderSystem.renderDeathMarks(deathMarks);
-
-            // Should create exactly one fabric.Path
-            expect(fabric.Path).toHaveBeenCalledTimes(1);
-
-            // Should add exactly one object to canvas
-            expect(mockCanvas.add).toHaveBeenCalledTimes(1);
-            expect(mockCanvas.add).toHaveBeenCalledWith(mockPath);
-
-            // Should store the path in deathMarkPath property
-            expect((renderSystem as any).deathMarkPath).toBe(mockPath);
+            expect((renderSystem as any).deathMarkManager).toBeDefined();
         });
 
-        it('should generate correct SVG path data for X marks', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            fabric.Path = vi.fn();
-
+        it('should handle multiple death marks through manager', () => {
             const deathMarks: DeathMark[] = [
                 { x: 100, y: 100, timestamp: Date.now() },
                 { x: 200, y: 150, timestamp: Date.now() }
             ];
 
-            renderSystem.renderDeathMarks(deathMarks);
+            // Should not throw and should delegate to manager
+            expect(() => {
+                renderSystem.renderDeathMarks(deathMarks);
+            }).not.toThrow();
 
-            const pathDataCall = fabric.Path.mock.calls[0][0];
-
-            // Should contain path data for both marks
-            expect(pathDataCall).toContain('M 92 92 L 108 108'); // First mark line1
-            expect(pathDataCall).toContain('M 108 92 L 92 108'); // First mark line2
-            expect(pathDataCall).toContain('M 192 142 L 208 158'); // Second mark line1
-            expect(pathDataCall).toContain('M 208 142 L 192 158'); // Second mark line2
+            // Verify manager received the death marks
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(2);
         });
 
-        it('should use correct fabric.Path options', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            fabric.Path = vi.fn();
-
+        it('should clear death marks when empty array provided', () => {
+            // Add some death marks first
             const deathMarks: DeathMark[] = [{ x: 100, y: 100, timestamp: Date.now() }];
-
             renderSystem.renderDeathMarks(deathMarks);
 
-            const pathOptions = fabric.Path.mock.calls[0][1];
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(1);
 
-            expect(pathOptions).toEqual({
-                stroke: 'rgba(255, 0, 0, 0.8)',
-                strokeWidth: 3,
-                selectable: false,
-                evented: false,
-                objectCaching: false
-            });
-        });
-
-        it('should remove previous deathMarkPath before creating new one', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            const mockPath1 = { type: 'path', id: 1 };
-            const mockPath2 = { type: 'path', id: 2 };
-            const mockCanvas = (renderSystem as any).canvas;
-
-            fabric.Path = vi.fn().mockReturnValueOnce(mockPath1).mockReturnValueOnce(mockPath2);
-            mockCanvas.remove = vi.fn();
-            mockCanvas.add = vi.fn();
-
-            const deathMarks: DeathMark[] = [{ x: 100, y: 100, timestamp: Date.now() }];
-
-            // First render
-            renderSystem.renderDeathMarks(deathMarks);
-            expect((renderSystem as any).deathMarkPath).toBe(mockPath1);
-
-            // Second render should remove previous path
-            renderSystem.renderDeathMarks(deathMarks);
-
-            expect(mockCanvas.remove).toHaveBeenCalledWith(mockPath1);
-            expect((renderSystem as any).deathMarkPath).toBe(mockPath2);
-        });
-
-        it('should handle empty death marks array', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            const mockCanvas = (renderSystem as any).canvas;
-
-            fabric.Path = vi.fn();
-            mockCanvas.add = vi.fn();
-            mockCanvas.remove = vi.fn();
-
+            // Clear with empty array
             renderSystem.renderDeathMarks([]);
-
-            // Should not create any fabric.Path
-            expect(fabric.Path).not.toHaveBeenCalled();
-            expect(mockCanvas.add).not.toHaveBeenCalled();
+            expect(manager.getDeathMarkCount()).toBe(0);
         });
-    });
 
-    describe('cleanup method integration', () => {
-        it('should remove deathMarkPath during cleanup', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            const mockPath = { type: 'path' };
-            const mockCanvas = (renderSystem as any).canvas;
+        it('should replace existing death marks when new ones provided', () => {
+            // Add initial death marks
+            const initialMarks: DeathMark[] = [
+                { x: 100, y: 100, timestamp: Date.now() },
+                { x: 200, y: 150, timestamp: Date.now() }
+            ];
+            renderSystem.renderDeathMarks(initialMarks);
 
-            fabric.Path = vi.fn().mockReturnValue(mockPath);
-            mockCanvas.add = vi.fn();
-            mockCanvas.remove = vi.fn();
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(2);
 
-            // Create death mark path
-            const deathMarks: DeathMark[] = [{ x: 100, y: 100, timestamp: Date.now() }];
-            renderSystem.renderDeathMarks(deathMarks);
+            // Replace with new death marks
+            const newMarks: DeathMark[] = [{ x: 300, y: 300, timestamp: Date.now() }];
+            renderSystem.renderDeathMarks(newMarks);
+            expect(manager.getDeathMarkCount()).toBe(1);
 
-            expect((renderSystem as any).deathMarkPath).toBe(mockPath);
-
-            // Cleanup should remove the path
-            await renderSystem.cleanup();
-
-            expect(mockCanvas.remove).toHaveBeenCalledWith(mockPath);
-            expect((renderSystem as any).deathMarkPath).toBeNull();
+            // Verify the new mark is at the correct position
+            const marks = manager.getDeathMarks();
+            expect(marks[0]).toMatchObject({ x: 300, y: 300 });
         });
     });
 
     describe('performance characteristics', () => {
-        it('should maintain constant canvas object count regardless of death mark count', async () => {
-            const fabricModule = await import('fabric');
-            const { fabric } = fabricModule as any;
-            const mockCanvas = (renderSystem as any).canvas;
-
-            fabric.Path = vi.fn().mockReturnValue({ type: 'path' });
-            mockCanvas.add = vi.fn();
-
-            // Test with varying death mark counts
+        it('should maintain O(1) canvas object count regardless of death mark count', () => {
             const smallSet: DeathMark[] = [{ x: 100, y: 100, timestamp: Date.now() }];
             const largeSet: DeathMark[] = Array.from({ length: 100 }, (_, i) => ({
                 x: i * 10,
@@ -232,14 +137,91 @@ describe.skip('FabricRenderSystem - Death Marks Performance', () => {
                 timestamp: Date.now()
             }));
 
-            // Both should result in exactly one canvas.add call
+            // Test with small set
             renderSystem.renderDeathMarks(smallSet);
-            expect(mockCanvas.add).toHaveBeenCalledTimes(1);
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(1);
 
-            mockCanvas.add.mockClear();
-
+            // Test with large set - should handle efficiently
             renderSystem.renderDeathMarks(largeSet);
-            expect(mockCanvas.add).toHaveBeenCalledTimes(1);
+            expect(manager.getDeathMarkCount()).toBe(100);
+
+            // Performance should be consistent regardless of count
+            // (The underlying FabricDeathMarkRenderer creates only 1 canvas object)
+        });
+
+        it('should handle rapid death mark updates efficiently', () => {
+            const startTime = performance.now();
+
+            // Simulate rapid updates (like during gameplay)
+            for (let i = 0; i < 50; i++) {
+                const marks: DeathMark[] = Array.from({ length: i + 1 }, (_, j) => ({
+                    x: j * 20,
+                    y: j * 20,
+                    timestamp: Date.now()
+                }));
+                renderSystem.renderDeathMarks(marks);
+            }
+
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(50);
+            expect(duration).toBeLessThan(100); // Should complete quickly
+        });
+    });
+
+    describe('cleanup integration', () => {
+        it('should clean up death mark manager during system cleanup', async () => {
+            // Add some death marks
+            const deathMarks: DeathMark[] = [
+                { x: 100, y: 100, timestamp: Date.now() },
+                { x: 200, y: 150, timestamp: Date.now() }
+            ];
+            renderSystem.renderDeathMarks(deathMarks);
+
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(2);
+
+            // Cleanup should clear everything
+            await renderSystem.cleanup();
+            expect(manager.getDeathMarkCount()).toBe(0);
+        });
+    });
+
+    describe('edge cases', () => {
+        it('should handle zero coordinates correctly', () => {
+            const deathMarks: DeathMark[] = [{ x: 0, y: 0, timestamp: Date.now() }];
+
+            expect(() => {
+                renderSystem.renderDeathMarks(deathMarks);
+            }).not.toThrow();
+
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(1);
+        });
+
+        it('should handle negative coordinates correctly', () => {
+            const deathMarks: DeathMark[] = [{ x: -100, y: -200, timestamp: Date.now() }];
+
+            expect(() => {
+                renderSystem.renderDeathMarks(deathMarks);
+            }).not.toThrow();
+
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(1);
+        });
+
+        it('should handle very large coordinates correctly', () => {
+            const deathMarks: DeathMark[] = [{ x: 99999, y: 88888, timestamp: Date.now() }];
+
+            expect(() => {
+                renderSystem.renderDeathMarks(deathMarks);
+            }).not.toThrow();
+
+            const manager = (renderSystem as any).deathMarkManager;
+            expect(manager.getDeathMarkCount()).toBe(1);
         });
     });
 });

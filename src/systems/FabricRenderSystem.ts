@@ -1,4 +1,6 @@
 import * as fabric from 'fabric';
+import { FabricDeathMarkRenderer } from '../adapters/FabricDeathMarkRenderer.js';
+import { DeathMarkManager } from '../core/DeathMarkManager.js';
 import type { Goal, MovingPlatform, Spike, StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
@@ -31,7 +33,7 @@ export class FabricRenderSystem {
     private landingHistory: { x: number; y: number; timestamp: number }[] = [];
     private readonly LERP_SPEED = 0.1;
 
-    private deathMarkPath: fabric.Path | null = null;
+    private deathMarkManager: DeathMarkManager;
     private readonly HISTORY_FADE_TIME = 3000;
 
     constructor(canvasElement: HTMLCanvasElement) {
@@ -52,6 +54,10 @@ export class FabricRenderSystem {
         if (upperCanvas) {
             upperCanvas.style.backgroundColor = 'transparent';
         }
+
+        // Initialize death mark manager
+        const deathMarkRenderer = new FabricDeathMarkRenderer(this.canvas);
+        this.deathMarkManager = new DeathMarkManager(deathMarkRenderer);
 
         // 初期描画を実行
         this.canvas.renderAll();
@@ -336,37 +342,13 @@ export class FabricRenderSystem {
     }
 
     renderDeathMarks(deathMarks: DeathMark[]): void {
-        // Remove previous path if it exists
-        if (this.deathMarkPath) {
-            this.canvas.remove(this.deathMarkPath);
-            this.deathMarkPath = null;
+        // Clear existing death marks
+        this.deathMarkManager.clearDeathMarks();
+
+        // Add new death marks
+        for (const mark of deathMarks) {
+            this.deathMarkManager.addDeathMark(mark.x, mark.y);
         }
-
-        if (deathMarks.length === 0) {
-            return;
-        }
-
-        // Generate combined path data for all death marks
-        const pathData = deathMarks
-            .map((mark) => {
-                const size = 8;
-                // Create X mark using SVG path commands
-                const line1 = `M ${mark.x - size} ${mark.y - size} L ${mark.x + size} ${mark.y + size}`;
-                const line2 = `M ${mark.x + size} ${mark.y - size} L ${mark.x - size} ${mark.y + size}`;
-                return `${line1} ${line2}`;
-            })
-            .join(' ');
-
-        // Create single Path object for all death marks
-        this.deathMarkPath = new fabric.Path(pathData, {
-            stroke: 'rgba(255, 0, 0, 0.8)',
-            strokeWidth: 3,
-            selectable: false,
-            evented: false,
-            objectCaching: false // Performance optimization for dynamic objects
-        });
-
-        this.canvas.add(this.deathMarkPath);
     }
 
     renderLandingPredictions(): void {
@@ -671,11 +653,8 @@ export class FabricRenderSystem {
                 }
                 this.textShapes = [];
 
-                // Clean up deathMarkPath
-                if (this.deathMarkPath) {
-                    this.canvas.remove(this.deathMarkPath);
-                    this.deathMarkPath = null;
-                }
+                // Clean up death mark manager
+                await this.deathMarkManager.cleanup();
 
                 // In fabric.js v6, dispose is async and must be awaited
                 await this.canvas.dispose();
