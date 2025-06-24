@@ -54,24 +54,19 @@
   },
   "tutorialMessages": [
     {
-      "x": 600,
+      "x": 400,
       "y": 450,
-      "text": "THOUGHT YOU COULD JUMP?"
+      "text": "HURRY! THE SHIP IS LEAVING!"
+    },
+    {
+      "x": 1100,
+      "y": 450,
+      "text": "ENJOYING THE ENDLESS RIDE?"
     },
     {
       "x": 1450,
       "y": 420,
-      "text": "WELCOME BACK TO LAND"
-    },
-    {
-      "x": 1700,
-      "y": 420,
-      "text": "READY FOR SPEED?"
-    },
-    {
-      "x": 2300,
-      "y": 360,
-      "text": "ALMOST DONE!"
+      "text": "OH, SOLID GROUND AT LAST!"
     }
   ]
 }
