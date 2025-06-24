@@ -340,7 +340,7 @@ export class FabricRenderSystem {
                     left: message.x,
                     top: message.y,
                     fontSize: 12,
-                    fill: 'yellow',
+                    fill: 'white',
                     fontFamily: 'monospace',
                     originX: 'center',
                     originY: 'center',

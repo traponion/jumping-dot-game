@@ -54,44 +54,24 @@
   },
   "tutorialMessages": [
     {
-      "x": 600,
-      "y": 460,
-      "text": "NICE WALK, RIGHT?"
-    },
-    {
-      "x": 780,
-      "y": 460,
-      "text": "SURPRISE! :)"
-    },
-    {
       "x": 1100,
       "y": 460,
       "text": "THOUGHT YOU COULD JUMP?"
     },
     {
-      "x": 1100,
-      "y": 480,
-      "text": "ENJOY THE 18-SEC RIDE..."
-    },
-    {
       "x": 1300,
       "y": 460,
-      "text": "STILL THERE? GOOD."
+      "text": "ENJOY THE RIDE..."
     },
     {
       "x": 1550,
       "y": 430,
-      "text": "FINALLY! WELCOME BACK TO LAND"
-    },
-    {
-      "x": 1825,
-      "y": 430,
-      "text": "NOW FASTER, BECAUSE WHY NOT?"
+      "text": "WELCOME BACK TO LAND"
     },
     {
       "x": 2100,
       "y": 400,
-      "text": "ALMOST DONE WITH THIS ORDEAL"
+      "text": "ALMOST DONE!"
     }
   ]
 }
