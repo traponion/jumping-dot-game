@@ -55,22 +55,22 @@
   "tutorialMessages": [
     {
       "x": 1100,
-      "y": 460,
+      "y": 450,
       "text": "THOUGHT YOU COULD JUMP?"
     },
     {
       "x": 1300,
-      "y": 460,
+      "y": 450,
       "text": "ENJOY THE RIDE..."
     },
     {
-      "x": 1550,
-      "y": 430,
+      "x": 1600,
+      "y": 420,
       "text": "WELCOME BACK TO LAND"
     },
     {
       "x": 2100,
-      "y": 400,
+      "y": 390,
       "text": "ALMOST DONE!"
     }
   ]
