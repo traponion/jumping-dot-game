@@ -120,6 +120,7 @@ export interface StageData {
     goalText: TextElement;
     leftEdgeMessage?: TextElement;
     leftEdgeSubMessage?: TextElement;
+    tutorialMessages?: TextElement[];
 }
 
 /**
