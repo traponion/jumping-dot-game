@@ -1,29 +1,19 @@
 {
   "id": 2,
   "name": "Stage 2",
-  "timeLimit": 45,
   "description": "Moving Platform Tutorial - Mathematically Optimized Design",
   "platforms": [
     { "x1": -500, "y1": 500, "x2": 750, "y2": 500 },
-    { "x1": 1500, "y1": 470, "x2": 1700, "y2": 470 },
-    { "x1": 2000, "y1": 440, "x2": 2200, "y2": 440 },
-    { "x1": 2250, "y1": 410, "x2": 2400, "y2": 410 }
+    { "x1": 1500, "y1": 500, "x2": 2400, "y2": 500 }
   ],
   "movingPlatforms": [
     { 
       "x1": 750, "y1": 500, "x2": 880, "y2": 500,
       "startX": 750, "endX": 1400, "speed": 0.6, "direction": 1
-    },
-    { 
-      "x1": 1750, "y1": 470, "x2": 1880, "y2": 470,
-      "startX": 1750, "endX": 1900, "speed": 1.2, "direction": 1
     }
   ],
   "holes": [
-    { "x1": 750, "x2": 1500 },
-    { "x1": 1700, "x2": 1750 },
-    { "x1": 1900, "x2": 2000 },
-    { "x1": 2200, "x2": 2250 }
+    { "x1": 750, "x2": 1500 }
   ],
   "spikes": [],
   "movingSpikes": [],
@@ -55,7 +45,7 @@
   },
   "tutorialMessages": [
     {
-      "x": 400,
+      "x": 600,
       "y": 450,
       "text": "HURRY! THE SHIP IS LEAVING!"
     },
@@ -65,8 +55,8 @@
       "text": "ENJOYING THE ENDLESS RIDE?"
     },
     {
-      "x": 1450,
-      "y": 420,
+      "x": 1600,
+      "y": 450,
       "text": "OH, SOLID GROUND AT LAST!"
     }
   ]
