@@ -332,6 +332,25 @@ export class FabricRenderSystem {
             this.canvas.add(edgeSubMessage);
             this.textShapes.push(edgeSubMessage);
         }
+
+        // tutorialMessagesを描画
+        if (stage.tutorialMessages) {
+            for (const message of stage.tutorialMessages) {
+                const tutorialText = new fabric.Text(message.text, {
+                    left: message.x,
+                    top: message.y,
+                    fontSize: 12,
+                    fill: 'yellow',
+                    fontFamily: 'monospace',
+                    originX: 'center',
+                    originY: 'center',
+                    selectable: false,
+                    evented: false
+                });
+                this.canvas.add(tutorialText);
+                this.textShapes.push(tutorialText);
+            }
+        }
     }
 
     renderDeathMarks(deathMarks: DeathMark[]): void {

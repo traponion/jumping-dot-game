@@ -3,44 +3,32 @@
   "name": "Stage 2",
   "description": "Moving Platform Tutorial - Mathematically Optimized Design",
   "platforms": [
-    { "x1": -500, "y1": 500, "x2": 300, "y2": 500 },
-    { "x1": 500, "y1": 500, "x2": 700, "y2": 500 },
-    { "x1": 1500, "y1": 480, "x2": 1700, "y2": 480 },
-    { "x1": 2000, "y1": 460, "x2": 2200, "y2": 460 },
-    { "x1": 2250, "y1": 440, "x2": 2400, "y2": 440 }
+    { "x1": -500, "y1": 500, "x2": 750, "y2": 500 },
+    { "x1": 1500, "y1": 470, "x2": 1700, "y2": 470 },
+    { "x1": 2000, "y1": 440, "x2": 2200, "y2": 440 },
+    { "x1": 2250, "y1": 410, "x2": 2400, "y2": 410 }
   ],
   "movingPlatforms": [
     { 
-      "x1": 350, "y1": 500, "x2": 450, "y2": 500,
-      "startX": 350, "endX": 450, "speed": 1.0, "direction": 1
-    },
-    { 
-      "x1": 750, "y1": 500, "x2": 850, "y2": 500,
+      "x1": 750, "y1": 500, "x2": 880, "y2": 500,
       "startX": 750, "endX": 1400, "speed": 0.6, "direction": 1
     },
     { 
-      "x1": 1750, "y1": 480, "x2": 1850, "y2": 480,
+      "x1": 1750, "y1": 470, "x2": 1880, "y2": 470,
       "startX": 1750, "endX": 1900, "speed": 1.2, "direction": 1
     }
   ],
   "holes": [
-    { "x1": 300, "x2": 350 },
-    { "x1": 450, "x2": 500 },
-    { "x1": 700, "x2": 750 },
-    { "x1": 850, "x2": 1500 },
+    { "x1": 750, "x2": 1500 },
     { "x1": 1700, "x2": 1750 },
     { "x1": 1900, "x2": 2000 },
     { "x1": 2200, "x2": 2250 }
   ],
-  "spikes": [
-    { "x": 375, "y": 480, "width": 15, "height": 15 },
-    { "x": 725, "y": 480, "width": 15, "height": 15 },
-    { "x": 1775, "y": 460, "width": 15, "height": 15 }
-  ],
+  "spikes": [],
   "movingSpikes": [],
   "goal": {
     "x": 2450,
-    "y": 390,
+    "y": 360,
     "width": 40,
     "height": 50
   },
@@ -51,39 +39,59 @@
   },
   "goalText": {
     "x": 2470,
-    "y": 370,
+    "y": 340,
     "text": "GOAL"
   },
   "leftEdgeMessage": {
     "x": -400,
     "y": 450,
-    "text": "MATH-OPTIMIZED TUTORIAL!"
+    "text": "MOVING PLATFORM TUTORIAL!"
   },
   "leftEdgeSubMessage": {
     "x": -400,
     "y": 470,
-    "text": "RIDE THE PLATFORMS →"
+    "text": "ENJOY THE RIDE →"
   },
   "tutorialMessages": [
     {
-      "x": 400,
+      "x": 600,
       "y": 460,
-      "text": "BASIC TRAINING"
+      "text": "NICE WALK, RIGHT?"
+    },
+    {
+      "x": 780,
+      "y": 460,
+      "text": "SURPRISE! :)"
     },
     {
       "x": 1100,
       "y": 460,
-      "text": "650PX MEGA TRANSPORT!"
+      "text": "THOUGHT YOU COULD JUMP?"
     },
     {
       "x": 1100,
       "y": 480,
-      "text": "STAY ON FOR 18 SECONDS"
+      "text": "ENJOY THE 18-SEC RIDE..."
+    },
+    {
+      "x": 1300,
+      "y": 460,
+      "text": "STILL THERE? GOOD."
+    },
+    {
+      "x": 1550,
+      "y": 430,
+      "text": "FINALLY! WELCOME BACK TO LAND"
     },
     {
       "x": 1825,
-      "y": 440,
-      "text": "TIMING CHALLENGE"
+      "y": 430,
+      "text": "NOW FASTER, BECAUSE WHY NOT?"
+    },
+    {
+      "x": 2100,
+      "y": 400,
+      "text": "ALMOST DONE WITH THIS ORDEAL"
     }
   ]
 }
