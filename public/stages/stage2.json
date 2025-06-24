@@ -1,6 +1,7 @@
 {
   "id": 2,
   "name": "Stage 2",
+  "timeLimit": 45,
   "description": "Moving Platform Tutorial - Mathematically Optimized Design",
   "platforms": [
     { "x1": -500, "y1": 500, "x2": 750, "y2": 500 },
