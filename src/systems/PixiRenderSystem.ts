@@ -124,6 +124,66 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Render spikes as white triangular shapes
+     */
+    renderSpikes(spikes: Array<{ x: number; y: number; width: number; height: number }>): void {
+        this.spikeGraphics.clear();
+        this.spikeGraphics.fill(0xffffff); // White fill
+        this.spikeGraphics.stroke({ width: 1, color: 0xffffff });
+
+        for (const spike of spikes) {
+            // Create triangular spike shape with points at:
+            // Bottom-left, top-center, bottom-right
+            const points = [
+                spike.x,
+                spike.y + spike.height, // Bottom-left
+                spike.x + spike.width / 2,
+                spike.y, // Top-center
+                spike.x + spike.width,
+                spike.y + spike.height // Bottom-right
+            ];
+
+            this.spikeGraphics.poly(points);
+        }
+    }
+
+    /**
+     * Render goal as white rectangle frame with X pattern inside
+     */
+    renderGoal(goal: { x: number; y: number; width: number; height: number }): void {
+        this.goalGraphics.clear();
+        this.goalGraphics.stroke({ width: 2, color: 0xffffff });
+
+        // Draw goal frame (rectangle outline)
+        this.goalGraphics.rect(goal.x, goal.y, goal.width, goal.height);
+
+        // Draw X pattern inside the goal (two diagonal lines)
+        this.goalGraphics.moveTo(goal.x, goal.y);
+        this.goalGraphics.lineTo(goal.x + goal.width, goal.y + goal.height);
+
+        this.goalGraphics.moveTo(goal.x + goal.width, goal.y);
+        this.goalGraphics.lineTo(goal.x, goal.y + goal.height);
+    }
+
+    /**
+     * Render complete stage with all elements (platforms, spikes, goal)
+     * Note: Text rendering will be added in Phase 2
+     */
+    renderStage(stage: StageData): void {
+        this.renderPlatforms(stage);
+
+        // Render moving platforms if they exist
+        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
+            this.renderMovingPlatforms(stage.movingPlatforms);
+        }
+
+        this.renderSpikes(stage.spikes);
+        this.renderGoal(stage.goal);
+
+        // TODO Phase 2: Add renderStageTexts(stage) for text elements
+    }
+
+    /**
      * Render player trail with fade effect
      */
     /**
