@@ -34,11 +34,12 @@ export class PixiRenderSystem {
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
-    // Effect data (to be implemented in future phases)
-    // private landingPredictions: LandingPrediction[] = [];
-    // private landingHistory: { x: number; y: number; timestamp: number }[] = [];
-    // private readonly LERP_SPEED = 0.15;
-    // private readonly HISTORY_FADE_TIME = 3000;
+    // Landing prediction and history data
+    // private landingPredictions: LandingPrediction[] = []; // TODO: implement landing predictions
+    private landingHistory: { x: number; y: number; timestamp: number }[] = [];
+    private landingHistoryGraphics: PIXI.Graphics;
+    // private readonly LERP_SPEED = 0.15; // TODO: implement interpolation
+    private readonly HISTORY_FADE_TIME = 3000;
 
     constructor() {
         // Initialize PixiJS application
@@ -58,6 +59,7 @@ export class PixiRenderSystem {
         this.deathMarkManager = new DeathMarkRenderingManager(this.app);
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
+        this.landingHistoryGraphics = new PIXI.Graphics();
     }
 
     /**
@@ -85,6 +87,7 @@ export class PixiRenderSystem {
         this.gameContainer.addChild(this.goalGraphics);
         this.gameContainer.addChild(this.trailGraphics);
         this.gameContainer.addChild(this.trailParticleManager.getParticleContainer());
+        this.gameContainer.addChild(this.landingHistoryGraphics);
         this.gameContainer.addChild(this.effectsGraphics);
         this.uiContainer.addChild(this.uiGraphics);
     }
@@ -213,6 +216,74 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Adds a landing position to the history for collision feedback
+     */
+    addLandingHistory(x: number, y: number): void {
+        this.landingHistory.push({
+            x,
+            y,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * Renders landing predictions and history with fade effects
+     */
+    renderLandingPredictions(): void {
+        this.cleanupLandingHistory();
+        this.renderLandingHistory();
+    }
+
+    /**
+     * Cleans up old landing history entries
+     */
+    private cleanupLandingHistory(): void {
+        const now = Date.now();
+        this.landingHistory = this.landingHistory.filter(
+            (landing) => now - landing.timestamp < this.HISTORY_FADE_TIME
+        );
+    }
+
+    /**
+     * Renders landing history as white vertical lines with fade effect
+     */
+    private renderLandingHistory(): void {
+        // Clear previous history graphics
+        this.landingHistoryGraphics.clear();
+
+        if (this.landingHistory.length === 0) {
+            // Set stroke style even for empty history (for consistency)
+            this.landingHistoryGraphics.stroke({
+                color: 0xffffff,
+                width: 1
+            });
+            return;
+        }
+
+        // Set stroke style for history lines
+        this.landingHistoryGraphics.stroke({
+            color: 0xffffff,
+            width: 1
+        });
+
+        // TODO: Implement fade effect - uncomment when implementing alpha blending
+        // const currentTime = Date.now();
+        const lineHeight = 8;
+
+        // Draw vertical lines for each landing position
+        for (const history of this.landingHistory) {
+            // TODO: Implement alpha fade effect based on age
+            // const age = currentTime - history.timestamp;
+            // const fadeProgress = age / this.HISTORY_FADE_TIME;
+            // const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
+
+            // Draw vertical line (fade effect to be implemented later)
+            this.landingHistoryGraphics.moveTo(history.x, history.y);
+            this.landingHistoryGraphics.lineTo(history.x, history.y - lineHeight);
+        }
+    }
+
+    /**
      * Apply camera transformation to game container
      */
     /**
@@ -239,6 +310,7 @@ export class PixiRenderSystem {
         this.spikeGraphics.clear();
         this.goalGraphics.clear();
         this.trailGraphics.clear();
+        this.landingHistoryGraphics.clear();
         this.effectsGraphics.clear();
         this.uiGraphics.clear();
 

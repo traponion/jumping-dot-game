@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
 import { TrailParticleManager } from '../systems/TrailParticleManager.js';
 import type { Camera } from '../types/GameTypes.js';
@@ -332,8 +332,8 @@ describe('PixiRenderSystem', () => {
         it('should clear all graphics', () => {
             renderSystem.clear();
 
-            // All graphics objects should be cleared (7 graphics objects in constructor)
-            expect(mockGraphics.clear).toHaveBeenCalledTimes(7);
+            // All graphics objects should be cleared (8 graphics objects in constructor)
+            expect(mockGraphics.clear).toHaveBeenCalledTimes(8);
         });
 
         it('should destroy properly', () => {
@@ -363,6 +363,163 @@ describe('PixiRenderSystem', () => {
         it('should return UI container', () => {
             const container = renderSystem.getUIContainer();
             expect(container).toBeDefined();
+        });
+    });
+
+    describe('collision detection integration', () => {
+        beforeEach(() => {
+            // Mock Date.now() for consistent timestamp testing
+            vi.spyOn(Date, 'now').mockReturnValue(12345);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        describe('addLandingHistory', () => {
+            it('should add landing position with timestamp to history', () => {
+                renderSystem.addLandingHistory(100, 200);
+
+                // Should store landing with correct data structure
+                const history = (renderSystem as any).landingHistory;
+                expect(history).toHaveLength(1);
+                expect(history[0]).toEqual({
+                    x: 100,
+                    y: 200,
+                    timestamp: 12345
+                });
+            });
+
+            it('should accumulate multiple landing positions', () => {
+                renderSystem.addLandingHistory(100, 200);
+                renderSystem.addLandingHistory(150, 250);
+                renderSystem.addLandingHistory(200, 300);
+
+                const history = (renderSystem as any).landingHistory;
+                expect(history).toHaveLength(3);
+                expect(history[1]).toEqual({
+                    x: 150,
+                    y: 250,
+                    timestamp: 12345
+                });
+                expect(history[2]).toEqual({
+                    x: 200,
+                    y: 300,
+                    timestamp: 12345
+                });
+            });
+
+            it('should handle edge case coordinates correctly', () => {
+                renderSystem.addLandingHistory(0, 0);
+                renderSystem.addLandingHistory(-100, -50);
+                renderSystem.addLandingHistory(9999, 9999);
+
+                const history = (renderSystem as any).landingHistory;
+                expect(history).toHaveLength(3);
+                expect(history[0]).toEqual({ x: 0, y: 0, timestamp: 12345 });
+                expect(history[1]).toEqual({ x: -100, y: -50, timestamp: 12345 });
+                expect(history[2]).toEqual({ x: 9999, y: 9999, timestamp: 12345 });
+            });
+        });
+
+        describe('renderLandingPredictions', () => {
+            it('should clean up old history and render current history', () => {
+                // Add some landing history first
+                renderSystem.addLandingHistory(100, 200);
+                renderSystem.addLandingHistory(150, 250);
+
+                renderSystem.renderLandingPredictions();
+
+                // Should call cleanup and drawing methods
+                expect(mockGraphics.clear).toHaveBeenCalled();
+                expect(mockGraphics.stroke).toHaveBeenCalled();
+            });
+
+            it('should handle empty landing history gracefully', () => {
+                renderSystem.renderLandingPredictions();
+
+                // Should not throw error and should clear graphics
+                expect(mockGraphics.clear).toHaveBeenCalled();
+                expect(mockGraphics.stroke).toHaveBeenCalled();
+            });
+
+            it('should render vertical lines for each landing position', () => {
+                renderSystem.addLandingHistory(100, 200);
+                renderSystem.addLandingHistory(150, 250);
+
+                renderSystem.renderLandingPredictions();
+
+                // Should draw lines at landing positions
+                expect(mockGraphics.moveTo).toHaveBeenCalledWith(100, 200);
+                expect(mockGraphics.lineTo).toHaveBeenCalledWith(100, 192); // y - 8
+                expect(mockGraphics.moveTo).toHaveBeenCalledWith(150, 250);
+                expect(mockGraphics.lineTo).toHaveBeenCalledWith(150, 242); // y - 8
+            });
+        });
+
+        describe('landing history cleanup', () => {
+            it('should remove old history entries beyond fade time', () => {
+                // Set initial timestamp
+                vi.mocked(Date.now).mockReturnValue(1000);
+                renderSystem.addLandingHistory(100, 200);
+
+                // Advance time beyond fade period (3000ms)
+                vi.mocked(Date.now).mockReturnValue(5000);
+                renderSystem.addLandingHistory(200, 300);
+
+                // Cleanup should remove old entry
+                renderSystem.renderLandingPredictions();
+
+                const history = (renderSystem as any).landingHistory;
+                expect(history).toHaveLength(1);
+                expect(history[0]).toEqual({
+                    x: 200,
+                    y: 300,
+                    timestamp: 5000
+                });
+            });
+
+            it('should keep recent history entries within fade time', () => {
+                vi.mocked(Date.now).mockReturnValue(1000);
+                renderSystem.addLandingHistory(100, 200);
+
+                // Advance time within fade period
+                vi.mocked(Date.now).mockReturnValue(2000);
+                renderSystem.addLandingHistory(200, 300);
+
+                renderSystem.renderLandingPredictions();
+
+                const history = (renderSystem as any).landingHistory;
+                expect(history).toHaveLength(2);
+            });
+        });
+
+        describe('visual styling for landing history', () => {
+            it('should use white color with appropriate alpha for history lines', () => {
+                renderSystem.addLandingHistory(100, 200);
+                renderSystem.renderLandingPredictions();
+
+                // Should set stroke style for white lines
+                expect(mockGraphics.stroke).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        color: 0xffffff,
+                        width: 1
+                    })
+                );
+            });
+
+            it('should render consistent line height for all history markers', () => {
+                renderSystem.addLandingHistory(100, 200);
+                renderSystem.addLandingHistory(300, 400);
+
+                renderSystem.renderLandingPredictions();
+
+                // All lines should have same height (8 pixels)
+                expect(mockGraphics.moveTo).toHaveBeenCalledWith(100, 200);
+                expect(mockGraphics.lineTo).toHaveBeenCalledWith(100, 192);
+                expect(mockGraphics.moveTo).toHaveBeenCalledWith(300, 400);
+                expect(mockGraphics.lineTo).toHaveBeenCalledWith(300, 392);
+            });
         });
     });
 });
