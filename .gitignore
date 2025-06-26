@@ -80,6 +80,8 @@ review.md
 # serena
 .serena/
 
-# Handover documents (temporary, for ねつき sessions)
+# Claude Code working files (internal use only)
 .claude/handover_document.md
 .claude/handover*.md
+.claude/issues_template.md
+.claude/migration_handover.md
