@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
-import type { Camera, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
 export interface LandingPrediction {
@@ -10,6 +10,7 @@ export interface LandingPrediction {
     jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
+import { DeathMarkRenderingManager } from './DeathMarkRenderingManager.js';
 /**
  * PixiJS-based rendering system for the jumping dot game.
  * Provides high-performance WebGL rendering with fallback to Canvas2D.
@@ -29,6 +30,7 @@ export class PixiRenderSystem {
     private goalGraphics: PIXI.Graphics;
     private trailGraphics: PIXI.Graphics;
     private trailParticleManager: TrailParticleManager;
+    private deathMarkManager: DeathMarkRenderingManager;
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
@@ -53,6 +55,7 @@ export class PixiRenderSystem {
         this.goalGraphics = new PIXI.Graphics();
         this.trailGraphics = new PIXI.Graphics();
         this.trailParticleManager = new TrailParticleManager(this.app);
+        this.deathMarkManager = new DeathMarkRenderingManager(this.app);
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
     }
@@ -203,6 +206,13 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Renders death marks using PixiJS Graphics API
+     */
+    renderDeathMarks(deathMarks: DeathMark[]): void {
+        this.deathMarkManager.renderDeathMarks(deathMarks);
+    }
+
+    /**
      * Apply camera transformation to game container
      */
     /**
@@ -249,6 +259,7 @@ export class PixiRenderSystem {
      */
     destroy(): void {
         this.trailParticleManager.destroy();
+        this.deathMarkManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
     }
 
