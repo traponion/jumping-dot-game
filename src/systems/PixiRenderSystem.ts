@@ -14,6 +14,8 @@ export interface LandingPrediction {
  * PixiJS-based rendering system for the jumping dot game.
  * Provides high-performance WebGL rendering with fallback to Canvas2D.
  */
+import { TrailParticleManager } from './TrailParticleManager.js';
+
 export class PixiRenderSystem {
     private app: PIXI.Application;
     private gameContainer: PIXI.Container;
@@ -26,6 +28,7 @@ export class PixiRenderSystem {
     private spikeGraphics: PIXI.Graphics;
     private goalGraphics: PIXI.Graphics;
     private trailGraphics: PIXI.Graphics;
+    private trailParticleManager: TrailParticleManager;
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
@@ -49,6 +52,7 @@ export class PixiRenderSystem {
         this.spikeGraphics = new PIXI.Graphics();
         this.goalGraphics = new PIXI.Graphics();
         this.trailGraphics = new PIXI.Graphics();
+        this.trailParticleManager = new TrailParticleManager(this.app);
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
     }
@@ -77,6 +81,7 @@ export class PixiRenderSystem {
         this.gameContainer.addChild(this.spikeGraphics);
         this.gameContainer.addChild(this.goalGraphics);
         this.gameContainer.addChild(this.trailGraphics);
+        this.gameContainer.addChild(this.trailParticleManager.getParticleContainer());
         this.gameContainer.addChild(this.effectsGraphics);
         this.uiContainer.addChild(this.uiGraphics);
     }
@@ -190,16 +195,11 @@ export class PixiRenderSystem {
      * Render player trail with fade effect
      */
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
+        // Use high-performance ParticleContainer for trail rendering
+        this.trailParticleManager.renderTrail(trail, playerRadius);
+
+        // Keep legacy Graphics trail clear for compatibility
         this.trailGraphics.clear();
-
-        for (let i = 0; i < trail.length; i++) {
-            const point = trail[i];
-            const alpha = (i + 1) / trail.length; // Fade from old to new
-            const radius = playerRadius * alpha * 0.8; // Scale radius based on age
-
-            this.trailGraphics.circle(point.x, point.y, radius);
-            this.trailGraphics.fill({ color: 0xffffff, alpha });
-        }
     }
 
     /**
@@ -248,6 +248,7 @@ export class PixiRenderSystem {
      * Clean up resources and destroy the application
      */
     destroy(): void {
+        this.trailParticleManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
     }
 

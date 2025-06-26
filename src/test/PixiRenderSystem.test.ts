@@ -1,5 +1,7 @@
+import * as PIXI from 'pixi.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
+import { TrailParticleManager } from '../systems/TrailParticleManager.js';
 import type { Camera } from '../types/GameTypes.js';
 
 // Mock PIXI
@@ -25,29 +27,90 @@ const mockGraphics = {
     y: 0
 };
 
-const mockApp = {
-    init: vi.fn().mockResolvedValue(undefined),
-    renderer: {
-        width: 800,
-        height: 600,
-        resize: vi.fn()
-    },
-    stage: {
-        addChild: vi.fn(),
-        removeChild: vi.fn()
-    },
-    destroy: vi.fn()
-};
+vi.mock('pixi.js', () => {
+    const mockTexture = {
+        width: 16,
+        height: 16,
+        destroy: vi.fn()
+    };
 
-vi.mock('pixi.js', () => ({
-    Application: vi.fn(() => mockApp),
-    Container: vi.fn(() => mockContainer),
-    Graphics: vi.fn(() => mockGraphics)
-}));
+    const mockParticleContainer = {
+        addParticle: vi.fn(),
+        removeParticle: vi.fn(),
+        removeParticles: vi.fn(),
+        particleChildren: [],
+        update: vi.fn(),
+        destroy: vi.fn(),
+        clear: vi.fn()
+    };
+
+    const mockParticle = {
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        alpha: 1,
+        texture: null
+    };
+
+    const mockApp = {
+        init: vi.fn().mockResolvedValue(undefined),
+        renderer: {
+            width: 800,
+            height: 600,
+            resize: vi.fn(),
+            generateTexture: vi.fn(() => mockTexture)
+        },
+        stage: {
+            addChild: vi.fn(),
+            removeChild: vi.fn()
+        },
+        destroy: vi.fn()
+    };
+
+    return {
+        Application: vi.fn(() => mockApp),
+        Container: vi.fn(() => mockContainer),
+        Graphics: vi.fn(() => mockGraphics),
+        ParticleContainer: vi.fn(() => mockParticleContainer),
+        Particle: vi.fn(() => ({ ...mockParticle })),
+        Texture: {
+            from: vi.fn(() => mockTexture),
+            EMPTY: mockTexture
+        },
+        RenderTexture: {
+            create: vi.fn(() => mockTexture)
+        }
+    };
+});
+
+// Mock TrailParticleManager
+vi.mock('../systems/TrailParticleManager.js', () => {
+    const mockParticleContainer = {
+        addParticle: vi.fn(),
+        removeParticle: vi.fn(),
+        removeParticles: vi.fn(),
+        particleChildren: [],
+        update: vi.fn(),
+        destroy: vi.fn(),
+        clear: vi.fn()
+    };
+
+    return {
+        TrailParticleManager: vi.fn(() => ({
+            renderTrail: vi.fn(),
+            getParticleContainer: vi.fn(() => mockParticleContainer),
+            getActiveParticleCount: vi.fn(() => 0),
+            destroy: vi.fn()
+        }))
+    };
+});
 
 describe('PixiRenderSystem', () => {
     let renderSystem: PixiRenderSystem;
     let canvas: HTMLCanvasElement;
+    let mockApp: any;
+    let mockTrailManager: any;
 
     beforeEach(() => {
         // Reset mocks
@@ -60,6 +123,10 @@ describe('PixiRenderSystem', () => {
 
         // Create render system (no canvas parameter)
         renderSystem = new PixiRenderSystem();
+
+        // Get mocked instances after creation
+        mockApp = vi.mocked(PIXI.Application).mock.results[0].value;
+        mockTrailManager = vi.mocked(TrailParticleManager).mock.results[0].value;
     });
 
     describe('initialization', () => {
@@ -243,19 +310,21 @@ describe('PixiRenderSystem', () => {
     });
 
     describe('trail rendering', () => {
-        it('should render trail with alpha blending', () => {
+        it('should render trail using ParticleContainer', () => {
             const trail = [
-                { x: 100, y: 200, age: 0 },
-                { x: 110, y: 210, age: 500 },
-                { x: 120, y: 220, age: 1000 }
+                { x: 100, y: 200 },
+                { x: 110, y: 210 },
+                { x: 120, y: 220 }
             ];
             const playerRadius = 8;
 
             renderSystem.renderTrail(trail, playerRadius);
 
+            // Should use TrailParticleManager for high-performance rendering
+            expect(mockTrailManager.renderTrail).toHaveBeenCalledWith(trail, playerRadius);
+
+            // Legacy graphics should be cleared for compatibility
             expect(mockGraphics.clear).toHaveBeenCalled();
-            expect(mockGraphics.circle).toHaveBeenCalledTimes(3);
-            expect(mockGraphics.fill).toHaveBeenCalledTimes(3);
         });
     });
 
