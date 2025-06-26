@@ -208,12 +208,16 @@ export class PixiRenderSystem {
     /**
      * Apply camera transformation to game container
      */
-    applyCamera(camera: Camera): void {
+    applyCameraTransform(camera: Camera): void {
         // Center the game view in the renderer viewport
         const centerX = this.app.renderer.width / 2;
         const centerY = this.app.renderer.height / 2;
         this.gameContainer.x = -camera.x + centerX;
         this.gameContainer.y = -camera.y + centerY;
+    }
+
+    restoreCameraTransform(): void {
+        // Keep camera transform for consistency (UI elements handle their own transforms)
     }
 
     /**
