@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
-import type { Camera, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
 export interface LandingPrediction {
@@ -10,10 +10,13 @@ export interface LandingPrediction {
     jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
+import { DeathMarkRenderingManager } from './DeathMarkRenderingManager.js';
 /**
  * PixiJS-based rendering system for the jumping dot game.
  * Provides high-performance WebGL rendering with fallback to Canvas2D.
  */
+import { TrailParticleManager } from './TrailParticleManager.js';
+
 export class PixiRenderSystem {
     private app: PIXI.Application;
     private gameContainer: PIXI.Container;
@@ -26,14 +29,17 @@ export class PixiRenderSystem {
     private spikeGraphics: PIXI.Graphics;
     private goalGraphics: PIXI.Graphics;
     private trailGraphics: PIXI.Graphics;
+    private trailParticleManager: TrailParticleManager;
+    private deathMarkManager: DeathMarkRenderingManager;
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
-    // Effect data (to be implemented in future phases)
-    // private landingPredictions: LandingPrediction[] = [];
-    // private landingHistory: { x: number; y: number; timestamp: number }[] = [];
-    // private readonly LERP_SPEED = 0.15;
-    // private readonly HISTORY_FADE_TIME = 3000;
+    // Landing prediction and history data
+    // private landingPredictions: LandingPrediction[] = []; // TODO: implement landing predictions
+    private landingHistory: { x: number; y: number; timestamp: number }[] = [];
+    private landingHistoryGraphics: PIXI.Graphics;
+    // private readonly LERP_SPEED = 0.15; // TODO: implement interpolation
+    private readonly HISTORY_FADE_TIME = 3000;
 
     constructor() {
         // Initialize PixiJS application
@@ -49,8 +55,11 @@ export class PixiRenderSystem {
         this.spikeGraphics = new PIXI.Graphics();
         this.goalGraphics = new PIXI.Graphics();
         this.trailGraphics = new PIXI.Graphics();
+        this.trailParticleManager = new TrailParticleManager(this.app);
+        this.deathMarkManager = new DeathMarkRenderingManager(this.app);
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
+        this.landingHistoryGraphics = new PIXI.Graphics();
     }
 
     /**
@@ -77,6 +86,8 @@ export class PixiRenderSystem {
         this.gameContainer.addChild(this.spikeGraphics);
         this.gameContainer.addChild(this.goalGraphics);
         this.gameContainer.addChild(this.trailGraphics);
+        this.gameContainer.addChild(this.trailParticleManager.getParticleContainer());
+        this.gameContainer.addChild(this.landingHistoryGraphics);
         this.gameContainer.addChild(this.effectsGraphics);
         this.uiContainer.addChild(this.uiGraphics);
     }
@@ -190,15 +201,85 @@ export class PixiRenderSystem {
      * Render player trail with fade effect
      */
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
+        // Use high-performance ParticleContainer for trail rendering
+        this.trailParticleManager.renderTrail(trail, playerRadius);
+
+        // Keep legacy Graphics trail clear for compatibility
         this.trailGraphics.clear();
+    }
 
-        for (let i = 0; i < trail.length; i++) {
-            const point = trail[i];
-            const alpha = (i + 1) / trail.length; // Fade from old to new
-            const radius = playerRadius * alpha * 0.8; // Scale radius based on age
+    /**
+     * Renders death marks using PixiJS Graphics API
+     */
+    renderDeathMarks(deathMarks: DeathMark[]): void {
+        this.deathMarkManager.renderDeathMarks(deathMarks);
+    }
 
-            this.trailGraphics.circle(point.x, point.y, radius);
-            this.trailGraphics.fill({ color: 0xffffff, alpha });
+    /**
+     * Adds a landing position to the history for collision feedback
+     */
+    addLandingHistory(x: number, y: number): void {
+        this.landingHistory.push({
+            x,
+            y,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * Renders landing predictions and history with fade effects
+     */
+    renderLandingPredictions(): void {
+        this.cleanupLandingHistory();
+        this.renderLandingHistory();
+    }
+
+    /**
+     * Cleans up old landing history entries
+     */
+    private cleanupLandingHistory(): void {
+        const now = Date.now();
+        this.landingHistory = this.landingHistory.filter(
+            (landing) => now - landing.timestamp < this.HISTORY_FADE_TIME
+        );
+    }
+
+    /**
+     * Renders landing history as white vertical lines with fade effect
+     */
+    private renderLandingHistory(): void {
+        // Clear previous history graphics
+        this.landingHistoryGraphics.clear();
+
+        if (this.landingHistory.length === 0) {
+            // Set stroke style even for empty history (for consistency)
+            this.landingHistoryGraphics.stroke({
+                color: 0xffffff,
+                width: 1
+            });
+            return;
+        }
+
+        // Set stroke style for history lines
+        this.landingHistoryGraphics.stroke({
+            color: 0xffffff,
+            width: 1
+        });
+
+        // TODO: Implement fade effect - uncomment when implementing alpha blending
+        // const currentTime = Date.now();
+        const lineHeight = 8;
+
+        // Draw vertical lines for each landing position
+        for (const history of this.landingHistory) {
+            // TODO: Implement alpha fade effect based on age
+            // const age = currentTime - history.timestamp;
+            // const fadeProgress = age / this.HISTORY_FADE_TIME;
+            // const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
+
+            // Draw vertical line (fade effect to be implemented later)
+            this.landingHistoryGraphics.moveTo(history.x, history.y);
+            this.landingHistoryGraphics.lineTo(history.x, history.y - lineHeight);
         }
     }
 
@@ -229,6 +310,7 @@ export class PixiRenderSystem {
         this.spikeGraphics.clear();
         this.goalGraphics.clear();
         this.trailGraphics.clear();
+        this.landingHistoryGraphics.clear();
         this.effectsGraphics.clear();
         this.uiGraphics.clear();
 
@@ -248,6 +330,8 @@ export class PixiRenderSystem {
      * Clean up resources and destroy the application
      */
     destroy(): void {
+        this.trailParticleManager.destroy();
+        this.deathMarkManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
     }
 
