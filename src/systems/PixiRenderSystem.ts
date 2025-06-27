@@ -1,5 +1,8 @@
 import * as PIXI from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
+import type { IBundleAnalysisService } from '../services/interfaces/IBundleAnalysisService.js';
+import type { ICompatibilityCheckService } from '../services/interfaces/ICompatibilityCheckService.js';
+import type { IPerformanceMonitorService } from '../services/interfaces/IPerformanceMonitorService.js';
 import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
@@ -10,9 +13,6 @@ export interface LandingPrediction {
     jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
-import { BundleAnalyzer } from '../utils/BundleAnalyzer.js';
-import { CompatibilityChecker } from '../utils/CompatibilityChecker.js';
-import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import { DeathMarkRenderingManager } from './DeathMarkRenderingManager.js';
 import { GameOverMenuManager } from './GameOverMenuManager.js';
 import { StageTransitionManager } from './StageTransitionManager.js';
@@ -38,9 +38,7 @@ export class PixiRenderSystem {
     private deathMarkManager: DeathMarkRenderingManager;
     private gameOverMenuManager: GameOverMenuManager;
     private stageTransitionManager: StageTransitionManager;
-    private performanceMonitor: PerformanceMonitor;
-    private compatibilityChecker: CompatibilityChecker;
-    private bundleAnalyzer: BundleAnalyzer;
+
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
@@ -51,7 +49,11 @@ export class PixiRenderSystem {
     // private readonly LERP_SPEED = 0.15; // TODO: implement interpolation
     private readonly HISTORY_FADE_TIME = 3000;
 
-    constructor() {
+    constructor(
+        private performanceService?: IPerformanceMonitorService,
+        private compatibilityService?: ICompatibilityCheckService,
+        private bundleService?: IBundleAnalysisService
+    ) {
         // Initialize PixiJS application
         this.app = new PIXI.Application();
 
@@ -69,9 +71,7 @@ export class PixiRenderSystem {
         this.deathMarkManager = new DeathMarkRenderingManager(this.app);
         this.gameOverMenuManager = new GameOverMenuManager(this.app);
         this.stageTransitionManager = new StageTransitionManager(this.app);
-        this.performanceMonitor = new PerformanceMonitor();
-        this.compatibilityChecker = new CompatibilityChecker();
-        this.bundleAnalyzer = new BundleAnalyzer();
+
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
         this.landingHistoryGraphics = new PIXI.Graphics();
@@ -303,11 +303,11 @@ export class PixiRenderSystem {
      * Performance monitoring and profiling
      */
     enablePerformanceProfiling(): void {
-        this.performanceMonitor.enableProfiling();
+        this.performanceService?.enableProfiling();
     }
 
     disablePerformanceProfiling(): void {
-        this.performanceMonitor.disableProfiling();
+        this.performanceService?.disableProfiling();
     }
 
     getPerformanceMetrics(): {
@@ -318,34 +318,49 @@ export class PixiRenderSystem {
         sessionDuration: number;
         startTime: number;
     } {
-        return this.performanceMonitor.getMetrics();
+        return (
+            this.performanceService?.getMetrics() || {
+                frameRate: 0,
+                averageFrameTime: 0,
+                frameCount: 0,
+                memoryUsage: 0,
+                sessionDuration: 0,
+                startTime: 0
+            }
+        );
     }
 
     getPerformanceWarnings(): string[] {
-        return this.performanceMonitor.getPerformanceWarnings();
+        return this.performanceService?.getWarnings() || [];
     }
 
     generatePerformanceReport(): string {
-        return this.performanceMonitor.generateReport();
+        return this.performanceService?.generateReport() || 'Performance monitoring not available';
     }
 
     logPerformanceMetrics(): void {
-        this.performanceMonitor.logMetrics();
+        this.performanceService?.logMetrics();
     }
 
     startFrameProfiling(): void {
-        this.performanceMonitor.startFrame();
+        this.performanceService?.startFrame();
     }
 
     endFrameProfiling(): void {
-        this.performanceMonitor.endFrame();
+        this.performanceService?.endFrame();
     }
 
     /**
      * Cross-browser compatibility checking
      */
     getBrowserInfo(): { name: string; version: string; isSupported: boolean } {
-        return this.compatibilityChecker.getBrowserInfo();
+        return (
+            this.compatibilityService?.getBrowserInfo() || {
+                name: 'Unknown',
+                version: '0',
+                isSupported: false
+            }
+        );
     }
 
     checkWebGLSupport(): {
@@ -354,30 +369,37 @@ export class PixiRenderSystem {
         renderer?: string;
         vendor?: string;
     } {
-        return this.compatibilityChecker.checkWebGLSupport();
+        return this.compatibilityService?.checkWebGLSupport() || { isSupported: false, version: 0 };
     }
 
     getCompatibilityIssues(): string[] {
-        return this.compatibilityChecker.getCompatibilityIssues();
+        return this.compatibilityService?.getCompatibilityIssues() || [];
     }
 
     getCompatibilityWorkarounds(): string[] {
-        return this.compatibilityChecker.getWorkarounds();
+        return this.compatibilityService?.getCompatibilityWorkarounds() || [];
     }
 
     generateCompatibilityReport(): string {
-        return this.compatibilityChecker.generateCompatibilityReport();
+        return (
+            this.compatibilityService?.generateReport() || 'Compatibility checking not available'
+        );
     }
 
     logCompatibilityReport(): void {
-        this.compatibilityChecker.logCompatibilityReport();
+        this.compatibilityService?.logReport();
     }
 
     getBrowserSpecificConfig(): {
         requiresWorkarounds: boolean;
         recommendations: string[];
     } {
-        return this.compatibilityChecker.getBrowserSpecificConfig();
+        return (
+            this.compatibilityService?.getBrowserSpecificConfig() || {
+                requiresWorkarounds: false,
+                recommendations: []
+            }
+        );
     }
 
     /**
@@ -389,7 +411,14 @@ export class PixiRenderSystem {
         modules: Array<{ name: string; size: number }>;
         pixiModules: Array<{ name: string; size: number }>;
     } {
-        return this.bundleAnalyzer.getBundleInfo();
+        return (
+            this.bundleService?.getBundleInfo() || {
+                totalSize: 0,
+                gzippedSize: 0,
+                modules: [],
+                pixiModules: []
+            }
+        );
     }
 
     getBundleMetrics(): {
@@ -399,7 +428,15 @@ export class PixiRenderSystem {
         isUnderTarget: boolean;
         loadTimeEstimate: number;
     } {
-        return this.bundleAnalyzer.getMetrics();
+        return (
+            this.bundleService?.getMetrics() || {
+                totalSizeKB: 0,
+                gzippedSizeKB: 0,
+                pixiSizeKB: 0,
+                isUnderTarget: true,
+                loadTimeEstimate: 0
+            }
+        );
     }
 
     getOptimizationRecommendations(): {
@@ -407,15 +444,15 @@ export class PixiRenderSystem {
         recommendations: string[];
         potentialSavings: number;
     }[] {
-        return this.bundleAnalyzer.getOptimizationRecommendations();
+        return this.bundleService?.getOptimizationRecommendations() || [];
     }
 
     generateBundleReport(): string {
-        return this.bundleAnalyzer.generateBundleReport();
+        return this.bundleService?.generateReport() || 'Bundle analysis not available';
     }
 
     logBundleAnalysis(): void {
-        this.bundleAnalyzer.logBundleAnalysis();
+        this.bundleService?.logAnalysis();
     }
 
     /**

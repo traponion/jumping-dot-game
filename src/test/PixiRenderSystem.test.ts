@@ -157,6 +157,9 @@ describe('PixiRenderSystem', () => {
     let canvas: HTMLCanvasElement;
     let mockApp: any;
     let mockTrailManager: any;
+    let mockPerformanceService: any;
+    let mockCompatibilityService: any;
+    let mockBundleService: any;
 
     beforeEach(() => {
         // Reset mocks
@@ -183,8 +186,79 @@ describe('PixiRenderSystem', () => {
         canvas.width = 800;
         canvas.height = 600;
 
-        // Create render system (no canvas parameter)
-        renderSystem = new PixiRenderSystem();
+        // Create mock services
+        mockPerformanceService = {
+            enableProfiling: vi.fn(),
+            disableProfiling: vi.fn(),
+            getMetrics: vi.fn(() => ({
+                frameRate: 60,
+                averageFrameTime: 16.67,
+                frameCount: 1000,
+                memoryUsage: 50000000,
+                sessionDuration: 16670,
+                startTime: 1234567890
+            })),
+            startFrame: vi.fn(),
+            endFrame: vi.fn(),
+            generateReport: vi.fn(() => 'Performance Report: 60 FPS'),
+            logMetrics: vi.fn(),
+            getWarnings: vi.fn(() => ['Memory usage above 100MB'])
+        };
+
+        mockCompatibilityService = {
+            checkWebGLSupport: vi.fn(() => ({
+                isSupported: true,
+                version: 2,
+                renderer: 'Mocked WebGL',
+                vendor: 'Mocked Vendor'
+            })),
+            getBrowserInfo: vi.fn(() => ({
+                name: 'Chrome',
+                version: '118.0.0.0',
+                isSupported: true
+            })),
+            getCompatibilityIssues: vi.fn(() => ['Browser not supported']),
+            getCompatibilityWorkarounds: vi.fn(() => ['Update browser']),
+            getBrowserSpecificConfig: vi.fn(() => ({
+                requiresWorkarounds: false,
+                recommendations: ['Enable hardware acceleration']
+            })),
+            generateReport: vi.fn(() => 'Compatibility Report: All good'),
+            logReport: vi.fn()
+        };
+
+        mockBundleService = {
+            getBundleInfo: vi.fn(() => ({
+                totalSize: 1024000,
+                gzippedSize: 256000,
+                modules: [{ name: 'main.js', size: 512000 }],
+                pixiModules: [{ name: 'pixi.js', size: 300000 }]
+            })),
+            getMetrics: vi.fn(() => ({
+                totalSizeKB: 1000,
+                gzippedSizeKB: 250,
+                pixiSizeKB: 300,
+                isUnderTarget: true,
+                loadTimeEstimate: 2.5
+            })),
+            getOptimizationRecommendations: vi.fn(() => [
+                {
+                    category: 'PixiJS Tree-shaking',
+                    recommendations: ['Import only required modules'],
+                    potentialSavings: 50000
+                }
+            ]),
+            generateReport: vi.fn(() => 'Bundle Report: 1MB total'),
+            logAnalysis: vi.fn(),
+            analyzeLoadTime: vi.fn(() => 1000)
+        };
+
+        // Create render system with mocked services
+        renderSystem = new PixiRenderSystem(
+            mockPerformanceService,
+            mockCompatibilityService,
+            mockBundleService
+        );
 
         // Get mocked instances after creation
         mockApp = vi.mocked(PIXI.Application).mock.results[0].value;
@@ -636,12 +710,9 @@ describe('PixiRenderSystem', () => {
         });
 
         it('should log performance metrics', () => {
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
             renderSystem.logPerformanceMetrics();
 
-            expect(consoleSpy).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(mockPerformanceService.logMetrics).toHaveBeenCalled();
         });
     });
 
@@ -681,12 +752,9 @@ describe('PixiRenderSystem', () => {
         });
 
         it('should log compatibility report', () => {
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
             renderSystem.logCompatibilityReport();
 
-            expect(consoleSpy).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(mockCompatibilityService.logReport).toHaveBeenCalled();
         });
 
         it('should get browser specific config', () => {
@@ -727,12 +795,9 @@ describe('PixiRenderSystem', () => {
         });
 
         it('should log bundle analysis', () => {
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
             renderSystem.logBundleAnalysis();
 
-            expect(consoleSpy).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(mockBundleService.logAnalysis).toHaveBeenCalled();
         });
     });
 
