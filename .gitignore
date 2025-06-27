@@ -17,6 +17,9 @@ dist/
 *.swp
 *.swo
 
+# Local settings (should not be committed)
+.claude/settings.local.json
+
 # OS generated files
 .DS_Store
 .DS_Store?
