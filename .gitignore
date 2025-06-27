@@ -90,3 +90,5 @@ review.md
 .claude/migration_handover.md
 .claude/gemini_memory.md
 .claude/netsuki_gemini_manual.md
+.claude/*_plan.md
+.claude/*_refactoring_plan.md
