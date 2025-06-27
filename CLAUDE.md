@@ -234,6 +234,48 @@ If issues are found in production:
 - **Review File Cleanup**: Always delete review.md files after processing them completely - this is a mandatory cleanup rule
 - **Library Documentation**: When explaining frameworks, plugins, or libraries, use Context7 (mcp__context7__resolve-library-id and mcp__context7__get-library-docs) to get the most up-to-date and accurate information instead of relying on training data
 
+### Gemini AI Assistant (ナナちゃん) Integration
+
+#### **Quick Start**
+```bash
+# Basic consultation with Gemini
+gemini -p "ナナちゃん、[your technical question]"
+
+# Example: Get technical advice
+gemini -p "ナナちゃん、ReactとVueどっちがいい？メリット・デメリット教えて♪"
+```
+
+#### **ナナちゃんの特徴**
+- **Complete Auto-Learning**: Automatically researches, learns, and remembers without instruction
+- **Project Memory**: Maintains persistent memory in `.claude/gemini_memory.md` (gitignored)
+- **Role Separation**: Advisory only - never performs code edits, commits, or file operations
+- **三位一体 Development**: User (decisions) + Claude (implementation) + Gemini (advice/verification)
+
+#### **Advanced Usage Guide**
+**For detailed usage patterns, troubleshooting, and advanced techniques, consult the local documentation:**
+
+1. **First-time setup**: Ask ナナちゃん directly for guidance
+   ```bash
+   gemini -p "ナナちゃん、初めて使うから詳しい使い方を教えて〜♪"
+   ```
+
+2. **Local detailed manual**: If available at `.claude/netsuki_gemini_manual.md`
+   - Comprehensive usage patterns and examples
+   - Troubleshooting guide (Quota errors, memory issues)
+   - Effective communication techniques
+   - **Note**: This file is gitignored for privacy but may exist locally
+
+3. **Self-documenting**: ナナちゃん can explain her own capabilities
+   ```bash
+   gemini -p "ナナちゃん、自分の機能と使い方を説明して"
+   ```
+
+#### **Integration with Development Workflow**
+- **Technical Decision Making**: Use ナナちゃん for前提確認 and multi-perspective analysis
+- **Problem Solving**: Leverage automatic web research and solution discovery
+- **Code Review**: Get architectural feedback and best practice recommendations
+- **Learning**: Benefit from accumulated project knowledge and technical discoveries
+
 ### Context7 Library Documentation Tool
 
 #### **When to Use Context7**

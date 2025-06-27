@@ -117,7 +117,8 @@
       "Bash(npm init:*)",
       "Bash(git config:*)",
       "mcp__serena__replace_lines",
-      "Bash(gemini:*)"
+      "Bash(gemini:*)",
+      "Bash(jobs)"
     ],
     "deny": []
   },
