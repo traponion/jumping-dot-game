@@ -256,4 +256,92 @@ describe('PerformanceMonitor', () => {
             expect(report).toContain('Frame Count:');
         });
     });
+
+    describe('logging and profiling utilities', () => {
+        it('should log metrics to console when profiling enabled', () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            const consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {});
+            const consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+
+            monitor.enableProfiling();
+            monitor.logMetrics();
+
+            expect(consoleGroupSpy).toHaveBeenCalledWith('Performance Metrics');
+            expect(consoleSpy).toHaveBeenCalled();
+            expect(consoleGroupEndSpy).toHaveBeenCalled();
+
+            consoleSpy.mockRestore();
+            consoleGroupSpy.mockRestore();
+            consoleGroupEndSpy.mockRestore();
+        });
+
+        it('should log disabled message when profiling is disabled', () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+            monitor.disableProfiling();
+            monitor.logMetrics();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Performance profiling is disabled');
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should benchmark function execution time', () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            const testFunction = vi.fn(() => 42);
+
+            const result = monitor.benchmark(testFunction, 'Test Function');
+
+            expect(result).toBe(42);
+            expect(testFunction).toHaveBeenCalled();
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Test Function execution time:')
+            );
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should benchmark function with default label', () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            const testFunction = vi.fn(() => 'test');
+
+            const result = monitor.benchmark(testFunction);
+
+            expect(result).toBe('test');
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Function execution time:')
+            );
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should profile async function execution time', async () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            const asyncFunction = vi.fn(async () => 'async result');
+
+            const result = await monitor.profileAsync(asyncFunction, 'Async Test');
+
+            expect(result).toBe('async result');
+            expect(asyncFunction).toHaveBeenCalled();
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Async Test execution time:')
+            );
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should profile async function with default label', async () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            const asyncFunction = vi.fn(async () => 'default');
+
+            const result = await monitor.profileAsync(asyncFunction);
+
+            expect(result).toBe('default');
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Async Function execution time:')
+            );
+
+            consoleSpy.mockRestore();
+        });
+    });
 });

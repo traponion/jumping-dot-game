@@ -11,5 +11,5 @@ git add .
 # Run typecheck to ensure no type errors
 npm run typecheck
 
-# Run tests to ensure nothing is broken
-npm test
+# Run tests with coverage to ensure nothing is broken and coverage meets thresholds
+npm run test:coverage

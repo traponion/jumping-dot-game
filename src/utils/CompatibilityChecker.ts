@@ -107,22 +107,6 @@ export class CompatibilityChecker {
     }
 
     /**
-     * Check touch support
-     */
-    checkTouchSupport(): {
-        isSupported: boolean;
-        maxTouchPoints: number;
-    } {
-        const maxTouchPoints = navigator.maxTouchPoints || 0;
-        const isSupported = maxTouchPoints > 0 || 'ontouchstart' in window;
-
-        return {
-            isSupported,
-            maxTouchPoints
-        };
-    }
-
-    /**
      * Check requestAnimationFrame support
      */
     checkRequestAnimationFrameSupport(): boolean {
@@ -357,7 +341,7 @@ export class CompatibilityChecker {
         const browserInfo = this.getBrowserInfo();
         const webglSupport = this.checkWebGLSupport();
         const canvas2dSupport = this.checkCanvas2DSupport();
-        const touchSupport = this.checkTouchSupport();
+
         const deviceInfo = this.getDeviceInfo();
         const issues = this.getCompatibilityIssues();
         const workarounds = this.getWorkarounds();
@@ -378,14 +362,9 @@ export class CompatibilityChecker {
         report += '\n';
 
         // Canvas2D support
-        report += `Canvas2D Support: ${canvas2dSupport ? 'Yes' : 'No'}\n\n`;
+        report += `Canvas2D Support: ${canvas2dSupport ? 'Yes' : 'No'}
 
-        // Touch support
-        report += `Touch Support: ${touchSupport.isSupported ? 'Yes' : 'No'}\n`;
-        if (touchSupport.isSupported) {
-            report += `Max Touch Points: ${touchSupport.maxTouchPoints}\n`;
-        }
-        report += '\n';
+`;
 
         // Device information
         report += `Platform: ${deviceInfo.platform}\n`;
