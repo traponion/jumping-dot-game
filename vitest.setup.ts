@@ -46,6 +46,12 @@ beforeAll(() => {
       ellipse: () => {},
       closePath: () => {}
     });
+
+    // Mock event listener methods for HTMLCanvasElement (required by game-inputs)
+    if (!HTMLCanvasElement.prototype.addEventListener) {
+      HTMLCanvasElement.prototype.addEventListener = () => {};
+      HTMLCanvasElement.prototype.removeEventListener = () => {};
+    }
   }
 
   // Mock performance.now for consistent testing
@@ -53,6 +59,9 @@ beforeAll(() => {
     globalThis.performance = {
       now: () => Date.now()
     } as any;
+  } else if (typeof globalThis.performance.now !== 'function') {
+    // Ensure performance.now is always a function, even when modified by fake timers
+    globalThis.performance.now = () => Date.now();
   }
 
   // Polyfill for missing browser APIs in test environment
@@ -78,24 +87,35 @@ beforeAll(() => {
     };
   }
 
-  // Mock window event listeners for game-inputs compatibility
+  // Mock window and document event listeners for game-inputs compatibility
   if (typeof window !== 'undefined') {
     if (!window.addEventListener) {
       window.addEventListener = () => {};
       window.removeEventListener = () => {};
     }
     
-    // Mock CustomEvent for older test environments
-    if (typeof globalThis.CustomEvent === 'undefined') {
-      globalThis.CustomEvent = class CustomEvent extends Event {
-        detail: any;
-        constructor(type: string, eventInitDict?: CustomEventInit) {
-          super(type, eventInitDict);
-          this.detail = eventInitDict?.detail;
-        }
-      } as any;
+    // Ensure document exists and has event listener methods
+    if (typeof document !== 'undefined') {
+      if (!document.addEventListener) {
+        document.addEventListener = () => {};
+        document.removeEventListener = () => {};
+      }
     }
-    
+  }
+
+  // Mock CustomEvent for older test environments
+  if (typeof globalThis.CustomEvent === 'undefined') {
+    globalThis.CustomEvent = class CustomEvent extends Event {
+      detail: any;
+      constructor(type: string, eventInitDict?: CustomEventInit) {
+        super(type, eventInitDict);
+        this.detail = eventInitDict?.detail;
+      }
+    } as any;
+  }
+
+  // Mock window-specific APIs when window is available
+  if (typeof window !== 'undefined') {
     // Mock window.confirm for game tests
     if (!window.confirm) {
       window.confirm = () => true; // Default to confirm for tests

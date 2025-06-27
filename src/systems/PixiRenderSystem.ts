@@ -10,7 +10,12 @@ export interface LandingPrediction {
     jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
+import { BundleAnalyzer } from '../utils/BundleAnalyzer.js';
+import { CompatibilityChecker } from '../utils/CompatibilityChecker.js';
+import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import { DeathMarkRenderingManager } from './DeathMarkRenderingManager.js';
+import { GameOverMenuManager } from './GameOverMenuManager.js';
+import { StageTransitionManager } from './StageTransitionManager.js';
 /**
  * PixiJS-based rendering system for the jumping dot game.
  * Provides high-performance WebGL rendering with fallback to Canvas2D.
@@ -31,6 +36,11 @@ export class PixiRenderSystem {
     private trailGraphics: PIXI.Graphics;
     private trailParticleManager: TrailParticleManager;
     private deathMarkManager: DeathMarkRenderingManager;
+    private gameOverMenuManager: GameOverMenuManager;
+    private stageTransitionManager: StageTransitionManager;
+    private performanceMonitor: PerformanceMonitor;
+    private compatibilityChecker: CompatibilityChecker;
+    private bundleAnalyzer: BundleAnalyzer;
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
@@ -57,6 +67,11 @@ export class PixiRenderSystem {
         this.trailGraphics = new PIXI.Graphics();
         this.trailParticleManager = new TrailParticleManager(this.app);
         this.deathMarkManager = new DeathMarkRenderingManager(this.app);
+        this.gameOverMenuManager = new GameOverMenuManager(this.app);
+        this.stageTransitionManager = new StageTransitionManager(this.app);
+        this.performanceMonitor = new PerformanceMonitor();
+        this.compatibilityChecker = new CompatibilityChecker();
+        this.bundleAnalyzer = new BundleAnalyzer();
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
         this.landingHistoryGraphics = new PIXI.Graphics();
@@ -90,6 +105,8 @@ export class PixiRenderSystem {
         this.gameContainer.addChild(this.landingHistoryGraphics);
         this.gameContainer.addChild(this.effectsGraphics);
         this.uiContainer.addChild(this.uiGraphics);
+        this.uiContainer.addChild(this.gameOverMenuManager.getMenuContainer());
+        this.uiContainer.addChild(this.stageTransitionManager.getTransitionContainer());
     }
 
     /**
@@ -216,6 +233,192 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Render game over menu using PixiJS Container composition
+     */
+    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+        // Get camera position for centering menu
+        const cameraX = -this.gameContainer.x + this.app.renderer.width / 2;
+        const cameraY = -this.gameContainer.y + this.app.renderer.height / 2;
+
+        // Create and position menu
+        this.gameOverMenuManager.createMenu(options, selectedIndex, finalScore);
+        this.gameOverMenuManager.positionMenu(cameraX, cameraY);
+        this.gameOverMenuManager.showMenu();
+    }
+
+    /**
+     * Update game over menu selection
+     */
+    updateGameOverMenuSelection(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number
+    ): void {
+        this.gameOverMenuManager.updateSelection(options, selectedIndex, finalScore);
+    }
+
+    /**
+     * Hide game over menu
+     */
+    hideGameOverMenu(): void {
+        this.gameOverMenuManager.hideMenu();
+    }
+
+    /**
+     * Stage transition effects
+     */
+    async fadeOutTransition(duration = 500): Promise<void> {
+        return this.stageTransitionManager.fadeOut(duration);
+    }
+
+    async fadeInTransition(duration = 500): Promise<void> {
+        return this.stageTransitionManager.fadeIn(duration);
+    }
+
+    showLoadingScreen(message: string): void {
+        this.stageTransitionManager.showLoadingScreen(message);
+    }
+
+    hideLoadingScreen(): void {
+        this.stageTransitionManager.hideLoadingScreen();
+    }
+
+    async flashEffect(color = 0xffffff, duration = 200): Promise<void> {
+        return this.stageTransitionManager.flashEffect(color, duration);
+    }
+
+    async stageCompleteEffect(score: number): Promise<void> {
+        return this.stageTransitionManager.stageCompleteEffect(score);
+    }
+
+    isTransitioning(): boolean {
+        return this.stageTransitionManager.isTransitioning();
+    }
+
+    cancelTransition(): void {
+        this.stageTransitionManager.cancelTransition();
+    }
+
+    /**
+     * Performance monitoring and profiling
+     */
+    enablePerformanceProfiling(): void {
+        this.performanceMonitor.enableProfiling();
+    }
+
+    disablePerformanceProfiling(): void {
+        this.performanceMonitor.disableProfiling();
+    }
+
+    getPerformanceMetrics(): {
+        frameRate: number;
+        averageFrameTime: number;
+        frameCount: number;
+        memoryUsage: number;
+        sessionDuration: number;
+        startTime: number;
+    } {
+        return this.performanceMonitor.getMetrics();
+    }
+
+    getPerformanceWarnings(): string[] {
+        return this.performanceMonitor.getPerformanceWarnings();
+    }
+
+    generatePerformanceReport(): string {
+        return this.performanceMonitor.generateReport();
+    }
+
+    logPerformanceMetrics(): void {
+        this.performanceMonitor.logMetrics();
+    }
+
+    startFrameProfiling(): void {
+        this.performanceMonitor.startFrame();
+    }
+
+    endFrameProfiling(): void {
+        this.performanceMonitor.endFrame();
+    }
+
+    /**
+     * Cross-browser compatibility checking
+     */
+    getBrowserInfo(): { name: string; version: string; isSupported: boolean } {
+        return this.compatibilityChecker.getBrowserInfo();
+    }
+
+    checkWebGLSupport(): {
+        isSupported: boolean;
+        version: number;
+        renderer?: string;
+        vendor?: string;
+    } {
+        return this.compatibilityChecker.checkWebGLSupport();
+    }
+
+    getCompatibilityIssues(): string[] {
+        return this.compatibilityChecker.getCompatibilityIssues();
+    }
+
+    getCompatibilityWorkarounds(): string[] {
+        return this.compatibilityChecker.getWorkarounds();
+    }
+
+    generateCompatibilityReport(): string {
+        return this.compatibilityChecker.generateCompatibilityReport();
+    }
+
+    logCompatibilityReport(): void {
+        this.compatibilityChecker.logCompatibilityReport();
+    }
+
+    getBrowserSpecificConfig(): {
+        requiresWorkarounds: boolean;
+        recommendations: string[];
+    } {
+        return this.compatibilityChecker.getBrowserSpecificConfig();
+    }
+
+    /**
+     * Bundle size analysis and optimization
+     */
+    getBundleInfo(): {
+        totalSize: number;
+        gzippedSize: number;
+        modules: Array<{ name: string; size: number }>;
+        pixiModules: Array<{ name: string; size: number }>;
+    } {
+        return this.bundleAnalyzer.getBundleInfo();
+    }
+
+    getBundleMetrics(): {
+        totalSizeKB: number;
+        gzippedSizeKB: number;
+        pixiSizeKB: number;
+        isUnderTarget: boolean;
+        loadTimeEstimate: number;
+    } {
+        return this.bundleAnalyzer.getMetrics();
+    }
+
+    getOptimizationRecommendations(): {
+        category: string;
+        recommendations: string[];
+        potentialSavings: number;
+    }[] {
+        return this.bundleAnalyzer.getOptimizationRecommendations();
+    }
+
+    generateBundleReport(): string {
+        return this.bundleAnalyzer.generateBundleReport();
+    }
+
+    logBundleAnalysis(): void {
+        this.bundleAnalyzer.logBundleAnalysis();
+    }
+
+    /**
      * Adds a landing position to the history for collision feedback
      */
     addLandingHistory(x: number, y: number): void {
@@ -332,6 +535,8 @@ export class PixiRenderSystem {
     destroy(): void {
         this.trailParticleManager.destroy();
         this.deathMarkManager.destroy();
+        this.gameOverMenuManager.destroy();
+        this.stageTransitionManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
     }
 
