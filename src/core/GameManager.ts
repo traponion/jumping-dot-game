@@ -161,26 +161,33 @@ export class GameManager {
         this.isResettingSystems = true;
 
         try {
+            console.log('🎮 resetGameState step 1: stopGame/restartGame');
             gameStore.getState().stopGame();
             gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
             gameStore.getState().restartGame();
 
-            // Clean up all existing systems
-            await this.cleanupSystems();
+            // DEBUGGING: Comment out cleanupSystems to test if this causes freeze
+            console.log('🎮 resetGameState step 2: SKIPPING cleanupSystems() for debugging');
+            // await this.cleanupSystems();
 
+            console.log('🎮 resetGameState step 3: SKIPPING initializeSystems() for debugging');
             // Reinitialize all systems with fresh instances
-            this.initializeSystems(this.gameController);
+            // this.initializeSystems(this.gameController);
 
+            console.log('🎮 resetGameState step 4: SKIPPING initialize() for debugging');
             // Initialize the new render system
-            await this.initialize();
+            // await this.initialize();
 
+            console.log('🎮 resetGameState step 5: stage reload');
             // Reload stage to get clean initial data
             const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
             this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
 
+            console.log('🎮 resetGameState step 6: player/animation reset');
             this.playerSystem.reset(100, 400);
             this.animationSystem.reset();
 
+            console.log('🎮 resetGameState step 7: camera/input reset');
             gameStore.getState().updateCamera({ x: 0, y: 0 });
 
             // Clear inputs first before changing game state
@@ -188,7 +195,7 @@ export class GameManager {
             this.prevPlayerY = 0;
             this.isInitializingPixi = false;
             
-            console.log('🎮 resetGameState completed');
+            console.log('🎮 resetGameState completed - ALL HEAVY OPERATIONS SKIPPED');
         } catch (error) {
             console.error('🎮 resetGameState failed:', error);
         } finally {
