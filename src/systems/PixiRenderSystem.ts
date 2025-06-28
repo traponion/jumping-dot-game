@@ -439,11 +439,13 @@ export class PixiRenderSystem {
      * Clean up resources and destroy the application
      */
     destroy(): void {
-        this.trailParticleManager.destroy();
-        this.deathMarkManager.destroy();
-        this.gameOverMenuManager.destroy();
-        this.stageTransitionManager.destroy();
-        this.app.destroy(true, { children: true, texture: true });
+        this.trailParticleManager?.destroy();
+        this.deathMarkManager?.destroy();
+        this.gameOverMenuManager?.destroy();
+        this.stageTransitionManager?.destroy();
+        if (this.app) {
+            this.app.destroy(true, { children: true, texture: true });
+        }
     }
 
     /**
