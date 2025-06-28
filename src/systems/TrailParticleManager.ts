@@ -13,7 +13,7 @@ import type { TrailPoint } from '../types/GameTypes.js';
  */
 export class TrailParticleManager {
     private readonly particleContainer: PIXI.ParticleContainer;
-    private readonly particleTexture: PIXI.Texture;
+    private particleTexture: PIXI.Texture | null = null;
     private readonly particles: PIXI.Particle[] = [];
     private activeParticleCount = 0;
 
@@ -31,9 +31,6 @@ export class TrailParticleManager {
                 color: false // Static color for performance
             }
         });
-
-        // Generate white circle texture for trail particles
-        this.particleTexture = this.createTrailTexture();
     }
 
     /**
@@ -57,6 +54,10 @@ export class TrailParticleManager {
      * @param playerRadius - Player radius for particle scaling
      */
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
+        if (!this.particleTexture) {
+            this.particleTexture = this.createTrailTexture();
+        }
+
         const targetCount = trail.length;
 
         // Handle trail shrinking - remove excess particles
@@ -122,7 +123,9 @@ export class TrailParticleManager {
      */
     destroy(): void {
         this.particleContainer.destroy();
-        this.particleTexture.destroy();
+        if (this.particleTexture) {
+            this.particleTexture.destroy();
+        }
         this.particles.length = 0;
         this.activeParticleCount = 0;
     }

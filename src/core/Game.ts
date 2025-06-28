@@ -71,6 +71,7 @@ export class JumpingDotGame {
         this.gameLoop.resetCleanupState(); // Reset cleanup flag
         this.gameUI.showLoading();
 
+        await this.gameManager.initialize();
         await this.gameManager.loadStage(getGameStore().getCurrentStage());
 
         this.gameUI.showReadyToStart();

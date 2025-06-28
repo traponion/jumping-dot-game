@@ -81,6 +81,12 @@ export class GameManager {
         this.initializeSystems(gameController);
     }
 
+    async initialize(): Promise<void> {
+        if (this.renderSystem && 'initialize' in this.renderSystem) {
+            await this.renderSystem.initialize(this.canvas);
+        }
+    }
+
     private initializeEntities(): void {
         // Initialize Zustand store with default values
         gameStore.getState().reset();

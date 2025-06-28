@@ -98,7 +98,15 @@ describe('TrailParticleManager', () => {
             expect(trailManager).toBeDefined();
         });
 
-        it('should create white circle texture for trail particles', () => {
+        it('should create white circle texture for trail particles on first render', () => {
+            // Texture should not be created on initialization
+            expect(PIXI.Graphics).not.toHaveBeenCalled();
+            expect(mockApp.renderer.generateTexture).not.toHaveBeenCalled();
+
+            // Render a trail to trigger texture creation
+            trailManager.renderTrail([{ x: 0, y: 0 }], 8);
+
+            // Now, texture should be created
             expect(PIXI.Graphics).toHaveBeenCalled();
             expect(mockApp.renderer.generateTexture).toHaveBeenCalled();
         });
