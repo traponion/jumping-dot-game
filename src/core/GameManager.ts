@@ -51,10 +51,11 @@ export class GameManager {
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
     private movingPlatformSystem!: MovingPlatformSystem;
-    /** @private {PixiRenderSystem | MockRenderSystem} Rendering system */
+    /** @private {PixiRenderSystem | MockRenderSystem | null} Rendering system */
     private renderSystem!:
         | PixiRenderSystem
-        | import('../systems/MockRenderSystem.js').MockRenderSystem;
+        | import('../systems/MockRenderSystem.js').MockRenderSystem
+        | null;
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
 
@@ -267,7 +268,7 @@ export class GameManager {
 
                     // Add landing history with updated position
                     const finalPlayer = getGameStore().getPlayer();
-                    this.renderSystem.addLandingHistory(
+                    this.renderSystem?.addLandingHistory(
                         finalPlayer.x,
                         finalPlayer.y + finalPlayer.radius
                     );
@@ -292,7 +293,7 @@ export class GameManager {
                 this.playerSystem.resetJumpTimer();
                 // Get updated player state from store after collision
                 const updatedPlayer = getGameStore().getPlayer();
-                this.renderSystem.addLandingHistory(
+                this.renderSystem?.addLandingHistory(
                     updatedPlayer.x,
                     updatedPlayer.y + updatedPlayer.radius
                 );
@@ -348,9 +349,9 @@ export class GameManager {
                     jumpNumber: 1
                 }
             ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
+            this.renderSystem?.setLandingPredictions(simplePrediction);
         } else {
-            this.renderSystem.setLandingPredictions([]);
+            this.renderSystem?.setLandingPredictions([]);
         }
     }
 
@@ -470,6 +471,10 @@ export class GameManager {
      */
     render(ui?: GameUI): void {
         const renderer = this.renderSystem;
+        if (!renderer) {
+            console.warn('Render system not available during render call');
+            return;
+        }
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();
@@ -570,7 +575,13 @@ export class GameManager {
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as PixiRenderSystem).cleanup();
+            try {
+                await (this.renderSystem as PixiRenderSystem).cleanup();
+            } catch (error) {
+                console.warn('Error during render system cleanup:', error);
+            }
+            // Null out the reference to prevent double cleanup
+            this.renderSystem = null;
         }
     }
     /**

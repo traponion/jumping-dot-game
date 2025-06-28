@@ -24,6 +24,7 @@ export class PixiRenderSystem {
     private app: PIXI.Application;
     private gameContainer: PIXI.Container;
     private uiContainer: PIXI.Container;
+    private isDestroyed = false;
 
     // Game objects
     private playerShape: PIXI.Graphics | null = null;
@@ -439,30 +440,69 @@ export class PixiRenderSystem {
      * Clean up resources and destroy the application
      */
     destroy(): void {
-        this.trailParticleManager?.destroy();
-        this.deathMarkManager?.destroy();
-        this.gameOverMenuManager?.destroy();
-        this.stageTransitionManager?.destroy();
+        // Prevent double destruction
+        if (this.isDestroyed) {
+            return;
+        }
+        this.isDestroyed = true;
+
+        try {
+            // Safely destroy managers
+            this.trailParticleManager?.destroy();
+        } catch (error) {
+            console.warn('Error destroying trailParticleManager:', error);
+        }
+
+        try {
+            this.deathMarkManager?.destroy();
+        } catch (error) {
+            console.warn('Error destroying deathMarkManager:', error);
+        }
+
+        try {
+            this.gameOverMenuManager?.destroy();
+        } catch (error) {
+            console.warn('Error destroying gameOverMenuManager:', error);
+        }
+
+        try {
+            this.stageTransitionManager?.destroy();
+        } catch (error) {
+            console.warn('Error destroying stageTransitionManager:', error);
+        }
 
         if (this.app) {
-            // Manually destroy children of containers to prevent errors
-            // from double-destroyed objects during stage transitions.
-            if (this.gameContainer?.children?.length) {
-                for (const child of [...this.gameContainer.children]) {
-                    if (child && !child.destroyed) {
-                        child.destroy();
+            try {
+                // Manually destroy children of containers to prevent errors
+                // from double-destroyed objects during stage transitions.
+                if (this.gameContainer?.children?.length) {
+                    for (const child of [...this.gameContainer.children]) {
+                        if (child && !child.destroyed) {
+                            try {
+                                child.destroy();
+                            } catch (error) {
+                                console.warn('Error destroying game container child:', error);
+                            }
+                        }
                     }
                 }
-            }
-            if (this.uiContainer?.children?.length) {
-                for (const child of [...this.uiContainer.children]) {
-                    if (child && !child.destroyed) {
-                        child.destroy();
+                if (this.uiContainer?.children?.length) {
+                    for (const child of [...this.uiContainer.children]) {
+                        if (child && !child.destroyed) {
+                            try {
+                                child.destroy();
+                            } catch (error) {
+                                console.warn('Error destroying UI container child:', error);
+                            }
+                        }
                     }
                 }
-            }
 
-            this.app.destroy(true, { children: true, texture: true });
+                // Destroy the application itself
+                this.app.destroy(true, { children: true, texture: true });
+            } catch (error) {
+                console.warn('Error destroying PixiJS application:', error);
+            }
         }
     }
 
