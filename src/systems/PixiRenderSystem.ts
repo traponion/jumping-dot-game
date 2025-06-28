@@ -408,6 +408,15 @@ export class PixiRenderSystem {
      */
     private cameraLogCount = 0;
     applyCameraTransform(camera: Camera): void {
+        // Safety check: ensure PixiJS app is initialized
+        if (!this.app?.renderer) {
+            if (this.cameraLogCount < 3) {
+                console.log('🎮 applyCameraTransform skipped: PixiJS app not initialized');
+                this.cameraLogCount++;
+            }
+            return;
+        }
+
         // Center the game view in the renderer viewport
         const centerX = this.app.renderer.width / 2;
         const centerY = this.app.renderer.height / 2;
