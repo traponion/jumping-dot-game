@@ -1,15 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run Biome format and lint with auto-fix
-npm run format
-npm run lint:fix
+# Run the full quality check suite to ensure everything is in order.
+# This includes formatting, linting, type checking, and test coverage.
+npm run quality
 
-# Stage the automatically fixed files
+# Stage any automatically fixed files before committing
 git add .
-
-# Run typecheck to ensure no type errors
-npm run typecheck
-
-# Run tests to ensure nothing is broken
-npm test

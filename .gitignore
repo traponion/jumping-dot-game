@@ -17,6 +17,9 @@ dist/
 *.swp
 *.swo
 
+# Local settings (should not be committed)
+.claude/settings.local.json
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -85,3 +88,8 @@ review.md
 .claude/handover*.md
 .claude/issues_template.md
 .claude/migration_handover.md
+.claude/gemini_memory.md
+.claude/netsuki_gemini_manual.md
+.claude/*_plan.md
+.claude/*_refactoring_plan.md
+.claude/current_session_progress.md

@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
+
 import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
@@ -11,6 +12,8 @@ export interface LandingPrediction {
 }
 
 import { DeathMarkRenderingManager } from './DeathMarkRenderingManager.js';
+import { GameOverMenuManager } from './GameOverMenuManager.js';
+import { StageTransitionManager } from './StageTransitionManager.js';
 /**
  * PixiJS-based rendering system for the jumping dot game.
  * Provides high-performance WebGL rendering with fallback to Canvas2D.
@@ -31,6 +34,9 @@ export class PixiRenderSystem {
     private trailGraphics: PIXI.Graphics;
     private trailParticleManager: TrailParticleManager;
     private deathMarkManager: DeathMarkRenderingManager;
+    private gameOverMenuManager: GameOverMenuManager;
+    private stageTransitionManager: StageTransitionManager;
+
     private effectsGraphics: PIXI.Graphics;
     private uiGraphics: PIXI.Graphics;
 
@@ -57,6 +63,9 @@ export class PixiRenderSystem {
         this.trailGraphics = new PIXI.Graphics();
         this.trailParticleManager = new TrailParticleManager(this.app);
         this.deathMarkManager = new DeathMarkRenderingManager(this.app);
+        this.gameOverMenuManager = new GameOverMenuManager(this.app);
+        this.stageTransitionManager = new StageTransitionManager(this.app);
+
         this.effectsGraphics = new PIXI.Graphics();
         this.uiGraphics = new PIXI.Graphics();
         this.landingHistoryGraphics = new PIXI.Graphics();
@@ -90,6 +99,8 @@ export class PixiRenderSystem {
         this.gameContainer.addChild(this.landingHistoryGraphics);
         this.gameContainer.addChild(this.effectsGraphics);
         this.uiContainer.addChild(this.uiGraphics);
+        this.uiContainer.addChild(this.gameOverMenuManager.getMenuContainer());
+        this.uiContainer.addChild(this.stageTransitionManager.getTransitionContainer());
     }
 
     /**
@@ -216,6 +227,73 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Render game over menu using PixiJS Container composition
+     */
+    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+        // Get camera position for centering menu
+        const cameraX = -this.gameContainer.x + this.app.renderer.width / 2;
+        const cameraY = -this.gameContainer.y + this.app.renderer.height / 2;
+
+        // Create and position menu
+        this.gameOverMenuManager.createMenu(options, selectedIndex, finalScore);
+        this.gameOverMenuManager.positionMenu(cameraX, cameraY);
+        this.gameOverMenuManager.showMenu();
+    }
+
+    /**
+     * Update game over menu selection
+     */
+    updateGameOverMenuSelection(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number
+    ): void {
+        this.gameOverMenuManager.updateSelection(options, selectedIndex, finalScore);
+    }
+
+    /**
+     * Hide game over menu
+     */
+    hideGameOverMenu(): void {
+        this.gameOverMenuManager.hideMenu();
+    }
+
+    /**
+     * Stage transition effects
+     */
+    async fadeOutTransition(duration = 500): Promise<void> {
+        return this.stageTransitionManager.fadeOut(duration);
+    }
+
+    async fadeInTransition(duration = 500): Promise<void> {
+        return this.stageTransitionManager.fadeIn(duration);
+    }
+
+    showLoadingScreen(message: string): void {
+        this.stageTransitionManager.showLoadingScreen(message);
+    }
+
+    hideLoadingScreen(): void {
+        this.stageTransitionManager.hideLoadingScreen();
+    }
+
+    async flashEffect(color = 0xffffff, duration = 200): Promise<void> {
+        return this.stageTransitionManager.flashEffect(color, duration);
+    }
+
+    async stageCompleteEffect(score: number): Promise<void> {
+        return this.stageTransitionManager.stageCompleteEffect(score);
+    }
+
+    isTransitioning(): boolean {
+        return this.stageTransitionManager.isTransitioning();
+    }
+
+    cancelTransition(): void {
+        this.stageTransitionManager.cancelTransition();
+    }
+
+    /**
      * Adds a landing position to the history for collision feedback
      */
     addLandingHistory(x: number, y: number): void {
@@ -332,6 +410,8 @@ export class PixiRenderSystem {
     destroy(): void {
         this.trailParticleManager.destroy();
         this.deathMarkManager.destroy();
+        this.gameOverMenuManager.destroy();
+        this.stageTransitionManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
     }
 

@@ -10,7 +10,13 @@ const mockContainer = {
     y: 0,
     addChild: vi.fn(),
     removeChild: vi.fn(),
-    destroy: vi.fn()
+    removeChildren: vi.fn(),
+    destroy: vi.fn(),
+    position: {
+        set: vi.fn(),
+        x: 0,
+        y: 0
+    }
 };
 
 const mockGraphics = {
@@ -23,8 +29,17 @@ const mockGraphics = {
     poly: vi.fn(),
     rect: vi.fn(),
     destroy: vi.fn(),
+    beginFill: vi.fn(),
+    drawRect: vi.fn(),
+    endFill: vi.fn(),
+    alpha: 1,
     x: 0,
-    y: 0
+    y: 0,
+    position: {
+        set: vi.fn(),
+        x: 0,
+        y: 0
+    }
 };
 
 vi.mock('pixi.js', () => {
@@ -65,7 +80,36 @@ vi.mock('pixi.js', () => {
             addChild: vi.fn(),
             removeChild: vi.fn()
         },
+        screen: {
+            width: 800,
+            height: 600
+        },
         destroy: vi.fn()
+    };
+
+    const mockText = {
+        text: '',
+        x: 0,
+        y: 0,
+        anchor: {
+            set: vi.fn(),
+            x: 0,
+            y: 0
+        },
+        position: {
+            set: vi.fn(),
+            x: 0,
+            y: 0
+        },
+        style: {},
+        destroy: vi.fn()
+    };
+
+    const mockTextStyle = {
+        fontFamily: 'Arial',
+        fontSize: 12,
+        fill: '#ffffff',
+        align: 'center'
     };
 
     return {
@@ -74,6 +118,8 @@ vi.mock('pixi.js', () => {
         Graphics: vi.fn(() => mockGraphics),
         ParticleContainer: vi.fn(() => mockParticleContainer),
         Particle: vi.fn(() => ({ ...mockParticle })),
+        Text: vi.fn(() => ({ ...mockText })),
+        TextStyle: vi.fn(() => ({ ...mockTextStyle })),
         Texture: {
             from: vi.fn(() => mockTexture),
             EMPTY: mockTexture
@@ -116,12 +162,28 @@ describe('PixiRenderSystem', () => {
         // Reset mocks
         vi.clearAllMocks();
 
+        // Mock WebGL context
+        const mockWebGLContext = {
+            getExtension: vi.fn(() => null),
+            getParameter: vi.fn(() => 'Mocked WebGL')
+        };
+
+        // Mock canvas getContext
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+            (contextType: string) => {
+                if (contextType === 'webgl' || contextType === 'webgl2') {
+                    return mockWebGLContext as any;
+                }
+                return null;
+            }
+        );
+
         // Create canvas
         canvas = document.createElement('canvas');
         canvas.width = 800;
         canvas.height = 600;
 
-        // Create render system (no canvas parameter)
+        // Create render system
         renderSystem = new PixiRenderSystem();
 
         // Get mocked instances after creation
@@ -520,6 +582,129 @@ describe('PixiRenderSystem', () => {
                 expect(mockGraphics.moveTo).toHaveBeenCalledWith(300, 400);
                 expect(mockGraphics.lineTo).toHaveBeenCalledWith(300, 392);
             });
+        });
+    });
+
+    describe('game over menu', () => {
+        it('should render game over menu with selection', () => {
+            const menuState = {
+                isVisible: true,
+                selectedOption: 0,
+                options: ['Restart Stage', 'Stage Select']
+            };
+
+            renderSystem.renderGameOverMenu(menuState.options, menuState.selectedOption, 0);
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should update game over menu selection', () => {
+            const options = ['Restart Stage', 'Stage Select'];
+            renderSystem.updateGameOverMenuSelection(options, 1, 0);
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should hide game over menu', () => {
+            renderSystem.hideGameOverMenu();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('transition effects', () => {
+        it('should perform fade out transition', () => {
+            renderSystem.fadeOutTransition();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should perform fade in transition', () => {
+            renderSystem.fadeInTransition();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should perform flash effect', () => {
+            renderSystem.flashEffect();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should perform stage complete effect', () => {
+            renderSystem.stageCompleteEffect(100);
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should check if transitioning', () => {
+            const isTransitioning = renderSystem.isTransitioning();
+
+            expect(typeof isTransitioning).toBe('boolean');
+        });
+
+        it('should cancel transition', () => {
+            renderSystem.cancelTransition();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('loading screen', () => {
+        it('should show loading screen', () => {
+            renderSystem.showLoadingScreen('Loading...');
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+
+        it('should hide loading screen', () => {
+            renderSystem.hideLoadingScreen();
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('death marks rendering', () => {
+        it('should render death marks', () => {
+            const deathMarks = [
+                { x: 100, y: 200, timestamp: Date.now() },
+                { x: 300, y: 400, timestamp: Date.now() }
+            ];
+
+            renderSystem.renderDeathMarks(deathMarks);
+
+            // Should not throw error
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('branch coverage edge cases', () => {
+        it('should handle missing playerShape in clear method', () => {
+            // Set playerShape to undefined to test the if condition
+            (renderSystem as any).playerShape = undefined;
+
+            // Should not throw error when playerShape is undefined
+            expect(() => renderSystem.clear()).not.toThrow();
+        });
+
+        it('should clear playerShape when it exists', () => {
+            // Ensure playerShape exists and has clear method
+            const mockClear = vi.fn();
+            (renderSystem as any).playerShape = { clear: mockClear };
+
+            renderSystem.clear();
+
+            expect(mockClear).toHaveBeenCalledOnce();
         });
     });
 });
