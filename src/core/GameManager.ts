@@ -68,6 +68,8 @@ export class GameManager {
     // Game state tracking
     /** @private {number} Previous player Y position for collision detection */
     private prevPlayerY = 0;
+    /** @private {boolean} Flag to prevent multiple PixiJS initializations */
+    private isInitializingPixi = false;
 
     /**
      * Creates a new GameManager instance
@@ -178,6 +180,7 @@ export class GameManager {
         // Clear inputs first before changing game state
         this.inputManager.clearInputs();
         this.prevPlayerY = 0;
+        this.isInitializingPixi = false;
     }
 
     /**
@@ -487,23 +490,37 @@ export class GameManager {
             return;
         }
 
-        // Check if PixiJS is initialized, if not, try to initialize it
+        // Check if PixiJS is initialized, if not, try to initialize it (once)
         if (renderer && 'getApp' in renderer) {
             try {
                 const app = renderer.getApp();
                 if (!app?.stage) {
-                    console.log('🎮 PixiJS not initialized, initializing now...');
-                    // Skip rendering this frame, initialization will happen asynchronously
-                    renderer.initialize(this.canvas).catch((error) => {
-                        console.error('Failed to initialize PixiJS:', error);
-                    });
+                    if (!this.isInitializingPixi) {
+                        console.log('🎮 PixiJS not initialized, initializing now...');
+                        this.isInitializingPixi = true;
+                        // Skip rendering this frame, initialization will happen asynchronously
+                        renderer.initialize(this.canvas).then(() => {
+                            console.log('🎮 PixiJS initialization completed');
+                            this.isInitializingPixi = false;
+                        }).catch((error) => {
+                            console.error('Failed to initialize PixiJS:', error);
+                            this.isInitializingPixi = false;
+                        });
+                    }
                     return;
                 }
             } catch (error) {
-                console.log('🎮 PixiJS initialization needed due to error:', error);
-                renderer.initialize(this.canvas).catch((error) => {
-                    console.error('Failed to initialize PixiJS:', error);
-                });
+                if (!this.isInitializingPixi) {
+                    console.log('🎮 PixiJS initialization needed due to error:', error);
+                    this.isInitializingPixi = true;
+                    renderer.initialize(this.canvas).then(() => {
+                        console.log('🎮 PixiJS initialization completed after error');
+                        this.isInitializingPixi = false;
+                    }).catch((initError) => {
+                        console.error('Failed to initialize PixiJS after error:', initError);
+                        this.isInitializingPixi = false;
+                    });
+                }
                 return;
             }
         }
