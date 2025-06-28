@@ -54,6 +54,21 @@ describe('BundleAnalyzer', () => {
             expect(Array.isArray(bundleInfo.pixiModules)).toBe(true);
         });
 
+        it('should return default bundle info if analysis has not been performed', () => {
+            const analyzer = new BundleAnalyzer();
+            // Force bundleInfo to be null to test the default fallback path
+            (analyzer as any).bundleInfo = null;
+
+            const bundleInfo = analyzer.getBundleInfo();
+
+            expect(bundleInfo).toEqual({
+                totalSize: 0,
+                gzippedSize: 0,
+                modules: [],
+                pixiModules: []
+            });
+        });
+
         it('should have expected module structure', () => {
             const analyzer = new BundleAnalyzer();
             const bundleInfo = analyzer.getBundleInfo();
@@ -481,6 +496,44 @@ describe('BundleAnalyzer', () => {
             // Verify the order of console method calls
             expect(groupSpy).toHaveBeenCalledBefore(logSpy);
             expect(logSpy).toHaveBeenCalledBefore(groupEndSpy);
+        });
+    });
+
+    describe('branch coverage edge cases', () => {
+        it('should handle tree-shaking effectiveness when not effective', () => {
+            const analyzer = new BundleAnalyzer();
+
+            // Mock analyzeTreeShaking to return ineffective result (>= 5 unused exports)
+            vi.spyOn(analyzer, 'analyzeTreeShaking').mockReturnValue({
+                isEffective: false, // This will trigger the 'Needs Improvement' branch
+                unusedExports: ['export1', 'export2', 'export3', 'export4', 'export5', 'export6'],
+                suggestions: ['suggestion1', 'suggestion2']
+            });
+
+            const report = analyzer.generateBundleReport();
+
+            expect(report).toContain('Tree-shaking Effectiveness: Needs Improvement');
+        });
+
+        it('should handle missing pixi.js module in getMetrics', () => {
+            const analyzer = new BundleAnalyzer();
+
+            // Mock getBundleInfo to return modules without pixi.js
+            vi.spyOn(analyzer, 'getBundleInfo').mockReturnValue({
+                totalSize: 100000,
+                gzippedSize: 30000,
+                modules: [
+                    { name: 'other-module', size: 50000 },
+                    { name: 'another-module', size: 50000 }
+                    // Note: no pixi.js module here to trigger the || 0 fallback
+                ],
+                pixiModules: []
+            });
+
+            const metrics = analyzer.getMetrics();
+
+            expect(metrics.pixiSizeKB).toBe(0); // Should fallback to 0 when pixi.js not found
+            expect(metrics.totalSizeKB).toBe(98); // Math.round(100000 / 1024)
         });
     });
 });

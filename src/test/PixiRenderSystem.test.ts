@@ -903,4 +903,39 @@ describe('PixiRenderSystem', () => {
             expect(true).toBe(true);
         });
     });
+
+    describe('branch coverage edge cases', () => {
+        it('should handle missing bundleService in getBundleMetrics', () => {
+            // Set bundleService to undefined to trigger the || fallback
+            (renderSystem as any).bundleService = undefined;
+
+            const metrics = renderSystem.getBundleMetrics();
+
+            expect(metrics).toEqual({
+                totalSizeKB: 0,
+                gzippedSizeKB: 0,
+                pixiSizeKB: 0,
+                isUnderTarget: true,
+                loadTimeEstimate: 0
+            });
+        });
+
+        it('should handle missing playerShape in clear method', () => {
+            // Set playerShape to undefined to test the if condition
+            (renderSystem as any).playerShape = undefined;
+
+            // Should not throw error when playerShape is undefined
+            expect(() => renderSystem.clear()).not.toThrow();
+        });
+
+        it('should clear playerShape when it exists', () => {
+            // Ensure playerShape exists and has clear method
+            const mockClear = vi.fn();
+            (renderSystem as any).playerShape = { clear: mockClear };
+
+            renderSystem.clear();
+
+            expect(mockClear).toHaveBeenCalledOnce();
+        });
+    });
 });
