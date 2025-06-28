@@ -443,7 +443,25 @@ export class PixiRenderSystem {
         this.deathMarkManager?.destroy();
         this.gameOverMenuManager?.destroy();
         this.stageTransitionManager?.destroy();
+
         if (this.app) {
+            // Manually destroy children of containers to prevent errors
+            // from double-destroyed objects during stage transitions.
+            if (this.gameContainer?.children?.length) {
+                for (const child of [...this.gameContainer.children]) {
+                    if (child && !child.destroyed) {
+                        child.destroy();
+                    }
+                }
+            }
+            if (this.uiContainer?.children?.length) {
+                for (const child of [...this.uiContainer.children]) {
+                    if (child && !child.destroyed) {
+                        child.destroy();
+                    }
+                }
+            }
+
             this.app.destroy(true, { children: true, texture: true });
         }
     }
