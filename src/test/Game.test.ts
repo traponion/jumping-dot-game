@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
 
-// Mock Fabric Canvas for tracking objects
-interface MockFabricCanvas {
+interface MockCanvas {
     add: (obj: unknown) => void;
     clear: () => void;
     getObjects: () => unknown[];
@@ -13,13 +12,13 @@ interface MockFabricCanvas {
 }
 
 class MockRenderSystem {
-    private mockCanvas: MockFabricCanvas;
+    private mockCanvas: MockCanvas;
 
     constructor(_canvas: HTMLCanvasElement) {
         this.mockCanvas = this.createMockCanvas();
     }
 
-    private createMockCanvas(): MockFabricCanvas {
+    private createMockCanvas(): MockCanvas {
         const objects: unknown[] = [];
         return {
             objects: objects,
@@ -39,7 +38,7 @@ class MockRenderSystem {
         };
     }
 
-    getMockCanvas(): MockFabricCanvas {
+    getMockCanvas(): MockCanvas {
         return this.mockCanvas;
     }
 
@@ -63,7 +62,7 @@ class MockRenderSystem {
     // Editor methods removed - Editor functionality deprecated
     dispose = vi.fn();
 
-    // Additional methods found in FabricRenderSystem
+    // Additional methods found in PixiRenderSystem
     renderDeathMarks = vi.fn();
     renderTrail = vi.fn();
     renderLandingPredictions = vi.fn();

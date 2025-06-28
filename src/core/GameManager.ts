@@ -8,11 +8,11 @@ import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstan
 import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
-import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
+import type { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
@@ -51,9 +51,9 @@ export class GameManager {
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
     private movingPlatformSystem!: MovingPlatformSystem;
-    /** @private {FabricRenderSystem | MockRenderSystem} Rendering system */
+    /** @private {PixiRenderSystem | MockRenderSystem} Rendering system */
     private renderSystem!:
-        | FabricRenderSystem
+        | PixiRenderSystem
         | import('../systems/MockRenderSystem.js').MockRenderSystem;
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
@@ -519,7 +519,7 @@ export class GameManager {
      */
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
-            (this.renderSystem as FabricRenderSystem).renderGameOverMenu(
+            (this.renderSystem as PixiRenderSystem).renderGameOverMenu(
                 options,
                 selectedIndex,
                 finalScore
@@ -549,7 +549,7 @@ export class GameManager {
 
         // Cleanup render system to prevent canvas reinitialization issues
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as FabricRenderSystem).cleanup();
+            await (this.renderSystem as PixiRenderSystem).cleanup();
         }
 
         gameStore.getState().gameOver();
@@ -561,7 +561,7 @@ export class GameManager {
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as FabricRenderSystem).cleanup();
+            await (this.renderSystem as PixiRenderSystem).cleanup();
         }
     }
     /**

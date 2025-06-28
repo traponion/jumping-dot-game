@@ -2,17 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import type { GameUI } from '../core/GameUI.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
-import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import type { GameController } from '../systems/InputManager.js';
+import type { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
 
 // Mock dependencies
 vi.mock('../ui/GameUI.js');
-vi.mock('../systems/FabricRenderSystem.js');
+vi.mock('../systems/PixiRenderSystem.js');
 
 describe('GameManager render with GameUI integration', () => {
     let gameManager: GameManager;
     let mockGameUI: GameUI;
-    let mockRenderSystem: Partial<FabricRenderSystem>;
+    let mockRenderSystem: Partial<PixiRenderSystem>;
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
@@ -56,7 +56,7 @@ describe('GameManager render with GameUI integration', () => {
         // Create GameManager and inject mock render system
         const mockGameController = {} as GameController;
         gameManager = new GameManager(canvas, mockGameController);
-        (gameManager as unknown as { renderSystem: Partial<FabricRenderSystem> }).renderSystem =
+        (gameManager as unknown as { renderSystem: Partial<PixiRenderSystem> }).renderSystem =
             mockRenderSystem;
     });
 
