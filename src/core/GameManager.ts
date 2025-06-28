@@ -70,6 +70,8 @@ export class GameManager {
     private prevPlayerY = 0;
     /** @private {boolean} Flag to prevent multiple PixiJS initializations */
     private isInitializingPixi = false;
+    /** @private {boolean} Flag to prevent rendering during system reset */
+    private isResettingSystems = false;
 
     /**
      * Creates a new GameManager instance
@@ -155,32 +157,43 @@ export class GameManager {
      * Reset game state to initial values
      */
     async resetGameState(): Promise<void> {
-        gameStore.getState().stopGame();
-        gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-        gameStore.getState().restartGame();
+        console.log('🎮 resetGameState started');
+        this.isResettingSystems = true;
 
-        // Clean up all existing systems
-        await this.cleanupSystems();
+        try {
+            gameStore.getState().stopGame();
+            gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
+            gameStore.getState().restartGame();
 
-        // Reinitialize all systems with fresh instances
-        this.initializeSystems(this.gameController);
+            // Clean up all existing systems
+            await this.cleanupSystems();
 
-        // Initialize the new render system
-        await this.initialize();
+            // Reinitialize all systems with fresh instances
+            this.initializeSystems(this.gameController);
 
-        // Reload stage to get clean initial data
-        const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
-        this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
+            // Initialize the new render system
+            await this.initialize();
 
-        this.playerSystem.reset(100, 400);
-        this.animationSystem.reset();
+            // Reload stage to get clean initial data
+            const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
+            this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
 
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
+            this.playerSystem.reset(100, 400);
+            this.animationSystem.reset();
 
-        // Clear inputs first before changing game state
-        this.inputManager.clearInputs();
-        this.prevPlayerY = 0;
-        this.isInitializingPixi = false;
+            gameStore.getState().updateCamera({ x: 0, y: 0 });
+
+            // Clear inputs first before changing game state
+            this.inputManager.clearInputs();
+            this.prevPlayerY = 0;
+            this.isInitializingPixi = false;
+            
+            console.log('🎮 resetGameState completed');
+        } catch (error) {
+            console.error('🎮 resetGameState failed:', error);
+        } finally {
+            this.isResettingSystems = false;
+        }
     }
 
     /**
@@ -484,6 +497,11 @@ export class GameManager {
      * Render the game
      */
     render(ui?: GameUI): void {
+        // Skip rendering during system reset to prevent race conditions
+        if (this.isResettingSystems) {
+            return;
+        }
+
         const renderer = this.renderSystem;
         if (!renderer) {
             console.warn('Render system not available during render call');
