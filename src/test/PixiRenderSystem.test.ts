@@ -157,9 +157,6 @@ describe('PixiRenderSystem', () => {
     let canvas: HTMLCanvasElement;
     let mockApp: any;
     let mockTrailManager: any;
-    let mockPerformanceService: any;
-    let mockCompatibilityService: any;
-    let mockBundleService: any;
 
     beforeEach(() => {
         // Reset mocks
@@ -186,79 +183,8 @@ describe('PixiRenderSystem', () => {
         canvas.width = 800;
         canvas.height = 600;
 
-        // Create mock services
-        mockPerformanceService = {
-            enableProfiling: vi.fn(),
-            disableProfiling: vi.fn(),
-            getMetrics: vi.fn(() => ({
-                frameRate: 60,
-                averageFrameTime: 16.67,
-                frameCount: 1000,
-                memoryUsage: 50000000,
-                sessionDuration: 16670,
-                startTime: 1234567890
-            })),
-            startFrame: vi.fn(),
-            endFrame: vi.fn(),
-            generateReport: vi.fn(() => 'Performance Report: 60 FPS'),
-            logMetrics: vi.fn(),
-            getWarnings: vi.fn(() => ['Memory usage above 100MB'])
-        };
-
-        mockCompatibilityService = {
-            checkWebGLSupport: vi.fn(() => ({
-                isSupported: true,
-                version: 2,
-                renderer: 'Mocked WebGL',
-                vendor: 'Mocked Vendor'
-            })),
-            getBrowserInfo: vi.fn(() => ({
-                name: 'Chrome',
-                version: '118.0.0.0',
-                isSupported: true
-            })),
-            getCompatibilityIssues: vi.fn(() => ['Browser not supported']),
-            getCompatibilityWorkarounds: vi.fn(() => ['Update browser']),
-            getBrowserSpecificConfig: vi.fn(() => ({
-                requiresWorkarounds: false,
-                recommendations: ['Enable hardware acceleration']
-            })),
-            generateReport: vi.fn(() => 'Compatibility Report: All good'),
-            logReport: vi.fn()
-        };
-
-        mockBundleService = {
-            getBundleInfo: vi.fn(() => ({
-                totalSize: 1024000,
-                gzippedSize: 256000,
-                modules: [{ name: 'main.js', size: 512000 }],
-                pixiModules: [{ name: 'pixi.js', size: 300000 }]
-            })),
-            getMetrics: vi.fn(() => ({
-                totalSizeKB: 1000,
-                gzippedSizeKB: 250,
-                pixiSizeKB: 300,
-                isUnderTarget: true,
-                loadTimeEstimate: 2.5
-            })),
-            getOptimizationRecommendations: vi.fn(() => [
-                {
-                    category: 'PixiJS Tree-shaking',
-                    recommendations: ['Import only required modules'],
-                    potentialSavings: 50000
-                }
-            ]),
-            generateReport: vi.fn(() => 'Bundle Report: 1MB total'),
-            logAnalysis: vi.fn(),
-            analyzeLoadTime: vi.fn(() => 1000)
-        };
-
-        // Create render system with mocked services
-        renderSystem = new PixiRenderSystem(
-            mockPerformanceService,
-            mockCompatibilityService,
-            mockBundleService
-        );
+        // Create render system
+        renderSystem = new PixiRenderSystem();
 
         // Get mocked instances after creation
         mockApp = vi.mocked(PIXI.Application).mock.results[0].value;
@@ -659,148 +585,6 @@ describe('PixiRenderSystem', () => {
         });
     });
 
-    describe('performance monitoring', () => {
-        it('should enable performance profiling', () => {
-            renderSystem.enablePerformanceProfiling();
-
-            // Should not throw error
-            expect(true).toBe(true);
-        });
-
-        it('should disable performance profiling', () => {
-            renderSystem.disablePerformanceProfiling();
-
-            // Should not throw error
-            expect(true).toBe(true);
-        });
-
-        it('should start frame profiling', () => {
-            renderSystem.startFrameProfiling();
-
-            // Should not throw error
-            expect(true).toBe(true);
-        });
-
-        it('should end frame profiling', () => {
-            renderSystem.endFrameProfiling();
-
-            // Should not throw error
-            expect(true).toBe(true);
-        });
-
-        it('should get performance metrics', () => {
-            const metrics = renderSystem.getPerformanceMetrics();
-
-            expect(metrics).toBeDefined();
-            expect(typeof metrics).toBe('object');
-        });
-
-        it('should get performance warnings', () => {
-            const warnings = renderSystem.getPerformanceWarnings();
-
-            expect(warnings).toBeDefined();
-            expect(Array.isArray(warnings)).toBe(true);
-        });
-
-        it('should generate performance report', () => {
-            const report = renderSystem.generatePerformanceReport();
-
-            expect(report).toBeDefined();
-            expect(typeof report).toBe('string');
-        });
-
-        it('should log performance metrics', () => {
-            renderSystem.logPerformanceMetrics();
-
-            expect(mockPerformanceService.logMetrics).toHaveBeenCalled();
-        });
-    });
-
-    describe('compatibility checking', () => {
-        it('should check WebGL support', () => {
-            const support = renderSystem.checkWebGLSupport();
-
-            expect(typeof support).toBe('object');
-        });
-
-        it('should get browser info', () => {
-            const browserInfo = renderSystem.getBrowserInfo();
-
-            expect(browserInfo).toBeDefined();
-            expect(typeof browserInfo).toBe('object');
-        });
-
-        it('should get compatibility issues', () => {
-            const issues = renderSystem.getCompatibilityIssues();
-
-            expect(issues).toBeDefined();
-            expect(Array.isArray(issues)).toBe(true);
-        });
-
-        it('should get compatibility workarounds', () => {
-            const workarounds = renderSystem.getCompatibilityWorkarounds();
-
-            expect(workarounds).toBeDefined();
-            expect(Array.isArray(workarounds)).toBe(true);
-        });
-
-        it('should generate compatibility report', () => {
-            const report = renderSystem.generateCompatibilityReport();
-
-            expect(report).toBeDefined();
-            expect(typeof report).toBe('string');
-        });
-
-        it('should log compatibility report', () => {
-            renderSystem.logCompatibilityReport();
-
-            expect(mockCompatibilityService.logReport).toHaveBeenCalled();
-        });
-
-        it('should get browser specific config', () => {
-            const config = renderSystem.getBrowserSpecificConfig();
-
-            expect(config).toBeDefined();
-            expect(typeof config).toBe('object');
-        });
-    });
-
-    describe('bundle analysis', () => {
-        it('should get bundle info', () => {
-            const bundleInfo = renderSystem.getBundleInfo();
-
-            expect(bundleInfo).toBeDefined();
-            expect(typeof bundleInfo).toBe('object');
-        });
-
-        it('should get bundle metrics', () => {
-            const metrics = renderSystem.getBundleMetrics();
-
-            expect(metrics).toBeDefined();
-            expect(typeof metrics).toBe('object');
-        });
-
-        it('should get optimization recommendations', () => {
-            const recommendations = renderSystem.getOptimizationRecommendations();
-
-            expect(recommendations).toBeDefined();
-            expect(Array.isArray(recommendations)).toBe(true);
-        });
-
-        it('should generate bundle report', () => {
-            const report = renderSystem.generateBundleReport();
-
-            expect(report).toBeDefined();
-            expect(typeof report).toBe('string');
-        });
-
-        it('should log bundle analysis', () => {
-            renderSystem.logBundleAnalysis();
-
-            expect(mockBundleService.logAnalysis).toHaveBeenCalled();
-        });
-    });
-
     describe('game over menu', () => {
         it('should render game over menu with selection', () => {
             const menuState = {
@@ -905,21 +689,6 @@ describe('PixiRenderSystem', () => {
     });
 
     describe('branch coverage edge cases', () => {
-        it('should handle missing bundleService in getBundleMetrics', () => {
-            // Set bundleService to undefined to trigger the || fallback
-            (renderSystem as any).bundleService = undefined;
-
-            const metrics = renderSystem.getBundleMetrics();
-
-            expect(metrics).toEqual({
-                totalSizeKB: 0,
-                gzippedSizeKB: 0,
-                pixiSizeKB: 0,
-                isUnderTarget: true,
-                loadTimeEstimate: 0
-            });
-        });
-
         it('should handle missing playerShape in clear method', () => {
             // Set playerShape to undefined to test the if condition
             (renderSystem as any).playerShape = undefined;

@@ -1,8 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
-import type { IBundleAnalysisService } from '../services/interfaces/IBundleAnalysisService.js';
-import type { ICompatibilityCheckService } from '../services/interfaces/ICompatibilityCheckService.js';
-import type { IPerformanceMonitorService } from '../services/interfaces/IPerformanceMonitorService.js';
+
 import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
 
 // Landing prediction interface for render system
@@ -49,11 +47,7 @@ export class PixiRenderSystem {
     // private readonly LERP_SPEED = 0.15; // TODO: implement interpolation
     private readonly HISTORY_FADE_TIME = 3000;
 
-    constructor(
-        private performanceService?: IPerformanceMonitorService,
-        private compatibilityService?: ICompatibilityCheckService,
-        private bundleService?: IBundleAnalysisService
-    ) {
+    constructor() {
         // Initialize PixiJS application
         this.app = new PIXI.Application();
 
@@ -297,162 +291,6 @@ export class PixiRenderSystem {
 
     cancelTransition(): void {
         this.stageTransitionManager.cancelTransition();
-    }
-
-    /**
-     * Performance monitoring and profiling
-     */
-    enablePerformanceProfiling(): void {
-        this.performanceService?.enableProfiling();
-    }
-
-    disablePerformanceProfiling(): void {
-        this.performanceService?.disableProfiling();
-    }
-
-    getPerformanceMetrics(): {
-        frameRate: number;
-        averageFrameTime: number;
-        frameCount: number;
-        memoryUsage: number;
-        sessionDuration: number;
-        startTime: number;
-    } {
-        return (
-            this.performanceService?.getMetrics() || {
-                frameRate: 0,
-                averageFrameTime: 0,
-                frameCount: 0,
-                memoryUsage: 0,
-                sessionDuration: 0,
-                startTime: 0
-            }
-        );
-    }
-
-    getPerformanceWarnings(): string[] {
-        return this.performanceService?.getWarnings() || [];
-    }
-
-    generatePerformanceReport(): string {
-        return this.performanceService?.generateReport() || 'Performance monitoring not available';
-    }
-
-    logPerformanceMetrics(): void {
-        this.performanceService?.logMetrics();
-    }
-
-    startFrameProfiling(): void {
-        this.performanceService?.startFrame();
-    }
-
-    endFrameProfiling(): void {
-        this.performanceService?.endFrame();
-    }
-
-    /**
-     * Cross-browser compatibility checking
-     */
-    getBrowserInfo(): { name: string; version: string; isSupported: boolean } {
-        return (
-            this.compatibilityService?.getBrowserInfo() || {
-                name: 'Unknown',
-                version: '0',
-                isSupported: false
-            }
-        );
-    }
-
-    checkWebGLSupport(): {
-        isSupported: boolean;
-        version: number;
-        renderer?: string;
-        vendor?: string;
-    } {
-        return this.compatibilityService?.checkWebGLSupport() || { isSupported: false, version: 0 };
-    }
-
-    getCompatibilityIssues(): string[] {
-        return this.compatibilityService?.getCompatibilityIssues() || [];
-    }
-
-    getCompatibilityWorkarounds(): string[] {
-        return this.compatibilityService?.getCompatibilityWorkarounds() || [];
-    }
-
-    generateCompatibilityReport(): string {
-        return (
-            this.compatibilityService?.generateReport() || 'Compatibility checking not available'
-        );
-    }
-
-    logCompatibilityReport(): void {
-        this.compatibilityService?.logReport();
-    }
-
-    getBrowserSpecificConfig(): {
-        requiresWorkarounds: boolean;
-        recommendations: string[];
-    } {
-        return (
-            this.compatibilityService?.getBrowserSpecificConfig() || {
-                requiresWorkarounds: false,
-                recommendations: []
-            }
-        );
-    }
-
-    /**
-     * Bundle size analysis and optimization
-     */
-    getBundleInfo(): {
-        totalSize: number;
-        gzippedSize: number;
-        modules: Array<{ name: string; size: number }>;
-        pixiModules: Array<{ name: string; size: number }>;
-    } {
-        return (
-            this.bundleService?.getBundleInfo() || {
-                totalSize: 0,
-                gzippedSize: 0,
-                modules: [],
-                pixiModules: []
-            }
-        );
-    }
-
-    getBundleMetrics(): {
-        totalSizeKB: number;
-        gzippedSizeKB: number;
-        pixiSizeKB: number;
-        isUnderTarget: boolean;
-        loadTimeEstimate: number;
-    } {
-        return (
-            this.bundleService?.getMetrics() || {
-                totalSizeKB: 0,
-                gzippedSizeKB: 0,
-                pixiSizeKB: 0,
-                isUnderTarget: true,
-                loadTimeEstimate: 0
-            }
-        );
-    }
-
-    getOptimizationRecommendations(): {
-        category: string;
-        recommendations: string[];
-        potentialSavings: number;
-    }[] {
-        return this.bundleService?.getOptimizationRecommendations() || [];
-    }
-
-    generateBundleReport(): string {
-        return this.bundleService?.generateReport() || 'Bundle analysis not available';
-    }
-
-    logBundleAnalysis(): void {
-        this.bundleService?.logAnalysis();
     }
 
     /**
