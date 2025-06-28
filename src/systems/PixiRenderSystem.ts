@@ -269,10 +269,9 @@ export class PixiRenderSystem {
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         // Add a check to ensure app and renderer are initialized
         if (!this.app?.renderer) {
-            console.error(
-                'PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized.'
-            );
-            return; // Prevent further errors and infinite loop
+            const error = new Error('PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized.');
+            console.error(error.message);
+            throw error; // Force GameLoop to stop via try-catch
         }
 
         // Get camera position for centering menu
