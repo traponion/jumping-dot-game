@@ -93,3 +93,9 @@ review.md
 .claude/*_plan.md
 .claude/*_refactoring_plan.md
 .claude/current_session_progress.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

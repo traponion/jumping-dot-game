@@ -23,9 +23,9 @@ export class GameOverMenuManager {
         const screenHeight = this.app.screen.height;
 
         // Game Over title with shadow effect
-        const gameOverText = new PIXI.Text(
-            'GAME OVER',
-            new PIXI.TextStyle({
+        const gameOverText = new PIXI.Text({
+            text: 'GAME OVER',
+            style: new PIXI.TextStyle({
                 fontSize: 32,
                 fill: 'white',
                 fontFamily: 'monospace',
@@ -36,16 +36,16 @@ export class GameOverMenuManager {
                     alpha: 0.8
                 }
             })
-        );
+        });
         gameOverText.anchor.set(0.5, 0.5);
         gameOverText.position.set(0, -80);
         this.menuContainer.addChild(gameOverText);
 
         // Score display
         if (finalScore > 0) {
-            const scoreText = new PIXI.Text(
-                `Score: ${finalScore}`,
-                new PIXI.TextStyle({
+            const scoreText = new PIXI.Text({
+                text: `Score: ${finalScore}`,
+                style: new PIXI.TextStyle({
                     fontSize: 20,
                     fill: 'white',
                     fontFamily: 'monospace',
@@ -56,7 +56,7 @@ export class GameOverMenuManager {
                         alpha: 0.8
                     }
                 })
-            );
+            });
             scoreText.anchor.set(0.5, 0.5);
             scoreText.position.set(0, -40);
             this.menuContainer.addChild(scoreText);
@@ -73,17 +73,15 @@ export class GameOverMenuManager {
             // Selection indicator background
             if (isSelected) {
                 const selectionRect = new PIXI.Graphics();
-                selectionRect.beginFill(0xffffff);
-                selectionRect.drawRect(-150, -20, 300, 40);
-                selectionRect.endFill();
+                selectionRect.rect(-150, -20, 300, 40).fill(0xffffff);
                 selectionRect.position.set(0, y);
                 this.menuContainer.addChild(selectionRect);
             }
 
             // Option text
-            const optionText = new PIXI.Text(
-                option,
-                new PIXI.TextStyle({
+            const optionText = new PIXI.Text({
+                text: option,
+                style: new PIXI.TextStyle({
                     fontSize: 24,
                     fill: isSelected ? 'black' : 'white',
                     fontFamily: 'monospace',
@@ -98,16 +96,16 @@ export class GameOverMenuManager {
                               }
                           })
                 })
-            );
+            });
             optionText.anchor.set(0.5, 0.5);
             optionText.position.set(0, y);
             this.menuContainer.addChild(optionText);
         });
 
         // Instructions at bottom
-        const instructionText = new PIXI.Text(
-            '↑↓ Navigate  ENTER/R/SPACE Select',
-            new PIXI.TextStyle({
+        const instructionText = new PIXI.Text({
+            text: '↑↓ Navigate  ENTER/R/SPACE Select',
+            style: new PIXI.TextStyle({
                 fontSize: 16,
                 fill: '#aaaaaa',
                 fontFamily: 'monospace',
@@ -118,7 +116,7 @@ export class GameOverMenuManager {
                     alpha: 0.8
                 }
             })
-        );
+        });
         instructionText.anchor.set(0.5, 1);
         instructionText.position.set(0, screenHeight / 2 - 50);
         this.menuContainer.addChild(instructionText);

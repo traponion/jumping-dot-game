@@ -101,7 +101,8 @@ export class GameManager {
             radius: GAME_CONFIG.player.defaultRadius,
             grounded: false
         });
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
+        // Set camera Y to show platforms (y=500) in the center of 600px screen
+        gameStore.getState().updateCamera({ x: 0, y: 200 });
 
         this.stageLoader = new StageLoader();
     }
@@ -315,9 +316,19 @@ export class GameManager {
 
     private updateCamera(): void {
         const player = getGameStore().getPlayer();
-        gameStore
-            .getState()
-            .updateCamera({ x: player.x - this.canvas.width / 2, y: getGameStore().getCamera().y });
+        // Set camera Y to show platforms at y=500 in center of 600px screen
+        // Camera Y should be around 200 so platforms appear at screen center
+        const cameraY = 200; // This will put y=500 platforms at screen center (500-200=300)
+        const newCameraX = player.x - this.canvas.width / 2;
+
+        console.log('🎮 updateCamera called:', {
+            playerX: player.x,
+            canvasWidth: this.canvas.width,
+            newCameraX,
+            newCameraY: cameraY
+        });
+
+        gameStore.getState().updateCamera({ x: newCameraX, y: cameraY });
     }
 
     private checkBoundaries(): void {
@@ -474,6 +485,27 @@ export class GameManager {
         if (!renderer) {
             console.warn('Render system not available during render call');
             return;
+        }
+
+        // Check if PixiJS is initialized, if not, try to initialize it
+        if (renderer && 'getApp' in renderer) {
+            try {
+                const app = renderer.getApp();
+                if (!app?.stage) {
+                    console.log('🎮 PixiJS not initialized, initializing now...');
+                    // Skip rendering this frame, initialization will happen asynchronously
+                    renderer.initialize(this.canvas).catch((error) => {
+                        console.error('Failed to initialize PixiJS:', error);
+                    });
+                    return;
+                }
+            } catch (error) {
+                console.log('🎮 PixiJS initialization needed due to error:', error);
+                renderer.initialize(this.canvas).catch((error) => {
+                    console.error('Failed to initialize PixiJS:', error);
+                });
+                return;
+            }
         }
 
         renderer.clearCanvas();

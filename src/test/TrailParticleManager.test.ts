@@ -43,7 +43,10 @@ vi.mock('pixi.js', () => {
 
     return {
         ParticleContainer: vi.fn(() => mockParticleContainer),
-        Particle: vi.fn(() => ({ ...mockParticle })),
+        Particle: vi.fn((options) => ({
+            ...mockParticle,
+            texture: options?.texture || mockTexture
+        })),
         Texture: {
             from: vi.fn(() => mockTexture),
             EMPTY: mockTexture
@@ -132,6 +135,9 @@ describe('TrailParticleManager', () => {
             trailManager.renderTrail(sampleTrail, 8);
 
             expect(PIXI.Particle).toHaveBeenCalledTimes(3);
+            expect(PIXI.Particle).toHaveBeenCalledWith({
+                texture: expect.any(Object)
+            });
             expect(trailManager.getActiveParticleCount()).toBe(3);
         });
 
@@ -140,6 +146,9 @@ describe('TrailParticleManager', () => {
 
             // Should create particles for all trail points
             expect(PIXI.Particle).toHaveBeenCalledTimes(3);
+            expect(PIXI.Particle).toHaveBeenCalledWith({
+                texture: expect.any(Object)
+            });
             expect(trailManager.getActiveParticleCount()).toBe(3);
         });
 

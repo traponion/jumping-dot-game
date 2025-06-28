@@ -6,9 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: [
-      path.resolve(process.cwd(), 'vitest.setup.ts')
-    ],
+    setupFiles: ['vitest-canvas-mock'],
     environmentOptions: {
       jsdom: {
         resources: 'usable',
@@ -83,6 +81,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    https: {
+      key: path.resolve(__dirname, '.cert/key.pem'),
+      cert: path.resolve(__dirname, '.cert/cert.pem')
+    },
+    // Allow all hosts for SSH port forwarding
+    host: '0.0.0.0'
   }
 })

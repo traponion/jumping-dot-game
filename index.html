@@ -72,6 +72,68 @@
             display: none;
         }
         
+        .stage-select-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .stage-select-title {
+            font-size: 32px;
+            color: white;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        
+        .stage-select-subtitle {
+            font-size: 16px;
+            color: white;
+            font-family: monospace;
+            margin-bottom: 40px;
+        }
+        
+        .stage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .stage-item {
+            padding: 20px 40px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .stage-item.selected {
+            background-color: white;
+            color: black;
+        }
+        
+        .stage-name {
+            font-size: 24px;
+            font-family: monospace;
+            margin-bottom: 5px;
+        }
+        
+        .stage-description {
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .stage-select-instructions {
+            position: absolute;
+            bottom: 50px;
+            font-size: 14px;
+            font-family: monospace;
+            color: #aaa;
+        }
+        
 @media (max-width: 768px) {
             canvas {
                 width: 95vw;
@@ -109,6 +171,21 @@
             </div>
             <div id="gameOverScreen" class="game-over-screen hidden">
                 Game Over - Press R to restart
+            </div>
+            <div id="stageSelectScreen" class="stage-select-screen hidden">
+                <div class="stage-select-title">JUMPING DOT GAME</div>
+                <div class="stage-select-subtitle">SELECT STAGE</div>
+                <div class="stage-list">
+                    <div class="stage-item selected" data-stage-id="1">
+                        <div class="stage-name">STAGE 1</div>
+                        <div class="stage-description">Basic tutorial stage</div>
+                    </div>
+                    <div class="stage-item" data-stage-id="2">
+                        <div class="stage-name">STAGE 2</div>
+                        <div class="stage-description">Moving platforms</div>
+                    </div>
+                </div>
+                <div class="stage-select-instructions">↑↓ Navigate  SPACE Select</div>
             </div>
         </div>
         

@@ -25,9 +25,7 @@ export class StageTransitionManager {
 
             // Create black overlay
             const overlay = new PIXI.Graphics();
-            overlay.beginFill(0x000000);
-            overlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-            overlay.endFill();
+            overlay.rect(0, 0, this.app.screen.width, this.app.screen.height).fill(0x000000);
             overlay.alpha = 0;
 
             this.transitionContainer.addChild(overlay);
@@ -63,9 +61,7 @@ export class StageTransitionManager {
 
             // Create black overlay starting at full opacity
             const overlay = new PIXI.Graphics();
-            overlay.beginFill(0x000000);
-            overlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-            overlay.endFill();
+            overlay.rect(0, 0, this.app.screen.width, this.app.screen.height).fill(0x000000);
             overlay.alpha = 1;
 
             this.transitionContainer.addChild(overlay);
@@ -102,14 +98,14 @@ export class StageTransitionManager {
 
         // Create dark overlay
         const overlay = new PIXI.Graphics();
-        overlay.beginFill(0x000000, 0.8);
-        overlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-        overlay.endFill();
+        overlay
+            .rect(0, 0, this.app.screen.width, this.app.screen.height)
+            .fill({ color: 0x000000, alpha: 0.8 });
 
         // Create loading text
-        const loadingText = new PIXI.Text(
-            message,
-            new PIXI.TextStyle({
+        const loadingText = new PIXI.Text({
+            text: message,
+            style: new PIXI.TextStyle({
                 fontSize: 24,
                 fill: 'white',
                 fontFamily: 'monospace',
@@ -120,7 +116,7 @@ export class StageTransitionManager {
                     alpha: 0.8
                 }
             })
-        );
+        });
         loadingText.anchor.set(0.5, 0.5);
         loadingText.position.set(this.app.screen.width / 2, this.app.screen.height / 2);
 
@@ -147,9 +143,9 @@ export class StageTransitionManager {
 
             // Create colored overlay
             const flash = new PIXI.Graphics();
-            flash.beginFill(color, 0.7);
-            flash.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-            flash.endFill();
+            flash
+                .rect(0, 0, this.app.screen.width, this.app.screen.height)
+                .fill({ color: color, alpha: 0.7 });
             flash.alpha = 0;
 
             this.transitionContainer.addChild(flash);
@@ -196,14 +192,14 @@ export class StageTransitionManager {
 
             // Create celebration overlay
             const overlay = new PIXI.Graphics();
-            overlay.beginFill(0x000000, 0.7);
-            overlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-            overlay.endFill();
+            overlay
+                .rect(0, 0, this.app.screen.width, this.app.screen.height)
+                .fill({ color: 0x000000, alpha: 0.7 });
 
             // Stage complete text
-            const completeText = new PIXI.Text(
-                'Stage Complete!',
-                new PIXI.TextStyle({
+            const completeText = new PIXI.Text({
+                text: 'Stage Complete!',
+                style: new PIXI.TextStyle({
                     fontSize: 36,
                     fill: '#00ff00',
                     fontFamily: 'monospace',
@@ -214,14 +210,14 @@ export class StageTransitionManager {
                         alpha: 0.8
                     }
                 })
-            );
+            });
             completeText.anchor.set(0.5, 0.5);
             completeText.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 30);
 
             // Score text
-            const scoreText = new PIXI.Text(
-                `Score: ${score}`,
-                new PIXI.TextStyle({
+            const scoreText = new PIXI.Text({
+                text: `Score: ${score}`,
+                style: new PIXI.TextStyle({
                     fontSize: 24,
                     fill: 'white',
                     fontFamily: 'monospace',
@@ -232,7 +228,7 @@ export class StageTransitionManager {
                         alpha: 0.8
                     }
                 })
-            );
+            });
             scoreText.anchor.set(0.5, 0.5);
             scoreText.position.set(this.app.screen.width / 2, this.app.screen.height / 2 + 30);
 

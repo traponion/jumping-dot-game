@@ -24,6 +24,7 @@ export class TrailParticleManager {
     constructor(private readonly app: PIXI.Application) {
         // Configure ParticleContainer for optimal trail rendering
         this.particleContainer = new PIXI.ParticleContainer({
+            boundsArea: new PIXI.Rectangle(0, 0, 1000, 1000), // Required in v8
             dynamicProperties: {
                 position: true, // Particles move dynamically
                 scale: true, // Scale changes for fading effect
@@ -40,7 +41,7 @@ export class TrailParticleManager {
     private createTrailTexture(): PIXI.Texture {
         const graphics = new PIXI.Graphics();
         graphics.circle(0, 0, 8); // 8px radius circle
-        graphics.fill({ color: 0xffffff }); // White fill
+        graphics.fill(0xffffff); // White fill
 
         const texture = this.app.renderer.generateTexture(graphics);
         graphics.destroy(); // Clean up temporary graphics
@@ -68,9 +69,7 @@ export class TrailParticleManager {
 
         // Handle trail growing - create additional particles
         while (this.particles.length < targetCount) {
-            const particle = new PIXI.Particle({
-                texture: this.particleTexture
-            });
+            const particle = new PIXI.Particle(this.particleTexture);
             this.particles.push(particle);
         }
 

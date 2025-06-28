@@ -1,4 +1,4 @@
-import * as PIXI from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import type { MovingPlatform, StageData } from '../core/StageLoader.js';
 
 import type { Camera, DeathMark, Player, TrailPoint } from '../types/GameTypes.js';
@@ -21,70 +21,78 @@ import { StageTransitionManager } from './StageTransitionManager.js';
 import { TrailParticleManager } from './TrailParticleManager.js';
 
 export class PixiRenderSystem {
-    private app: PIXI.Application;
-    private gameContainer: PIXI.Container;
-    private uiContainer: PIXI.Container;
+    private app: Application;
+    private gameContainer: Container;
+    private uiContainer: Container;
     private isDestroyed = false;
 
     // Game objects
-    private playerShape: PIXI.Graphics | null = null;
-    private platformGraphics: PIXI.Graphics;
-    private movingPlatformGraphics: PIXI.Graphics;
-    private spikeGraphics: PIXI.Graphics;
-    private goalGraphics: PIXI.Graphics;
-    private trailGraphics: PIXI.Graphics;
+    private playerShape: Graphics | null = null;
+    private platformGraphics: Graphics;
+    private movingPlatformGraphics: Graphics;
+    private spikeGraphics: Graphics;
+    private goalGraphics: Graphics;
+    private trailGraphics: Graphics;
     private trailParticleManager: TrailParticleManager;
     private deathMarkManager: DeathMarkRenderingManager;
     private gameOverMenuManager: GameOverMenuManager;
     private stageTransitionManager: StageTransitionManager;
 
-    private effectsGraphics: PIXI.Graphics;
-    private uiGraphics: PIXI.Graphics;
+    private effectsGraphics: Graphics;
+    private uiGraphics: Graphics;
 
     // Landing prediction and history data
     // private landingPredictions: LandingPrediction[] = []; // TODO: implement landing predictions
     private landingHistory: { x: number; y: number; timestamp: number }[] = [];
-    private landingHistoryGraphics: PIXI.Graphics;
+    private landingHistoryGraphics: Graphics;
     // private readonly LERP_SPEED = 0.15; // TODO: implement interpolation
     private readonly HISTORY_FADE_TIME = 3000;
 
     constructor() {
-        // Initialize PixiJS application
-        this.app = new PIXI.Application();
+        // This will be initialized in the initialize method
+        this.app = undefined as unknown as Application;
 
-        // Initialize graphics containers
-        this.gameContainer = new PIXI.Container();
-        this.uiContainer = new PIXI.Container();
+        // Initialize graphics containers (will be properly set up in initialize)
+        this.gameContainer = new Container();
+        this.uiContainer = new Container();
 
         // Initialize graphics objects
-        this.platformGraphics = new PIXI.Graphics();
-        this.movingPlatformGraphics = new PIXI.Graphics();
-        this.spikeGraphics = new PIXI.Graphics();
-        this.goalGraphics = new PIXI.Graphics();
-        this.trailGraphics = new PIXI.Graphics();
-        this.trailParticleManager = new TrailParticleManager(this.app);
-        this.deathMarkManager = new DeathMarkRenderingManager(this.app);
-        this.gameOverMenuManager = new GameOverMenuManager(this.app);
-        this.stageTransitionManager = new StageTransitionManager(this.app);
+        this.platformGraphics = new Graphics();
+        this.movingPlatformGraphics = new Graphics();
+        this.spikeGraphics = new Graphics();
+        this.goalGraphics = new Graphics();
+        this.trailGraphics = new Graphics();
+        this.effectsGraphics = new Graphics();
+        this.uiGraphics = new Graphics();
+        this.landingHistoryGraphics = new Graphics();
 
-        this.effectsGraphics = new PIXI.Graphics();
-        this.uiGraphics = new PIXI.Graphics();
-        this.landingHistoryGraphics = new PIXI.Graphics();
+        // Managers will be initialized in initialize method
+        this.trailParticleManager = undefined as unknown as TrailParticleManager;
+        this.deathMarkManager = undefined as unknown as DeathMarkRenderingManager;
+        this.gameOverMenuManager = undefined as unknown as GameOverMenuManager;
+        this.stageTransitionManager = undefined as unknown as StageTransitionManager;
     }
 
     /**
      * Initialize the PixiJS application and setup the stage
      */
     async initialize(canvasElement: HTMLCanvasElement): Promise<void> {
+        // PixiJS v8 standard initialization
+        this.app = new Application();
+
+        // Try the same simple configuration as official PixiJS samples
         await this.app.init({
             canvas: canvasElement,
             width: canvasElement.width,
             height: canvasElement.height,
-            backgroundColor: 0x000000, // Black background
-            antialias: false, // Disable for performance
-            resolution: 1, // Standard resolution for performance
-            autoDensity: false // Disable auto-density for performance
+            backgroundColor: 0x000000
         });
+
+        // Initialize managers now that app is available
+        this.trailParticleManager = new TrailParticleManager(this.app);
+        this.deathMarkManager = new DeathMarkRenderingManager(this.app);
+        this.gameOverMenuManager = new GameOverMenuManager(this.app);
+        this.stageTransitionManager = new StageTransitionManager(this.app);
 
         // Setup container hierarchy
         this.app.stage.addChild(this.gameContainer);
@@ -107,29 +115,50 @@ export class PixiRenderSystem {
     /**
      * Render the player as a white circle
      */
+    private playerLogCount = 0;
     renderPlayer(player: Player): void {
+        if (this.playerLogCount < 3) {
+            console.log('🎮 renderPlayer called:', {
+                x: player.x,
+                y: player.y,
+                radius: player.radius
+            });
+            this.playerLogCount++;
+        }
+
         if (!this.playerShape) {
-            this.playerShape = new PIXI.Graphics();
+            this.playerShape = new Graphics();
             this.gameContainer.addChild(this.playerShape);
+            console.log('🎮 Player shape created and added to gameContainer');
         }
 
         this.playerShape.clear();
-        this.playerShape.circle(0, 0, player.radius);
-        this.playerShape.fill(0xffffff); // White fill
-        this.playerShape.x = player.x;
-        this.playerShape.y = player.y;
+        // Test: Draw player at fixed position near canvas center for debugging
+        this.playerShape.circle(400, 300, 20).fill(0xff0000); // Red fill for testing
+
+        // Also try to draw at actual player position
+        this.playerShape.circle(player.x, player.y, player.radius).fill(0xffffff); // White fill
     }
 
     /**
      * Render static platforms as white lines
      */
+    private platformLogCount = 0;
     renderPlatforms(stageData: StageData): void {
+        if (this.platformLogCount === 0) {
+            console.log('🎮 renderPlatforms called with', stageData.platforms.length, 'platforms');
+            stageData.platforms.forEach((platform, i) => {
+                if (i < 3) console.log('🎮 Platform', i, ':', platform);
+            });
+            this.platformLogCount++;
+        }
         this.platformGraphics.clear();
-        this.platformGraphics.stroke({ width: 2, color: 0xffffff });
 
         for (const platform of stageData.platforms) {
-            this.platformGraphics.moveTo(platform.x1, platform.y1);
-            this.platformGraphics.lineTo(platform.x2, platform.y2);
+            this.platformGraphics
+                .moveTo(platform.x1, platform.y1)
+                .lineTo(platform.x2, platform.y2)
+                .stroke({ width: 2, color: 0xffffff });
         }
     }
 
@@ -138,11 +167,12 @@ export class PixiRenderSystem {
      */
     renderMovingPlatforms(movingPlatforms: MovingPlatform[]): void {
         this.movingPlatformGraphics.clear();
-        this.movingPlatformGraphics.stroke({ width: 2, color: 0xffffff });
 
         for (const platform of movingPlatforms) {
-            this.movingPlatformGraphics.moveTo(platform.x1, platform.y1);
-            this.movingPlatformGraphics.lineTo(platform.x2, platform.y2);
+            this.movingPlatformGraphics
+                .moveTo(platform.x1, platform.y1)
+                .lineTo(platform.x2, platform.y2)
+                .stroke({ width: 2, color: 0xffffff });
         }
     }
 
@@ -151,8 +181,6 @@ export class PixiRenderSystem {
      */
     renderSpikes(spikes: Array<{ x: number; y: number; width: number; height: number }>): void {
         this.spikeGraphics.clear();
-        this.spikeGraphics.fill(0xffffff); // White fill
-        this.spikeGraphics.stroke({ width: 1, color: 0xffffff });
 
         for (const spike of spikes) {
             // Create triangular spike shape with points at:
@@ -166,7 +194,10 @@ export class PixiRenderSystem {
                 spike.y + spike.height // Bottom-right
             ];
 
-            this.spikeGraphics.poly(points);
+            this.spikeGraphics
+                .poly(points)
+                .fill(0xffffff) // White fill
+                .stroke({ width: 1, color: 0xffffff });
         }
     }
 
@@ -175,17 +206,22 @@ export class PixiRenderSystem {
      */
     renderGoal(goal: { x: number; y: number; width: number; height: number }): void {
         this.goalGraphics.clear();
-        this.goalGraphics.stroke({ width: 2, color: 0xffffff });
 
         // Draw goal frame (rectangle outline)
-        this.goalGraphics.rect(goal.x, goal.y, goal.width, goal.height);
+        this.goalGraphics
+            .rect(goal.x, goal.y, goal.width, goal.height)
+            .stroke({ width: 2, color: 0xffffff });
 
         // Draw X pattern inside the goal (two diagonal lines)
-        this.goalGraphics.moveTo(goal.x, goal.y);
-        this.goalGraphics.lineTo(goal.x + goal.width, goal.y + goal.height);
+        this.goalGraphics
+            .moveTo(goal.x, goal.y)
+            .lineTo(goal.x + goal.width, goal.y + goal.height)
+            .stroke({ width: 2, color: 0xffffff });
 
-        this.goalGraphics.moveTo(goal.x + goal.width, goal.y);
-        this.goalGraphics.lineTo(goal.x, goal.y + goal.height);
+        this.goalGraphics
+            .moveTo(goal.x + goal.width, goal.y)
+            .lineTo(goal.x, goal.y + goal.height)
+            .stroke({ width: 2, color: 0xffffff });
     }
 
     /**
@@ -339,19 +375,8 @@ export class PixiRenderSystem {
         this.landingHistoryGraphics.clear();
 
         if (this.landingHistory.length === 0) {
-            // Set stroke style even for empty history (for consistency)
-            this.landingHistoryGraphics.stroke({
-                color: 0xffffff,
-                width: 1
-            });
             return;
         }
-
-        // Set stroke style for history lines
-        this.landingHistoryGraphics.stroke({
-            color: 0xffffff,
-            width: 1
-        });
 
         // TODO: Implement fade effect - uncomment when implementing alpha blending
         // const currentTime = Date.now();
@@ -368,6 +393,11 @@ export class PixiRenderSystem {
             this.landingHistoryGraphics.moveTo(history.x, history.y);
             this.landingHistoryGraphics.lineTo(history.x, history.y - lineHeight);
         }
+        // Set stroke style for history lines
+        this.landingHistoryGraphics.stroke({
+            color: 0xffffff,
+            width: 1
+        });
     }
 
     /**
@@ -376,12 +406,32 @@ export class PixiRenderSystem {
     /**
      * Apply camera transformation to game container
      */
+    private cameraLogCount = 0;
     applyCameraTransform(camera: Camera): void {
         // Center the game view in the renderer viewport
         const centerX = this.app.renderer.width / 2;
         const centerY = this.app.renderer.height / 2;
-        this.gameContainer.x = -camera.x + centerX;
-        this.gameContainer.y = -camera.y + centerY;
+        const newX = -camera.x + centerX;
+
+        // TEMPORARY FIX: Use hardcoded Y=200 to show platforms at y=500 in center
+        const fixedCameraY = 200;
+        const newY = -fixedCameraY + centerY; // This should put y=500 at screen center
+
+        if (this.cameraLogCount < 5) {
+            console.log('🎮 applyCameraTransform (TEMP FIX):', {
+                cameraX: camera.x,
+                originalCameraY: camera.y,
+                fixedCameraY,
+                centerX,
+                centerY,
+                newContainerX: newX,
+                newContainerY: newY
+            });
+            this.cameraLogCount++;
+        }
+
+        this.gameContainer.x = newX;
+        this.gameContainer.y = newY;
     }
 
     restoreCameraTransform(): void {
@@ -548,21 +598,21 @@ export class PixiRenderSystem {
     /**
      * Get the underlying PixiJS application
      */
-    getApp(): PIXI.Application {
+    getApp(): Application {
         return this.app;
     }
 
     /**
      * Get the game container for advanced manipulations
      */
-    getGameContainer(): PIXI.Container {
+    getGameContainer(): Container {
         return this.gameContainer;
     }
 
     /**
      * Get the UI container for HUD elements
      */
-    getUIContainer(): PIXI.Container {
+    getUIContainer(): Container {
         return this.uiContainer;
     }
 }
