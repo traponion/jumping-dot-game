@@ -307,6 +307,14 @@ export class PixiRenderSystem {
     /**
      * Renders landing predictions and history with fade effects
      */
+    /**
+     * Sets landing predictions (stub for MockRenderSystem compatibility)
+     */
+    setLandingPredictions(_predictions: unknown[]): void {
+        // TODO: Implement landing predictions rendering
+        // For now, this is a stub for compatibility with GameManager
+    }
+
     renderLandingPredictions(): void {
         this.cleanupLandingHistory();
         this.renderLandingHistory();
@@ -398,6 +406,29 @@ export class PixiRenderSystem {
     }
 
     /**
+     * Alias for clear() to maintain compatibility with MockRenderSystem
+     */
+    clearCanvas(): void {
+        this.clear();
+    }
+
+    /**
+     * Stub for setDrawingStyle (MockRenderSystem compatibility)
+     */
+    setDrawingStyle(): void {
+        // PixiJS handles drawing styles internally per graphics object
+        // This is a compatibility stub
+    }
+
+    /**
+     * Renders all graphics (MockRenderSystem compatibility)
+     */
+    renderAll(): void {
+        // PixiJS handles rendering automatically through the application ticker
+        // This is a compatibility stub for MockRenderSystem
+    }
+
+    /**
      * Resize the renderer to match canvas dimensions
      */
     resize(width: number, height: number): void {
@@ -413,6 +444,45 @@ export class PixiRenderSystem {
         this.gameOverMenuManager.destroy();
         this.stageTransitionManager.destroy();
         this.app.destroy(true, { children: true, texture: true });
+    }
+
+    /**
+     * Alias for destroy() to maintain compatibility with MockRenderSystem
+     */
+    async cleanup(): Promise<void> {
+        this.destroy();
+    }
+
+    /**
+     * Renders start instruction (MockRenderSystem compatibility)
+     */
+    renderStartInstruction(): void {
+        // TODO: Implement start instruction rendering with PixiJS
+        // For now, this is a compatibility stub
+    }
+
+    /**
+     * Renders credits (MockRenderSystem compatibility)
+     */
+    renderCredits(): void {
+        // TODO: Implement credits rendering with PixiJS
+        // For now, this is a compatibility stub
+    }
+
+    /**
+     * Renders death animation (MockRenderSystem compatibility)
+     */
+    renderDeathAnimation(_particles: unknown[]): void {
+        // TODO: Implement death animation rendering with PixiJS
+        // For now, this is a compatibility stub
+    }
+
+    /**
+     * Renders clear animation (MockRenderSystem compatibility)
+     */
+    renderClearAnimation(_particles: unknown[], _progress: number, _x: number, _y: number): void {
+        // TODO: Implement clear animation rendering with PixiJS
+        // For now, this is a compatibility stub
     }
 
     /**

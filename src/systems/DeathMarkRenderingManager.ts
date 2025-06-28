@@ -4,7 +4,7 @@ import type { DeathMark } from '../types/GameTypes';
 
 /**
  * Manages death mark rendering using PixiJS Graphics API
- * Migrated from Fabric.js Path rendering to improve performance
+ 
  */
 export class DeathMarkRenderingManager {
     private app: Application;

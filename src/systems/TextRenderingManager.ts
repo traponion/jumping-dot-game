@@ -4,7 +4,7 @@ import type { StageData, TextElement } from '../core/StageLoader';
 
 /**
  * Manages text rendering using PixiJS Text objects
- * Migrated from Fabric.js text rendering to improve performance
+ 
  */
 export class TextRenderingManager {
     private app: Application;

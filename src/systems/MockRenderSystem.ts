@@ -1,10 +1,9 @@
 // Mock render system for testing environment
-// Based on Fabric.js official testing patterns
 
 import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Player } from '../types/GameTypes.js';
 
-export interface MockFabricCanvas {
+export interface MockCanvas {
     width: number;
     height: number;
     clear(): void;
@@ -18,14 +17,14 @@ export interface MockFabricCanvas {
 
 export class MockRenderSystem {
     private canvasElement: HTMLCanvasElement;
-    private mockCanvas: MockFabricCanvas;
+    private mockCanvas: MockCanvas;
     private landingPredictions: unknown[] = [];
     private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvasElement = canvasElement;
 
-        // Check if canvas context is available (same as FabricRenderSystem would do)
+        // Check if canvas context is available (same as PixiRenderSystem would do)
         const context = canvasElement.getContext('2d');
         if (!context) {
             throw new Error('Failed to get 2D rendering context');
@@ -34,7 +33,7 @@ export class MockRenderSystem {
         this.mockCanvas = this.createMockCanvas();
     }
 
-    private createMockCanvas(): MockFabricCanvas {
+    private createMockCanvas(): MockCanvas {
         return {
             width: this.canvasElement.width,
             height: this.canvasElement.height,
@@ -48,7 +47,7 @@ export class MockRenderSystem {
         };
     }
 
-    // Public API matching FabricRenderSystem
+    // Public API matching PixiRenderSystem
     clearCanvas(): void {
         this.mockCanvas.clear();
     }
@@ -137,7 +136,7 @@ export class MockRenderSystem {
     }
 
     // Test utilities
-    getMockCanvas(): MockFabricCanvas {
+    getMockCanvas(): MockCanvas {
         return this.mockCanvas;
     }
 
