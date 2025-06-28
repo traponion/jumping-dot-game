@@ -174,9 +174,9 @@ export class GameManager {
             // Reinitialize all systems with fresh instances
             this.initializeSystems(this.gameController);
 
-            console.log('🎮 resetGameState step 4: SKIPPING initialize() for debugging');
+            console.log('🎮 resetGameState step 4: TESTING initialize()');
             // Initialize the new render system
-            // await this.initialize();
+            await this.initialize();
 
             console.log('🎮 resetGameState step 5: stage reload');
             // Reload stage to get clean initial data
@@ -194,7 +194,7 @@ export class GameManager {
             this.inputManager.clearInputs();
             this.prevPlayerY = 0;
             this.isInitializingPixi = false;
-            
+
             console.log('🎮 resetGameState completed - ALL HEAVY OPERATIONS SKIPPED');
         } catch (error) {
             console.error('🎮 resetGameState failed:', error);
@@ -524,13 +524,16 @@ export class GameManager {
                         console.log('🎮 PixiJS not initialized, initializing now...');
                         this.isInitializingPixi = true;
                         // Skip rendering this frame, initialization will happen asynchronously
-                        renderer.initialize(this.canvas).then(() => {
-                            console.log('🎮 PixiJS initialization completed');
-                            this.isInitializingPixi = false;
-                        }).catch((error) => {
-                            console.error('Failed to initialize PixiJS:', error);
-                            this.isInitializingPixi = false;
-                        });
+                        renderer
+                            .initialize(this.canvas)
+                            .then(() => {
+                                console.log('🎮 PixiJS initialization completed');
+                                this.isInitializingPixi = false;
+                            })
+                            .catch((error) => {
+                                console.error('Failed to initialize PixiJS:', error);
+                                this.isInitializingPixi = false;
+                            });
                     }
                     return;
                 }
@@ -538,13 +541,16 @@ export class GameManager {
                 if (!this.isInitializingPixi) {
                     console.log('🎮 PixiJS initialization needed due to error:', error);
                     this.isInitializingPixi = true;
-                    renderer.initialize(this.canvas).then(() => {
-                        console.log('🎮 PixiJS initialization completed after error');
-                        this.isInitializingPixi = false;
-                    }).catch((initError) => {
-                        console.error('Failed to initialize PixiJS after error:', initError);
-                        this.isInitializingPixi = false;
-                    });
+                    renderer
+                        .initialize(this.canvas)
+                        .then(() => {
+                            console.log('🎮 PixiJS initialization completed after error');
+                            this.isInitializingPixi = false;
+                        })
+                        .catch((initError) => {
+                            console.error('Failed to initialize PixiJS after error:', initError);
+                            this.isInitializingPixi = false;
+                        });
                 }
                 return;
             }
@@ -646,6 +652,7 @@ export class GameManager {
     /**
      * Clean up all systems properly
      */
+    // @ts-ignore
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
