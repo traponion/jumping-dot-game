@@ -170,9 +170,9 @@ export class GameManager {
             console.log('🎮 resetGameState step 2: SKIPPING cleanupSystems() for debugging');
             // await this.cleanupSystems();
 
-            console.log('🎮 resetGameState step 3: SKIPPING initializeSystems() for debugging');
+            console.log('🎮 resetGameState step 3: initializeSystems() - TESTING THIS STEP');
             // Reinitialize all systems with fresh instances
-            // this.initializeSystems(this.gameController);
+            this.initializeSystems(this.gameController);
 
             console.log('🎮 resetGameState step 4: SKIPPING initialize() for debugging');
             // Initialize the new render system
