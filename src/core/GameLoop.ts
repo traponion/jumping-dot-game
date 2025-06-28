@@ -94,13 +94,19 @@ export class GameLoop {
         // Clamp delta time to prevent large jumps (max 2 frames at 60fps)
         const clampedDelta = Math.min(deltaTime, 16.67 * 2);
 
-        // Execute update and render callbacks
-        if (this.updateCallback) {
-            this.updateCallback(clampedDelta);
-        }
+        try {
+            // Execute update and render callbacks
+            if (this.updateCallback) {
+                this.updateCallback(clampedDelta);
+            }
 
-        if (this.renderCallback) {
-            this.renderCallback();
+            if (this.renderCallback) {
+                this.renderCallback();
+            }
+        } catch (error) {
+            console.error('Critical error in game loop, stopping:', error);
+            this.stop(); // Stop the game loop on critical error
+            return; // Prevent scheduling next frame
         }
 
         // Schedule next frame

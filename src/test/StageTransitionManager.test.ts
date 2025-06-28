@@ -26,6 +26,8 @@ const createMockGraphics = () => ({
     beginFill: vi.fn().mockReturnThis(),
     drawRect: vi.fn().mockReturnThis(),
     endFill: vi.fn().mockReturnThis(),
+    rect: vi.fn().mockReturnThis(),
+    fill: vi.fn().mockReturnThis(),
     position: { set: vi.fn() },
     alpha: 1,
     destroy: vi.fn()

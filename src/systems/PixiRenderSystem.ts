@@ -267,6 +267,14 @@ export class PixiRenderSystem {
      * Render game over menu using PixiJS Container composition
      */
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+        // Add a check to ensure app and renderer are initialized
+        if (!this.app?.renderer) {
+            console.error(
+                'PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized.'
+            );
+            return; // Prevent further errors and infinite loop
+        }
+
         // Get camera position for centering menu
         const cameraX = -this.gameContainer.x + this.app.renderer.width / 2;
         const cameraY = -this.gameContainer.y + this.app.renderer.height / 2;

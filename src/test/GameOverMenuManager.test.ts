@@ -34,6 +34,8 @@ const createMockGraphics = () => ({
     beginFill: vi.fn().mockReturnThis(),
     drawRect: vi.fn().mockReturnThis(),
     endFill: vi.fn().mockReturnThis(),
+    rect: vi.fn().mockReturnThis(),
+    fill: vi.fn().mockReturnThis(),
     position: { set: vi.fn() },
     destroy: vi.fn()
 });
@@ -49,7 +51,15 @@ vi.mock('pixi.js', () => ({
     }),
     Graphics: vi.fn(() => {
         mockGraphicsSpy();
-        return createMockGraphics();
+        const graphics = createMockGraphics();
+        // Ensure chainability by explicitly returning the graphics object itself
+        graphics.rect.mockImplementation(function () {
+            return this;
+        });
+        graphics.fill.mockImplementation(function () {
+            return this;
+        });
+        return graphics;
     }),
     TextStyle: vi.fn((style: any) => {
         mockTextStyleSpy(style);

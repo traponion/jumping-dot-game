@@ -54,7 +54,8 @@ vi.mock('pixi.js', () => {
         Graphics: vi.fn(() => mockGraphics),
         RenderTexture: {
             create: vi.fn(() => mockTexture)
-        }
+        },
+        Rectangle: vi.fn()
     };
 });
 

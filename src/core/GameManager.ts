@@ -166,9 +166,7 @@ export class GameManager {
             gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
             gameStore.getState().restartGame();
 
-            // DEBUGGING: Comment out cleanupSystems to test if this causes freeze
-            console.log('🎮 resetGameState step 2: SKIPPING cleanupSystems() for debugging');
-            // await this.cleanupSystems();
+            await this.cleanupSystems();
 
             console.log('🎮 resetGameState step 3: initializeSystems() - TESTING THIS STEP');
             // Reinitialize all systems with fresh instances

@@ -22,12 +22,12 @@ const mockContainer = {
 const mockGraphics = {
     clear: vi.fn(),
     circle: vi.fn(),
-    fill: vi.fn(),
+    fill: vi.fn().mockReturnThis(),
     stroke: vi.fn(),
     moveTo: vi.fn(),
     lineTo: vi.fn(),
     poly: vi.fn(),
-    rect: vi.fn(),
+    rect: vi.fn().mockReturnThis(),
     destroy: vi.fn(),
     beginFill: vi.fn(),
     drawRect: vi.fn(),
@@ -42,7 +42,9 @@ const mockGraphics = {
     }
 };
 
-vi.mock('pixi.js', () => {
+vi.mock('pixi.js', async (importOriginal) => {
+    const actual = await importOriginal();
+
     const mockTexture = {
         width: 16,
         height: 16,
@@ -113,9 +115,19 @@ vi.mock('pixi.js', () => {
     };
 
     return {
-        Application: vi.fn(() => mockApp),
+        ...actual, // Import and spread actual PIXI exports
+        Application: vi.fn().mockImplementation(() => mockApp),
         Container: vi.fn(() => mockContainer),
-        Graphics: vi.fn(() => mockGraphics),
+        Graphics: vi.fn(() => {
+            const graphics = mockGraphics;
+            graphics.rect.mockImplementation(function () {
+                return this;
+            });
+            graphics.fill.mockImplementation(function () {
+                return this;
+            });
+            return graphics;
+        }),
         ParticleContainer: vi.fn(() => mockParticleContainer),
         Particle: vi.fn(() => ({ ...mockParticle })),
         Text: vi.fn(() => ({ ...mockText })),
@@ -126,7 +138,8 @@ vi.mock('pixi.js', () => {
         },
         RenderTexture: {
             create: vi.fn(() => mockTexture)
-        }
+        },
+        Rectangle: vi.fn(() => new actual.Rectangle()) // Mock Rectangle
     };
 });
 
@@ -186,9 +199,12 @@ describe('PixiRenderSystem', () => {
         // Create render system
         renderSystem = new PixiRenderSystem();
 
-        // Get mocked instances after creation
+        // Get mocked instances before creation
         mockApp = vi.mocked(PIXI.Application).mock.results[0].value;
         mockTrailManager = vi.mocked(TrailParticleManager).mock.results[0].value;
+
+        // Create render system
+        renderSystem = new PixiRenderSystem();
     });
 
     describe('initialization', () => {
