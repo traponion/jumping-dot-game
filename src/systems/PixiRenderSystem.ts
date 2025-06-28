@@ -269,9 +269,8 @@ export class PixiRenderSystem {
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         // Add a check to ensure app and renderer are initialized
         if (!this.app?.renderer) {
-            const error = new Error('PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized.');
-            console.error(error.message);
-            throw error; // Force GameLoop to stop via try-catch
+            console.warn('PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized. Skipping render.');
+            return; // Safe fallback - just skip rendering
         }
 
         // Get camera position for centering menu
@@ -499,6 +498,10 @@ export class PixiRenderSystem {
      * Resize the renderer to match canvas dimensions
      */
     resize(width: number, height: number): void {
+        if (!this.app?.renderer) {
+            console.warn('PixiRenderSystem: Attempted to resize before PixiJS app initialized. Skipping resize.');
+            return;
+        }
         this.app.renderer.resize(width, height);
     }
 
