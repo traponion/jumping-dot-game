@@ -16,6 +16,10 @@ export class PurePixiGame {
     private app: Application | null = null;
     private gameState: PixiGameState | null = null;
     private stageLoader: StageLoader;
+    
+    // Input System properties
+    private keys: Set<string> = new Set();
+    private isInputEnabled: boolean = false;
 
     /**
      * Initialize PixiJS game instance
@@ -98,9 +102,8 @@ export class PurePixiGame {
 
         this.gameState.startGame();
 
-        // TODO: Add game loop integration (app.ticker)
-        // TODO: Add input system integration
-        // TODO: Add physics system integration
+        // Initialize input system
+        this.setupInputSystem();
 
         console.log('🎮 PurePixiGame: Game session started');
     }
@@ -145,6 +148,9 @@ export class PurePixiGame {
             this.gameState = null;
         }
 
+        // Cleanup input system
+        this.cleanupInputSystem();
+
         // Cleanup PixiJS application
         if (this.app) {
             await this.app.destroy({ removeView: true }, true);
@@ -186,5 +192,99 @@ export class PurePixiGame {
      */
     getApp(): Application | null {
         return this.app;
+    }
+
+    /**
+     * Setup keyboard input system
+     * @private
+     */
+    private setupInputSystem(): void {
+        // Enable input processing
+        this.isInputEnabled = true;
+        
+        // Add keyboard event listeners
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+        
+        console.log('🎮 PurePixiGame: Input system initialized');
+    }
+    
+    /**
+     * Handle keydown events
+     * @param event - Keyboard event
+     * @private
+     */
+    private handleKeyDown(event: KeyboardEvent): void {
+        if (!this.isInputEnabled) return;
+        
+        // Prevent default browser behavior for game keys
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(event.code)) {
+            event.preventDefault();
+        }
+        
+        // Add key to active keys set
+        this.keys.add(event.code);
+        
+        // Handle immediate key responses
+        this.processKeyInput(event.code);
+    }
+    
+    /**
+     * Handle keyup events
+     * @param event - Keyboard event
+     * @private
+     */
+    private handleKeyUp(event: KeyboardEvent): void {
+        if (!this.isInputEnabled) return;
+        
+        // Remove key from active keys set
+        this.keys.delete(event.code);
+    }
+    
+    /**
+     * Process specific key input
+     * @param keyCode - Key code to process
+     * @private
+     */
+    private processKeyInput(keyCode: string): void {
+        if (!this.gameState) return;
+        
+        switch (keyCode) {
+            case 'Space':
+                console.log('🎮 Input: SPACE key pressed');
+                // TODO: Add jump logic
+                break;
+            case 'ArrowLeft':
+                console.log('🎮 Input: LEFT arrow pressed');
+                // TODO: Add left movement
+                break;
+            case 'ArrowRight':
+                console.log('🎮 Input: RIGHT arrow pressed');
+                // TODO: Add right movement
+                break;
+            case 'KeyR':
+                console.log('🎮 Input: R key pressed - Restart game');
+                this.restartGame();
+                break;
+        }
+    }
+
+    
+    /**
+     * Cleanup input system
+     * @private
+     */
+    private cleanupInputSystem(): void {
+        // Disable input processing
+        this.isInputEnabled = false;
+        
+        // Clear all active keys
+        this.keys.clear();
+        
+        // Remove event listeners
+        document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+        document.removeEventListener('keyup', this.handleKeyUp.bind(this));
+        
+        console.log('🎮 PurePixiGame: Input system cleaned up');
     }
 }
