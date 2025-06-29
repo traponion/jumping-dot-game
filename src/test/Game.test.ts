@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { JumpingDotGame } from '../core/Game.ts';
+// Disabled: JumpingDotGame was removed in Zustand elimination
+// import { JumpingDotGame } from '../core/Game.ts';
 
 interface MockCanvas {
     add: (obj: unknown) => void;
@@ -165,8 +166,8 @@ const mockScore = {
     setAttribute: vi.fn()
 } as unknown as HTMLElement;
 
-describe('JumpingDotGame', () => {
-    let game: JumpingDotGame;
+describe.skip('JumpingDotGame - DISABLED (removed in Zustand elimination)', () => {
+    let game: any; // JumpingDotGame removed
     let originalGetElementById: typeof document.getElementById;
 
     beforeEach(async () => {
@@ -214,7 +215,7 @@ describe('JumpingDotGame', () => {
         } as any;
 
         // Create game instance
-        game = new JumpingDotGame();
+        // game = new JumpingDotGame(); // DISABLED
     });
 
     afterEach(() => {
@@ -225,7 +226,7 @@ describe('JumpingDotGame', () => {
 
     describe('initialization', () => {
         it('should create a game instance', () => {
-            expect(game).toBeInstanceOf(JumpingDotGame);
+            // expect(game).toBeInstanceOf(JumpingDotGame); // DISABLED
         });
 
         it('should initialize with DOM elements', () => {
@@ -533,7 +534,7 @@ describe('JumpingDotGame', () => {
         it('should handle missing DOM elements gracefully', () => {
             global.document.getElementById = vi.fn(() => null);
 
-            expect(() => new JumpingDotGame()).toThrow('Required DOM element');
+            // expect(() => new JumpingDotGame()).toThrow('Required DOM element'); // DISABLED
         });
 
         it.skip('should handle invalid canvas context', () => {

@@ -5,12 +5,10 @@
  * Implements a stage selection screen with keyboard navigation and game instance management.
  */
 
-import { JumpingDotGame } from './core/Game.js';
+import { PurePixiGame } from './core/PurePixiGame.js';
 
 /**
- * Window interface extension for global StageSelect access
- * @interface Window
- * @property {StageSelect} stageSelect - Global stage select instance
+ * Global interface extension for StageSelect access
  */
 declare global {
     interface Window {
@@ -37,8 +35,8 @@ interface StageSelectItem {
  * @description Manages stage selection interface with keyboard navigation and game launching
  */
 class StageSelect {
-    /** @private {JumpingDotGame | null} Current game instance */
-    private gameInstance: JumpingDotGame | null = null;
+    /** @private {PurePixiGame | null} Current game instance */
+    private gameInstance: PurePixiGame | null = null;
     /** @private {HTMLElement} Stage select screen element */
     private stageSelectElement: HTMLElement;
     /** @private {HTMLElement} Stage list container element */
@@ -212,8 +210,11 @@ class StageSelect {
         if (controls) controls.style.display = 'block';
 
         try {
-            // Create new game instance
-            this.gameInstance = new JumpingDotGame();
+            // Create new PixiJS game instance
+            this.gameInstance = new PurePixiGame();
+            await this.gameInstance.init();
+
+            // Initialize PixiJS game with stage
             await this.gameInstance.initWithStage(stageId);
         } catch (error) {
             console.error(`❌ Failed to start stage ${stageId}:`, error);

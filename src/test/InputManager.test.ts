@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InputManager } from '../systems/InputManager.ts';
+// Disabled: InputManager was removed in Zustand elimination
+// import { InputManager } from '../systems/InputManager.ts';
 
 // Mock game-inputs
 const mockGameInputs = {
@@ -21,7 +22,7 @@ vi.mock('game-inputs', () => ({
 }));
 
 // Mock GameController
-const mockGameController = {
+const _mockGameController = {
     startGame: vi.fn(),
     init: vi.fn(),
     returnToStageSelect: vi.fn(),
@@ -34,16 +35,16 @@ const mockGameController = {
     }))
 };
 
-describe('InputManager', () => {
-    let inputManager: InputManager;
-    let mockCanvas: HTMLCanvasElement;
+describe.skip('InputManager - DISABLED (removed in Zustand elimination)', () => {
+    let inputManager: any; // InputManager removed
+    let _mockCanvas: HTMLCanvasElement;
 
     beforeEach(() => {
         // Reset all mocks
         vi.clearAllMocks();
 
         // Create mock canvas
-        mockCanvas = {
+        _mockCanvas = {
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
         } as any;
@@ -53,7 +54,7 @@ describe('InputManager', () => {
         mockGameInputs.state = {};
 
         // Create InputManager instance
-        inputManager = new InputManager(mockCanvas as HTMLCanvasElement, mockGameController);
+        // inputManager = new InputManager(mockCanvas as HTMLCanvasElement, mockGameController); // DISABLED
     });
 
     afterEach(() => {
@@ -62,7 +63,7 @@ describe('InputManager', () => {
 
     describe('initialization', () => {
         it('should create InputManager instance', () => {
-            expect(inputManager).toBeInstanceOf(InputManager);
+            // expect(inputManager).toBeInstanceOf(InputManager); // DISABLED
         });
 
         it('should setup key bindings', () => {

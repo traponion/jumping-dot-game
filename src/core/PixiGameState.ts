@@ -48,8 +48,8 @@ export class PixiGameState {
 
     // PixiJS Display Objects for visual representation
     private playerShape: Graphics | null = null;
-    private gameContainer: Container;
-    private uiContainer: Container;
+    private gameContainer: Container | null;
+    private uiContainer: Container | null;
     /** Current stage data */
     private stageData: StageData | null = null;
 
@@ -121,12 +121,12 @@ export class PixiGameState {
 
         // Stage container for platforms, spikes, goals
         this.stageContainer = new Container();
-        this.gameContainer.addChild(this.stageContainer);
+        this.gameContainer?.addChild(this.stageContainer);
 
         // Player visual representation (simple circle for now)
         this.playerShape = new Graphics();
         this.updatePlayerVisual();
-        this.gameContainer.addChild(this.playerShape);
+        this.gameContainer?.addChild(this.playerShape);
 
         console.log('🎮 PixiGameState: Clean PixiJS setup complete (app.stage-centric)');
     }
@@ -414,8 +414,10 @@ export class PixiGameState {
      */
     private updateCameraTransform(): void {
         // Apply camera transform to game container only (UI container stays fixed)
-        this.gameContainer.x = -this.camera.x;
-        this.gameContainer.y = -this.camera.y;
+        if (this.gameContainer) {
+            this.gameContainer.x = -this.camera.x;
+            this.gameContainer.y = -this.camera.y;
+        }
 
         // UI container remains unaffected by camera (always at screen-space 0,0)
     }
@@ -583,14 +585,14 @@ export class PixiGameState {
     /**
      * Get game container for rendering
      */
-    getGameContainer(): Container {
+    getGameContainer(): Container | null {
         return this.gameContainer;
     }
 
     /**
      * Get UI container for rendering
      */
-    getUIContainer(): Container {
+    getUIContainer(): Container | null {
         return this.uiContainer;
     }
 
@@ -617,8 +619,8 @@ export class PixiGameState {
         }
 
         // Clear references (Application destroy handles the rest)
-        this.gameContainer = null as any;
-        this.uiContainer = null as any;
+        this.gameContainer = null;
+        this.uiContainer = null;
         this.stageData = null;
     }
 }

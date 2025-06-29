@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AnimationSystem } from '../systems/AnimationSystem.js';
+// Disabled: AnimationSystem was removed in Zustand elimination
+// import { AnimationSystem } from '../systems/AnimationSystem.js';
 import type { DeathMark, Player } from '../types/GameTypes.js';
 
 // Mock GameZustandStore
@@ -14,12 +15,12 @@ vi.mock('../stores/GameZustandStore.js', () => ({
     getGameStore: () => mockGameStore
 }));
 
-describe('AnimationSystem', () => {
-    let animationSystem: AnimationSystem;
+describe.skip('AnimationSystem - DISABLED (removed in Zustand elimination)', () => {
+    let animationSystem: any; // AnimationSystem removed
     let mockPlayer: Player;
 
     beforeEach(() => {
-        animationSystem = new AnimationSystem();
+        // animationSystem = new AnimationSystem(); // DISABLED
         mockPlayer = {
             x: 100,
             y: 400,
