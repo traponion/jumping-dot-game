@@ -6,8 +6,8 @@
 
 import { getGameStore } from '../stores/GameZustandStore.js';
 import type { GameState } from '../types/GameTypes.js';
+import { CleanGameManager } from './CleanGameManager.js';
 import { GameLoop } from './GameLoop.js';
-import { GameManager } from './GameManager.js';
 import { GameUI } from './GameUI.js';
 
 /**
@@ -24,8 +24,8 @@ export class JumpingDotGame {
     private gameUI: GameUI;
     /** @private {GameLoop} Game loop timing component */
     private gameLoop: GameLoop;
-    /** @private {GameManager} Game logic management component */
-    private gameManager: GameManager;
+    /** @private {CleanGameManager} Game logic management component */
+    private gameManager: CleanGameManager;
 
     /**
      * Creates a new JumpingDotGame instance
@@ -37,7 +37,10 @@ export class JumpingDotGame {
         // Initialize component classes
         this.gameUI = new GameUI();
         this.gameLoop = new GameLoop();
-        this.gameManager = new GameManager(this.canvas, this);
+        this.gameManager = new CleanGameManager(this.canvas);
+
+        // Connect GameUI to GameManager for UI state management
+        this.gameManager.setGameUI(this.gameUI);
 
         // Set up game loop callbacks
         this.gameLoop.setUpdateCallback((deltaTime) => this.update(deltaTime));
@@ -75,13 +78,10 @@ export class JumpingDotGame {
         await this.gameManager.loadStage(getGameStore().getCurrentStage());
 
         this.gameUI.showReadyToStart();
-        await this.gameManager.resetGameState();
+        // Reset handled automatically by CleanGameManager
         this.gameUI.updateInitialUI();
 
-        // Clear inputs after a short delay
-        setTimeout(() => {
-            this.gameManager.getInputManager().clearInputs();
-        }, 0);
+        // Input management handled by CleanGameManager
 
         this.gameLoop.start();
     }
@@ -90,29 +90,33 @@ export class JumpingDotGame {
         getGameStore().setCurrentStage(stageId);
         this.gameUI.showLoading();
 
+        await this.gameManager.initialize();
         await this.gameManager.loadStage(stageId);
 
         this.gameUI.showReadyToStart();
-        await this.gameManager.resetGameState();
+        // Reset handled automatically by CleanGameManager
         this.gameUI.updateInitialUI();
 
-        // Clear inputs after a short delay
-        setTimeout(() => {
-            this.gameManager.getInputManager().clearInputs();
-        }, 0);
+        // Input management handled by CleanGameManager
 
         this.gameLoop.start();
     }
 
     public startGame(): void {
         this.gameManager.startGame();
-        this.gameUI.showPlaying();
+        // GameUI.showPlaying() is now handled by CleanGameManager
     }
 
-    private update(deltaTime: number): void {
+    private update(_deltaTime: number): void {
         // Update timer UI if game is running
-        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
-            this.gameUI.updateTimer();
+        const pixiGameState = this.gameManager.getPixiGameState();
+        const isGameRunning = pixiGameState
+            ? pixiGameState.isGameRunning()
+            : getGameStore().isGameRunning();
+        const isGameOver = pixiGameState ? pixiGameState.isGameOver() : getGameStore().isGameOver();
+
+        if (isGameRunning && !isGameOver) {
+            this.gameUI.updateTimer(pixiGameState);
 
             // Check for time up
             if (this.gameManager.checkTimeUp()) {
@@ -121,11 +125,7 @@ export class JumpingDotGame {
             }
         }
 
-        // Delegate main update logic to GameManager
-        this.gameManager.update(deltaTime);
-
-        // Update previous player position for next frame
-        this.gameManager.updatePrevPlayerY();
+        // CleanGameManager handles updates via PixiJS ticker automatically
     }
 
     private setupGameManagerCallbacks(): void {
@@ -138,7 +138,23 @@ export class JumpingDotGame {
     }
 
     public getGameState(): GameState {
-        return this.gameManager.getGameState();
+        // CleanGameManager uses PixiGameState instead of legacy GameState
+        const pixiGameState = this.gameManager.getPixiGameState();
+        if (!pixiGameState) {
+            throw new Error('PixiGameState not initialized');
+        }
+
+        // Convert PixiGameState to legacy GameState format
+        return {
+            gameRunning: pixiGameState.isGameRunning(),
+            gameOver: pixiGameState.isGameOver(),
+            currentStage: getGameStore().getCurrentStage(),
+            timeLimit: pixiGameState.getTimeLimit(),
+            timeRemaining: pixiGameState.getTimeRemaining(),
+            gameStartTime: pixiGameState.getGameStartTime(),
+            finalScore: pixiGameState.getFinalScore(),
+            hasMovedOnce: pixiGameState.hasPlayerMoved()
+        };
     }
 
     public handleGameOverNavigation(direction: 'up' | 'down'): void {
@@ -146,7 +162,8 @@ export class JumpingDotGame {
     }
 
     public handleGameOverSelection(): void {
-        if (!getGameStore().isGameOver()) return;
+        const pixiGameState = this.gameManager.getPixiGameState();
+        if (!pixiGameState || !pixiGameState.isGameOver()) return;
 
         const selectedOption = this.gameUI.getGameOverSelection();
 
@@ -166,7 +183,7 @@ export class JumpingDotGame {
             return;
         }
 
-        // Delegate all rendering to GameManager, including UI state management
+        // Call CleanGameManager render for compatibility
         this.gameManager.render(this.gameUI);
 
         // Update UI visibility during gameplay
@@ -177,7 +194,7 @@ export class JumpingDotGame {
 
     async cleanup(): Promise<void> {
         this.gameLoop.cleanup();
-        await this.gameManager.cleanup();
+        await this.gameManager.destroy();
     }
 
     // Public methods for testing
