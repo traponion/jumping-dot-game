@@ -16,10 +16,10 @@ export class PurePixiGame {
     private app: Application | null = null;
     private gameState: PixiGameState | null = null;
     private stageLoader: StageLoader;
-    
+
     // Input System properties
     private keys: Set<string> = new Set();
-    private isInputEnabled: boolean = false;
+    private isInputEnabled = false;
 
     /**
      * Initialize PixiJS game instance
@@ -104,6 +104,9 @@ export class PurePixiGame {
 
         // Initialize input system
         this.setupInputSystem();
+        
+        // Start game loop
+        this.startGameLoop();
 
         console.log('🎮 PurePixiGame: Game session started');
     }
@@ -150,6 +153,9 @@ export class PurePixiGame {
 
         // Cleanup input system
         this.cleanupInputSystem();
+        
+        // Stop game loop
+        this.stopGameLoop();
 
         // Cleanup PixiJS application
         if (this.app) {
@@ -201,14 +207,14 @@ export class PurePixiGame {
     private setupInputSystem(): void {
         // Enable input processing
         this.isInputEnabled = true;
-        
+
         // Add keyboard event listeners
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
         document.addEventListener('keyup', this.handleKeyUp.bind(this));
-        
+
         console.log('🎮 PurePixiGame: Input system initialized');
     }
-    
+
     /**
      * Handle keydown events
      * @param event - Keyboard event
@@ -216,19 +222,19 @@ export class PurePixiGame {
      */
     private handleKeyDown(event: KeyboardEvent): void {
         if (!this.isInputEnabled) return;
-        
+
         // Prevent default browser behavior for game keys
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(event.code)) {
             event.preventDefault();
         }
-        
+
         // Add key to active keys set
         this.keys.add(event.code);
-        
+
         // Handle immediate key responses
         this.processKeyInput(event.code);
     }
-    
+
     /**
      * Handle keyup events
      * @param event - Keyboard event
@@ -236,11 +242,11 @@ export class PurePixiGame {
      */
     private handleKeyUp(event: KeyboardEvent): void {
         if (!this.isInputEnabled) return;
-        
+
         // Remove key from active keys set
         this.keys.delete(event.code);
     }
-    
+
     /**
      * Process specific key input
      * @param keyCode - Key code to process
@@ -248,19 +254,19 @@ export class PurePixiGame {
      */
     private processKeyInput(keyCode: string): void {
         if (!this.gameState) return;
-        
+
         switch (keyCode) {
             case 'Space':
                 console.log('🎮 Input: SPACE key pressed');
-                // TODO: Add jump logic
+                this.handleJump();
                 break;
             case 'ArrowLeft':
                 console.log('🎮 Input: LEFT arrow pressed');
-                // TODO: Add left movement
+                // Left movement handled in updatePhysics()
                 break;
             case 'ArrowRight':
                 console.log('🎮 Input: RIGHT arrow pressed');
-                // TODO: Add right movement
+                // Right movement handled in updatePhysics()
                 break;
             case 'KeyR':
                 console.log('🎮 Input: R key pressed - Restart game');
@@ -269,7 +275,6 @@ export class PurePixiGame {
         }
     }
 
-    
     /**
      * Cleanup input system
      * @private
@@ -277,14 +282,170 @@ export class PurePixiGame {
     private cleanupInputSystem(): void {
         // Disable input processing
         this.isInputEnabled = false;
-        
+
         // Clear all active keys
         this.keys.clear();
-        
+
         // Remove event listeners
         document.removeEventListener('keydown', this.handleKeyDown.bind(this));
         document.removeEventListener('keyup', this.handleKeyUp.bind(this));
-        
+
         console.log('🎮 PurePixiGame: Input system cleaned up');
+    }
+
+    
+    /**
+     * Start the main game loop using PixiJS ticker
+     * @private
+     */
+    private startGameLoop(): void {
+        if (!this.app) {
+            throw new Error('PixiJS application not initialized');
+        }
+        
+        // Add game update to PixiJS ticker
+        this.app.ticker.add(this.updateGame.bind(this));
+        
+        console.log('🎮 PurePixiGame: Game loop started (PixiJS ticker)');
+    }
+    
+    /**
+     * Main game update loop
+     * @param deltaTime - Delta time from PixiJS ticker
+     * @private
+     */
+    private updateGame(ticker: any): void {
+        const deltaTime = ticker.deltaTime;
+        // Only update if game is running
+        if (!this.gameState?.isGameRunning()) {
+            return;
+        }
+        
+        // Update continuous input (movement keys)
+        this.updateContinuousInput(deltaTime);
+        
+        // Apply physics updates
+        this.updatePhysics(deltaTime);
+        
+        // TODO: Add collision detection
+        // TODO: Add particle system updates
+        
+        // Debug output (throttled)
+        if (this.app?.ticker.FPS && Math.floor(this.app.ticker.lastTime / 1000) % 1 === 0) {
+            console.log(`🎮 Game Loop: FPS=${Math.round(this.app.ticker.FPS)}, DeltaTime=${deltaTime.toFixed(2)}`);
+        }
+    }
+    
+    /**
+     * Update continuous input processing (for held keys)
+     * @param deltaTime - Delta time from PixiJS ticker
+     * @private
+     */
+    private updateContinuousInput(deltaTime: number): void {
+        if (!this.isInputEnabled) return;
+        
+        // Note: deltaTime parameter available for future continuous input features
+        
+        // Note: SPACE and R are handled in processKeyInput() for single press
+    }
+
+    
+    /**
+     * Update physics simulation
+     * @param deltaTime - Delta time from PixiJS ticker
+     * @private
+     */
+    private updatePhysics(deltaTime: number): void {
+        if (!this.gameState) return;
+        
+        const player = this.gameState.getPlayer();
+        
+        // Physics constants
+        const GRAVITY = 0.8;
+        const MOVE_SPEED = 5.0;
+        const JUMP_FORCE = -12;
+        const MAX_SPEED = 10;
+        
+        // Apply gravity
+        let newVy = player.vy + GRAVITY * deltaTime;
+        
+        // Handle continuous input for movement
+        let newVx = player.vx;
+        if (this.keys.has('ArrowLeft')) {
+            newVx = -MOVE_SPEED;
+        } else if (this.keys.has('ArrowRight')) {
+            newVx = MOVE_SPEED;
+        } else {
+            // Apply friction when no input
+            newVx *= 0.8;
+        }
+        
+        // Clamp velocities
+        newVx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newVx));
+        newVy = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newVy));
+        
+        // Update position
+        const newX = player.x + newVx * deltaTime;
+        const newY = player.y + newVy * deltaTime;
+        
+        // Basic boundary checks (prevent falling through bottom)
+        const boundedY = Math.max(0, Math.min(600 - player.radius, newY));
+        
+        // Check if grounded (simple ground check)
+        const isGrounded = boundedY >= 600 - player.radius - 1;
+        if (isGrounded && newVy > 0) {
+            newVy = 0; // Stop falling
+        }
+        
+        // Update player state
+        this.gameState.updatePlayer({
+            x: newX,
+            y: boundedY,
+            vx: newVx,
+            vy: newVy,
+            grounded: isGrounded
+        });
+        
+        console.log(`🎮 Physics: Player at (${newX.toFixed(1)}, ${boundedY.toFixed(1)}) vel=(${newVx.toFixed(1)}, ${newVy.toFixed(1)}) grounded=${isGrounded}`);
+    }
+
+    
+    /**
+     * Handle player jump
+     * @private
+     */
+    private handleJump(): void {
+        if (!this.gameState) return;
+        
+        const player = this.gameState.getPlayer();
+        
+        // Only allow jumping if grounded
+        if (player.grounded) {
+            const JUMP_FORCE = -12;
+            
+            this.gameState.updatePlayer({
+                vy: JUMP_FORCE,
+                grounded: false
+            });
+            
+            console.log('🎮 Physics: Player jumped!');
+        } else {
+            console.log('🎮 Physics: Cannot jump - not grounded');
+        }
+    }
+
+    
+    /**
+     * Stop the main game loop
+     * @private
+     */
+    private stopGameLoop(): void {
+        if (this.app) {
+            if (this.app) {
+            this.app.ticker.remove(this.updateGame.bind(this));
+            console.log('🎮 PurePixiGame: Game loop stopped');
+        }
+            console.log('🎮 PurePixiGame: Game loop stopped');
+        }
     }
 }
