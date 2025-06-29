@@ -130,12 +130,11 @@ export class GameOverMenuManager {
     }
 
     /**
-     * Position menu at camera center
+     * Position menu at specified coordinates (should be screen-space coordinates)
      */
-    positionMenu(cameraX: number, cameraY: number): void {
-        const screenCenterX = cameraX + this.app.screen.width / 2;
-        const screenCenterY = cameraY + this.app.screen.height / 2;
-        this.menuContainer.position.set(screenCenterX, screenCenterY);
+    positionMenu(screenX: number, screenY: number): void {
+        // Use coordinates directly (no additional calculation needed)
+        this.menuContainer.position.set(screenX, screenY);
     }
 
     /**

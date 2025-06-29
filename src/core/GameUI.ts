@@ -1,5 +1,6 @@
 import { getGameStore } from '../stores/GameZustandStore.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
+import type { PixiGameState } from './PixiGameState.js';
 
 /**
  * GameUI - Manages DOM elements and UI updates for the jumping dot game
@@ -38,13 +39,20 @@ export class GameUI {
     /**
      * Update timer display based on current game time
      */
-    updateTimer(): void {
-        const gameStartTime = getGameStore().game.gameStartTime;
-        if (gameStartTime) {
-            const currentTime = getCurrentTime();
-            const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
+    updateTimer(pixiGameState?: PixiGameState | null): void {
+        if (pixiGameState) {
+            // Use PixiGameState for timer
+            const timeRemaining = pixiGameState.getTimeRemaining();
             this.timerDisplay.textContent = `Time: ${Math.ceil(timeRemaining)}`;
+        } else {
+            // Fallback to Zustand during migration
+            const gameStartTime = getGameStore().game.gameStartTime;
+            if (gameStartTime) {
+                const currentTime = getCurrentTime();
+                const elapsedSeconds = (currentTime - gameStartTime) / 1000;
+                const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
+                this.timerDisplay.textContent = `Time: ${Math.ceil(timeRemaining)}`;
+            }
         }
     }
 

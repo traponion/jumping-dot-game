@@ -207,7 +207,7 @@ export class PixiGameState {
 
         for (const platform of this.stageData.platforms) {
             const platformShape = new Graphics();
-            
+
             // Draw platform as a line from (x1,y1) to (x2,y2)
             platformShape
                 .moveTo(platform.x1, platform.y1)
@@ -228,11 +228,9 @@ export class PixiGameState {
 
         for (const spike of this.stageData.spikes) {
             const spikeShape = new Graphics();
-            
+
             // Draw spike as a red rectangle
-            spikeShape
-                .rect(spike.x, spike.y, spike.width, spike.height)
-                .fill(0xff0000); // Red color for danger
+            spikeShape.rect(spike.x, spike.y, spike.width, spike.height).fill(0xff0000); // Red color for danger
 
             this.spikeShapes.push(spikeShape);
             this.stageContainer.addChild(spikeShape);
@@ -329,7 +327,7 @@ export class PixiGameState {
         this.gameTime = {
             startTime: Date.now(),
             timeLimit: this.gameTime.timeLimit, // Preserve time limit
-            isRunning: true,
+            isRunning: false, // Wait for startGame() to set true
             isPaused: false,
             isGameOver: false
         };

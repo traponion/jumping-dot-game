@@ -275,13 +275,13 @@ export class PixiRenderSystem {
             return; // Safe fallback - just skip rendering
         }
 
-        // Get camera position for centering menu
-        const cameraX = -this.gameContainer.x + this.app.renderer.width / 2;
-        const cameraY = -this.gameContainer.y + this.app.renderer.height / 2;
+        // GameOverMenu should be positioned at screen center (UI space, not affected by camera)
+        const screenCenterX = this.app.renderer.width / 2;
+        const screenCenterY = this.app.renderer.height / 2;
 
         // Create and position menu
         this.gameOverMenuManager.createMenu(options, selectedIndex, finalScore);
-        this.gameOverMenuManager.positionMenu(cameraX, cameraY);
+        this.gameOverMenuManager.positionMenu(screenCenterX, screenCenterY);
         this.gameOverMenuManager.showMenu();
     }
 
@@ -415,40 +415,15 @@ export class PixiRenderSystem {
      * Apply camera transformation to game container
      */
     private cameraLogCount = 0;
-    applyCameraTransform(camera: Camera): void {
-        // Safety check: ensure PixiJS app is initialized
-        if (!this.app?.renderer) {
-            if (this.cameraLogCount < 3) {
-                console.log('🎮 applyCameraTransform skipped: PixiJS app not initialized');
-                this.cameraLogCount++;
-            }
-            return;
-        }
-
-        // Center the game view in the renderer viewport
-        const centerX = this.app.renderer.width / 2;
-        const centerY = this.app.renderer.height / 2;
-        const newX = -camera.x + centerX;
-
-        // TEMPORARY FIX: Use hardcoded Y=200 to show platforms at y=500 in center
-        const fixedCameraY = 200;
-        const newY = -fixedCameraY + centerY; // This should put y=500 at screen center
-
-        if (this.cameraLogCount < 5) {
-            console.log('🎮 applyCameraTransform (TEMP FIX):', {
-                cameraX: camera.x,
-                originalCameraY: camera.y,
-                fixedCameraY,
-                centerX,
-                centerY,
-                newContainerX: newX,
-                newContainerY: newY
-            });
+    applyCameraTransform(_camera: Camera): void {
+        // NOTE: Camera transform is now handled by PixiGameState directly on gameContainer
+        // This method is kept for compatibility but does no operation to avoid double-transform
+        if (this.cameraLogCount < 3) {
+            console.log(
+                '🎮 applyCameraTransform: Camera handled by PixiGameState, skipping renderer transform'
+            );
             this.cameraLogCount++;
         }
-
-        this.gameContainer.x = newX;
-        this.gameContainer.y = newY;
     }
 
     restoreCameraTransform(): void {

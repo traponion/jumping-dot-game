@@ -18,6 +18,7 @@ import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
+import { PixiGameState } from './PixiGameState.js';
 import { type Platform, type StageData, StageLoader } from './StageLoader.js';
 
 /**
@@ -59,6 +60,10 @@ export class GameManager {
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
 
+    // PixiJS Game State (replacing Zustand for game logic)
+    /** @private {PixiGameState | null} PixiJS-native game state management */
+    private pixiGameState: PixiGameState | null = null;
+
     // Stage
     /** @private {StageLoader} Stage data loading system */
     private stageLoader!: StageLoader;
@@ -89,6 +94,12 @@ export class GameManager {
     async initialize(): Promise<void> {
         if (this.renderSystem && 'initialize' in this.renderSystem) {
             await this.renderSystem.initialize(this.canvas);
+
+            // Initialize PixiGameState after PixiJS app is ready
+            if ('getApp' in this.renderSystem) {
+                this.pixiGameState = new PixiGameState(this.renderSystem.getApp());
+                console.log('🎮 PixiGameState initialized with PixiJS Application');
+            }
         }
     }
 
@@ -123,6 +134,8 @@ export class GameManager {
 
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.canvas, gameController);
+        // Set PixiGameState getter for InputManager
+        this.inputManager.setPixiGameStateGetter(() => this.pixiGameState);
 
         // Initialize PlayerSystem with InputManager
         this.playerSystem = new PlayerSystem(this.inputManager);
@@ -138,10 +151,18 @@ export class GameManager {
             // Set timeLimit from stage data if available
             if (this.stage && this.stage.timeLimit !== undefined) {
                 gameStore.getState().setTimeLimit(this.stage.timeLimit);
+                // Also set in PixiGameState if available
+                if (this.pixiGameState) {
+                    this.pixiGameState.setTimeLimit(this.stage.timeLimit);
+                }
             } else {
                 // Use default timeLimit from current store state
                 const defaultTimeLimit = getGameStore().game.timeLimit;
                 gameStore.getState().setTimeLimit(defaultTimeLimit);
+                // Also set in PixiGameState if available
+                if (this.pixiGameState) {
+                    this.pixiGameState.setTimeLimit(defaultTimeLimit);
+                }
             }
         } catch (error) {
             console.error('Failed to load stage:', error);
@@ -150,6 +171,10 @@ export class GameManager {
             // Set timeLimit from fallback stage data
             const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
             gameStore.getState().setTimeLimit(fallbackTimeLimit);
+            // Also set in PixiGameState if available
+            if (this.pixiGameState) {
+                this.pixiGameState.setTimeLimit(fallbackTimeLimit);
+            }
         }
     }
 
@@ -162,9 +187,16 @@ export class GameManager {
 
         try {
             console.log('🎮 resetGameState step 1: stopGame/restartGame');
-            gameStore.getState().stopGame();
-            gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-            gameStore.getState().restartGame();
+
+            // Use PixiGameState if available, fallback to Zustand during migration
+            if (this.pixiGameState) {
+                this.pixiGameState.stopGame();
+                this.pixiGameState.restartGame();
+            } else {
+                gameStore.getState().stopGame();
+                gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
+                gameStore.getState().restartGame();
+            }
 
             await this.cleanupSystems();
 
@@ -181,12 +213,22 @@ export class GameManager {
             const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
             this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
 
+            // Re-apply stage timeLimit to PixiGameState after reload
+            if (this.stage && this.stage.timeLimit !== undefined && this.pixiGameState) {
+                this.pixiGameState.setTimeLimit(this.stage.timeLimit);
+            }
+
             console.log('🎮 resetGameState step 6: player/animation reset');
             this.playerSystem.reset(100, 400);
             this.animationSystem.reset();
 
             console.log('🎮 resetGameState step 7: camera/input reset');
-            gameStore.getState().updateCamera({ x: 0, y: 0 });
+            // Reset camera using PixiGameState if available
+            if (this.pixiGameState) {
+                this.pixiGameState.updateCamera({ x: 0, y: 200 }); // Default camera position
+            } else {
+                gameStore.getState().updateCamera({ x: 0, y: 0 });
+            }
 
             // Clear inputs first before changing game state
             this.inputManager.clearInputs();
@@ -205,7 +247,12 @@ export class GameManager {
      * Start the game
      */
     startGame(): void {
-        gameStore.getState().startGame();
+        // Use PixiGameState if available, fallback to Zustand during migration
+        if (this.pixiGameState) {
+            this.pixiGameState.startGame();
+        } else {
+            gameStore.getState().startGame();
+        }
         // Clear inputs on game start
         this.inputManager.clearInputs();
     }
@@ -214,7 +261,15 @@ export class GameManager {
      * Update game systems and logic
      */
     update(deltaTime: number): void {
-        if (!getGameStore().isGameRunning() || getGameStore().isGameOver()) {
+        // Use PixiGameState if available, fallback to Zustand during migration
+        const isGameRunning = this.pixiGameState
+            ? this.pixiGameState.isGameRunning()
+            : getGameStore().isGameRunning();
+        const isGameOver = this.pixiGameState
+            ? this.pixiGameState.isGameOver()
+            : getGameStore().isGameOver();
+
+        if (!isGameRunning || isGameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
             return;
@@ -235,6 +290,12 @@ export class GameManager {
         this.playerSystem.update(deltaTime, physicsConstants);
 
         this.physicsSystem.update(deltaTime);
+
+        // Sync player state from PhysicsSystem to PixiGameState
+        if (this.pixiGameState) {
+            const currentPlayer = getGameStore().getPlayer(); // PhysicsSystem updates Zustand
+            this.pixiGameState.updatePlayer(currentPlayer);
+        }
 
         // Update moving platforms if stage has them
         if (this.stage?.movingPlatforms) {
@@ -336,24 +397,30 @@ export class GameManager {
     }
 
     private updateCamera(): void {
-        const player = getGameStore().getPlayer();
-        // Set camera Y to show platforms at y=500 in center of 600px screen
-        // Camera Y should be around 200 so platforms appear at screen center
-        const cameraY = 200; // This will put y=500 platforms at screen center (500-200=300)
+        // Use PixiGameState if available, fallback to Zustand during migration
+        const player = this.pixiGameState
+            ? this.pixiGameState.getPlayer()
+            : getGameStore().getPlayer();
+
+        // Follow player horizontally, but keep Y fixed to show platforms properly
         const newCameraX = player.x - this.canvas.width / 2;
+        const newCameraY = 200; // Fixed Y to show y=500 platforms in lower part of screen
 
-        console.log('🎮 updateCamera called:', {
-            playerX: player.x,
-            canvasWidth: this.canvas.width,
-            newCameraX,
-            newCameraY: cameraY
-        });
+        // Debug log removed for performance
 
-        gameStore.getState().updateCamera({ x: newCameraX, y: cameraY });
+        if (this.pixiGameState) {
+            this.pixiGameState.updateCamera({ x: newCameraX, y: newCameraY });
+        } else {
+            gameStore.getState().updateCamera({ x: newCameraX, y: newCameraY });
+        }
     }
 
     private checkBoundaries(): void {
-        const player = getGameStore().getPlayer();
+        // Use PixiGameState if available, fallback to Zustand during migration
+        const player = this.pixiGameState
+            ? this.pixiGameState.getPlayer()
+            : getGameStore().getPlayer();
+
         if (this.collisionSystem.checkHoleCollision(player, 600)) {
             this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
         } else if (this.collisionSystem.checkBoundaryCollision(player, this.canvas.height)) {
@@ -435,10 +502,19 @@ export class GameManager {
         message: string,
         deathType = 'normal'
     ): { message: string; deathType: string } {
-        gameStore.getState().gameOver();
+        // Use PixiGameState if available, fallback to Zustand during migration
+        if (this.pixiGameState) {
+            this.pixiGameState.gameOver();
+        } else {
+            gameStore.getState().gameOver();
+        }
 
-        const player = getGameStore().getPlayer();
-        const camera = getGameStore().getCamera();
+        const player = this.pixiGameState
+            ? this.pixiGameState.getPlayer()
+            : getGameStore().getPlayer();
+        const camera = this.pixiGameState
+            ? this.pixiGameState.getCamera()
+            : getGameStore().getCamera();
         let deathMarkY = player.y;
         if (deathType === 'fall') {
             deathMarkY = camera.y + this.canvas.height - 20;
@@ -455,11 +531,25 @@ export class GameManager {
      * Handle goal reached
      */
     handleGoalReached(): { finalScore: number } {
-        gameStore.getState().gameOver();
-        const finalScore = Math.ceil(getGameStore().getTimeRemaining());
-        gameStore.getState().setFinalScore(finalScore);
+        // Use PixiGameState if available, fallback to Zustand during migration
+        if (this.pixiGameState) {
+            this.pixiGameState.gameOver();
+            const finalScore = Math.ceil(this.pixiGameState.getTimeRemaining());
+            this.pixiGameState.setFinalScore(finalScore);
+        } else {
+            gameStore.getState().gameOver();
+            const finalScore = Math.ceil(getGameStore().getTimeRemaining());
+            gameStore.getState().setFinalScore(finalScore);
+        }
 
-        this.animationSystem.startClearAnimation(getGameStore().getPlayer());
+        const finalScore = this.pixiGameState
+            ? this.pixiGameState.getFinalScore()
+            : getGameStore().getFinalScore();
+        const player = this.pixiGameState
+            ? this.pixiGameState.getPlayer()
+            : getGameStore().getPlayer();
+
+        this.animationSystem.startClearAnimation(player);
 
         // Set up auto-return to stage select after clear animation
         setTimeout(() => {
@@ -476,16 +566,24 @@ export class GameManager {
      * Check if time is up
      */
     checkTimeUp(): boolean {
-        const gameStartTime = getGameStore().game.gameStartTime;
-        if (gameStartTime) {
-            const currentTime = getCurrentTime();
-            const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
-            gameStore.getState().updateTimeRemaining(timeRemaining);
-
-            if (timeRemaining <= 0) {
+        // Use PixiGameState if available, fallback to Zustand during migration
+        if (this.pixiGameState) {
+            if (this.pixiGameState.isTimeUp()) {
                 this.handlePlayerDeath('Time Up! Press R to restart');
                 return true;
+            }
+        } else {
+            const gameStartTime = getGameStore().game.gameStartTime;
+            if (gameStartTime) {
+                const currentTime = getCurrentTime();
+                const elapsedSeconds = (currentTime - gameStartTime) / 1000;
+                const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
+                gameStore.getState().updateTimeRemaining(timeRemaining);
+
+                if (timeRemaining <= 0) {
+                    this.handlePlayerDeath('Time Up! Press R to restart');
+                    return true;
+                }
             }
         }
         return false;
@@ -556,16 +654,33 @@ export class GameManager {
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();
-        renderer.applyCameraTransform(getGameStore().getCamera());
+
+        // Use PixiGameState if available, fallback to Zustand during migration
+        const camera = this.pixiGameState
+            ? this.pixiGameState.getCamera()
+            : getGameStore().getCamera();
+        renderer.applyCameraTransform(camera);
 
         if (this.stage) {
             renderer.renderStage(this.stage);
         }
 
-        renderer.renderDeathMarks(getGameStore().runtime.deathMarks);
+        const deathMarks = this.pixiGameState
+            ? this.pixiGameState.getDeathMarks()
+            : getGameStore().runtime.deathMarks;
+        renderer.renderDeathMarks(deathMarks);
 
-        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
-            const player = getGameStore().getPlayer();
+        const isGameRunning = this.pixiGameState
+            ? this.pixiGameState.isGameRunning()
+            : getGameStore().isGameRunning();
+        const isGameOver = this.pixiGameState
+            ? this.pixiGameState.isGameOver()
+            : getGameStore().isGameOver();
+
+        if (isGameRunning && !isGameOver) {
+            const player = this.pixiGameState
+                ? this.pixiGameState.getPlayer()
+                : getGameStore().getPlayer();
             renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
             renderer.renderLandingPredictions();
             renderer.renderPlayer(player);
@@ -580,23 +695,24 @@ export class GameManager {
         if (clearAnim.active && clearAnim.startTime) {
             const elapsed = getCurrentTime() - clearAnim.startTime;
             const progress = elapsed / clearAnim.duration;
-            const player = getGameStore().getPlayer();
+            const player = this.pixiGameState
+                ? this.pixiGameState.getPlayer()
+                : getGameStore().getPlayer();
             renderer.renderClearAnimation(clearAnim.particles, progress, player.x, player.y);
         }
 
         renderer.restoreCameraTransform();
 
-        // UI state-based rendering - consolidated in GameManager
-        if (getGameStore().isGameOver()) {
+        // UI state-based rendering - consolidated in GameManager (using already fetched state)
+        if (isGameOver) {
             if (ui) {
                 const menuData = ui.getGameOverMenuData();
-                renderer.renderGameOverMenu(
-                    menuData.options,
-                    menuData.selectedIndex,
-                    getGameStore().getFinalScore()
-                );
+                const finalScore = this.pixiGameState
+                    ? this.pixiGameState.getFinalScore()
+                    : getGameStore().getFinalScore();
+                renderer.renderGameOverMenu(menuData.options, menuData.selectedIndex, finalScore);
             }
-        } else if (!getGameStore().isGameRunning()) {
+        } else if (!isGameRunning) {
             renderer.renderStartInstruction();
         }
 
@@ -653,6 +769,14 @@ export class GameManager {
     // @ts-ignore
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
+
+        // Cleanup PixiGameState first (before destroying PixiJS app)
+        if (this.pixiGameState) {
+            this.pixiGameState.destroy();
+            this.pixiGameState = null;
+            console.log('🎮 PixiGameState cleaned up');
+        }
+
         if (this.renderSystem && 'cleanup' in this.renderSystem) {
             try {
                 await (this.renderSystem as PixiRenderSystem).cleanup();
@@ -668,6 +792,13 @@ export class GameManager {
      */
     getAnimationSystem(): AnimationSystem {
         return this.animationSystem;
+    }
+
+    /**
+     * Get PixiGameState (for external access)
+     */
+    getPixiGameState(): PixiGameState | null {
+        return this.pixiGameState;
     }
 
     /**

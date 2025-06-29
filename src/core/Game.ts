@@ -163,7 +163,7 @@ export class JumpingDotGame {
 
     public handleGameOverSelection(): void {
         const pixiGameState = this.gameManager.getPixiGameState();
-        if (!pixiGameState || !pixiGameState.isGameOver()) return;
+        if (!pixiGameState?.isGameOver()) return;
 
         const selectedOption = this.gameUI.getGameOverSelection();
 

@@ -1,10 +1,10 @@
 import { Application } from 'pixi.js';
+import { CollisionSystem } from '../systems/CollisionSystem';
 import { InputManager } from '../systems/InputManager';
 import { PlayerSystem } from '../systems/PlayerSystem';
-import { CollisionSystem } from '../systems/CollisionSystem';
+import type { GameUI } from './GameUI';
 import { PixiGameState } from './PixiGameState';
 import { StageLoader } from './StageLoader';
-import { GameUI } from './GameUI';
 
 /**
  * Clean PixiJS-centric GameManager - complete rewrite following PixiJS recommended patterns
@@ -161,7 +161,7 @@ export class CleanGameManager {
      * @private
      */
     private updateGame(): void {
-        if (!this.pixiGameState || !this.pixiGameState.isGameRunning()) {
+        if (!this.pixiGameState?.isGameRunning()) {
             return;
         }
 
@@ -175,7 +175,7 @@ export class CleanGameManager {
      * @private
      */
     private updateGameLogic(): void {
-        if (!this.inputManager || !this.playerSystem || !this.pixiGameState) {
+        if (!(this.inputManager && this.playerSystem && this.pixiGameState)) {
             return;
         }
 
@@ -209,12 +209,12 @@ export class CleanGameManager {
      * @private
      */
     private handleCollisions(): void {
-        if (!this.pixiGameState || !this.playerSystem) return;
+        if (!(this.pixiGameState && this.playerSystem)) return;
 
         const player = this.pixiGameState.getPlayer();
         const stageData = (this.pixiGameState as any).stageData;
-        
-        if (!stageData || !player) return;
+
+        if (!(stageData && player)) return;
 
         // Handle platform collisions
         const prevPlayerFootY = player.y + player.radius;
@@ -222,11 +222,11 @@ export class CleanGameManager {
             stageData.platforms || [],
             prevPlayerFootY
         );
-        
+
         if (platformCollisionUpdate) {
             // Apply collision update to player
             this.pixiGameState.updatePlayer(platformCollisionUpdate);
-            
+
             // Update PlayerSystem with collision result
             // TODO: Implement proper collision result application in PlayerSystem
             // if (this.playerSystem) {
@@ -244,14 +244,19 @@ export class CleanGameManager {
         }
 
         // Check goal collision (win)
-        if (stageData.goal && this.collisionSystem.checkGoalCollision(updatedPlayer, stageData.goal)) {
+        if (
+            stageData.goal &&
+            this.collisionSystem.checkGoalCollision(updatedPlayer, stageData.goal)
+        ) {
             this.handleGoalReached();
             return;
         }
 
         // Check boundary collisions (death)
-        if (this.collisionSystem.checkBoundaryCollision(updatedPlayer, 600) || 
-            this.collisionSystem.checkHoleCollision(updatedPlayer, 600)) {
+        if (
+            this.collisionSystem.checkBoundaryCollision(updatedPlayer, 600) ||
+            this.collisionSystem.checkHoleCollision(updatedPlayer, 600)
+        ) {
             this.handlePlayerDeath();
         }
     }
@@ -264,13 +269,13 @@ export class CleanGameManager {
         if (!this.pixiGameState) return;
 
         const player = this.pixiGameState.getPlayer();
-        
+
         // Add death mark for visual feedback
         this.pixiGameState.addDeathMark({ x: player.x, y: player.y, timestamp: Date.now() });
-        
+
         // Trigger game over
         this.pixiGameState.gameOver();
-        
+
         console.log('🎮 CleanGameManager: Player death');
     }
 
@@ -284,10 +289,10 @@ export class CleanGameManager {
         // Calculate final score based on remaining time
         const finalScore = Math.ceil(this.pixiGameState.getTimeRemaining());
         this.pixiGameState.setFinalScore(finalScore);
-        
+
         // Trigger game over (success)
         this.pixiGameState.gameOver();
-        
+
         console.log('🎮 CleanGameManager: Goal reached! Score:', finalScore);
     }
 
@@ -295,7 +300,7 @@ export class CleanGameManager {
      * Load and start a game stage
      */
     async loadStage(stageNumber: number): Promise<void> {
-        if (!this.isInitialized || !this.pixiGameState) {
+        if (!(this.isInitialized && this.pixiGameState)) {
             throw new Error('CleanGameManager not initialized');
         }
 

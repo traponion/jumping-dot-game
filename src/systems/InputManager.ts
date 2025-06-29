@@ -5,6 +5,7 @@
  */
 
 import { GameInputs } from 'game-inputs';
+import type { PixiGameState } from '../core/PixiGameState.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 
 /**
@@ -46,6 +47,8 @@ export class InputManager {
     private inputs: GameInputs | null;
     /** @private {GameController | null} Reference to the game controller for handling game actions */
     private gameController: GameController | null;
+    /** @private {() => PixiGameState | null} Function to get PixiGameState from GameManager */
+    private getPixiGameState: (() => PixiGameState | null) | null = null;
     /** @private {number} Timestamp of the last processed input for debouncing */
     private lastInputTime = 0;
     /** @private {number} Cooldown period in milliseconds to prevent rapid inputs */
@@ -70,6 +73,13 @@ export class InputManager {
 
         this.setupBindings();
         this.setupEventHandlers();
+    }
+
+    /**
+     * Set function to get PixiGameState from GameManager
+     */
+    setPixiGameStateGetter(getter: () => PixiGameState | null): void {
+        this.getPixiGameState = getter;
     }
 
     /**
@@ -120,7 +130,12 @@ export class InputManager {
             this.lastInputTime = now;
 
             // Only allow restart when game is actually over
-            if (getGameStore().isGameOver()) {
+            const pixiGameState = this.getPixiGameState?.();
+            const isGameOver = pixiGameState
+                ? pixiGameState.isGameOver()
+                : getGameStore().isGameOver();
+
+            if (isGameOver) {
                 this.gameController.init();
             }
         });
@@ -128,14 +143,28 @@ export class InputManager {
         // Game over menu navigation
         this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (getGameStore().isGameOver()) {
+
+            const pixiGameState = this.getPixiGameState?.();
+            const isGameOver = pixiGameState
+                ? pixiGameState.isGameOver()
+                : getGameStore().isGameOver();
+
+            console.log('🎮 menu-up pressed, isGameOver:', isGameOver);
+
+            if (isGameOver) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (getGameStore().isGameOver()) {
+
+            const pixiGameState = this.getPixiGameState?.();
+            const isGameOver = pixiGameState
+                ? pixiGameState.isGameOver()
+                : getGameStore().isGameOver();
+
+            if (isGameOver) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
@@ -149,10 +178,20 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (getGameStore().isGameOver()) {
+            const pixiGameState = this.getPixiGameState?.();
+            const isGameOver = pixiGameState
+                ? pixiGameState.isGameOver()
+                : getGameStore().isGameOver();
+            const isGameRunning = pixiGameState
+                ? pixiGameState.isGameRunning()
+                : getGameStore().isGameRunning();
+
+            console.log('🎮 menu-select:', { isGameOver, isGameRunning });
+
+            if (isGameOver) {
                 // Game over menu selection
                 this.gameController.handleGameOverSelection();
-            } else if (!getGameStore().isGameRunning()) {
+            } else if (!isGameRunning) {
                 // Game start (when not running and not over)
                 this.gameController.startGame();
             }
