@@ -269,7 +269,9 @@ export class PixiRenderSystem {
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
         // Add a check to ensure app and renderer are initialized
         if (!this.app?.renderer) {
-            console.warn('PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized. Skipping render.');
+            console.warn(
+                'PixiRenderSystem: Attempted to render game over menu before PixiJS app or renderer was initialized. Skipping render.'
+            );
             return; // Safe fallback - just skip rendering
         }
 
@@ -499,7 +501,9 @@ export class PixiRenderSystem {
      */
     resize(width: number, height: number): void {
         if (!this.app?.renderer) {
-            console.warn('PixiRenderSystem: Attempted to resize before PixiJS app initialized. Skipping resize.');
+            console.warn(
+                'PixiRenderSystem: Attempted to resize before PixiJS app initialized. Skipping resize.'
+            );
             return;
         }
         this.app.renderer.resize(width, height);
@@ -567,8 +571,17 @@ export class PixiRenderSystem {
                     }
                 }
 
-                // Destroy the application itself
-                this.app.destroy(true, { children: true, texture: true });
+                // Destroy the application itself using PixiJS recommended pattern
+                // Context7 confirmed: proper WebGL context cleanup required
+                this.app.destroy(
+                    { removeView: true }, // Renderer options - remove canvas
+                    {
+                        children: true, // Destroy all children
+                        texture: true, // Destroy textures
+                        textureSource: true, // Destroy texture sources (was missing!)
+                        context: true // Destroy WebGL context (was missing!)
+                    }
+                );
             } catch (error) {
                 console.warn('Error destroying PixiJS application:', error);
             }
