@@ -19,12 +19,10 @@ describe('GameManager render with GameUI integration', () => {
         // Reset store to clean state
         getGameStore().reset();
 
-        // Create canvas with event listener mocks for game-inputs compatibility
+        // Create canvas
         canvas = document.createElement('canvas');
         canvas.width = 800;
         canvas.height = 600;
-        canvas.addEventListener = vi.fn();
-        canvas.removeEventListener = vi.fn();
 
         // Create mock GameUI
         mockGameUI = {
