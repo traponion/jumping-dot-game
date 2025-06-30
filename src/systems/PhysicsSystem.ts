@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../stores/GameState.js';
 import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 
 /**
@@ -17,12 +17,17 @@ export class PhysicsSystem {
     /** @private {PhysicsConstants} Current physics constants configuration */
     private constants: PhysicsConstants;
 
+    /** @private {GameState} Game state instance for direct state access */
+    private gameState: GameState;
+
     /**
      * Creates a new PhysicsSystem instance
      * @constructor
+     * @param {GameState} gameState - Game state instance for state management
      * @param {PhysicsConstants} constants - Physics constants for calculations
      */
-    constructor(constants: PhysicsConstants) {
+    constructor(gameState: GameState, constants: PhysicsConstants) {
+        this.gameState = gameState;
         this.constants = constants;
     }
 
@@ -34,18 +39,17 @@ export class PhysicsSystem {
     update(deltaTime: number): void {
         const dtFactor = (deltaTime / (1000 / 60)) * this.constants.gameSpeed;
 
-        // Get current player state from store
-        const player = getGameStore().getPlayer();
+        // Get current player state from game state
+        const player = this.gameState.runtime.player;
 
         // Calculate physics updates
         const newVy = this.calculateGravity(player, dtFactor);
         const newPosition = this.calculatePosition(player, newVy, dtFactor);
 
-        // Update store with new state
-        getGameStore().updatePlayer({
-            ...newPosition,
-            vy: newVy
-        });
+        // Update game state with new values
+        player.x = newPosition.x;
+        player.y = newPosition.y;
+        player.vy = newVy;
     }
 
     /**

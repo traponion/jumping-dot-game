@@ -106,7 +106,7 @@ export class GameManager {
     private initializeSystems(gameController: GameController): void {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
-        this.physicsSystem = new PhysicsSystem(physicsConstants);
+        this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
         this.collisionSystem = new CollisionSystem();
         this.animationSystem = new AnimationSystem();
         this.movingPlatformSystem = new MovingPlatformSystem();

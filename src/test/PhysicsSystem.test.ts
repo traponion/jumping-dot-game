@@ -1,18 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import { GameState } from '../stores/GameState.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
-import type { PhysicsConstants, Player } from '../types/GameTypes.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
 
 describe('PhysicsSystem', () => {
-    let player: Player;
+    let gameState: GameState;
     let physicsSystem: PhysicsSystem;
     let constants: PhysicsConstants;
 
     beforeEach(() => {
-        // Reset store to clean state
-        getGameStore().reset();
+        // Create fresh GameState instance for each test
+        gameState = new GameState();
 
-        player = {
+        // Set up initial player state
+        gameState.runtime.player = {
             x: 100,
             y: 400,
             vx: 2,
@@ -20,9 +21,6 @@ describe('PhysicsSystem', () => {
             radius: 3,
             grounded: false
         };
-
-        // Set up initial player state in store
-        getGameStore().updatePlayer(player);
 
         constants = {
             gravity: 0.6,
@@ -32,74 +30,73 @@ describe('PhysicsSystem', () => {
             gameSpeed: 2.0
         };
 
-        physicsSystem = new PhysicsSystem(constants);
+        physicsSystem = new PhysicsSystem(gameState, constants);
     });
 
     describe('gravity application', () => {
         it('should apply gravity when player is not grounded', () => {
-            // Set player as not grounded in store
-            getGameStore().updatePlayer({ grounded: false });
-            const initialPlayer = getGameStore().getPlayer();
-            const initialVy = initialPlayer.vy;
+            // Set player as not grounded
+            gameState.runtime.player.grounded = false;
+            const initialVy = gameState.runtime.player.vy;
 
             physicsSystem.update(16.67); // 60fps frame
 
             // Gravity should increase downward velocity
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.vy).toBeGreaterThan(initialVy);
+            expect(gameState.runtime.player.vy).toBeGreaterThan(initialVy);
         });
 
         it('should not apply gravity when player is grounded', () => {
-            // Set player as grounded in store
-            getGameStore().updatePlayer({ grounded: true });
-            const initialPlayer = getGameStore().getPlayer();
-            const initialVy = initialPlayer.vy;
+            // Set player as grounded
+            gameState.runtime.player.grounded = true;
+            const initialVy = gameState.runtime.player.vy;
 
             physicsSystem.update(16.67);
 
-            const updatedPlayer = getGameStore().getPlayer();
-            expect(updatedPlayer.vy).toBe(initialVy);
+            expect(gameState.runtime.player.vy).toBe(initialVy);
         });
     });
 
     describe('position updates', () => {
         it('should update player position based on velocity', () => {
-            const initialX = player.x;
-            const initialY = player.y;
+            const initialX = gameState.runtime.player.x;
+            const initialY = gameState.runtime.player.y;
 
             physicsSystem.update(16.67);
 
-            // Get updated player from store
-            const updatedPlayer = getGameStore().getPlayer();
-
             // Position should change based on velocity and game speed
-            expect(updatedPlayer.x).not.toBe(initialX);
-            expect(updatedPlayer.y).not.toBe(initialY);
+            expect(gameState.runtime.player.x).not.toBe(initialX);
+            expect(gameState.runtime.player.y).not.toBe(initialY);
         });
 
         it('should account for game speed in position updates', () => {
             const slowConstants = { ...constants, gameSpeed: 1.0 };
             const fastConstants = { ...constants, gameSpeed: 2.0 };
 
-            const slowPhysics = new PhysicsSystem(slowConstants);
-            const fastPhysics = new PhysicsSystem(fastConstants);
+            // Create separate game states for isolated testing
+            const slowGameState = new GameState();
+            const fastGameState = new GameState();
 
-            // Reset store and set up initial player for slow test
-            getGameStore().reset();
-            getGameStore().updatePlayer(player);
-            const initialX = player.x;
+            // Set up identical initial conditions
+            const initialPlayer = {
+                x: 100,
+                y: 400,
+                vx: 2,
+                vy: -5,
+                radius: 3,
+                grounded: false
+            };
+
+            slowGameState.runtime.player = { ...initialPlayer };
+            fastGameState.runtime.player = { ...initialPlayer };
+
+            const slowPhysics = new PhysicsSystem(slowGameState, slowConstants);
+            const fastPhysics = new PhysicsSystem(fastGameState, fastConstants);
 
             slowPhysics.update(16.67);
-            const slowPlayer = getGameStore().getPlayer();
-            const slowDistance = Math.abs(slowPlayer.x - initialX);
-
-            // Reset store and set up initial player for fast test
-            getGameStore().reset();
-            getGameStore().updatePlayer(player);
+            const slowDistance = Math.abs(slowGameState.runtime.player.x - initialPlayer.x);
 
             fastPhysics.update(16.67);
-            const fastPlayer = getGameStore().getPlayer();
-            const fastDistance = Math.abs(fastPlayer.x - initialX);
+            const fastDistance = Math.abs(fastGameState.runtime.player.x - initialPlayer.x);
 
             // Fast physics should move player further
             expect(fastDistance).toBeGreaterThan(slowDistance);
@@ -138,19 +135,39 @@ describe('PhysicsSystem', () => {
 
     describe('frame rate independence', () => {
         it('should produce reasonably consistent results with different frame rates', () => {
-            const player1 = { ...player };
-            const player2 = { ...player };
+            // Create two identical game states for comparison
+            const gameState1 = new GameState();
+            const gameState2 = new GameState();
+
+            const initialPlayer = {
+                x: 100,
+                y: 400,
+                vx: 2,
+                vy: -5,
+                radius: 3,
+                grounded: false
+            };
+
+            gameState1.runtime.player = { ...initialPlayer };
+            gameState2.runtime.player = { ...initialPlayer };
+
+            const physics1 = new PhysicsSystem(gameState1, constants);
+            const physics2 = new PhysicsSystem(gameState2, constants);
 
             // Simulate 30fps (33.33ms per frame)
-            physicsSystem.update(33.33);
+            physics1.update(33.33);
 
             // Simulate 60fps (16.67ms per frame) x2
-            physicsSystem.update(16.67);
-            physicsSystem.update(16.67);
+            physics2.update(16.67);
+            physics2.update(16.67);
 
             // Results should be reasonably close (allowing for gravity accumulation)
-            expect(Math.abs(player1.x - player2.x)).toBeLessThan(1.0);
-            expect(Math.abs(player1.y - player2.y)).toBeLessThan(3.0);
+            expect(
+                Math.abs(gameState1.runtime.player.x - gameState2.runtime.player.x)
+            ).toBeLessThan(1.0);
+            expect(
+                Math.abs(gameState1.runtime.player.y - gameState2.runtime.player.y)
+            ).toBeLessThan(3.0);
         });
     });
 });
