@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
+import { GameState } from '../stores/GameState.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 
 // Mock all dependencies
@@ -22,6 +23,7 @@ vi.mock('../systems/RenderSystemFactory', () => ({
 
 describe('GameManager', () => {
     let gameManager: GameManager;
+    let gameState: GameState;
     let mockCollisionSystem: unknown;
     let mockAnimationSystem: unknown;
     let mockPlayerSystem: unknown;
@@ -29,18 +31,21 @@ describe('GameManager', () => {
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
-        // Create canvas and GameManager
+        // Create canvas, GameState, and GameManager
         canvas = document.createElement('canvas');
-        gameManager = new GameManager(canvas, {
-            startGame: vi.fn(),
-            init: vi.fn(),
-            returnToStageSelect: vi.fn(),
-            handleGameOverNavigation: vi.fn(),
-            handleGameOverSelection: vi.fn(),
-            getGameState: vi
-                .fn()
-                .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 })
-        });
+        gameState = new GameState();
+        gameManager = new GameManager(
+            canvas,
+            {
+                startGame: vi.fn(),
+                init: vi.fn(),
+                returnToStageSelect: vi.fn(),
+                handleGameOverNavigation: vi.fn(),
+                handleGameOverSelection: vi.fn(),
+                getGameState: vi.fn().mockReturnValue(gameState)
+            },
+            gameState
+        );
 
         // Get mock instances
         mockCollisionSystem = (gameManager as any).collisionSystem;

@@ -24,7 +24,7 @@ export interface GameController {
     /** Handle menu selection in game over state */
     handleGameOverSelection(): void;
     /** Get current game state information */
-    getGameState(): { gameRunning: boolean; gameOver: boolean; finalScore: number };
+    getGameState(): import('../stores/GameState.js').GameState;
 }
 
 /**

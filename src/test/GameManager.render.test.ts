@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import type { GameUI } from '../core/GameUI.js';
+import { GameState } from '../stores/GameState.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import type { GameController } from '../systems/InputManager.js';
@@ -53,7 +54,8 @@ describe('GameManager render with GameUI integration', () => {
 
         // Create GameManager and inject mock render system
         const mockGameController = {} as GameController;
-        gameManager = new GameManager(canvas, mockGameController);
+        const gameState = new GameState();
+        gameManager = new GameManager(canvas, mockGameController, gameState);
         (gameManager as unknown as { renderSystem: Partial<FabricRenderSystem> }).renderSystem =
             mockRenderSystem;
     });

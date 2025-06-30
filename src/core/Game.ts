@@ -4,8 +4,7 @@
  * @description Application Layer - Main game orchestrator and entry point
  */
 
-import { getGameStore } from '../stores/GameZustandStore.js';
-import type { GameState } from '../types/GameTypes.js';
+import { GameState } from '../stores/GameState.js';
 import { GameLoop } from './GameLoop.js';
 import { GameManager } from './GameManager.js';
 import { GameUI } from './GameUI.js';
@@ -18,6 +17,8 @@ import { GameUI } from './GameUI.js';
 export class JumpingDotGame {
     /** @private {HTMLCanvasElement} Main game canvas */
     private canvas: HTMLCanvasElement;
+    /** @private {GameState} Game state instance */
+    private gameState: GameState;
 
     // Component classes following Single Responsibility Principle
     /** @private {GameUI} UI management component */
@@ -34,10 +35,13 @@ export class JumpingDotGame {
     constructor() {
         this.canvas = this.getRequiredElement('gameCanvas') as HTMLCanvasElement;
 
+        // Initialize game state first
+        this.gameState = new GameState();
+
         // Initialize component classes
         this.gameUI = new GameUI();
         this.gameLoop = new GameLoop();
-        this.gameManager = new GameManager(this.canvas, this);
+        this.gameManager = new GameManager(this.canvas, this, this.gameState);
 
         // Set up game loop callbacks
         this.gameLoop.setUpdateCallback((deltaTime) => this.update(deltaTime));
@@ -71,7 +75,7 @@ export class JumpingDotGame {
         this.gameLoop.resetCleanupState(); // Reset cleanup flag
         this.gameUI.showLoading();
 
-        await this.gameManager.loadStage(getGameStore().getCurrentStage());
+        await this.gameManager.loadStage(this.gameState.game.currentStage);
 
         this.gameUI.showReadyToStart();
         await this.gameManager.resetGameState();
@@ -86,7 +90,7 @@ export class JumpingDotGame {
     }
 
     async initWithStage(stageId: number): Promise<void> {
-        getGameStore().setCurrentStage(stageId);
+        this.gameState.game.currentStage = stageId;
         this.gameUI.showLoading();
 
         await this.gameManager.loadStage(stageId);
@@ -110,7 +114,7 @@ export class JumpingDotGame {
 
     private update(deltaTime: number): void {
         // Update timer UI if game is running
-        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
+        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
             this.gameUI.updateTimer();
 
             // Check for time up
@@ -137,7 +141,7 @@ export class JumpingDotGame {
     }
 
     public getGameState(): GameState {
-        return this.gameManager.getGameState();
+        return this.gameState;
     }
 
     public handleGameOverNavigation(direction: 'up' | 'down'): void {
@@ -145,7 +149,7 @@ export class JumpingDotGame {
     }
 
     public handleGameOverSelection(): void {
-        if (!getGameStore().isGameOver()) return;
+        if (!this.gameState.game.gameOver) return;
 
         const selectedOption = this.gameUI.getGameOverSelection();
 
@@ -169,7 +173,7 @@ export class JumpingDotGame {
         this.gameManager.render(this.gameUI);
 
         // Update UI visibility during gameplay
-        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
+        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
             this.gameUI.updateUIVisibility(true, false);
         }
     }
@@ -181,7 +185,7 @@ export class JumpingDotGame {
 
     // Public methods for testing
     setGameOver(): void {
-        getGameStore().gameOver();
+        this.gameState.game.gameOver = true;
     }
 
     setAnimationId(id: number): void {

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
+import { GameState } from '../stores/GameState.js';
 import { getGameStore } from '../stores/GameZustandStore.js';
 
 describe('GameManager timeLimit integration', () => {
@@ -26,7 +27,8 @@ describe('GameManager timeLimit integration', () => {
                 .fn()
                 .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 })
         };
-        gameManager = new GameManager(canvas, mockGameController);
+        const gameState = new GameState();
+        gameManager = new GameManager(canvas, mockGameController, gameState);
     });
 
     describe('when loading stage with timeLimit', () => {

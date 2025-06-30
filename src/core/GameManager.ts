@@ -5,6 +5,7 @@
  */
 
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
+import type { GameState } from '../stores/GameState.js';
 import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
@@ -15,7 +16,7 @@ import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
 import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
-import type { GameState, PhysicsConstants } from '../types/GameTypes.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
 import { type Platform, type StageData, StageLoader } from './StageLoader.js';
@@ -39,6 +40,8 @@ export class GameManager {
     private canvas: HTMLCanvasElement;
     /** @private {any} Game controller reference for system initialization */
     private gameController: GameController;
+    /** @private {GameState} Game state instance */
+    private gameState: GameState;
 
     // Systems
     /** @private {PlayerSystem} Player input and movement system */
@@ -74,9 +77,10 @@ export class GameManager {
      * @param {HTMLCanvasElement} canvas - The game canvas element
      * @param {GameController} gameController - Game controller instance for UI integration
      */
-    constructor(canvas: HTMLCanvasElement, gameController: GameController) {
+    constructor(canvas: HTMLCanvasElement, gameController: GameController, gameState: GameState) {
         this.canvas = canvas;
         this.gameController = gameController;
+        this.gameState = gameState;
         this.initializeEntities();
         this.initializeSystems(gameController);
     }
@@ -531,7 +535,7 @@ export class GameManager {
      * Get current game state
      */
     getGameState(): GameState {
-        return getGameStore().getGameState();
+        return this.gameState;
     }
 
     /**

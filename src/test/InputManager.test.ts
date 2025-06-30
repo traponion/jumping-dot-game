@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GameState } from '../stores/GameState.js';
 import { InputManager } from '../systems/InputManager.ts';
 
 // Mock game-inputs
@@ -27,11 +28,7 @@ const mockGameController = {
     returnToStageSelect: vi.fn(),
     handleGameOverNavigation: vi.fn(),
     handleGameOverSelection: vi.fn(),
-    getGameState: vi.fn(() => ({
-        gameRunning: false,
-        gameOver: false,
-        finalScore: 0
-    }))
+    getGameState: vi.fn(() => new GameState())
 };
 
 describe('InputManager', () => {
