@@ -117,7 +117,7 @@ export class GameManager {
         this.inputManager = new InputManager(this.canvas, gameController);
 
         // Initialize PlayerSystem with InputManager
-        this.playerSystem = new PlayerSystem(this.inputManager);
+        this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
     }
 
     /**

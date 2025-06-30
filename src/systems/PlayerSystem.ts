@@ -5,7 +5,7 @@
  */
 
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../stores/GameState.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 import type { InputManager } from './InputManager.js';
@@ -19,21 +19,23 @@ export class PlayerSystem {
     /** @private {InputManager | null} Input manager instance for handling user input */
     private inputManager: InputManager | null = null;
 
+    /** @private {GameState} Game state instance for direct state access */
+    private gameState: GameState;
+
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
 
     /** @private {number | null} Timestamp of the last auto-jump execution */
     private lastJumpTime: number | null = null;
 
-    // Trail is now managed by Zustand store
-
     /**
      * Creates a new PlayerSystem instance
      * @constructor
+     * @param {GameState} gameState - Game state instance for state management
      * @param {InputManager} [inputManager] - Optional input manager for handling user input
      */
-    constructor(inputManager?: InputManager) {
-        // Use Zustand store for all state management
+    constructor(gameState: GameState, inputManager?: InputManager) {
+        this.gameState = gameState;
         this.inputManager = inputManager || null;
     }
 
@@ -71,20 +73,23 @@ export class PlayerSystem {
 
         const leftInput = this.inputManager.isPressed('move-left');
         const rightInput = this.inputManager.isPressed('move-right');
-        const gameStore = getGameStore();
 
         if (leftInput || rightInput) {
-            // Use Zustand store actions to update player state
-            gameStore.updatePlayerVelocity(leftInput ? 'left' : 'right', dtFactor);
-            gameStore.markPlayerMoved();
+            const player = this.gameState.runtime.player;
+            const direction = leftInput ? -1 : 1;
+            const acceleration = GAME_CONFIG.player.acceleration * direction * dtFactor;
+
+            player.vx += acceleration;
             this.hasMovedOnce = true;
         }
 
-        // Get updated player state from store
-        const currentPlayer = gameStore.getPlayer();
-        if (this.hasMovedOnce && Math.abs(currentPlayer.vx) < GAME_CONFIG.player.minVelocity) {
-            // Apply minimum velocity (still need to implement this in store)
-            // TODO: Add updatePlayerVelocityDirect action to store for this case
+        // Apply minimum velocity if player has moved once
+        if (
+            this.hasMovedOnce &&
+            Math.abs(this.gameState.runtime.player.vx) < GAME_CONFIG.player.minVelocity
+        ) {
+            const sign = this.gameState.runtime.player.vx >= 0 ? 1 : -1;
+            this.gameState.runtime.player.vx = GAME_CONFIG.player.minVelocity * sign;
         }
     }
 
@@ -100,12 +105,10 @@ export class PlayerSystem {
             this.lastJumpTime = currentTime - physics.autoJumpInterval;
         }
 
-        const currentPlayer = getGameStore().getPlayer();
-        if (currentPlayer.grounded && currentTime - this.lastJumpTime > physics.autoJumpInterval) {
-            getGameStore().updatePlayer({
-                vy: physics.jumpForce,
-                grounded: false
-            });
+        const player = this.gameState.runtime.player;
+        if (player.grounded && currentTime - this.lastJumpTime > physics.autoJumpInterval) {
+            player.vy = physics.jumpForce;
+            player.grounded = false;
             this.lastJumpTime = currentTime;
         }
     }
@@ -116,8 +119,13 @@ export class PlayerSystem {
      * @returns {void}
      */
     private updateTrail(): void {
-        const currentPlayer = getGameStore().getPlayer();
-        getGameStore().addTrailPoint({ x: currentPlayer.x, y: currentPlayer.y });
+        const player = this.gameState.runtime.player;
+        this.gameState.runtime.trail.push({ x: player.x, y: player.y });
+
+        // Limit trail length
+        if (this.gameState.runtime.trail.length > GAME_CONFIG.player.maxTrailLength) {
+            this.gameState.runtime.trail.shift();
+        }
     }
 
     /**
@@ -126,11 +134,9 @@ export class PlayerSystem {
      * @returns {void}
      */
     clampSpeed(maxSpeed: number): void {
-        const currentPlayer = getGameStore().getPlayer();
-        if (Math.abs(currentPlayer.vx) > maxSpeed) {
-            getGameStore().updatePlayer({
-                vx: currentPlayer.vx >= 0 ? maxSpeed : -maxSpeed
-            });
+        const player = this.gameState.runtime.player;
+        if (Math.abs(player.vx) > maxSpeed) {
+            player.vx = player.vx >= 0 ? maxSpeed : -maxSpeed;
         }
     }
 
@@ -147,7 +153,7 @@ export class PlayerSystem {
      * @returns {void}
      */
     clearTrail(): void {
-        getGameStore().updateTrail([]);
+        this.gameState.runtime.trail.length = 0;
     }
 
     /**
@@ -155,7 +161,7 @@ export class PlayerSystem {
      * @returns {TrailPoint[]} Array of trail points representing player's path
      */
     getTrail(): TrailPoint[] {
-        return getGameStore().runtime.trail;
+        return this.gameState.runtime.trail;
     }
 
     /**
@@ -165,16 +171,16 @@ export class PlayerSystem {
      * @returns {void}
      */
     reset(x: number, y: number): void {
-        getGameStore().updatePlayer({
-            x: x,
-            y: y,
-            vx: 0,
-            vy: 0,
-            grounded: false
-        });
+        const player = this.gameState.runtime.player;
+        player.x = x;
+        player.y = y;
+        player.vx = 0;
+        player.vy = 0;
+        player.grounded = false;
+
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        getGameStore().updateTrail([]);
+        this.gameState.runtime.trail.length = 0;
     }
 
     /**
