@@ -29,6 +29,36 @@ export class PurePixiGame {
     constructor() {
         this.stageLoader = new StageLoader();
     }
+    /**
+     * Updates the game status display in the DOM
+     */
+    private updateGameStatus(status: string): void {
+        const gameStatusElement = document.getElementById('gameStatus');
+        if (gameStatusElement) {
+            gameStatusElement.textContent = status;
+            console.log(`🎮 PurePixiGame: UI status updated to "${status}"`);
+        }
+    }
+
+    /**
+     * Updates the timer display in the DOM
+     */
+    private updateTimer(timeRemaining: number): void {
+        const timerElement = document.getElementById('timer');
+        if (timerElement) {
+            timerElement.textContent = `Time: ${timeRemaining}`;
+        }
+    }
+
+    /**
+     * Updates the score display in the DOM
+     */
+    private updateScore(score: number): void {
+        const scoreElement = document.getElementById('score');
+        if (scoreElement) {
+            scoreElement.textContent = `Score: ${score}`;
+        }
+    }
 
     /**
      * Initialize PixiJS application and game state
@@ -104,6 +134,9 @@ export class PurePixiGame {
 
         this.gameState.startGame();
 
+        // Update UI status to Playing
+        this.updateGameStatus('Playing');
+
         // Initialize input system
         this.setupInputSystem();
 
@@ -119,6 +152,7 @@ export class PurePixiGame {
     pauseGame(): void {
         if (this.gameState) {
             this.gameState.pauseGame();
+            this.updateGameStatus('Paused');
         }
     }
 
@@ -137,6 +171,10 @@ export class PurePixiGame {
     restartGame(): void {
         if (this.gameState) {
             this.gameState.restartGame();
+            this.updateGameStatus('Ready');
+            // Reset timer and score displays
+            this.updateTimer(20);
+            this.updateScore(0);
         }
     }
 
