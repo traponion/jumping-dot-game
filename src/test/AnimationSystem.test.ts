@@ -107,8 +107,8 @@ describe.skip('AnimationSystem - DISABLED (removed in Zustand elimination)', () 
             expect(deathAnim.particles.length).toBe(15); // Expected number of explosion particles
 
             // Check that particles have different velocities (circular pattern)
-            const velocities = deathAnim.particles.map((p) => ({ vx: p.vx, vy: p.vy }));
-            const uniqueVelocities = new Set(velocities.map((v) => `${v.vx},${v.vy}`));
+            const velocities = deathAnim.particles.map((p: any) => ({ vx: p.vx, vy: p.vy }));
+            const uniqueVelocities = new Set(velocities.map((v: any) => `${v.vx},${v.vy}`));
             expect(uniqueVelocities.size).toBeGreaterThan(1);
         });
 

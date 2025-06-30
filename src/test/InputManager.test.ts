@@ -21,33 +21,17 @@ vi.mock('game-inputs', () => ({
     GameInputs: vi.fn(() => mockGameInputs)
 }));
 
-// Mock GameController
-const _mockGameController = {
-    startGame: vi.fn(),
-    init: vi.fn(),
-    returnToStageSelect: vi.fn(),
-    handleGameOverNavigation: vi.fn(),
-    handleGameOverSelection: vi.fn(),
-    getGameState: vi.fn(() => ({
-        gameRunning: false,
-        gameOver: false,
-        finalScore: 0
-    }))
-};
+// Mock GameController (unused in disabled tests)
 
 describe.skip('InputManager - DISABLED (removed in Zustand elimination)', () => {
     let inputManager: any; // InputManager removed
-    let _mockCanvas: HTMLCanvasElement;
+    // Canvas mock not needed for disabled tests
 
     beforeEach(() => {
         // Reset all mocks
         vi.clearAllMocks();
 
-        // Create mock canvas
-        _mockCanvas = {
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn()
-        } as any;
+        // Mock canvas setup not needed for disabled tests
 
         // Reset GameInputs mock
         mockGameInputs.disabled = false;

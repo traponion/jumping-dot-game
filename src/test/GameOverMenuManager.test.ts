@@ -53,10 +53,10 @@ vi.mock('pixi.js', () => ({
         mockGraphicsSpy();
         const graphics = createMockGraphics();
         // Ensure chainability by explicitly returning the graphics object itself
-        graphics.rect.mockImplementation(function () {
+        graphics.rect.mockImplementation(function (this: any) {
             return this;
         });
-        graphics.fill.mockImplementation(function () {
+        graphics.fill.mockImplementation(function (this: any) {
             return this;
         });
         return graphics;

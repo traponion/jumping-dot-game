@@ -5,8 +5,9 @@
  */
 
 import { Application } from 'pixi.js';
-import type { Goal, Platform, Player, Spike } from '../types/GameTypes.js';
+import type { Player } from '../types/GameTypes.js';
 import { PixiGameState } from './PixiGameState.js';
+import type { Goal, Platform, Spike } from './StageLoader.js';
 import { StageLoader } from './StageLoader.js';
 
 /**

@@ -43,7 +43,7 @@ const mockGraphics = {
 };
 
 vi.mock('pixi.js', async (importOriginal) => {
-    const actual = await importOriginal();
+    const actual = (await importOriginal()) as any;
 
     const mockTexture = {
         width: 16,
@@ -115,15 +115,15 @@ vi.mock('pixi.js', async (importOriginal) => {
     };
 
     return {
-        ...actual, // Import and spread actual PIXI exports
+        ...(actual as any), // Import and spread actual PIXI exports
         Application: vi.fn().mockImplementation(() => mockApp),
         Container: vi.fn(() => mockContainer),
         Graphics: vi.fn(() => {
             const graphics = mockGraphics;
-            graphics.rect.mockImplementation(function () {
+            graphics.rect.mockImplementation(function (this: any) {
                 return this;
             });
-            graphics.fill.mockImplementation(function () {
+            graphics.fill.mockImplementation(function (this: any) {
                 return this;
             });
             return graphics;
@@ -139,7 +139,7 @@ vi.mock('pixi.js', async (importOriginal) => {
         RenderTexture: {
             create: vi.fn(() => mockTexture)
         },
-        Rectangle: vi.fn(() => new actual.Rectangle()) // Mock Rectangle
+        Rectangle: vi.fn(() => new (actual as any).Rectangle()) // Mock Rectangle
     };
 });
 
