@@ -75,15 +75,20 @@ export class PurePixiGame {
             autoDensity: true
         });
 
-        // Mount canvas to DOM
-        const gameContainer = document.getElementById('gameCanvas');
-        if (!gameContainer) {
-            throw new Error('Game canvas container not found in DOM');
+        // Replace existing canvas with PixiJS canvas
+        const existingCanvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+        if (!existingCanvas) {
+            throw new Error('Game canvas element not found in DOM');
         }
 
-        // Clear existing canvas if any
-        gameContainer.innerHTML = '';
-        gameContainer.appendChild(this.app.canvas);
+        const parentElement = existingCanvas.parentElement;
+        if (!parentElement) {
+            throw new Error('Game canvas parent element not found');
+        }
+
+        // Set PixiJS canvas ID and replace existing canvas
+        this.app.canvas.id = 'gameCanvas';
+        parentElement.replaceChild(this.app.canvas, existingCanvas);
 
         // Initialize PixiJS-native game state
         this.gameState = new PixiGameState(this.app);
@@ -197,16 +202,24 @@ export class PurePixiGame {
         // Stop game loop
         this.stopGameLoop();
 
-        // Cleanup PixiJS application
-        if (this.app) {
-            await this.app.destroy({ removeView: true }, true);
-            this.app = null;
+        // Restore original canvas element before destroying PixiJS app
+        if (this.app?.canvas?.parentElement) {
+            const parentElement = this.app.canvas.parentElement;
+
+            // Create new canvas element to restore original state
+            const originalCanvas = document.createElement('canvas');
+            originalCanvas.id = 'gameCanvas';
+            originalCanvas.width = 800;
+            originalCanvas.height = 600;
+
+            // Replace PixiJS canvas with original canvas
+            parentElement.replaceChild(originalCanvas, this.app.canvas);
         }
 
-        // Clear DOM canvas container
-        const gameContainer = document.getElementById('gameCanvas');
-        if (gameContainer) {
-            gameContainer.innerHTML = '';
+        // Cleanup PixiJS application
+        if (this.app) {
+            await this.app.destroy({ removeView: false }, true);
+            this.app = null;
         }
 
         console.log('🎮 PurePixiGame: Cleanup complete');
