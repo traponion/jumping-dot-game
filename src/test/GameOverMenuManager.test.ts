@@ -45,9 +45,9 @@ vi.mock('pixi.js', () => ({
         mockContainerSpy();
         return createMockContainer();
     }),
-    Text: vi.fn((content: string, style: any) => {
-        mockTextSpy(content, style);
-        return createMockText(content);
+    Text: vi.fn((options: any) => {
+        mockTextSpy(options);
+        return createMockText(options?.text || '');
     }),
     Graphics: vi.fn(() => {
         mockGraphicsSpy();
@@ -97,8 +97,14 @@ describe('GameOverMenuManager', () => {
 
             manager.createMenu(options, selectedIndex, finalScore);
 
-            expect(mockTextSpy).toHaveBeenCalledWith('GAME OVER', expect.any(Object));
-            expect(mockTextSpy).toHaveBeenCalledWith('Score: 100', expect.any(Object));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: 'GAME OVER',
+                style: expect.any(Object)
+            }));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: 'Score: 100',
+                style: expect.any(Object)
+            }));
         });
 
         it('should create menu without score when finalScore is 0', () => {
@@ -108,10 +114,13 @@ describe('GameOverMenuManager', () => {
 
             manager.createMenu(options, selectedIndex, finalScore);
 
-            expect(mockTextSpy).toHaveBeenCalledWith('GAME OVER', expect.any(Object));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: 'GAME OVER',
+                style: expect.any(Object)
+            }));
             // Should not create score text when finalScore is 0
             const textCalls = mockTextSpy.mock.calls;
-            const scoreCall = textCalls.find((call: any) => call[0].includes('Score:'));
+            const scoreCall = textCalls.find((call: any) => call[0]?.text?.includes('Score:'));
             expect(scoreCall).toBeUndefined();
         });
 
@@ -134,7 +143,10 @@ describe('GameOverMenuManager', () => {
 
             // Check that all options are created
             for (const option of options) {
-                expect(mockTextSpy).toHaveBeenCalledWith(option, expect.any(Object));
+                expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                    text: option,
+                    style: expect.any(Object)
+                }));
             }
         });
 
@@ -145,10 +157,10 @@ describe('GameOverMenuManager', () => {
 
             manager.createMenu(options, selectedIndex, finalScore);
 
-            expect(mockTextSpy).toHaveBeenCalledWith(
-                '↑↓ Navigate  ENTER/R/SPACE Select',
-                expect.any(Object)
-            );
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: '↑↓ Navigate  ENTER/R/SPACE Select',
+                style: expect.any(Object)
+            }));
         });
     });
 
@@ -176,17 +188,14 @@ describe('GameOverMenuManager', () => {
     });
 
     describe('positionMenu', () => {
-        it('should position menu at camera center', () => {
-            const cameraX = 100;
-            const cameraY = 50;
+        it('should position menu at specified coordinates', () => {
+            const screenX = 400;
+            const screenY = 300;
 
-            manager.positionMenu(cameraX, cameraY);
+            manager.positionMenu(screenX, screenY);
 
             const container = manager.getMenuContainer();
-            expect(container.position.set).toHaveBeenCalledWith(
-                cameraX + mockApp.screen.width / 2,
-                cameraY + mockApp.screen.height / 2
-            );
+            expect(container.position.set).toHaveBeenCalledWith(screenX, screenY);
         });
     });
 

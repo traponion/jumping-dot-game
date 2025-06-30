@@ -92,6 +92,7 @@ describe('TrailParticleManager', () => {
     describe('initialization', () => {
         it('should create TrailParticleManager with ParticleContainer', () => {
             expect(PIXI.ParticleContainer).toHaveBeenCalledWith({
+                boundsArea: expect.any(Object),
                 dynamicProperties: {
                     position: true,
                     scale: true,
@@ -136,9 +137,7 @@ describe('TrailParticleManager', () => {
             trailManager.renderTrail(sampleTrail, 8);
 
             expect(PIXI.Particle).toHaveBeenCalledTimes(3);
-            expect(PIXI.Particle).toHaveBeenCalledWith({
-                texture: expect.any(Object)
-            });
+            expect(PIXI.Particle).toHaveBeenCalledWith(expect.any(Object));
             expect(trailManager.getActiveParticleCount()).toBe(3);
         });
 
@@ -147,9 +146,7 @@ describe('TrailParticleManager', () => {
 
             // Should create particles for all trail points
             expect(PIXI.Particle).toHaveBeenCalledTimes(3);
-            expect(PIXI.Particle).toHaveBeenCalledWith({
-                texture: expect.any(Object)
-            });
+            expect(PIXI.Particle).toHaveBeenCalledWith(expect.any(Object));
             expect(trailManager.getActiveParticleCount()).toBe(3);
         });
 

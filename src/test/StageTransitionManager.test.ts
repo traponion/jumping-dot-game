@@ -51,9 +51,9 @@ vi.mock('pixi.js', () => ({
         mockGraphicsSpy();
         return createMockGraphics();
     }),
-    Text: vi.fn((content: string, style: any) => {
-        mockTextSpy(content, style);
-        return createMockText(content);
+    Text: vi.fn((options: any) => {
+        mockTextSpy(options);
+        return createMockText(options?.text || '');
     }),
     TextStyle: vi.fn((style: any) => style)
 }));
@@ -148,7 +148,10 @@ describe('StageTransitionManager', () => {
 
             manager.showLoadingScreen(message);
 
-            expect(mockTextSpy).toHaveBeenCalledWith(message, expect.any(Object));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: message,
+                style: expect.any(Object)
+            }));
             expect(manager.isTransitioning()).toBe(true);
         });
 
@@ -198,11 +201,14 @@ describe('StageTransitionManager', () => {
             manager.stageCompleteEffect(score);
 
             expect(manager.isTransitioning()).toBe(true);
-            expect(mockTextSpy).toHaveBeenCalledWith(
-                expect.stringContaining('Stage Complete'),
-                expect.any(Object)
-            );
-            expect(mockTextSpy).toHaveBeenCalledWith(`Score: ${score}`, expect.any(Object));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: expect.stringContaining('Stage Complete'),
+                style: expect.any(Object)
+            }));
+            expect(mockTextSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: `Score: ${score}`,
+                style: expect.any(Object)
+            }));
         });
     });
 
