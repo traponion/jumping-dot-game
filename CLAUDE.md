@@ -229,6 +229,27 @@ mcp__context7__get-library-docs({
 - JSDoc for functional descriptions only
 </quality-standards>
 
+<file-management>
+## File Management Rules
+
+### Handover Documents (CRITICAL)
+- **Location**: All AI handover documents MUST be placed in `.claude/` directory
+- **Format**: Use descriptive names like `refactoring_handover.md`, `analysis_report.md`
+- **Content**: English only, technical, objective, no personal references
+- **Git Status**: These files are automatically gitignored and never committed
+
+### Review Files
+- **Pattern**: `*_review.md` files are gitignored
+- **Usage**: Temporary analysis, code review notes
+- **Location**: Project root or appropriate subdirectory
+
+### Documentation Standards
+- **Language**: English for all technical documentation
+- **Tone**: Professional, objective, technical
+- **Content**: No personal names, chat references, or private information
+- **Purpose**: Must be usable as standalone technical reference
+</file-management>
+
 <troubleshooting>
 ## Troubleshooting
 
