@@ -597,6 +597,13 @@ export class PixiGameState {
     }
 
     /**
+     * Get the current stage data
+     */
+    getStageData(): StageData | null {
+        return this.stageData;
+    }
+
+    /**
      * Destroy PixiJS objects (called when PixiJS app is destroyed)
      */
     destroy(): void {

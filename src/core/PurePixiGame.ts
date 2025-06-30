@@ -5,6 +5,7 @@
  */
 
 import { Application } from 'pixi.js';
+import type { Goal, Platform, Player, Spike } from '../types/GameTypes.js';
 import { PixiGameState } from './PixiGameState.js';
 import { StageLoader } from './StageLoader.js';
 
@@ -104,7 +105,7 @@ export class PurePixiGame {
 
         // Initialize input system
         this.setupInputSystem();
-        
+
         // Start game loop
         this.startGameLoop();
 
@@ -153,7 +154,7 @@ export class PurePixiGame {
 
         // Cleanup input system
         this.cleanupInputSystem();
-        
+
         // Stop game loop
         this.stopGameLoop();
 
@@ -293,7 +294,6 @@ export class PurePixiGame {
         console.log('🎮 PurePixiGame: Input system cleaned up');
     }
 
-    
     /**
      * Start the main game loop using PixiJS ticker
      * @private
@@ -302,54 +302,55 @@ export class PurePixiGame {
         if (!this.app) {
             throw new Error('PixiJS application not initialized');
         }
-        
+
         // Add game update to PixiJS ticker
         this.app.ticker.add(this.updateGame.bind(this));
-        
+
         console.log('🎮 PurePixiGame: Game loop started (PixiJS ticker)');
     }
-    
+
     /**
      * Main game update loop
      * @param deltaTime - Delta time from PixiJS ticker
      * @private
      */
-    private updateGame(ticker: any): void {
+    private updateGame(ticker: { deltaTime: number }): void {
         const deltaTime = ticker.deltaTime;
         // Only update if game is running
         if (!this.gameState?.isGameRunning()) {
             return;
         }
-        
+
         // Update continuous input (movement keys)
         this.updateContinuousInput(deltaTime);
-        
+
         // Apply physics updates
         this.updatePhysics(deltaTime);
-        
+
         // TODO: Add collision detection
         // TODO: Add particle system updates
-        
+
         // Debug output (throttled)
         if (this.app?.ticker.FPS && Math.floor(this.app.ticker.lastTime / 1000) % 1 === 0) {
-            console.log(`🎮 Game Loop: FPS=${Math.round(this.app.ticker.FPS)}, DeltaTime=${deltaTime.toFixed(2)}`);
+            console.log(
+                `🎮 Game Loop: FPS=${Math.round(this.app.ticker.FPS)}, DeltaTime=${deltaTime.toFixed(2)}`
+            );
         }
     }
-    
+
     /**
      * Update continuous input processing (for held keys)
      * @param deltaTime - Delta time from PixiJS ticker
      * @private
      */
-    private updateContinuousInput(deltaTime: number): void {
+    private updateContinuousInput(_deltaTime: number): void {
         if (!this.isInputEnabled) return;
-        
+
         // Note: deltaTime parameter available for future continuous input features
-        
+
         // Note: SPACE and R are handled in processKeyInput() for single press
     }
 
-    
     /**
      * Update physics simulation
      * @param deltaTime - Delta time from PixiJS ticker
@@ -357,18 +358,18 @@ export class PurePixiGame {
      */
     private updatePhysics(deltaTime: number): void {
         if (!this.gameState) return;
-        
+
         const player = this.gameState.getPlayer();
-        
+
         // Physics constants
         const GRAVITY = 0.8;
         const MOVE_SPEED = 5.0;
-        const JUMP_FORCE = -12;
+        // const JUMP_FORCE = -12; // Reserved for future jump force adjustments
         const MAX_SPEED = 10;
-        
+
         // Apply gravity
         let newVy = player.vy + GRAVITY * deltaTime;
-        
+
         // Handle continuous input for movement
         let newVx = player.vx;
         if (this.keys.has('ArrowLeft')) {
@@ -379,25 +380,31 @@ export class PurePixiGame {
             // Apply friction when no input
             newVx *= 0.8;
         }
-        
+
         // Clamp velocities
         newVx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newVx));
         newVy = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newVy));
-        
+
         // Update position
         const newX = player.x + newVx * deltaTime;
         const newY = player.y + newVy * deltaTime;
-        
+
+        // Create temporary player state for collision detection
+        const tempPlayer = { ...player, x: newX, y: newY, vx: newVx, vy: newVy };
+
+        // Check platform collisions for grounding
+        const isOnPlatform = this.checkPlatformCollisions(tempPlayer);
+
         // Basic boundary checks (prevent falling through bottom)
         const boundedY = Math.max(0, Math.min(600 - player.radius, newY));
-        
-        // Check if grounded (simple ground check)
-        const isGrounded = boundedY >= 600 - player.radius - 1;
+
+        // Check if grounded (platform collision or ground boundary)
+        const isGrounded = isOnPlatform || boundedY >= 600 - player.radius - 1;
         if (isGrounded && newVy > 0) {
             newVy = 0; // Stop falling
         }
-        
-        // Update player state
+
+        // Update player state with new position and velocity
         this.gameState.updatePlayer({
             x: newX,
             y: boundedY,
@@ -405,36 +412,222 @@ export class PurePixiGame {
             vy: newVy,
             grounded: isGrounded
         });
-        
-        console.log(`🎮 Physics: Player at (${newX.toFixed(1)}, ${boundedY.toFixed(1)}) vel=(${newVx.toFixed(1)}, ${newVy.toFixed(1)}) grounded=${isGrounded}`);
+
+        // Check spike collisions (after position update)
+        this.checkSpikeCollisions(this.gameState.getPlayer());
+
+        // Check goal collision (after position update)
+        this.checkGoalCollision(this.gameState.getPlayer());
+
+        console.log(
+            `🎮 Physics: Player at (${newX.toFixed(1)}, ${boundedY.toFixed(1)}) vel=(${newVx.toFixed(1)}, ${newVy.toFixed(1)}) grounded=${isGrounded} onPlatform=${isOnPlatform}`
+        );
     }
 
-    
+    /**
+     * Check if player is colliding with any platform
+     */
+    private checkPlatformCollisions(player: Player): boolean {
+        const stageData = this.gameState?.getStageData();
+        if (!stageData?.platforms) return false;
+
+        for (const platform of stageData.platforms) {
+            if (this.isPlayerOnPlatform(player, platform)) {
+                return true; // Grounded on platform
+            }
+        }
+        return false; // Not on any platform
+    }
+
+    /**
+     * Check if player is on a specific platform (line segment collision)
+     */
+    private isPlayerOnPlatform(player: Player, platform: Platform): boolean {
+        // Platform is a line segment from (x1,y1) to (x2,y2)
+        // Check if player (circle) is standing on the line
+
+        // Check if player is horizontally within platform bounds
+        const playerLeft = player.x - player.radius;
+        const playerRight = player.x + player.radius;
+        const platformLeft = Math.min(platform.x1, platform.x2);
+        const platformRight = Math.max(platform.x1, platform.x2);
+
+        if (playerRight < platformLeft || playerLeft > platformRight) {
+            return false; // Not horizontally aligned
+        }
+
+        // Check if player is vertically touching the platform line
+        // For line segments, we need to interpolate the y-value at player's x position
+        const platformTop = Math.min(platform.y1, platform.y2);
+        // const platformBottom = Math.max(platform.y1, platform.y2); // Reserved for complex platform collision
+
+        // Simple approach: treat platform as horizontal line at the top edge
+        const platformY = platformTop;
+        const playerBottom = player.y + player.radius;
+
+        // Player is on platform if bottom edge is close to platform top
+        return Math.abs(playerBottom - platformY) <= 3 && player.vy >= 0;
+    }
+
+    /**
+     * Check if player is colliding with any spike
+     */
+    private checkSpikeCollisions(player: Player): boolean {
+        const stageData = this.gameState?.getStageData();
+        if (!stageData?.spikes) return false;
+
+        for (const spike of stageData.spikes) {
+            if (this.isPlayerTouchingSpike(player, spike)) {
+                this.handlePlayerDeath();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if player (circle) is touching a spike (rectangle)
+     */
+    private isPlayerTouchingSpike(player: Player, spike: Spike): boolean {
+        // Rectangle-circle collision detection
+        const playerCenterX = player.x;
+        const playerCenterY = player.y;
+        const playerRadius = player.radius;
+
+        // Find closest point on rectangle to circle center
+        const closestX = Math.max(spike.x, Math.min(playerCenterX, spike.x + spike.width));
+        const closestY = Math.max(spike.y, Math.min(playerCenterY, spike.y + spike.height));
+
+        // Calculate distance from circle center to closest point
+        const distanceX = playerCenterX - closestX;
+        const distanceY = playerCenterY - closestY;
+        const distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+        return distanceSquared <= playerRadius * playerRadius;
+    }
+
+    /**
+     * Handle player death
+     */
+    private handlePlayerDeath(): void {
+        if (!this.gameState) return;
+
+        const player = this.gameState.getPlayer();
+
+        // Add death mark at current position
+        this.gameState.addDeathMark({
+            x: player.x,
+            y: player.y,
+            timestamp: Date.now()
+        });
+
+        // Reset player to starting position
+        this.resetPlayerToStart();
+
+        console.log('💀 Player died! Death mark added, player reset to start');
+    }
+
+    /**
+     * Reset player to starting position
+     */
+    private resetPlayerToStart(): void {
+        if (!this.gameState) return;
+
+        const stageData = this.gameState.getStageData();
+        if (!stageData) return;
+
+        // Reset player to stage starting position (usually around x=50, y=100)
+        this.gameState.updatePlayer({
+            x: 50,
+            y: 100,
+            vx: 0,
+            vy: 0,
+            grounded: false
+        });
+
+        console.log('🔄 Player reset to starting position');
+    }
+
+    /**
+     * Check if player is colliding with the goal
+     */
+    private checkGoalCollision(player: Player): boolean {
+        const stageData = this.gameState?.getStageData();
+        if (!stageData?.goal) return false;
+
+        if (this.isPlayerTouchingGoal(player, stageData.goal)) {
+            this.handleLevelComplete();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if player (circle) is touching the goal (rectangle)
+     */
+    private isPlayerTouchingGoal(player: Player, goal: Goal): boolean {
+        // Rectangle-circle collision detection (same as spike collision)
+        const playerCenterX = player.x;
+        const playerCenterY = player.y;
+        const playerRadius = player.radius;
+
+        // Find closest point on rectangle to circle center
+        const closestX = Math.max(goal.x, Math.min(playerCenterX, goal.x + goal.width));
+        const closestY = Math.max(goal.y, Math.min(playerCenterY, goal.y + goal.height));
+
+        // Calculate distance from circle center to closest point
+        const distanceX = playerCenterX - closestX;
+        const distanceY = playerCenterY - closestY;
+        const distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+        return distanceSquared <= playerRadius * playerRadius;
+    }
+
+    /**
+     * Handle level completion
+     */
+    private handleLevelComplete(): void {
+        if (!this.gameState) return;
+
+        // Calculate final score based on time and deaths
+        const timeRemaining = this.gameState.getTimeRemaining();
+        const deathCount = this.gameState.getDeathMarks().length;
+        const finalScore = Math.max(0, timeRemaining * 10 - deathCount * 50);
+
+        this.gameState.setFinalScore(finalScore);
+        this.gameState.gameOver();
+
+        console.log(
+            `🎉 Level Complete! Score: ${finalScore}, Time: ${timeRemaining}s, Deaths: ${deathCount}`
+        );
+
+        // TODO: Trigger level complete UI or transition to next stage
+    }
+
     /**
      * Handle player jump
      * @private
      */
     private handleJump(): void {
         if (!this.gameState) return;
-        
+
         const player = this.gameState.getPlayer();
-        
+
         // Only allow jumping if grounded
         if (player.grounded) {
             const JUMP_FORCE = -12;
-            
+
             this.gameState.updatePlayer({
                 vy: JUMP_FORCE,
                 grounded: false
             });
-            
+
             console.log('🎮 Physics: Player jumped!');
         } else {
             console.log('🎮 Physics: Cannot jump - not grounded');
         }
     }
 
-    
     /**
      * Stop the main game loop
      * @private
@@ -442,9 +635,9 @@ export class PurePixiGame {
     private stopGameLoop(): void {
         if (this.app) {
             if (this.app) {
-            this.app.ticker.remove(this.updateGame.bind(this));
-            console.log('🎮 PurePixiGame: Game loop stopped');
-        }
+                this.app.ticker.remove(this.updateGame.bind(this));
+                console.log('🎮 PurePixiGame: Game loop stopped');
+            }
             console.log('🎮 PurePixiGame: Game loop stopped');
         }
     }
