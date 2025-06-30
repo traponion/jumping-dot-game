@@ -80,6 +80,5 @@ review.md
 # serena
 .serena/
 
-# Handover documents (temporary, for ねつき sessions)
-.claude/handover_document.md
-.claude/handover*.md
+# Claude AI working directory (temporary files, handovers, etc.)
+.claude/
