@@ -68,7 +68,6 @@ export class GameManager {
 
     // Game state tracking
     /** @private {number} Previous player Y position for collision detection */
-    private prevPlayerY = 0;
 
     /**
      * Creates a new GameManager instance
@@ -174,7 +173,7 @@ export class GameManager {
 
         // Clear inputs first before changing game state
         this.inputManager.clearInputs();
-        this.prevPlayerY = 0;
+        // Previous player Y tracking now handled by CollisionSystem
     }
 
     /**
@@ -198,7 +197,13 @@ export class GameManager {
         }
 
         this.updateSystems(deltaTime);
-        this.handleCollisions();
+        // REFACTOR: Use CollisionSystem.update() instead of handleCollisions()
+        this.collisionSystem.update(
+            this.playerSystem,
+            this.renderSystem,
+            () => this.handlePlayerDeath('Hit by spike! Press R to restart'),
+            () => this.handleGoalReached()
+        );
         this.updateCamera();
         this.checkBoundaries();
         this.updateLandingPredictions();
@@ -230,87 +235,6 @@ export class GameManager {
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
-    }
-
-    private handleCollisions(): void {
-        if (!this.stage) return;
-
-        const player = this.gameState.runtime.player;
-        const prevPlayerFootY = this.prevPlayerY + player.radius;
-
-        // Handle moving platform collisions first (higher priority)
-        if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
-            const movingPlatformCollisionUpdate =
-                this.collisionSystem.handleMovingPlatformCollisions(
-                    this.stage.movingPlatforms,
-                    prevPlayerFootY
-                );
-
-            if (movingPlatformCollisionUpdate) {
-                // Apply collision update to player
-                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
-
-                if (
-                    movingPlatformCollisionUpdate.grounded &&
-                    movingPlatformCollisionUpdate.platform
-                ) {
-                    this.playerSystem.resetJumpTimer();
-
-                    // IMPORTANT: Move player with the platform!
-                    const movingPlatform = movingPlatformCollisionUpdate.platform;
-                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime (should use actual deltaTime)
-                    const platformMovement =
-                        movingPlatform.speed * movingPlatform.direction * dtFactor;
-
-                    // Get current player and apply platform movement
-                    const currentPlayer = this.gameState.runtime.player;
-                    currentPlayer.x += platformMovement;
-
-                    // Add landing history with updated position
-                    const finalPlayer = this.gameState.runtime.player;
-                    this.renderSystem.addLandingHistory(
-                        finalPlayer.x,
-                        finalPlayer.y + finalPlayer.radius
-                    );
-                }
-
-                // Skip static platform collision check if moving platform collision found
-                return;
-            }
-        }
-
-        // Handle static platform collisions (only if no moving platform collision)
-        const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
-            this.stage.platforms,
-            prevPlayerFootY
-        );
-
-        if (platformCollisionUpdate) {
-            // GameManager is responsible for updating the store
-            Object.assign(this.gameState.runtime.player, platformCollisionUpdate);
-
-            if (platformCollisionUpdate.grounded) {
-                this.playerSystem.resetJumpTimer();
-                // Get updated player state from store after collision
-                const updatedPlayer = this.gameState.runtime.player;
-                this.renderSystem.addLandingHistory(
-                    updatedPlayer.x,
-                    updatedPlayer.y + updatedPlayer.radius
-                );
-            }
-        }
-
-        // Get latest player state from store for other collision checks
-        const latestPlayer = this.gameState.runtime.player;
-        if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
-            this.handlePlayerDeath('Hit by spike! Press R to restart');
-            return;
-        }
-
-        if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
-            this.handleGoalReached();
-            return;
-        }
     }
 
     private updateCamera(): void {
@@ -460,9 +384,6 @@ export class GameManager {
     /**
      * Update previous player position (for collision detection)
      */
-    updatePrevPlayerY(): void {
-        this.prevPlayerY = this.gameState.runtime.player.y;
-    }
 
     /**
      * Render the game

@@ -37,7 +37,8 @@ export class CollisionSystem {
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
-        this.prevPlayerY = 0;
+        // FIXED: Initialize with current player position instead of 0
+        this.prevPlayerY = this.gameState.runtime.player.y;
     }
 
     /**
@@ -293,16 +294,8 @@ export class CollisionSystem {
             );
 
             if (movingPlatformCollisionUpdate) {
-                // Direct GameState mutation - NEW PATTERN
-                if (movingPlatformCollisionUpdate.y !== undefined) {
-                    this.gameState.runtime.player.y = movingPlatformCollisionUpdate.y;
-                }
-                if (movingPlatformCollisionUpdate.vy !== undefined) {
-                    this.gameState.runtime.player.vy = movingPlatformCollisionUpdate.vy;
-                }
-                if (movingPlatformCollisionUpdate.grounded !== undefined) {
-                    this.gameState.runtime.player.grounded = movingPlatformCollisionUpdate.grounded;
-                }
+                // FIXED: Use Object.assign to ensure all properties are set properly
+                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
 
                 if (
                     movingPlatformCollisionUpdate.grounded &&
@@ -340,27 +333,17 @@ export class CollisionSystem {
             prevPlayerFootY
         );
 
-        if (platformCollisionUpdate) {
-            // Direct GameState mutation - NEW PATTERN
-            if (platformCollisionUpdate.y !== undefined) {
-                this.gameState.runtime.player.y = platformCollisionUpdate.y;
-            }
-            if (platformCollisionUpdate.vy !== undefined) {
-                this.gameState.runtime.player.vy = platformCollisionUpdate.vy;
-            }
-            if (platformCollisionUpdate.grounded !== undefined) {
-                this.gameState.runtime.player.grounded = platformCollisionUpdate.grounded;
-            }
+        // FIXED: Always apply platform collision result (including grounded: false)
+        Object.assign(this.gameState.runtime.player, platformCollisionUpdate);
 
-            if (platformCollisionUpdate.grounded && playerSystem) {
-                playerSystem.resetJumpTimer();
+        if (platformCollisionUpdate?.grounded && playerSystem) {
+            playerSystem.resetJumpTimer();
 
-                if (renderSystem) {
-                    renderSystem.addLandingHistory(
-                        this.gameState.runtime.player.x,
-                        this.gameState.runtime.player.y + this.gameState.runtime.player.radius
-                    );
-                }
+            if (renderSystem) {
+                renderSystem.addLandingHistory(
+                    this.gameState.runtime.player.x,
+                    this.gameState.runtime.player.y + this.gameState.runtime.player.radius
+                );
             }
         }
 

@@ -127,8 +127,7 @@ export class JumpingDotGame {
         // Delegate main update logic to GameManager
         this.gameManager.update(deltaTime);
 
-        // Update previous player position for next frame
-        this.gameManager.updatePrevPlayerY();
+        // Previous player position update now handled by CollisionSystem.update()
     }
 
     private setupGameManagerCallbacks(): void {
