@@ -152,6 +152,7 @@ export class GameManager {
      */
     async resetGameState(): Promise<void> {
         this.gameState.gameRunning = false;
+        this.gameState.gameStartTime = null;
         this.gameState.timeRemaining = this.gameState.timeLimit;
         this.gameState.gameOver = false;
 
@@ -181,6 +182,7 @@ export class GameManager {
      */
     startGame(): void {
         this.gameState.gameRunning = true;
+        this.gameState.gameStartTime = getCurrentTime();
         // Clear inputs on game start
         this.inputManager.clearInputs();
     }
