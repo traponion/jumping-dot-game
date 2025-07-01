@@ -1,19 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import type { DeathMark, Player } from '../types/GameTypes.js';
-
-// Mock GameZustandStore
-const mockGameStore = {
-    addDeathMark: vi.fn(),
-    runtime: {
-        deathMarks: [] as DeathMark[]
-    }
-};
-
-vi.mock('../stores/GameZustandStore.js', () => ({
-    getGameStore: () => mockGameStore
-}));
+import type { Player } from '../types/GameTypes.js';
 
 describe('AnimationSystem', () => {
     let animationSystem: AnimationSystem;
@@ -32,8 +20,6 @@ describe('AnimationSystem', () => {
             grounded: false
         };
 
-        // Reset mock store state
-        mockGameStore.runtime.deathMarks = [];
         vi.clearAllMocks();
 
         // Mock performance.now
