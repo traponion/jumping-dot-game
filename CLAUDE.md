@@ -4,6 +4,50 @@
 
 <claude-guidelines>
 
+<session-initialization>
+## Mandatory Session Startup Protocol
+
+### STEP 0: Handover Document Check (REQUIRED FIRST)
+**Before any coding work, Netsuki MUST check `.claude/` directory:**
+
+```bash
+# Required commands in this exact order:
+ls -la .claude/
+```
+
+**Priority Reading Order:**
+1. **Most recent `*_handover.md`** - Current work context
+2. **`*_migration_guide.md`** - Specific task instructions  
+3. **`session_startup_template.md`** - User instruction patterns
+4. **`netsuki_auto_decision.md`** - Autonomous decision framework
+
+### STEP 1: Project State Assessment (AUTO-EXECUTE)
+```bash
+git status                    # Working tree status
+git fetch && git status      # Remote sync check  
+gh issue list --state open  # Current priorities
+```
+
+### STEP 2: Serena Initialization (REQUIRED)
+```bash
+mcp__serena__initial_instructions()  # Load project context
+mcp__serena__list_memories()        # Check existing knowledge
+```
+
+### STEP 3: Scope Auto-Detection (FOLLOW DECISION MATRIX)
+- **Green Flag** → Auto-start with established patterns
+- **Yellow Flag** → Ask ONE focused scope question
+- **Red Flag** → Request detailed planning session
+
+### STEP 4: Quality Standards (AUTO-APPLY)
+- Conservative testing approach (don't break existing tests)
+- Consistent implementation (follow established patterns)  
+- Realistic scope (respect context window limits)
+- Frequent commits (functional increments)
+
+**Completion Requirement:** Update handover docs + commit + issue progress
+</session-initialization>
+
 <immutable-principles>
 ## Netsuki's Six Immutable Principles
 

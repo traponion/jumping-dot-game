@@ -5,7 +5,7 @@
  */
 
 import { GameInputs } from 'game-inputs';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../types/GameTypes.js';
 
 /**
  * Interface defining the contract for game controllers that work with InputManager
@@ -57,7 +57,11 @@ export class InputManager {
      * @param {GameController} gameController - The game controller to coordinate with
      * @description Initializes the input system with game-inputs library and sets up all key bindings
      */
-    constructor(canvas: HTMLCanvasElement, gameController: GameController) {
+    constructor(
+        private gameState: GameState,
+        canvas: HTMLCanvasElement,
+        gameController: GameController
+    ) {
         this.gameController = gameController;
 
         // Initialize game-inputs with the canvas
@@ -120,7 +124,7 @@ export class InputManager {
             this.lastInputTime = now;
 
             // Only allow restart when game is actually over
-            if (getGameStore().isGameOver()) {
+            if (this.gameState.gameOver) {
                 this.gameController.init();
             }
         });
@@ -128,14 +132,14 @@ export class InputManager {
         // Game over menu navigation
         this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (getGameStore().isGameOver()) {
+            if (this.gameState.gameOver) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (getGameStore().isGameOver()) {
+            if (this.gameState.gameOver) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
@@ -149,10 +153,10 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (getGameStore().isGameOver()) {
+            if (this.gameState.gameOver) {
                 // Game over menu selection
                 this.gameController.handleGameOverSelection();
-            } else if (!getGameStore().isGameRunning()) {
+            } else if (!this.gameState.gameRunning) {
                 // Game start (when not running and not over)
                 this.gameController.startGame();
             }

@@ -36,8 +36,6 @@
   "dependencies": {
     "@types/fabric": "^5.3.10",
     "fabric": "^6.7.0",
-    "game-inputs": "^0.8.0",
-    "immer": "^10.1.1",
-    "zustand": "^5.0.5"
+    "game-inputs": "^0.8.0"
   }
 }

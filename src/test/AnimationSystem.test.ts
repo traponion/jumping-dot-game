@@ -1,25 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import type { DeathMark, Player } from '../types/GameTypes.js';
-
-// Mock GameZustandStore
-const mockGameStore = {
-    addDeathMark: vi.fn(),
-    runtime: {
-        deathMarks: [] as DeathMark[]
-    }
-};
-
-vi.mock('../stores/GameZustandStore.js', () => ({
-    getGameStore: () => mockGameStore
-}));
+import type { Player } from '../types/GameTypes.js';
 
 describe('AnimationSystem', () => {
     let animationSystem: AnimationSystem;
+    let gameState: GameState;
     let mockPlayer: Player;
 
     beforeEach(() => {
-        animationSystem = new AnimationSystem();
+        gameState = new GameState();
+        animationSystem = new AnimationSystem(gameState);
         mockPlayer = {
             x: 100,
             y: 400,
@@ -29,8 +20,6 @@ describe('AnimationSystem', () => {
             grounded: false
         };
 
-        // Reset mock store state
-        mockGameStore.runtime.deathMarks = [];
         vi.clearAllMocks();
 
         // Mock performance.now
@@ -153,8 +142,8 @@ describe('AnimationSystem', () => {
         it('should add death mark to store', () => {
             animationSystem.addDeathMark(mockPlayer.x, mockPlayer.y);
 
-            expect(mockGameStore.addDeathMark).toHaveBeenCalledOnce();
-            expect(mockGameStore.addDeathMark).toHaveBeenCalledWith({
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
+            expect(gameState.runtime.deathMarks[0]).toEqual({
                 x: mockPlayer.x,
                 y: mockPlayer.y,
                 timestamp: 1000
@@ -166,7 +155,8 @@ describe('AnimationSystem', () => {
 
             animationSystem.addDeathMark(mockPlayer.x, adjustedY);
 
-            expect(mockGameStore.addDeathMark).toHaveBeenCalledWith({
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
+            expect(gameState.runtime.deathMarks[0]).toEqual({
                 x: mockPlayer.x,
                 y: adjustedY,
                 timestamp: 1000
@@ -178,18 +168,18 @@ describe('AnimationSystem', () => {
             animationSystem.addDeathMark(150, 250);
             animationSystem.addDeathMark(200, 300);
 
-            expect(mockGameStore.addDeathMark).toHaveBeenCalledTimes(3);
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(1, {
+            expect(gameState.runtime.deathMarks).toHaveLength(3);
+            expect(gameState.runtime.deathMarks[0]).toEqual({
                 x: 100,
                 y: 200,
                 timestamp: 1000
             });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(2, {
+            expect(gameState.runtime.deathMarks[1]).toEqual({
                 x: 150,
                 y: 250,
                 timestamp: 1000
             });
-            expect(mockGameStore.addDeathMark).toHaveBeenNthCalledWith(3, {
+            expect(gameState.runtime.deathMarks[2]).toEqual({
                 x: 200,
                 y: 300,
                 timestamp: 1000

@@ -39,7 +39,7 @@ export class JumpingDotGame {
         this.gameState = new GameState();
 
         // Initialize component classes
-        this.gameUI = new GameUI();
+        this.gameUI = new GameUI(this.gameState);
         this.gameLoop = new GameLoop();
         this.gameManager = new GameManager(this.canvas, this, this.gameState);
 
@@ -75,7 +75,7 @@ export class JumpingDotGame {
         this.gameLoop.resetCleanupState(); // Reset cleanup flag
         this.gameUI.showLoading();
 
-        await this.gameManager.loadStage(this.gameState.game.currentStage);
+        await this.gameManager.loadStage(this.gameState.currentStage);
 
         this.gameUI.showReadyToStart();
         await this.gameManager.resetGameState();
@@ -90,7 +90,7 @@ export class JumpingDotGame {
     }
 
     async initWithStage(stageId: number): Promise<void> {
-        this.gameState.game.currentStage = stageId;
+        this.gameState.currentStage = stageId;
         this.gameUI.showLoading();
 
         await this.gameManager.loadStage(stageId);
@@ -114,7 +114,7 @@ export class JumpingDotGame {
 
     private update(deltaTime: number): void {
         // Update timer UI if game is running
-        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
+        if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.gameUI.updateTimer();
 
             // Check for time up
@@ -149,7 +149,7 @@ export class JumpingDotGame {
     }
 
     public handleGameOverSelection(): void {
-        if (!this.gameState.game.gameOver) return;
+        if (!this.gameState.gameOver) return;
 
         const selectedOption = this.gameUI.getGameOverSelection();
 
@@ -173,7 +173,7 @@ export class JumpingDotGame {
         this.gameManager.render(this.gameUI);
 
         // Update UI visibility during gameplay
-        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
+        if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.gameUI.updateUIVisibility(true, false);
         }
     }
@@ -185,7 +185,7 @@ export class JumpingDotGame {
 
     // Public methods for testing
     setGameOver(): void {
-        this.gameState.game.gameOver = true;
+        this.gameState.gameOver = true;
     }
 
     setAnimationId(id: number): void {

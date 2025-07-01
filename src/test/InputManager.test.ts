@@ -50,7 +50,12 @@ describe('InputManager', () => {
         mockGameInputs.state = {};
 
         // Create InputManager instance
-        inputManager = new InputManager(mockCanvas as HTMLCanvasElement, mockGameController);
+        const gameState = new GameState();
+        inputManager = new InputManager(
+            gameState,
+            mockCanvas as HTMLCanvasElement,
+            mockGameController
+        );
     });
 
     afterEach(() => {

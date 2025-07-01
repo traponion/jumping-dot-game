@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import type { GameUI } from '../core/GameUI.js';
 import { GameState } from '../stores/GameState.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+// getGameStore import removed - using direct GameState instances
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import type { GameController } from '../systems/InputManager.js';
 
@@ -12,13 +12,14 @@ vi.mock('../systems/FabricRenderSystem.js');
 
 describe('GameManager render with GameUI integration', () => {
     let gameManager: GameManager;
+    let gameState: GameState;
     let mockGameUI: GameUI;
     let mockRenderSystem: Partial<FabricRenderSystem>;
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
         // Reset store to clean state
-        getGameStore().reset();
+        // Note: gameState is already created fresh in GameManager constructor
 
         // Create canvas
         canvas = document.createElement('canvas');
@@ -54,7 +55,7 @@ describe('GameManager render with GameUI integration', () => {
 
         // Create GameManager and inject mock render system
         const mockGameController = {} as GameController;
-        const gameState = new GameState();
+        gameState = new GameState();
         gameManager = new GameManager(canvas, mockGameController, gameState);
         (gameManager as unknown as { renderSystem: Partial<FabricRenderSystem> }).renderSystem =
             mockRenderSystem;
@@ -63,8 +64,8 @@ describe('GameManager render with GameUI integration', () => {
     describe('when game is over', () => {
         it('should call renderGameOverMenu before renderAll', () => {
             // Setup: Set game to over state
-            getGameStore().gameOver();
-            getGameStore().setFinalScore(150);
+            gameState.gameOver = true;
+            gameState.finalScore = 150;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
@@ -89,7 +90,7 @@ describe('GameManager render with GameUI integration', () => {
 
         it('should not render start instruction when game is over', () => {
             // Setup: Set game to over state
-            getGameStore().gameOver();
+            gameState.gameOver = true;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
@@ -102,7 +103,7 @@ describe('GameManager render with GameUI integration', () => {
     describe('when game is not running and not over (start screen)', () => {
         it('should call renderStartInstruction and not renderGameOverMenu', () => {
             // Setup: Game not running, not over (initial state)
-            getGameStore().stopGame();
+            gameState.gameRunning = false;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
@@ -117,7 +118,7 @@ describe('GameManager render with GameUI integration', () => {
     describe('when game is running', () => {
         it('should not call renderGameOverMenu or renderStartInstruction', () => {
             // Setup: Game running
-            getGameStore().startGame();
+            gameState.gameRunning = true;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
@@ -139,7 +140,7 @@ describe('GameManager render with GameUI integration', () => {
 
         it('should handle missing GameUI gracefully', () => {
             // Setup: Game over state
-            getGameStore().gameOver();
+            gameState.gameOver = true;
 
             // Act: Call render without GameUI (should not crash)
             expect(() => {

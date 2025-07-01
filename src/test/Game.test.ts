@@ -341,12 +341,12 @@ describe('JumpingDotGame', () => {
 
         it('should return game state correctly', () => {
             const gameState = game.getGameState();
-            expect(gameState.game).toHaveProperty('gameRunning');
-            expect(gameState.game).toHaveProperty('gameOver');
-            expect(gameState.game).toHaveProperty('currentStage');
-            expect(typeof gameState.game.gameRunning).toBe('boolean');
-            expect(typeof gameState.game.gameOver).toBe('boolean');
-            expect(typeof gameState.game.currentStage).toBe('number');
+            expect(gameState).toHaveProperty('gameRunning');
+            expect(gameState).toHaveProperty('gameOver');
+            expect(gameState).toHaveProperty('currentStage');
+            expect(typeof gameState.gameRunning).toBe('boolean');
+            expect(typeof gameState.gameOver).toBe('boolean');
+            expect(typeof gameState.currentStage).toBe('number');
         });
 
         it('should initialize with stage correctly', async () => {
@@ -366,7 +366,7 @@ describe('JumpingDotGame', () => {
 
             await game.initWithStage(2);
             const gameState = game.getGameState();
-            expect(gameState.game.currentStage).toBe(2);
+            expect(gameState.currentStage).toBe(2);
             expect(mockGameStatus.textContent).toBe('Press SPACE to start');
         });
     });
@@ -579,7 +579,7 @@ describe('JumpingDotGame', () => {
 
             await game.initWithStage(3);
             const gameState = game.getGameState();
-            expect(gameState.game.currentStage).toBe(3);
+            expect(gameState.currentStage).toBe(3);
         });
 
         it('should handle game over navigation with different directions', () => {

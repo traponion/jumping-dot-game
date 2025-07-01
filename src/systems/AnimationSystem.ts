@@ -6,7 +6,7 @@
  */
 
 import { GAME_CONFIG } from '../constants/GameConstants.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../stores/GameState.js';
 import type { AnimationSystem as AnimationData, Player } from '../types/GameTypes.js';
 import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
 
@@ -20,13 +20,17 @@ export class AnimationSystem {
     private clearAnimation: AnimationData;
     /** @private {AnimationData} Player death explosion animation */
     private deathAnimation: AnimationData;
+    /** @private {GameState} Game state instance for dependency injection */
+    private gameState: GameState;
 
     /**
      * Creates a new AnimationSystem instance
      * @constructor
+     * @param {GameState} gameState - Game state instance for dependency injection
      * @description Initializes clear and death animation configurations
      */
-    constructor() {
+    constructor(gameState: GameState) {
+        this.gameState = gameState;
         this.clearAnimation = {
             active: false,
             startTime: null,
@@ -158,7 +162,7 @@ export class AnimationSystem {
      * @description Records death location for visual feedback
      */
     addDeathMark(x: number, y: number): void {
-        getGameStore().addDeathMark({
+        this.gameState.runtime.deathMarks.push({
             x,
             y,
             timestamp: getCurrentTime()
