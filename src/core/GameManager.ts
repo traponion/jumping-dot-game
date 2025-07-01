@@ -107,7 +107,7 @@ export class GameManager {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
-        this.collisionSystem = new CollisionSystem();
+        this.collisionSystem = new CollisionSystem(this.gameState);
         this.animationSystem = new AnimationSystem();
         this.movingPlatformSystem = new MovingPlatformSystem();
         // Environment-aware rendering system

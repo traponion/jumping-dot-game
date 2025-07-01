@@ -5,7 +5,7 @@
  */
 
 import type { Goal, MovingPlatform, Platform, Spike } from '../core/StageLoader.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from '../utils/GameUtils.js';
 
@@ -22,6 +22,12 @@ export interface MovingPlatformCollisionResult extends Partial<Player> {
  * @description Provides collision detection methods for platforms, spikes, goals, and boundaries
  */
 export class CollisionSystem {
+    private gameState: GameState;
+
+    constructor(gameState: GameState) {
+        this.gameState = gameState;
+    }
+
     /**
      * Checks collision between player and a single platform
      * @param {Player} player - Current player state
@@ -72,7 +78,7 @@ export class CollisionSystem {
         platforms: Platform[],
         prevPlayerFootY: number
     ): Partial<Player> | null {
-        const player = getGameStore().getPlayer(); // Get latest player state from store
+        const player = this.gameState.runtime.player;
         let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
 
         for (const platform of platforms) {
@@ -214,7 +220,7 @@ export class CollisionSystem {
         movingPlatforms: MovingPlatform[],
         prevPlayerFootY: number
     ): MovingPlatformCollisionResult | null {
-        const player = getGameStore().getPlayer(); // Get latest player state from store
+        const player = this.gameState.runtime.player;
 
         for (const movingPlatform of movingPlatforms) {
             const collisionUpdate = this.checkMovingPlatformCollision(
