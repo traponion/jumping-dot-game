@@ -23,9 +23,11 @@ export interface MovingPlatformCollisionResult extends Partial<Player> {
  */
 export class CollisionSystem {
     private gameState: GameState;
+    private prevPlayerY = 0;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
+        this.prevPlayerY = 0;
     }
 
     /**
@@ -236,5 +238,20 @@ export class CollisionSystem {
 
         // If no collision found, return null (don't interfere with other collision systems)
         return null;
+    }
+
+    /**
+     * Gets the previous player Y position
+     * @returns {number} Previous player Y position
+     */
+    getPrevPlayerY(): number {
+        return this.prevPlayerY;
+    }
+
+    /**
+     * Updates the previous player Y position with current player position
+     */
+    updatePrevPlayerY(): void {
+        this.prevPlayerY = this.gameState.runtime.player.y;
     }
 }

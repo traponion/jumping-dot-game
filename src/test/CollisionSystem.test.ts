@@ -568,4 +568,48 @@ describe('CollisionSystem', () => {
             expect(result).toBeNull();
         });
     });
+
+    describe('prevPlayerY tracking', () => {
+        it('should initialize prevPlayerY to 0', () => {
+            // B/A pattern: Before - check initial state
+            expect(collisionSystem.getPrevPlayerY()).toBe(0);
+        });
+
+        it('should update prevPlayerY when updatePrevPlayerY is called', () => {
+            // B/A pattern: Before - set player position
+            gameState.runtime.player.y = 250;
+
+            // Action - update prevPlayerY
+            collisionSystem.updatePrevPlayerY();
+
+            // After - verify prevPlayerY was updated
+            expect(collisionSystem.getPrevPlayerY()).toBe(250);
+        });
+
+        it('should track player Y position changes across multiple updates', () => {
+            // B/A pattern: Before - initial position
+            gameState.runtime.player.y = 100;
+            collisionSystem.updatePrevPlayerY();
+            expect(collisionSystem.getPrevPlayerY()).toBe(100);
+
+            // Action - move player and update
+            gameState.runtime.player.y = 200;
+            collisionSystem.updatePrevPlayerY();
+
+            // After - verify tracking
+            expect(collisionSystem.getPrevPlayerY()).toBe(200);
+        });
+
+        it('should provide prevPlayerFootY for collision detection', () => {
+            // B/A pattern: Before - set up player state
+            gameState.runtime.player.y = 150;
+            gameState.runtime.player.radius = 5;
+            collisionSystem.updatePrevPlayerY();
+
+            // After - verify calculated prevPlayerFootY
+            const prevPlayerFootY =
+                collisionSystem.getPrevPlayerY() + gameState.runtime.player.radius;
+            expect(prevPlayerFootY).toBe(155);
+        });
+    });
 });
