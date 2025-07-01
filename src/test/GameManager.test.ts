@@ -330,7 +330,7 @@ describe('GameManager', () => {
             (gameManager as any).handlePlayerDeath('Test death message');
 
             // Assert
-            expect(getGameStore().isGameOver()).toBe(true);
+            expect(gameManager.getGameState().game.gameOver).toBe(true);
             expect(startDeathAnimationSpy).toHaveBeenCalled();
         });
     });
@@ -346,7 +346,7 @@ describe('GameManager', () => {
             (gameManager as any).handleGoalReached();
 
             // Assert
-            expect(getGameStore().isGameOver()).toBe(true);
+            expect(gameManager.getGameState().game.gameOver).toBe(true);
             expect(startClearAnimationSpy).toHaveBeenCalled();
         });
     });
