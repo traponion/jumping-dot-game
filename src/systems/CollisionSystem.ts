@@ -9,6 +9,16 @@ import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from '../utils/GameUtils.js';
 
+// Interface for PlayerSystem methods used by CollisionSystem
+interface IPlayerSystem {
+    resetJumpTimer(): void;
+}
+
+// Interface for RenderSystem methods used by CollisionSystem
+interface IRenderSystem {
+    addLandingHistory(x: number, y: number): void;
+}
+
 /**
  * Extended collision result that includes platform reference for moving platforms
  */
@@ -253,5 +263,126 @@ export class CollisionSystem {
      */
     updatePrevPlayerY(): void {
         this.prevPlayerY = this.gameState.runtime.player.y;
+    }
+
+    /**
+     * Autonomous collision update - directly mutates GameState
+     * Replaces GameManager.handleCollisions() logic
+     * @param playerSystem - Player system for jump timer reset
+     * @param renderSystem - Render system for landing history
+     * @param deathHandler - Optional death handler callback
+     * @param goalHandler - Optional goal reached handler callback
+     */
+    update(
+        playerSystem?: IPlayerSystem,
+        renderSystem?: IRenderSystem,
+        deathHandler?: () => void,
+        goalHandler?: () => void
+    ): void {
+        const stage = this.gameState.stage;
+        if (!stage) return;
+
+        const player = this.gameState.runtime.player;
+        const prevPlayerFootY = this.prevPlayerY + player.radius;
+
+        // Handle moving platform collisions first (higher priority)
+        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
+            const movingPlatformCollisionUpdate = this.handleMovingPlatformCollisions(
+                stage.movingPlatforms,
+                prevPlayerFootY
+            );
+
+            if (movingPlatformCollisionUpdate) {
+                // Direct GameState mutation - NEW PATTERN
+                if (movingPlatformCollisionUpdate.y !== undefined) {
+                    this.gameState.runtime.player.y = movingPlatformCollisionUpdate.y;
+                }
+                if (movingPlatformCollisionUpdate.vy !== undefined) {
+                    this.gameState.runtime.player.vy = movingPlatformCollisionUpdate.vy;
+                }
+                if (movingPlatformCollisionUpdate.grounded !== undefined) {
+                    this.gameState.runtime.player.grounded = movingPlatformCollisionUpdate.grounded;
+                }
+
+                if (
+                    movingPlatformCollisionUpdate.grounded &&
+                    movingPlatformCollisionUpdate.platform &&
+                    playerSystem
+                ) {
+                    playerSystem.resetJumpTimer();
+
+                    // Move player with the platform
+                    const movingPlatform = movingPlatformCollisionUpdate.platform;
+                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime
+                    const platformMovement =
+                        movingPlatform.speed * movingPlatform.direction * dtFactor;
+
+                    this.gameState.runtime.player.x += platformMovement;
+
+                    // Add landing history
+                    if (renderSystem) {
+                        renderSystem.addLandingHistory(
+                            this.gameState.runtime.player.x,
+                            this.gameState.runtime.player.y + this.gameState.runtime.player.radius
+                        );
+                    }
+                }
+
+                // Skip static platform collision check
+                this.updatePrevPlayerY();
+                return;
+            }
+        }
+
+        // Handle static platform collisions
+        const platformCollisionUpdate = this.handlePlatformCollisions(
+            stage.platforms,
+            prevPlayerFootY
+        );
+
+        if (platformCollisionUpdate) {
+            // Direct GameState mutation - NEW PATTERN
+            if (platformCollisionUpdate.y !== undefined) {
+                this.gameState.runtime.player.y = platformCollisionUpdate.y;
+            }
+            if (platformCollisionUpdate.vy !== undefined) {
+                this.gameState.runtime.player.vy = platformCollisionUpdate.vy;
+            }
+            if (platformCollisionUpdate.grounded !== undefined) {
+                this.gameState.runtime.player.grounded = platformCollisionUpdate.grounded;
+            }
+
+            if (platformCollisionUpdate.grounded && playerSystem) {
+                playerSystem.resetJumpTimer();
+
+                if (renderSystem) {
+                    renderSystem.addLandingHistory(
+                        this.gameState.runtime.player.x,
+                        this.gameState.runtime.player.y + this.gameState.runtime.player.radius
+                    );
+                }
+            }
+        }
+
+        // Check spike collisions
+        if (this.checkSpikeCollisions(this.gameState.runtime.player, stage.spikes)) {
+            if (deathHandler) {
+                deathHandler();
+            }
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Check goal collision
+        if (this.checkGoalCollision(this.gameState.runtime.player, stage.goal)) {
+            if (goalHandler) {
+                goalHandler();
+            }
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Update previous player Y for next frame
+        this.updatePrevPlayerY();
     }
 }

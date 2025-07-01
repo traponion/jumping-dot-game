@@ -1,3 +1,4 @@
+import type { StageData } from '../core/StageLoader.js';
 // Plain TypeScript GameState class - Library-independent state management
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
@@ -43,6 +44,7 @@ export class GameState {
     public gameStartTime: number | null = null;
     public finalScore = 0;
     public hasMovedOnce = false;
+    public stage: StageData | null = null;
 
     // Runtime state
     public runtime!: GameRuntimeState;
@@ -66,6 +68,7 @@ export class GameState {
         this.gameStartTime = null;
         this.finalScore = 0;
         this.hasMovedOnce = false;
+        this.stage = null;
 
         this.runtime = {
             player: {
