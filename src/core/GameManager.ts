@@ -86,8 +86,8 @@ export class GameManager {
 
     private initializeEntities(): void {
         // Initialize GameState with default values
-        this.gameState.game.currentStage = 1;
-        this.gameState.game.timeRemaining = 10;
+        this.gameState.currentStage = 1;
+        this.gameState.timeRemaining = 10;
         Object.assign(this.gameState.runtime.player, {
             x: 100,
             y: 400,
@@ -113,7 +113,7 @@ export class GameManager {
         this.renderSystem = createGameRenderSystem(this.canvas);
 
         // Initialize InputManager with canvas and game controller
-        this.inputManager = new InputManager(this.canvas, gameController);
+        this.inputManager = new InputManager(this.gameState, this.canvas, gameController);
 
         // Initialize PlayerSystem with InputManager
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
@@ -128,19 +128,19 @@ export class GameManager {
 
             // Set timeLimit from stage data if available
             if (this.stage && this.stage.timeLimit !== undefined) {
-                this.gameState.game.timeLimit = this.stage.timeLimit;
+                this.gameState.timeLimit = this.stage.timeLimit;
             } else {
                 // Use default timeLimit from current store state
-                const defaultTimeLimit = this.gameState.game.timeLimit;
-                this.gameState.game.timeLimit = defaultTimeLimit;
+                const defaultTimeLimit = this.gameState.timeLimit;
+                this.gameState.timeLimit = defaultTimeLimit;
             }
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
 
             // Set timeLimit from fallback stage data
-            const fallbackTimeLimit = this.stage.timeLimit || this.gameState.game.timeLimit;
-            this.gameState.game.timeLimit = fallbackTimeLimit;
+            const fallbackTimeLimit = this.stage.timeLimit || this.gameState.timeLimit;
+            this.gameState.timeLimit = fallbackTimeLimit;
         }
     }
 
@@ -148,9 +148,9 @@ export class GameManager {
      * Reset game state to initial values
      */
     async resetGameState(): Promise<void> {
-        this.gameState.game.gameRunning = false;
-        this.gameState.game.timeRemaining = this.gameState.game.timeLimit;
-        this.gameState.game.gameOver = false;
+        this.gameState.gameRunning = false;
+        this.gameState.timeRemaining = this.gameState.timeLimit;
+        this.gameState.gameOver = false;
 
         // Clean up all existing systems
         await this.cleanupSystems();
@@ -177,7 +177,7 @@ export class GameManager {
      * Start the game
      */
     startGame(): void {
-        this.gameState.game.gameRunning = true;
+        this.gameState.gameRunning = true;
         // Clear inputs on game start
         this.inputManager.clearInputs();
     }
@@ -186,7 +186,7 @@ export class GameManager {
      * Update game systems and logic
      */
     update(deltaTime: number): void {
-        if (!this.gameState.game.gameRunning || this.gameState.game.gameOver) {
+        if (!this.gameState.gameRunning || this.gameState.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
             return;
@@ -396,7 +396,7 @@ export class GameManager {
         message: string,
         deathType = 'normal'
     ): { message: string; deathType: string } {
-        this.gameState.game.gameOver = true;
+        this.gameState.gameOver = true;
 
         const player = this.gameState.runtime.player;
         const camera = this.gameState.runtime.camera;
@@ -416,9 +416,9 @@ export class GameManager {
      * Handle goal reached
      */
     handleGoalReached(): { finalScore: number } {
-        this.gameState.game.gameOver = true;
-        const finalScore = Math.ceil(this.gameState.game.timeRemaining);
-        this.gameState.game.finalScore = finalScore;
+        this.gameState.gameOver = true;
+        const finalScore = Math.ceil(this.gameState.timeRemaining);
+        this.gameState.finalScore = finalScore;
 
         this.animationSystem.startClearAnimation(this.gameState.runtime.player);
 
@@ -437,12 +437,12 @@ export class GameManager {
      * Check if time is up
      */
     checkTimeUp(): boolean {
-        const gameStartTime = this.gameState.game.gameStartTime;
+        const gameStartTime = this.gameState.gameStartTime;
         if (gameStartTime) {
             const currentTime = getCurrentTime();
             const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, this.gameState.game.timeLimit - elapsedSeconds);
-            this.gameState.game.timeRemaining = timeRemaining;
+            const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
+            this.gameState.timeRemaining = timeRemaining;
 
             if (timeRemaining <= 0) {
                 this.handlePlayerDeath('Time Up! Press R to restart');
@@ -475,7 +475,7 @@ export class GameManager {
 
         renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
 
-        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
+        if (this.gameState.gameRunning && !this.gameState.gameOver) {
             const player = this.gameState.runtime.player;
             renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
             renderer.renderLandingPredictions();
@@ -498,16 +498,16 @@ export class GameManager {
         renderer.restoreCameraTransform();
 
         // UI state-based rendering - consolidated in GameManager
-        if (this.gameState.game.gameOver) {
+        if (this.gameState.gameOver) {
             if (ui) {
                 const menuData = ui.getGameOverMenuData();
                 renderer.renderGameOverMenu(
                     menuData.options,
                     menuData.selectedIndex,
-                    this.gameState.game.finalScore
+                    this.gameState.finalScore
                 );
             }
-        } else if (!this.gameState.game.gameRunning) {
+        } else if (!this.gameState.gameRunning) {
             renderer.renderStartInstruction();
         }
 
@@ -555,7 +555,7 @@ export class GameManager {
             await (this.renderSystem as FabricRenderSystem).cleanup();
         }
 
-        this.gameState.game.gameOver = true;
+        this.gameState.gameOver = true;
     }
 
     /**

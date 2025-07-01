@@ -1,12 +1,5 @@
 // Plain TypeScript GameState class - Library-independent state management
-import type {
-    Camera,
-    DeathMark,
-    GameState as GameStateInfo,
-    Particle,
-    Player,
-    TrailPoint
-} from '../types/GameTypes.js';
+import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
 /**
  * Game Runtime State - Manages dynamic game entities and runtime data
@@ -41,7 +34,17 @@ interface GamePerformanceState {
  * without external dependencies (except for type definitions).
  */
 export class GameState {
-    public game!: GameStateInfo;
+    // Game state properties (flattened)
+    public gameRunning = false;
+    public gameOver = false;
+    public currentStage = 1;
+    public timeLimit = 20;
+    public timeRemaining = 20;
+    public gameStartTime: number | null = null;
+    public finalScore = 0;
+    public hasMovedOnce = false;
+
+    // Runtime state
     public runtime!: GameRuntimeState;
     public performance!: GamePerformanceState;
 
@@ -54,16 +57,15 @@ export class GameState {
      * Equivalent to createInitialState from GameZustandStore
      */
     public reset(): void {
-        this.game = {
-            gameRunning: false,
-            gameOver: false,
-            currentStage: 1,
-            timeLimit: 20,
-            timeRemaining: 20,
-            gameStartTime: null,
-            finalScore: 0,
-            hasMovedOnce: false
-        };
+        // Reset game state
+        this.gameRunning = false;
+        this.gameOver = false;
+        this.currentStage = 1;
+        this.timeLimit = 20;
+        this.timeRemaining = 20;
+        this.gameStartTime = null;
+        this.finalScore = 0;
+        this.hasMovedOnce = false;
 
         this.runtime = {
             player: {

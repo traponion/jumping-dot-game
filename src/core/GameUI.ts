@@ -1,4 +1,4 @@
-import { getGameStore } from '../stores/GameZustandStore.js';
+import type { GameState } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 
 /**
@@ -21,7 +21,7 @@ export class GameUI {
     private gameOverMenuIndex = 0;
     private gameOverOptions = ['RESTART STAGE', 'STAGE SELECT'];
 
-    constructor() {
+    constructor(private gameState: GameState) {
         this.gameStatus = this.getRequiredElement('gameStatus');
         this.timerDisplay = this.getRequiredElement('timer');
         this.scoreDisplay = this.getRequiredElement('score');
@@ -39,11 +39,11 @@ export class GameUI {
      * Update timer display based on current game time
      */
     updateTimer(): void {
-        const gameStartTime = getGameStore().game.gameStartTime;
+        const gameStartTime = this.gameState.gameStartTime;
         if (gameStartTime) {
             const currentTime = getCurrentTime();
             const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
+            const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
             this.timerDisplay.textContent = `Time: ${Math.ceil(timeRemaining)}`;
         }
     }
@@ -52,7 +52,7 @@ export class GameUI {
      * Update initial UI state
      */
     updateInitialUI(): void {
-        this.timerDisplay.textContent = `Time: ${getGameStore().game.timeLimit}`;
+        this.timerDisplay.textContent = `Time: ${this.gameState.timeLimit}`;
         this.scoreDisplay.textContent = 'Score: 0';
     }
 
@@ -89,7 +89,11 @@ export class GameUI {
      * Show goal reached state with score
      */
     showGoalReached(): void {
-        const finalScore = Math.ceil(getGameStore().getTimeRemaining());
+        const gameStartTime = this.gameState.gameStartTime;
+        const currentTime = getCurrentTime();
+        const elapsedSeconds = gameStartTime ? (currentTime - gameStartTime) / 1000 : 0;
+        const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
+        const finalScore = Math.ceil(timeRemaining);
         this.gameStatus.textContent = `Goal reached! Score: ${finalScore}`;
         this.scoreDisplay.textContent = `Score: ${finalScore}`;
     }
@@ -98,7 +102,7 @@ export class GameUI {
      * Handle game over menu navigation
      */
     handleGameOverNavigation(direction: 'up' | 'down'): void {
-        if (!getGameStore().isGameOver()) return;
+        if (!this.gameState.gameOver) return;
 
         if (direction === 'up') {
             this.gameOverMenuIndex = Math.max(0, this.gameOverMenuIndex - 1);
