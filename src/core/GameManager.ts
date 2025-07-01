@@ -6,7 +6,6 @@
 
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import type { GameState } from '../stores/GameState.js';
-import { gameStore, getGameStore } from '../stores/GameZustandStore.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
@@ -86,11 +85,10 @@ export class GameManager {
     }
 
     private initializeEntities(): void {
-        // Initialize Zustand store with default values
-        gameStore.getState().reset();
-        gameStore.getState().setCurrentStage(1);
-        gameStore.getState().updateTimeRemaining(10);
-        gameStore.getState().updatePlayer({
+        // Initialize GameState with default values
+        this.gameState.game.currentStage = 1;
+        this.gameState.game.timeRemaining = 10;
+        Object.assign(this.gameState.runtime.player, {
             x: 100,
             y: 400,
             vx: 0,
@@ -98,7 +96,8 @@ export class GameManager {
             radius: GAME_CONFIG.player.defaultRadius,
             grounded: false
         });
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
+        this.gameState.runtime.camera.x = 0;
+        this.gameState.runtime.camera.y = 0;
 
         this.stageLoader = new StageLoader();
     }
@@ -129,19 +128,19 @@ export class GameManager {
 
             // Set timeLimit from stage data if available
             if (this.stage && this.stage.timeLimit !== undefined) {
-                gameStore.getState().setTimeLimit(this.stage.timeLimit);
+                this.gameState.game.timeLimit = this.stage.timeLimit;
             } else {
                 // Use default timeLimit from current store state
-                const defaultTimeLimit = getGameStore().game.timeLimit;
-                gameStore.getState().setTimeLimit(defaultTimeLimit);
+                const defaultTimeLimit = this.gameState.game.timeLimit;
+                this.gameState.game.timeLimit = defaultTimeLimit;
             }
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
 
             // Set timeLimit from fallback stage data
-            const fallbackTimeLimit = this.stage.timeLimit || getGameStore().game.timeLimit;
-            gameStore.getState().setTimeLimit(fallbackTimeLimit);
+            const fallbackTimeLimit = this.stage.timeLimit || this.gameState.game.timeLimit;
+            this.gameState.game.timeLimit = fallbackTimeLimit;
         }
     }
 
@@ -149,9 +148,9 @@ export class GameManager {
      * Reset game state to initial values
      */
     async resetGameState(): Promise<void> {
-        gameStore.getState().stopGame();
-        gameStore.getState().updateTimeRemaining(getGameStore().game.timeLimit);
-        gameStore.getState().restartGame();
+        this.gameState.game.gameRunning = false;
+        this.gameState.game.timeRemaining = this.gameState.game.timeLimit;
+        this.gameState.game.gameOver = false;
 
         // Clean up all existing systems
         await this.cleanupSystems();
@@ -166,7 +165,8 @@ export class GameManager {
         this.playerSystem.reset(100, 400);
         this.animationSystem.reset();
 
-        gameStore.getState().updateCamera({ x: 0, y: 0 });
+        this.gameState.runtime.camera.x = 0;
+        this.gameState.runtime.camera.y = 0;
 
         // Clear inputs first before changing game state
         this.inputManager.clearInputs();
@@ -177,7 +177,7 @@ export class GameManager {
      * Start the game
      */
     startGame(): void {
-        gameStore.getState().startGame();
+        this.gameState.game.gameRunning = true;
         // Clear inputs on game start
         this.inputManager.clearInputs();
     }
@@ -186,7 +186,7 @@ export class GameManager {
      * Update game systems and logic
      */
     update(deltaTime: number): void {
-        if (!getGameStore().isGameRunning() || getGameStore().isGameOver()) {
+        if (!this.gameState.game.gameRunning || this.gameState.game.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
             return;
@@ -217,8 +217,11 @@ export class GameManager {
             );
         }
 
-        // Use store action for clamping speed
-        getGameStore().clampPlayerSpeed(physicsConstants.moveSpeed);
+        // Clamp player speed directly on gameState
+        const player = this.gameState.runtime.player;
+        const maxSpeed = physicsConstants.moveSpeed;
+        if (player.vx > maxSpeed) player.vx = maxSpeed;
+        if (player.vx < -maxSpeed) player.vx = -maxSpeed;
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
@@ -227,7 +230,7 @@ export class GameManager {
     private handleCollisions(): void {
         if (!this.stage) return;
 
-        const player = getGameStore().getPlayer();
+        const player = this.gameState.runtime.player;
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
         // Handle moving platform collisions first (higher priority)
@@ -240,7 +243,7 @@ export class GameManager {
 
             if (movingPlatformCollisionUpdate) {
                 // Apply collision update to player
-                getGameStore().updatePlayer(movingPlatformCollisionUpdate);
+                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
 
                 if (
                     movingPlatformCollisionUpdate.grounded &&
@@ -255,13 +258,11 @@ export class GameManager {
                         movingPlatform.speed * movingPlatform.direction * dtFactor;
 
                     // Get current player and apply platform movement
-                    const currentPlayer = getGameStore().getPlayer();
-                    getGameStore().updatePlayer({
-                        x: currentPlayer.x + platformMovement
-                    });
+                    const currentPlayer = this.gameState.runtime.player;
+                    currentPlayer.x += platformMovement;
 
                     // Add landing history with updated position
-                    const finalPlayer = getGameStore().getPlayer();
+                    const finalPlayer = this.gameState.runtime.player;
                     this.renderSystem.addLandingHistory(
                         finalPlayer.x,
                         finalPlayer.y + finalPlayer.radius
@@ -281,12 +282,12 @@ export class GameManager {
 
         if (platformCollisionUpdate) {
             // GameManager is responsible for updating the store
-            getGameStore().updatePlayer(platformCollisionUpdate);
+            Object.assign(this.gameState.runtime.player, platformCollisionUpdate);
 
             if (platformCollisionUpdate.grounded) {
                 this.playerSystem.resetJumpTimer();
                 // Get updated player state from store after collision
-                const updatedPlayer = getGameStore().getPlayer();
+                const updatedPlayer = this.gameState.runtime.player;
                 this.renderSystem.addLandingHistory(
                     updatedPlayer.x,
                     updatedPlayer.y + updatedPlayer.radius
@@ -295,7 +296,7 @@ export class GameManager {
         }
 
         // Get latest player state from store for other collision checks
-        const latestPlayer = getGameStore().getPlayer();
+        const latestPlayer = this.gameState.runtime.player;
         if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
             this.handlePlayerDeath('Hit by spike! Press R to restart');
             return;
@@ -308,14 +309,12 @@ export class GameManager {
     }
 
     private updateCamera(): void {
-        const player = getGameStore().getPlayer();
-        gameStore
-            .getState()
-            .updateCamera({ x: player.x - this.canvas.width / 2, y: getGameStore().getCamera().y });
+        const player = this.gameState.runtime.player;
+        this.gameState.runtime.camera.x = player.x - this.canvas.width / 2;
     }
 
     private checkBoundaries(): void {
-        const player = getGameStore().getPlayer();
+        const player = this.gameState.runtime.player;
         if (this.collisionSystem.checkHoleCollision(player, 600)) {
             this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
         } else if (this.collisionSystem.checkBoundaryCollision(player, this.canvas.height)) {
@@ -329,7 +328,7 @@ export class GameManager {
         // Simple input-based prediction that grows from landing spot
         const inputKeys = this.inputManager.getMovementState();
         const futureDistance = this.calculateFutureMovement(inputKeys);
-        const predictedX = getGameStore().getPlayer().x + futureDistance;
+        const predictedX = this.gameState.runtime.player.x + futureDistance;
 
         // Find the platform closest to predicted position
         const targetPlatform = this.findNearestPlatform(predictedX);
@@ -352,7 +351,7 @@ export class GameManager {
     private calculateFutureMovement(keys: Record<string, boolean>): number {
         // Estimate future movement for one jump (more realistic timing)
         const jumpDuration = 400; // Shorter, more realistic jump duration
-        const baseMovement = getGameStore().getPlayer().vx * (jumpDuration / 16.67); // Movement during jump
+        const baseMovement = this.gameState.runtime.player.vx * (jumpDuration / 16.67); // Movement during jump
 
         // Add smaller input-based movement
         let inputMovement = 0;
@@ -397,10 +396,10 @@ export class GameManager {
         message: string,
         deathType = 'normal'
     ): { message: string; deathType: string } {
-        gameStore.getState().gameOver();
+        this.gameState.game.gameOver = true;
 
-        const player = getGameStore().getPlayer();
-        const camera = getGameStore().getCamera();
+        const player = this.gameState.runtime.player;
+        const camera = this.gameState.runtime.camera;
         let deathMarkY = player.y;
         if (deathType === 'fall') {
             deathMarkY = camera.y + this.canvas.height - 20;
@@ -417,11 +416,11 @@ export class GameManager {
      * Handle goal reached
      */
     handleGoalReached(): { finalScore: number } {
-        gameStore.getState().gameOver();
-        const finalScore = Math.ceil(getGameStore().getTimeRemaining());
-        gameStore.getState().setFinalScore(finalScore);
+        this.gameState.game.gameOver = true;
+        const finalScore = Math.ceil(this.gameState.game.timeRemaining);
+        this.gameState.game.finalScore = finalScore;
 
-        this.animationSystem.startClearAnimation(getGameStore().getPlayer());
+        this.animationSystem.startClearAnimation(this.gameState.runtime.player);
 
         // Set up auto-return to stage select after clear animation
         setTimeout(() => {
@@ -438,12 +437,12 @@ export class GameManager {
      * Check if time is up
      */
     checkTimeUp(): boolean {
-        const gameStartTime = getGameStore().game.gameStartTime;
+        const gameStartTime = this.gameState.game.gameStartTime;
         if (gameStartTime) {
             const currentTime = getCurrentTime();
             const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, getGameStore().game.timeLimit - elapsedSeconds);
-            gameStore.getState().updateTimeRemaining(timeRemaining);
+            const timeRemaining = Math.max(0, this.gameState.game.timeLimit - elapsedSeconds);
+            this.gameState.game.timeRemaining = timeRemaining;
 
             if (timeRemaining <= 0) {
                 this.handlePlayerDeath('Time Up! Press R to restart');
@@ -457,7 +456,7 @@ export class GameManager {
      * Update previous player position (for collision detection)
      */
     updatePrevPlayerY(): void {
-        this.prevPlayerY = getGameStore().getPlayer().y;
+        this.prevPlayerY = this.gameState.runtime.player.y;
     }
 
     /**
@@ -468,16 +467,16 @@ export class GameManager {
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();
-        renderer.applyCameraTransform(getGameStore().getCamera());
+        renderer.applyCameraTransform(this.gameState.runtime.camera);
 
         if (this.stage) {
             renderer.renderStage(this.stage);
         }
 
-        renderer.renderDeathMarks(getGameStore().runtime.deathMarks);
+        renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
 
-        if (getGameStore().isGameRunning() && !getGameStore().isGameOver()) {
-            const player = getGameStore().getPlayer();
+        if (this.gameState.game.gameRunning && !this.gameState.game.gameOver) {
+            const player = this.gameState.runtime.player;
             renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
             renderer.renderLandingPredictions();
             renderer.renderPlayer(player);
@@ -492,23 +491,23 @@ export class GameManager {
         if (clearAnim.active && clearAnim.startTime) {
             const elapsed = getCurrentTime() - clearAnim.startTime;
             const progress = elapsed / clearAnim.duration;
-            const player = getGameStore().getPlayer();
+            const player = this.gameState.runtime.player;
             renderer.renderClearAnimation(clearAnim.particles, progress, player.x, player.y);
         }
 
         renderer.restoreCameraTransform();
 
         // UI state-based rendering - consolidated in GameManager
-        if (getGameStore().isGameOver()) {
+        if (this.gameState.game.gameOver) {
             if (ui) {
                 const menuData = ui.getGameOverMenuData();
                 renderer.renderGameOverMenu(
                     menuData.options,
                     menuData.selectedIndex,
-                    getGameStore().getFinalScore()
+                    this.gameState.game.finalScore
                 );
             }
-        } else if (!getGameStore().isGameRunning()) {
+        } else if (!this.gameState.game.gameRunning) {
             renderer.renderStartInstruction();
         }
 
@@ -556,7 +555,7 @@ export class GameManager {
             await (this.renderSystem as FabricRenderSystem).cleanup();
         }
 
-        gameStore.getState().gameOver();
+        this.gameState.game.gameOver = true;
     }
 
     /**
