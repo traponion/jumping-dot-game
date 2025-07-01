@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import { GameState } from '../stores/GameState.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+// getGameStore import removed - using direct GameState instances
 
 // Mock all dependencies
 vi.mock('../systems/CollisionSystem');
@@ -86,7 +86,7 @@ describe('GameManager', () => {
         (mockAnimationSystem as any).startClearAnimation = vi.fn();
 
         // Reset store
-        getGameStore().reset();
+        // Note: gameState is created fresh in GameManager constructor
     });
 
     afterEach(() => {
@@ -96,7 +96,7 @@ describe('GameManager', () => {
     describe('update method conditions', () => {
         it('should not call updateSystems when game is not running', () => {
             // Arrange: Game is stopped
-            getGameStore().stopGame();
+            gameState.gameRunning = false;
             const updateSystemsSpy = vi.spyOn(
                 gameManager as unknown as { updateSystems: () => void },
                 'updateSystems'
@@ -111,8 +111,8 @@ describe('GameManager', () => {
 
         it('should not call updateSystems when game is over', () => {
             // Arrange: Game is over
-            getGameStore().startGame();
-            getGameStore().gameOver();
+            gameState.gameRunning = true;
+            gameState.gameOver = true;
             const updateSystemsSpy = vi.spyOn(
                 gameManager as unknown as { updateSystems: () => void },
                 'updateSystems'
@@ -127,7 +127,7 @@ describe('GameManager', () => {
 
         it('should call updateSystems when game is running and not over', () => {
             // Arrange: Game is running
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             const updateSystemsSpy = vi.spyOn(
                 gameManager as unknown as { updateSystems: () => void },
                 'updateSystems'
@@ -149,7 +149,7 @@ describe('GameManager', () => {
                 spikes: [{ x: 100, y: 400, width: 10, height: 10 }],
                 goal: { x: 700, y: 450, width: 40, height: 50 }
             };
-            getGameStore().startGame();
+            gameState.gameRunning = true;
         });
 
         it('should handle player death on spike collision', () => {
@@ -212,7 +212,7 @@ describe('GameManager', () => {
 
     describe('checkBoundaries method', () => {
         beforeEach(() => {
-            getGameStore().startGame();
+            gameState.gameRunning = true;
         });
 
         it('should handle player death when falling into hole', () => {
@@ -276,13 +276,13 @@ describe('GameManager', () => {
 
     describe('checkTimeUp method', () => {
         beforeEach(() => {
-            getGameStore().startGame();
+            gameState.gameRunning = true;
         });
 
         it('should handle player death when time runs out', () => {
             // Arrange: Set time remaining to 0 to simulate timeout
-            getGameStore().startGame();
-            getGameStore().updateTimeRemaining(0);
+            gameState.gameRunning = true;
+            gameState.timeRemaining = 0;
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -303,7 +303,7 @@ describe('GameManager', () => {
 
         it('should not handle death when time remaining', () => {
             // Arrange: Set time to positive value
-            getGameStore().updateTimeRemaining(10);
+            gameState.timeRemaining = 10;
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -322,7 +322,7 @@ describe('GameManager', () => {
     describe('handlePlayerDeath method', () => {
         it('should set game over state and start death animation', () => {
             // Arrange
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             const startDeathAnimationSpy = vi.fn();
             (mockAnimationSystem as any).startDeathAnimation = startDeathAnimationSpy;
 
@@ -330,7 +330,7 @@ describe('GameManager', () => {
             (gameManager as any).handlePlayerDeath('Test death message');
 
             // Assert
-            expect(gameManager.getGameState().game.gameOver).toBe(true);
+            expect(gameManager.getGameState().gameOver).toBe(true);
             expect(startDeathAnimationSpy).toHaveBeenCalled();
         });
     });
@@ -338,7 +338,7 @@ describe('GameManager', () => {
     describe('handleGoalReached method', () => {
         it('should set game over state and start clear animation', () => {
             // Arrange
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             const startClearAnimationSpy = vi.fn();
             (mockAnimationSystem as any).startClearAnimation = startClearAnimationSpy;
 
@@ -346,7 +346,7 @@ describe('GameManager', () => {
             (gameManager as any).handleGoalReached();
 
             // Assert
-            expect(gameManager.getGameState().game.gameOver).toBe(true);
+            expect(gameManager.getGameState().gameOver).toBe(true);
             expect(startClearAnimationSpy).toHaveBeenCalled();
         });
     });
@@ -371,8 +371,8 @@ describe('GameManager', () => {
             await gameManager.loadStage(1);
 
             // Assert
-            expect(getGameStore().game.timeLimit).toBe(15);
-            expect(getGameStore().getTimeRemaining()).toBe(15);
+            expect(gameState.timeLimit).toBe(15);
+            expect(gameState.timeRemaining).toBe(15);
         });
 
         it('should use default time limit when stage has no timeLimit', async () => {
@@ -389,19 +389,19 @@ describe('GameManager', () => {
             };
             const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             (mockStageLoader as any).loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
-            const defaultTimeLimit = getGameStore().game.timeLimit;
+            const defaultTimeLimit = gameState.timeLimit;
 
             // Act
             await gameManager.loadStage(1);
 
             // Assert
-            expect(getGameStore().game.timeLimit).toBe(defaultTimeLimit);
+            expect(gameState.timeLimit).toBe(defaultTimeLimit);
         });
     });
 
     describe('updateSystems method', () => {
         beforeEach(() => {
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],
@@ -494,7 +494,7 @@ describe('GameManager', () => {
         it('should handle missing stage gracefully', () => {
             // Arrange
             (gameManager as unknown as Record<string, unknown>).stage = null;
-            getGameStore().startGame();
+            gameState.gameRunning = true;
 
             // Act & Assert - should not throw
             expect(() => gameManager.update(16.67)).not.toThrow();
@@ -502,7 +502,7 @@ describe('GameManager', () => {
 
         it('should handle zero delta time', () => {
             // Arrange
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],
@@ -515,7 +515,7 @@ describe('GameManager', () => {
 
         it('should handle negative delta time', () => {
             // Arrange
-            getGameStore().startGame();
+            gameState.gameRunning = true;
             (gameManager as unknown as Record<string, unknown>).stage = {
                 platforms: [],
                 spikes: [],

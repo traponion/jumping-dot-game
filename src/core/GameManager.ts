@@ -129,10 +129,12 @@ export class GameManager {
             // Set timeLimit from stage data if available
             if (this.stage && this.stage.timeLimit !== undefined) {
                 this.gameState.timeLimit = this.stage.timeLimit;
+                this.gameState.timeRemaining = this.stage.timeLimit; // Fix: Also update timeRemaining
             } else {
                 // Use default timeLimit from current store state
                 const defaultTimeLimit = this.gameState.timeLimit;
                 this.gameState.timeLimit = defaultTimeLimit;
+                this.gameState.timeRemaining = defaultTimeLimit; // Fix: Also update timeRemaining
             }
         } catch (error) {
             console.error('Failed to load stage:', error);
@@ -141,6 +143,7 @@ export class GameManager {
             // Set timeLimit from fallback stage data
             const fallbackTimeLimit = this.stage.timeLimit || this.gameState.timeLimit;
             this.gameState.timeLimit = fallbackTimeLimit;
+            this.gameState.timeRemaining = fallbackTimeLimit; // Fix: Also update timeRemaining
         }
     }
 

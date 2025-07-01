@@ -1,15 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameManager } from '../core/GameManager.js';
 import { GameState } from '../stores/GameState.js';
-import { getGameStore } from '../stores/GameZustandStore.js';
+// getGameStore import removed - using direct GameState instances
 
 describe('GameManager timeLimit integration', () => {
     let gameManager: GameManager;
+    let gameState: GameState;
     let canvas: HTMLCanvasElement;
 
     beforeEach(() => {
         // Reset store to clean state
-        getGameStore().reset();
+        // Note: gameState is created fresh in GameManager constructor
 
         // Create canvas
         canvas = document.createElement('canvas');
@@ -27,7 +28,7 @@ describe('GameManager timeLimit integration', () => {
                 .fn()
                 .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 })
         };
-        const gameState = new GameState();
+        gameState = new GameState();
         gameManager = new GameManager(canvas, mockGameController, gameState);
     });
 
@@ -53,9 +54,9 @@ describe('GameManager timeLimit integration', () => {
             // Act: Load stage
             await gameManager.loadStage(1);
 
-            // Assert: timeLimit should be set in store
-            expect(getGameStore().getTimeRemaining()).toBe(10);
-            expect(getGameStore().game.timeLimit).toBe(10);
+            // Assert: timeLimit should be set in gameState
+            expect(gameState.timeRemaining).toBe(10);
+            expect(gameState.timeLimit).toBe(10);
         });
 
         it('should set different timeLimit for different stages', async () => {
@@ -79,8 +80,8 @@ describe('GameManager timeLimit integration', () => {
             await gameManager.loadStage(2);
 
             // Assert: Different timeLimit should be set
-            expect(getGameStore().getTimeRemaining()).toBe(45);
-            expect(getGameStore().game.timeLimit).toBe(45);
+            expect(gameState.timeRemaining).toBe(45);
+            expect(gameState.timeLimit).toBe(45);
         });
 
         it('should use default timeLimit when stage has no timeLimit', async () => {
@@ -103,9 +104,9 @@ describe('GameManager timeLimit integration', () => {
             // Act: Load stage
             await gameManager.loadStage(3);
 
-            // Assert: Should use default timeLimit (20 seconds from initial store state)
-            expect(getGameStore().getTimeRemaining()).toBe(20);
-            expect(getGameStore().game.timeLimit).toBe(20);
+            // Assert: Should use default timeLimit (20 seconds from initial GameState)
+            expect(gameState.timeRemaining).toBe(20);
+            expect(gameState.timeLimit).toBe(20);
         });
 
         it('should handle fallback to hardcoded stage with timeLimit', async () => {
@@ -134,8 +135,8 @@ describe('GameManager timeLimit integration', () => {
             await gameManager.loadStage(1);
 
             // Assert: Should use hardcoded stage's timeLimit
-            expect(getGameStore().getTimeRemaining()).toBe(10);
-            expect(getGameStore().game.timeLimit).toBe(10);
+            expect(gameState.timeRemaining).toBe(10);
+            expect(gameState.timeLimit).toBe(10);
         });
     });
 
@@ -160,15 +161,15 @@ describe('GameManager timeLimit integration', () => {
             await gameManager.loadStage(1);
 
             // Simulate game running and time decreasing
-            getGameStore().updateTimeRemaining(5);
-            expect(getGameStore().getTimeRemaining()).toBe(5);
+            gameState.timeRemaining = 5;
+            expect(gameState.timeRemaining).toBe(5);
 
             // Act: Reset game state
             await gameManager.resetGameState();
 
             // Assert: timeRemaining should be reset to timeLimit
-            expect(getGameStore().getTimeRemaining()).toBe(15);
-            expect(getGameStore().game.timeLimit).toBe(15);
+            expect(gameState.timeRemaining).toBe(15);
+            expect(gameState.timeLimit).toBe(15);
         });
     });
 });
