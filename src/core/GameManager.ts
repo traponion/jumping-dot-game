@@ -10,6 +10,7 @@ import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
+import { GameRuleSystem } from '../systems/GameRuleSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
@@ -52,6 +53,8 @@ export class GameManager {
     private cameraSystem!: CameraSystem;
     /** @private {CollisionSystem} Collision detection system */
     private collisionSystem!: CollisionSystem;
+    /** @private {GameRuleSystem} Game rule enforcement system */
+    private gameRuleSystem!: GameRuleSystem;
     /** @private {AnimationSystem} Animation and visual effects system */
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
@@ -107,6 +110,7 @@ export class GameManager {
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
         this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
         this.collisionSystem = new CollisionSystem(this.gameState);
+        this.gameRuleSystem = new GameRuleSystem(this.gameState, this.collisionSystem);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem();
         // Environment-aware rendering system
@@ -203,17 +207,9 @@ export class GameManager {
         }
 
         this.updateSystems(deltaTime);
-
-        // Phase 2.1.3: Use CollisionSystem.update() instead of handleCollisions()
-        this.collisionSystem.update(
-            this.playerSystem,
-            this.renderSystem,
-            () => this.handlePlayerDeath('Hit by spike! Press R to restart'),
-            () => this.handleGoalReached()
-        );
-
+        this.collisionSystem.update();
+        this.gameRuleSystem.update();
         this.cameraSystem.update();
-        this.checkBoundaries();
         this.updateLandingPredictions();
     }
 
@@ -243,15 +239,6 @@ export class GameManager {
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
-    }
-
-    private checkBoundaries(): void {
-        const player = this.gameState.runtime.player;
-        if (this.collisionSystem.checkHoleCollision(player, 600)) {
-            this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
-        } else if (this.collisionSystem.checkBoundaryCollision(player, this.canvas.height)) {
-            this.handlePlayerDeath('Game Over - Press R to restart', 'fall');
-        }
     }
 
     private updateLandingPredictions(): void {
@@ -320,73 +307,6 @@ export class GameManager {
 
         return bestPlatform;
     }
-
-    /**
-     * Handle player death
-     */
-    handlePlayerDeath(
-        message: string,
-        deathType = 'normal'
-    ): { message: string; deathType: string } {
-        this.gameState.gameOver = true;
-
-        const player = this.gameState.runtime.player;
-        const camera = this.gameState.runtime.camera;
-        let deathMarkY = player.y;
-        if (deathType === 'fall') {
-            deathMarkY = camera.y + this.canvas.height - 20;
-        }
-
-        this.animationSystem.addDeathMark(player.x, deathMarkY);
-        this.animationSystem.startDeathAnimation(player);
-        this.playerSystem.clearTrail();
-
-        return { message, deathType };
-    }
-
-    /**
-     * Handle goal reached
-     */
-    handleGoalReached(): { finalScore: number } {
-        this.gameState.gameOver = true;
-        const finalScore = Math.ceil(this.gameState.timeRemaining);
-        this.gameState.finalScore = finalScore;
-
-        this.animationSystem.startClearAnimation(this.gameState.runtime.player);
-
-        // Set up auto-return to stage select after clear animation
-        setTimeout(() => {
-            const event = new CustomEvent('requestStageSelect');
-            if (typeof window.dispatchEvent === 'function') {
-                window.dispatchEvent(event);
-            }
-        }, 3000);
-
-        return { finalScore };
-    }
-
-    /**
-     * Check if time is up
-     */
-    checkTimeUp(): boolean {
-        const gameStartTime = this.gameState.gameStartTime;
-        if (gameStartTime) {
-            const currentTime = getCurrentTime();
-            const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
-            this.gameState.timeRemaining = timeRemaining;
-
-            if (timeRemaining <= 0) {
-                this.handlePlayerDeath('Time Up! Press R to restart');
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Update previous player position (for collision detection)
-     */
 
     /**
      * Render the game
