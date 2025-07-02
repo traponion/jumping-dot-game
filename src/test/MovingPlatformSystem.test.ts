@@ -97,7 +97,7 @@ describe('MovingPlatformSystem', () => {
                 mockMovingPlatforms[0].speed *
                 mockMovingPlatforms[0].direction *
                 (deltaTime / 16.67);
-            expect(platform!.x1).toBeCloseTo(originalX1 + expectedMovement, 2);
+            expect(platform?.x1).toBeCloseTo(originalX1 + expectedMovement, 2);
         });
 
         it('should move platforms according to speed and direction', () => {
@@ -115,7 +115,7 @@ describe('MovingPlatformSystem', () => {
                 mockMovingPlatforms[0].speed *
                 mockMovingPlatforms[0].direction *
                 (deltaTime / 16.67);
-            expect(platform!.x1).toBeCloseTo(initialX1_platform1 + expectedMovement1, 2);
+            expect(platform?.x1).toBeCloseTo(initialX1_platform1 + expectedMovement1, 2);
         });
 
         it('should reverse direction when platform reaches endX', () => {
@@ -133,7 +133,7 @@ describe('MovingPlatformSystem', () => {
             movingPlatformSystem.update(deltaTime);
 
             // Direction should be reversed
-            expect(platform!.direction).toBe(-1);
+            expect(platform?.direction).toBe(-1);
         });
 
         it('should reverse direction when platform reaches startX', () => {
@@ -151,7 +151,7 @@ describe('MovingPlatformSystem', () => {
             movingPlatformSystem.update(deltaTime);
 
             // Direction should be reversed
-            expect(platform!.direction).toBe(1);
+            expect(platform?.direction).toBe(1);
         });
 
         it('should maintain platform width during movement', () => {
