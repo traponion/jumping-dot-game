@@ -18,12 +18,18 @@ describe('GameRuleSystem', () => {
             runtime: {
                 player: { x: 100, y: 200, radius: 10 },
                 camera: { x: 0, y: 0 },
+                particles: [],
                 deathMarks: [],
+                trail: [],
                 collisionResults: {
                     holeCollision: false,
                     boundaryCollision: false,
                     goalCollision: false
-                }
+                },
+                shouldStartDeathAnimation: false,
+                shouldStartClearAnimation: false,
+                isInitialized: false,
+                lastUpdateTime: 0
             },
             gameRunning: true,
             gameOver: false,
@@ -220,55 +226,41 @@ describe('GameRuleSystem', () => {
         });
     });
 
-    describe('death marker position clamping', () => {
-        beforeEach(() => {
-            vi.mocked(getCurrentTime).mockReturnValue(1500);
-        });
-
-        it('should clamp death marker Y position to visible area for fall deaths', () => {
-            // Setup: Player falls below screen bounds (y > 600)
+    describe('rule enforcement only', () => {
+        it('should only set gameOver flag for hole collision without side effects', () => {
+            // Setup: Player position and hole collision
             mockGameState.runtime.player.x = 300;
-            mockGameState.runtime.player.y = 750; // Below screen bounds
+            mockGameState.runtime.player.y = 750;
             mockGameState.runtime.collisionResults.holeCollision = true;
 
             // Action: Trigger death via hole collision
             gameRuleSystem.update();
 
-            // Assert: Death marker Y position is clamped to visible area
+            // Assert: Only rule enforcement (gameOver flag), no side effects
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
-            expect(mockGameState.runtime.deathMarks[0]).toEqual({
-                x: 300,
-                y: 580, // Should be clamped above bottom edge for optimal visibility
-                timestamp: 1500
-            });
-            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(0); // No death marks added
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(false); // No animation trigger
         });
 
-        it('should not clamp death marker Y position for deaths within screen bounds', () => {
-            // Setup: Player dies within screen bounds (y < 600)
+        it('should only set gameOver flag for boundary collision without side effects', () => {
+            // Setup: Player position and boundary collision
             mockGameState.runtime.player.x = 400;
-            mockGameState.runtime.player.y = 350; // Within screen bounds
+            mockGameState.runtime.player.y = 350;
             mockGameState.runtime.collisionResults.boundaryCollision = true;
 
             // Action: Trigger death via boundary collision
             gameRuleSystem.update();
 
-            // Assert: Death marker Y position remains unchanged
+            // Assert: Only rule enforcement (gameOver flag), no side effects
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
-            expect(mockGameState.runtime.deathMarks[0]).toEqual({
-                x: 400,
-                y: 350, // Should remain at original position
-                timestamp: 1500
-            });
-            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(0); // No death marks added
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(false); // No animation trigger
         });
 
-        it('should clamp death marker Y position for time-up deaths below screen bounds', () => {
-            // Setup: Player below screen bounds when time runs out
+        it('should only set gameOver flag for time-up without side effects', () => {
+            // Setup: Time limit exceeded
             mockGameState.runtime.player.x = 200;
-            mockGameState.runtime.player.y = 680; // Below screen bounds
+            mockGameState.runtime.player.y = 680;
             mockGameState.gameStartTime = 1000;
             mockGameState.timeLimit = 0.5; // 0.5 seconds limit
             vi.mocked(getCurrentTime).mockReturnValue(2000); // 1 second later
@@ -276,15 +268,10 @@ describe('GameRuleSystem', () => {
             // Action: Trigger death via time up
             gameRuleSystem.update();
 
-            // Assert: Death marker Y position is clamped to visible area
+            // Assert: Only rule enforcement (gameOver flag), no side effects
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
-            expect(mockGameState.runtime.deathMarks[0]).toEqual({
-                x: 200,
-                y: 580, // Should be clamped above bottom edge for optimal visibility
-                timestamp: 2000
-            });
-            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(0); // No death marks added
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(false); // No animation trigger
         });
     });
 });

@@ -58,18 +58,8 @@ export class GameRuleSystem {
      * Handle player death: set game over, add death marker, and trigger death animation.
      */
     private handlePlayerDeath(): void {
+        // Pure rule enforcement: only set the game over flag
         this.gameState.gameOver = true;
-
-        // Add death marker with position adjustment for visibility
-        const player = this.gameState.runtime.player;
-        this.gameState.runtime.deathMarks.push({
-            x: player.x,
-            y: Math.min(player.y, 580), // Clamp Y position above bottom edge for optimal visibility
-            timestamp: getCurrentTime()
-        });
-
-        // Set flag to trigger death animation
-        this.gameState.runtime.shouldStartDeathAnimation = true;
     }
 
     /**

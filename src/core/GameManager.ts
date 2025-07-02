@@ -20,7 +20,7 @@ import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
-import { type Platform, type StageData, StageLoader } from './StageLoader.js';
+import { type StageData, StageLoader } from './StageLoader.js';
 
 /**
  * GameManager - Manages game state, systems coordination, and game logic
@@ -112,15 +112,16 @@ export class GameManager {
         this.collisionSystem = new CollisionSystem(this.gameState);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
-        this.movingPlatformSystem = new MovingPlatformSystem();
+        this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
         // Environment-aware rendering system
         this.renderSystem = createGameRenderSystem(this.canvas);
 
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.gameState, this.canvas, gameController);
 
-        // Initialize PlayerSystem with InputManager
+        // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
+        this.playerSystem.setRenderSystem(this.renderSystem);
     }
 
     /**
@@ -210,7 +211,6 @@ export class GameManager {
         this.collisionSystem.update();
         this.gameRuleSystem.update();
         this.cameraSystem.update();
-        this.updateLandingPredictions();
     }
 
     private updateSystems(deltaTime: number): void {
@@ -223,89 +223,10 @@ export class GameManager {
         this.physicsSystem.update(deltaTime);
 
         // Update moving platforms if stage has them
-        if (this.stage?.movingPlatforms) {
-            // Overwrite the old array with the new, updated array
-            this.stage.movingPlatforms = this.movingPlatformSystem.update(
-                this.stage.movingPlatforms,
-                deltaTime
-            );
-        }
-
-        // Clamp player speed directly on gameState
-        const player = this.gameState.runtime.player;
-        const maxSpeed = physicsConstants.moveSpeed;
-        if (player.vx > maxSpeed) player.vx = maxSpeed;
-        if (player.vx < -maxSpeed) player.vx = -maxSpeed;
+        this.movingPlatformSystem.update(deltaTime);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
-    }
-
-    private updateLandingPredictions(): void {
-        if (!this.stage) return;
-
-        // Simple input-based prediction that grows from landing spot
-        const inputKeys = this.inputManager.getMovementState();
-        const futureDistance = this.calculateFutureMovement(inputKeys);
-        const predictedX = this.gameState.runtime.player.x + futureDistance;
-
-        // Find the platform closest to predicted position
-        const targetPlatform = this.findNearestPlatform(predictedX);
-
-        if (targetPlatform) {
-            const simplePrediction = [
-                {
-                    x: predictedX,
-                    y: targetPlatform.y1,
-                    confidence: 0.8,
-                    jumpNumber: 1
-                }
-            ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
-        } else {
-            this.renderSystem.setLandingPredictions([]);
-        }
-    }
-
-    private calculateFutureMovement(keys: Record<string, boolean>): number {
-        // Estimate future movement for one jump (more realistic timing)
-        const jumpDuration = 400; // Shorter, more realistic jump duration
-        const baseMovement = this.gameState.runtime.player.vx * (jumpDuration / 16.67); // Movement during jump
-
-        // Add smaller input-based movement
-        let inputMovement = 0;
-        if (keys.ArrowLeft) {
-            inputMovement = -30; // Smaller left movement
-        } else if (keys.ArrowRight) {
-            inputMovement = 30; // Smaller right movement
-        }
-
-        return baseMovement + inputMovement;
-    }
-
-    private findNearestPlatform(targetX: number): Platform | null {
-        if (!this.stage) return null;
-
-        // Find platform that the player would likely land on
-        let bestPlatform = null;
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const platform of this.stage.platforms) {
-            // Check if target X is within platform bounds or nearby
-            const platformCenterX = (platform.x1 + platform.x2) / 2;
-            const distance = Math.abs(targetX - platformCenterX);
-
-            if (
-                distance < bestDistance &&
-                targetX >= platform.x1 - 30 &&
-                targetX <= platform.x2 + 30
-            ) {
-                bestDistance = distance;
-                bestPlatform = platform;
-            }
-        }
-
-        return bestPlatform;
     }
 
     /**

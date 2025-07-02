@@ -1,21 +1,28 @@
-import type { MovingPlatform } from '../core/StageLoader.js';
+import type { GameState } from '../stores/GameState.js';
 
 /**
  * System for updating moving platform positions and handling boundary collisions
  */
 export class MovingPlatformSystem {
+    private gameState: GameState;
+
+    constructor(gameState: GameState) {
+        this.gameState = gameState;
+    }
+
     /**
-     * Updates all moving platforms and returns a new array with updated positions.
-     * This method is a pure function and does not mutate the input array.
+     * Updates all moving platforms by directly mutating the GameState.
+     * This method follows the autonomous system pattern with side effects.
      *
-     * @param movingPlatforms - Array of moving platforms to update
      * @param deltaTime - Time elapsed since last update in milliseconds
-     * @returns A new array of MovingPlatform objects with updated positions and directions.
      */
-    update(movingPlatforms: MovingPlatform[], deltaTime: number): MovingPlatform[] {
+    update(deltaTime: number): void {
+        const movingPlatforms = this.gameState.stage?.movingPlatforms;
+        if (!movingPlatforms) return;
+
         const dtFactor = deltaTime / 16.67; // Normalize to ~60fps
 
-        return movingPlatforms.map((platform) => {
+        for (const platform of movingPlatforms) {
             const movement = platform.speed * platform.direction * dtFactor;
 
             let newX1 = platform.x1 + movement;
@@ -37,13 +44,10 @@ export class MovingPlatformSystem {
 
             const newX2 = newX1 + platformWidth;
 
-            // Return a NEW platform object, not a mutated one
-            return {
-                ...platform,
-                x1: newX1,
-                x2: newX2,
-                direction: newDirection
-            };
-        });
+            // Direct mutation of GameState
+            platform.x1 = newX1;
+            platform.x2 = newX2;
+            platform.direction = newDirection;
+        }
     }
 }

@@ -84,17 +84,6 @@ export interface DeathMark {
 }
 
 /**
- * Trail point interface for player movement trails
- * @interface TrailPoint
- * @property {number} x - Trail point X coordinate
- * @property {number} y - Trail point Y coordinate
- */
-export interface TrailPoint {
-    x: number;
-    y: number;
-}
-
-/**
  * Key state mapping for input management
  * @interface KeyState
  * @property {boolean} [key] - Dynamic key mapping to boolean state
@@ -124,6 +113,19 @@ export interface GameState {
     gameStartTime: number | null;
     finalScore: number;
     hasMovedOnce: boolean;
+}
+
+/**
+ * Trail point interface for tracking player movement history
+ * @interface TrailPoint
+ * @property {number} x - Trail point X coordinate
+ * @property {number} y - Trail point Y coordinate
+ * @property {number} timestamp - Creation timestamp for aging
+ */
+export interface TrailPoint {
+    x: number;
+    y: number;
+    timestamp: number;
 }
 
 /**

@@ -86,10 +86,13 @@ describe('PlayerSystem', () => {
 
             const trail = gameState.runtime.trail;
             expect(trail.length).toBe(initialTrailLength + 1);
-            expect(trail[trail.length - 1]).toEqual({
-                x: gameState.runtime.player.x,
-                y: gameState.runtime.player.y
-            });
+            expect(trail[trail.length - 1]).toEqual(
+                expect.objectContaining({
+                    x: gameState.runtime.player.x,
+                    y: gameState.runtime.player.y,
+                    timestamp: expect.any(Number)
+                })
+            );
         });
 
         it('should limit trail length to maximum', () => {
@@ -124,8 +127,8 @@ describe('PlayerSystem', () => {
         it('should get trail from game state', () => {
             // Arrange: Directly add trail points to state
             const directTrail = [
-                { x: 100, y: 200 },
-                { x: 150, y: 250 }
+                { x: 100, y: 200, timestamp: 1000 },
+                { x: 150, y: 250, timestamp: 2000 }
             ];
             gameState.runtime.trail = [...directTrail];
 

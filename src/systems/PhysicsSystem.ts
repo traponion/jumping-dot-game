@@ -50,6 +50,11 @@ export class PhysicsSystem {
         player.x = newPosition.x;
         player.y = newPosition.y;
         player.vy = newVy;
+
+        // Clamp horizontal velocity to maximum speed
+        const maxSpeed = this.constants.moveSpeed;
+        if (player.vx > maxSpeed) player.vx = maxSpeed;
+        if (player.vx < -maxSpeed) player.vx = -maxSpeed;
     }
 
     /**
