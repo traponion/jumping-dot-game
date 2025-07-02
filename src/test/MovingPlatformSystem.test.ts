@@ -40,6 +40,7 @@ describe('MovingPlatformSystem', () => {
             timeRemaining: 10,
             finalScore: 0,
             gameStartTime: null,
+            hasMovedOnce: false,
             runtime: {
                 player: { x: 100, y: 400, vx: 0, vy: 0, radius: 10, grounded: false },
                 camera: { x: 0, y: 0 },
@@ -58,12 +59,23 @@ describe('MovingPlatformSystem', () => {
             },
             stage: {
                 id: 1,
+                name: 'Test Stage',
                 platforms: [],
                 movingPlatforms: [...mockMovingPlatforms],
                 holes: [],
-                goal: { x1: 900, y1: 400, x2: 950, y2: 450 },
+                spikes: [],
+                goal: { x: 900, y: 400, width: 50, height: 50 },
+                startText: { x: 0, y: 0, text: 'Start' },
+                goalText: { x: 900, y: 400, text: 'Goal' },
                 timeLimit: 10
-            }
+            },
+            performance: {
+                frameRate: 0,
+                renderTime: 0,
+                lastOperation: '',
+                operationTime: 0
+            },
+            reset: () => {}
         };
 
         movingPlatformSystem = new MovingPlatformSystem(gameState);
@@ -72,7 +84,11 @@ describe('MovingPlatformSystem', () => {
     describe('update', () => {
         it('should directly mutate platforms in GameState', () => {
             const deltaTime = 16.67;
-            const originalX1 = gameState.stage?.movingPlatforms?.[0].x1;
+            const movingPlatforms = gameState.stage?.movingPlatforms;
+            expect(movingPlatforms).toBeDefined();
+            const platform = movingPlatforms?.[0];
+            expect(platform).toBeDefined();
+            const originalX1 = platform!.x1;
 
             movingPlatformSystem.update(deltaTime);
 
@@ -81,15 +97,16 @@ describe('MovingPlatformSystem', () => {
                 mockMovingPlatforms[0].speed *
                 mockMovingPlatforms[0].direction *
                 (deltaTime / 16.67);
-            expect(gameState.stage?.movingPlatforms?.[0].x1).toBeCloseTo(
-                originalX1 + expectedMovement,
-                2
-            );
+            expect(platform!.x1).toBeCloseTo(originalX1 + expectedMovement, 2);
         });
 
         it('should move platforms according to speed and direction', () => {
             const deltaTime = 16.67;
-            const initialX1_platform1 = gameState.stage?.movingPlatforms?.[0].x1;
+            const movingPlatforms = gameState.stage?.movingPlatforms;
+            expect(movingPlatforms).toBeDefined();
+            const platform = movingPlatforms?.[0];
+            expect(platform).toBeDefined();
+            const initialX1_platform1 = platform!.x1;
 
             movingPlatformSystem.update(deltaTime);
 
@@ -98,47 +115,56 @@ describe('MovingPlatformSystem', () => {
                 mockMovingPlatforms[0].speed *
                 mockMovingPlatforms[0].direction *
                 (deltaTime / 16.67);
-            expect(gameState.stage?.movingPlatforms?.[0].x1).toBeCloseTo(
-                initialX1_platform1 + expectedMovement1,
-                2
-            );
+            expect(platform!.x1).toBeCloseTo(initialX1_platform1 + expectedMovement1, 2);
         });
 
         it('should reverse direction when platform reaches endX', () => {
             const deltaTime = 16.67;
+            const movingPlatforms = gameState.stage?.movingPlatforms;
+            expect(movingPlatforms).toBeDefined();
+            const platform = movingPlatforms?.[0];
+            expect(platform).toBeDefined();
+
             // Set platform close to endX
-            gameState.stage?.movingPlatforms?.[0].x1 = 449.5;
-            gameState.stage?.movingPlatforms?.[0].x2 = 549.5;
-            gameState.stage?.movingPlatforms?.[0].direction = 1;
+            platform!.x1 = 449.5;
+            platform!.x2 = 549.5;
+            platform!.direction = 1;
 
             movingPlatformSystem.update(deltaTime);
 
             // Direction should be reversed
-            expect(gameState.stage?.movingPlatforms?.[0].direction).toBe(-1);
+            expect(platform!.direction).toBe(-1);
         });
 
         it('should reverse direction when platform reaches startX', () => {
             const deltaTime = 16.67;
+            const movingPlatforms = gameState.stage?.movingPlatforms;
+            expect(movingPlatforms).toBeDefined();
+            const platform = movingPlatforms?.[0];
+            expect(platform).toBeDefined();
+
             // Set platform close to startX
-            gameState.stage?.movingPlatforms?.[0].x1 = 350.5;
-            gameState.stage?.movingPlatforms?.[0].x2 = 450.5;
-            gameState.stage?.movingPlatforms?.[0].direction = -1;
+            platform!.x1 = 350.5;
+            platform!.x2 = 450.5;
+            platform!.direction = -1;
 
             movingPlatformSystem.update(deltaTime);
 
             // Direction should be reversed
-            expect(gameState.stage?.movingPlatforms?.[0].direction).toBe(1);
+            expect(platform!.direction).toBe(1);
         });
 
         it('should maintain platform width during movement', () => {
             const deltaTime = 16.67;
-            const originalWidth1 =
-                gameState.stage?.movingPlatforms?.[0].x2 - gameState.stage?.movingPlatforms?.[0].x1;
+            const movingPlatforms = gameState.stage?.movingPlatforms;
+            expect(movingPlatforms).toBeDefined();
+            const platform = movingPlatforms?.[0];
+            expect(platform).toBeDefined();
+            const originalWidth1 = platform!.x2 - platform!.x1;
 
             movingPlatformSystem.update(deltaTime);
 
-            const newWidth1 =
-                gameState.stage?.movingPlatforms?.[0].x2 - gameState.stage?.movingPlatforms?.[0].x1;
+            const newWidth1 = platform!.x2 - platform!.x1;
 
             expect(newWidth1).toBeCloseTo(originalWidth1, 5);
         });
