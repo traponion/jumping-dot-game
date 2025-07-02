@@ -239,7 +239,7 @@ describe('GameRuleSystem', () => {
             expect(mockGameState.runtime.deathMarks).toHaveLength(1);
             expect(mockGameState.runtime.deathMarks[0]).toEqual({
                 x: 300,
-                y: 585, // Should be clamped above bottom edge for visibility
+                y: 580, // Should be clamped above bottom edge for optimal visibility
                 timestamp: 1500
             });
             expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
@@ -281,7 +281,7 @@ describe('GameRuleSystem', () => {
             expect(mockGameState.runtime.deathMarks).toHaveLength(1);
             expect(mockGameState.runtime.deathMarks[0]).toEqual({
                 x: 200,
-                y: 585, // Should be clamped above bottom edge for visibility
+                y: 580, // Should be clamped above bottom edge for optimal visibility
                 timestamp: 2000
             });
             expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);

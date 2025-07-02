@@ -64,7 +64,7 @@ export class GameRuleSystem {
         const player = this.gameState.runtime.player;
         this.gameState.runtime.deathMarks.push({
             x: player.x,
-            y: Math.min(player.y, 585), // Clamp Y position above bottom edge for visibility
+            y: Math.min(player.y, 580), // Clamp Y position above bottom edge for optimal visibility
             timestamp: getCurrentTime()
         });
 
