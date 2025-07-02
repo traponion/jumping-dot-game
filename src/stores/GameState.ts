@@ -11,6 +11,11 @@ interface GameRuntimeState {
     particles: Particle[];
     deathMarks: DeathMark[];
     trail: TrailPoint[];
+    collisionResults: {
+        holeCollision: boolean;
+        boundaryCollision: boolean;
+        goalCollision: boolean;
+    };
     isInitialized: boolean;
     lastUpdateTime: number;
 }
@@ -86,6 +91,11 @@ export class GameState {
             particles: [],
             deathMarks: [],
             trail: [],
+            collisionResults: {
+                holeCollision: false,
+                boundaryCollision: false,
+                goalCollision: false
+            },
             isInitialized: false,
             lastUpdateTime: 0
         };

@@ -11,21 +11,19 @@ vi.mock('../utils/GameUtils', () => ({
 describe('GameRuleSystem', () => {
     let gameRuleSystem: GameRuleSystem;
     let mockGameState: GameState;
-    let mockCollisionSystem: any;
 
     beforeEach(() => {
-        // Mock CollisionSystem
-        mockCollisionSystem = {
-            checkHoleCollision: vi.fn(),
-            checkBoundaryCollision: vi.fn()
-        };
-
         // Setup mock GameState with all required properties
         mockGameState = {
             runtime: {
                 player: { x: 100, y: 200, radius: 10 },
                 camera: { x: 0, y: 0 },
-                deathMarks: []
+                deathMarks: [],
+                collisionResults: {
+                    holeCollision: false,
+                    boundaryCollision: false,
+                    goalCollision: false
+                }
             },
             gameRunning: true,
             gameOver: false,
@@ -40,46 +38,38 @@ describe('GameRuleSystem', () => {
             reset: vi.fn()
         } as unknown as GameState;
 
-        gameRuleSystem = new GameRuleSystem(mockGameState, mockCollisionSystem);
+        gameRuleSystem = new GameRuleSystem(mockGameState);
     });
 
     describe('boundary checking', () => {
         it('should detect hole collision and set game over', () => {
-            // Setup: Player in normal position, hole collision detected
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(true);
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
+            // Setup: Hole collision detected via collision results flag
+            mockGameState.runtime.collisionResults.holeCollision = true;
+            mockGameState.runtime.collisionResults.boundaryCollision = false;
 
             // Action: Run rule checking
             gameRuleSystem.update();
 
             // Assert: Game over state set
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockCollisionSystem.checkHoleCollision).toHaveBeenCalledWith(
-                mockGameState.runtime.player,
-                600
-            );
         });
 
         it('should detect boundary collision and set game over', () => {
-            // Setup: Player in normal position, boundary collision detected
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(false);
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(true);
+            // Setup: Boundary collision detected via collision results flag
+            mockGameState.runtime.collisionResults.holeCollision = false;
+            mockGameState.runtime.collisionResults.boundaryCollision = true;
 
             // Action: Run rule checking
             gameRuleSystem.update();
 
             // Assert: Game over state set
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockCollisionSystem.checkBoundaryCollision).toHaveBeenCalledWith(
-                mockGameState.runtime.player,
-                600 // canvas.height equivalent
-            );
         });
 
         it('should not set game over when no collisions detected', () => {
-            // Setup: No collisions
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(false);
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
+            // Setup: No collisions via collision results flags
+            mockGameState.runtime.collisionResults.holeCollision = false;
+            mockGameState.runtime.collisionResults.boundaryCollision = false;
 
             // Action: Run rule checking
             gameRuleSystem.update();
@@ -154,10 +144,10 @@ describe('GameRuleSystem', () => {
 
     describe('goal checking', () => {
         it('should detect goal reached and set final score', () => {
-            // Setup: Player reaches goal with 7 seconds remaining
+            // Setup: Player reaches goal with 7 seconds remaining via collision results flag
             mockGameState.timeRemaining = 7.3;
             mockGameState.stage = { goal: { x: 700, y: 400, width: 40, height: 50 } } as any;
-            mockCollisionSystem.checkGoalCollision = vi.fn().mockReturnValue(true);
+            mockGameState.runtime.collisionResults.goalCollision = true;
 
             // Action: Run rule checking
             gameRuleSystem.update();
@@ -168,9 +158,9 @@ describe('GameRuleSystem', () => {
         });
 
         it('should not affect game state when goal not reached', () => {
-            // Setup: Player not at goal
+            // Setup: Player not at goal via collision results flag
             const originalScore = mockGameState.finalScore;
-            mockCollisionSystem.checkGoalCollision = vi.fn().mockReturnValue(false);
+            mockGameState.runtime.collisionResults.goalCollision = false;
 
             // Action: Run rule checking
             gameRuleSystem.update();
@@ -190,7 +180,7 @@ describe('GameRuleSystem', () => {
             mockGameState.timeLimit = 10;
             const originalTimeRemaining = mockGameState.timeRemaining;
             vi.mocked(getCurrentTime).mockReturnValue(currentTime);
-            mockCollisionSystem.checkHoleCollision.mockReturnValue(true);
+            mockGameState.runtime.collisionResults.holeCollision = true;
 
             // Action: Run rule checking
             gameRuleSystem.update();
@@ -215,19 +205,18 @@ describe('GameRuleSystem', () => {
         });
     });
 
-    describe('integration with collision system', () => {
-        it('should provide correct canvas height for boundary checking', () => {
-            // Setup: Canvas height simulation
-            mockCollisionSystem.checkBoundaryCollision.mockReturnValue(false);
+    describe('collision results integration', () => {
+        it('should properly read collision results from GameState', () => {
+            // Setup: Set collision flags
+            mockGameState.runtime.collisionResults.holeCollision = false;
+            mockGameState.runtime.collisionResults.boundaryCollision = false;
+            mockGameState.runtime.collisionResults.goalCollision = false;
 
             // Action: Run rule checking
             gameRuleSystem.update();
 
-            // Assert: Correct canvas height passed
-            expect(mockCollisionSystem.checkBoundaryCollision).toHaveBeenCalledWith(
-                mockGameState.runtime.player,
-                600 // Standard canvas height
-            );
+            // Assert: Game continues when no collision flags are set
+            expect(mockGameState.gameOver).toBe(false);
         });
     });
 });

@@ -1,6 +1,5 @@
 import type { GameState } from '../stores/GameState';
 import { getCurrentTime } from '../utils/GameUtils';
-import type { CollisionSystem } from './CollisionSystem';
 
 /**
  * GameRuleSystem handles game rule enforcement and victory/defeat conditions.
@@ -8,11 +7,9 @@ import type { CollisionSystem } from './CollisionSystem';
  */
 export class GameRuleSystem {
     private gameState: GameState;
-    private collisionSystem: CollisionSystem;
 
-    constructor(gameState: GameState, collisionSystem: CollisionSystem) {
+    constructor(gameState: GameState) {
         this.gameState = gameState;
-        this.collisionSystem = collisionSystem;
     }
 
     /**
@@ -44,16 +41,14 @@ export class GameRuleSystem {
      * Sets gameOver = true if violation detected.
      */
     private checkBoundaries(): void {
-        const player = this.gameState.runtime.player;
-
-        // Check hole collision (depth: 600 pixels)
-        if (this.collisionSystem.checkHoleCollision(player, 600)) {
+        // Check hole collision using collision results flag
+        if (this.gameState.runtime.collisionResults.holeCollision) {
             this.gameState.gameOver = true;
             return;
         }
 
-        // Check boundary collision (canvas height: 600 pixels)
-        if (this.collisionSystem.checkBoundaryCollision(player, 600)) {
+        // Check boundary collision using collision results flag
+        if (this.gameState.runtime.collisionResults.boundaryCollision) {
             this.gameState.gameOver = true;
             return;
         }
@@ -86,13 +81,8 @@ export class GameRuleSystem {
      * Sets gameOver = true and finalScore if goal reached.
      */
     private checkGoalReached(): void {
-        // Check if stage has a goal and collision system has goal collision detection
-        const stage = this.gameState.stage;
-        if (
-            stage?.goal &&
-            this.collisionSystem.checkGoalCollision &&
-            this.collisionSystem.checkGoalCollision(this.gameState.runtime.player, stage.goal)
-        ) {
+        // Check goal collision using collision results flag
+        if (this.gameState.runtime.collisionResults.goalCollision) {
             this.gameState.gameOver = true;
             this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
         }

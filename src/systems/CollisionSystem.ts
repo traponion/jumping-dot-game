@@ -286,6 +286,27 @@ export class CollisionSystem {
         const player = this.gameState.runtime.player;
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
+        // Reset collision results at the start of each frame
+        this.gameState.runtime.collisionResults.holeCollision = false;
+        this.gameState.runtime.collisionResults.boundaryCollision = false;
+        this.gameState.runtime.collisionResults.goalCollision = false;
+
+        // Check boundary conditions and set flags
+        this.gameState.runtime.collisionResults.holeCollision = this.checkHoleCollision(
+            player,
+            600
+        );
+        this.gameState.runtime.collisionResults.boundaryCollision = this.checkBoundaryCollision(
+            player,
+            600
+        );
+
+        // Check goal collision and set flag
+        this.gameState.runtime.collisionResults.goalCollision = this.checkGoalCollision(
+            player,
+            stage.goal
+        );
+
         // Handle moving platform collisions first (higher priority)
         if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
             const movingPlatformCollisionUpdate = this.handleMovingPlatformCollisions(
@@ -356,8 +377,8 @@ export class CollisionSystem {
             return;
         }
 
-        // Check goal collision
-        if (this.checkGoalCollision(this.gameState.runtime.player, stage.goal)) {
+        // Check goal collision (legacy callback support)
+        if (this.gameState.runtime.collisionResults.goalCollision) {
             if (goalHandler) {
                 goalHandler();
             }

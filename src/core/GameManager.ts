@@ -110,7 +110,7 @@ export class GameManager {
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
         this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
         this.collisionSystem = new CollisionSystem(this.gameState);
-        this.gameRuleSystem = new GameRuleSystem(this.gameState, this.collisionSystem);
+        this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem();
         // Environment-aware rendering system
