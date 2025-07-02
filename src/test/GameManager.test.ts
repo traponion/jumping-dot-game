@@ -66,6 +66,8 @@ describe('GameManager', () => {
         (mockCollisionSystem as any).checkHoleCollision = vi.fn().mockReturnValue(false);
         (mockCollisionSystem as any).checkBoundaryCollision = vi.fn().mockReturnValue(false);
         (mockCollisionSystem as any).handlePlatformCollisions = vi.fn().mockReturnValue(null);
+        // Add default mock for CollisionSystem.update (new API)
+        (mockCollisionSystem as any).update = vi.fn();
 
         (mockPlayerSystem as any).resetJumpTimer = vi.fn();
         (mockPlayerSystem as any).update = vi.fn();
@@ -154,7 +156,12 @@ describe('GameManager', () => {
 
         it('should handle player death on spike collision', () => {
             // Arrange
-            (mockCollisionSystem as any).checkSpikeCollisions.mockReturnValue(true);
+            // Mock CollisionSystem.update to call the deathHandler callback
+            (mockCollisionSystem as any).update.mockImplementation(
+                (_playerSystem: any, _renderSystem: any, deathHandler: any, _goalHandler: any) => {
+                    deathHandler(); // Simulate spike collision calling death handler
+                }
+            );
             const handlePlayerDeathSpy = vi.spyOn(
                 gameManager as unknown as {
                     handlePlayerDeath: (message: string, type?: string) => void;
@@ -171,7 +178,12 @@ describe('GameManager', () => {
 
         it('should handle goal reached on goal collision', () => {
             // Arrange
-            (mockCollisionSystem as any).checkGoalCollision.mockReturnValue(true);
+            // Mock CollisionSystem.update to call the goalHandler callback
+            (mockCollisionSystem as any).update.mockImplementation(
+                (_playerSystem: any, _renderSystem: any, _deathHandler: any, goalHandler: any) => {
+                    goalHandler(); // Simulate goal collision calling goal handler
+                }
+            );
             const handleGoalReachedSpy = vi.spyOn(
                 gameManager as unknown as { handleGoalReached: () => void },
                 'handleGoalReached'
@@ -186,10 +198,12 @@ describe('GameManager', () => {
 
         it('should reset jump timer when platform collision occurs', () => {
             // Arrange
-            (mockCollisionSystem as any).handlePlatformCollisions.mockReturnValue({
-                grounded: true,
-                y: 400
-            });
+            // Mock CollisionSystem.update to call playerSystem.resetJumpTimer
+            (mockCollisionSystem as any).update.mockImplementation(
+                (playerSystem: any, _renderSystem: any, _deathHandler: any, _goalHandler: any) => {
+                    playerSystem.resetJumpTimer(); // Simulate platform collision calling resetJumpTimer
+                }
+            );
 
             // Act
             gameManager.update(16.67);
@@ -200,7 +214,12 @@ describe('GameManager', () => {
 
         it('should not reset jump timer when no platform collision', () => {
             // Arrange
-            (mockCollisionSystem as any).handlePlatformCollisions.mockReturnValue(null);
+            // Mock CollisionSystem.update to NOT call playerSystem.resetJumpTimer
+            (mockCollisionSystem as any).update.mockImplementation(
+                (_playerSystem: any, _renderSystem: any, _deathHandler: any, _goalHandler: any) => {
+                    // Do nothing - simulate no platform collision
+                }
+            );
 
             // Act
             gameManager.update(16.67);
