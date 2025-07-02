@@ -7,6 +7,7 @@
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
+import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
@@ -47,6 +48,8 @@ export class GameManager {
     private playerSystem!: PlayerSystem;
     /** @private {PhysicsSystem} Physics calculations system */
     private physicsSystem!: PhysicsSystem;
+    /** @private {CameraSystem} Camera positioning system */
+    private cameraSystem!: CameraSystem;
     /** @private {CollisionSystem} Collision detection system */
     private collisionSystem!: CollisionSystem;
     /** @private {AnimationSystem} Animation and visual effects system */
@@ -102,6 +105,7 @@ export class GameManager {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
+        this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
         this.collisionSystem = new CollisionSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem();
@@ -208,7 +212,7 @@ export class GameManager {
             () => this.handleGoalReached()
         );
 
-        this.updateCamera();
+        this.cameraSystem.update();
         this.checkBoundaries();
         this.updateLandingPredictions();
     }
@@ -239,11 +243,6 @@ export class GameManager {
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
-    }
-
-    private updateCamera(): void {
-        const player = this.gameState.runtime.player;
-        this.gameState.runtime.camera.x = player.x - this.canvas.width / 2;
     }
 
     private checkBoundaries(): void {
