@@ -43,15 +43,33 @@ export class GameRuleSystem {
     private checkBoundaries(): void {
         // Check hole collision using collision results flag
         if (this.gameState.runtime.collisionResults.holeCollision) {
-            this.gameState.gameOver = true;
+            this.handlePlayerDeath();
             return;
         }
 
         // Check boundary collision using collision results flag
         if (this.gameState.runtime.collisionResults.boundaryCollision) {
-            this.gameState.gameOver = true;
+            this.handlePlayerDeath();
             return;
         }
+    }
+
+    /**
+     * Handle player death: set game over, add death marker, and trigger death animation.
+     */
+    private handlePlayerDeath(): void {
+        this.gameState.gameOver = true;
+
+        // Add death marker at current player position
+        const player = this.gameState.runtime.player;
+        this.gameState.runtime.deathMarks.push({
+            x: player.x,
+            y: player.y,
+            timestamp: getCurrentTime()
+        });
+
+        // Set flag to trigger death animation
+        this.gameState.runtime.shouldStartDeathAnimation = true;
     }
 
     /**
@@ -71,7 +89,7 @@ export class GameRuleSystem {
 
             // Check if time is up
             if (timeRemaining <= 0) {
-                this.gameState.gameOver = true;
+                this.handlePlayerDeath();
             }
         }
     }
@@ -83,8 +101,18 @@ export class GameRuleSystem {
     private checkGoalReached(): void {
         // Check goal collision using collision results flag
         if (this.gameState.runtime.collisionResults.goalCollision) {
-            this.gameState.gameOver = true;
-            this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
+            this.handleGoalReached();
         }
+    }
+
+    /**
+     * Handle goal reached: set game over, calculate final score, and trigger clear animation.
+     */
+    private handleGoalReached(): void {
+        this.gameState.gameOver = true;
+        this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
+
+        // Set flag to trigger clear animation
+        this.gameState.runtime.shouldStartClearAnimation = true;
     }
 }

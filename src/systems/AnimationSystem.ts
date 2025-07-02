@@ -75,6 +75,13 @@ export class AnimationSystem {
      * @description Updates particle physics and removes expired particles
      */
     updateClearAnimation(): void {
+        // Check if we should start clear animation
+        if (this.gameState.runtime.shouldStartClearAnimation && !this.clearAnimation.active) {
+            this.startClearAnimation(this.gameState.runtime.player);
+            // Reset the flag to prevent multiple triggers
+            this.gameState.runtime.shouldStartClearAnimation = false;
+        }
+
         if (!this.clearAnimation.active || this.clearAnimation.startTime === null) return;
 
         const currentTime = getCurrentTime();
@@ -131,6 +138,13 @@ export class AnimationSystem {
      * @description Updates explosion particle physics and removes expired particles
      */
     updateDeathAnimation(): void {
+        // Check if we should start death animation
+        if (this.gameState.runtime.shouldStartDeathAnimation && !this.deathAnimation.active) {
+            this.startDeathAnimation(this.gameState.runtime.player);
+            // Reset the flag to prevent multiple triggers
+            this.gameState.runtime.shouldStartDeathAnimation = false;
+        }
+
         if (!this.deathAnimation.active || this.deathAnimation.startTime === null) return;
 
         const currentTime = getCurrentTime();

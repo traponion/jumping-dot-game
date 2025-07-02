@@ -16,6 +16,9 @@ interface GameRuntimeState {
         boundaryCollision: boolean;
         goalCollision: boolean;
     };
+    // Animation trigger flags for autonomous system behavior
+    shouldStartDeathAnimation: boolean;
+    shouldStartClearAnimation: boolean;
     isInitialized: boolean;
     lastUpdateTime: number;
 }
@@ -96,6 +99,8 @@ export class GameState {
                 boundaryCollision: false,
                 goalCollision: false
             },
+            shouldStartDeathAnimation: false,
+            shouldStartClearAnimation: false,
             isInitialized: false,
             lastUpdateTime: 0
         };
