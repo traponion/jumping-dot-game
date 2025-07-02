@@ -720,9 +720,10 @@ describe('CollisionSystem', () => {
     });
 
     describe('prevPlayerY tracking', () => {
-        it('should initialize prevPlayerY to 0', () => {
+        it('should initialize prevPlayerY to player initial Y position', () => {
             // B/A pattern: Before - check initial state
-            expect(collisionSystem.getPrevPlayerY()).toBe(0);
+            // Should be initialized to current player Y position (400)
+            expect(collisionSystem.getPrevPlayerY()).toBe(400);
         });
 
         it('should update prevPlayerY when updatePrevPlayerY is called', () => {
