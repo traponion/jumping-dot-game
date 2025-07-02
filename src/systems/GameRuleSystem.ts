@@ -60,11 +60,11 @@ export class GameRuleSystem {
     private handlePlayerDeath(): void {
         this.gameState.gameOver = true;
 
-        // Add death marker at current player position
+        // Add death marker with position adjustment for visibility
         const player = this.gameState.runtime.player;
         this.gameState.runtime.deathMarks.push({
             x: player.x,
-            y: player.y,
+            y: Math.min(player.y, 600), // Clamp Y position to visible screen area
             timestamp: getCurrentTime()
         });
 

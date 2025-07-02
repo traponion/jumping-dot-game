@@ -219,4 +219,72 @@ describe('GameRuleSystem', () => {
             expect(mockGameState.gameOver).toBe(false);
         });
     });
+
+    describe('death marker position clamping', () => {
+        beforeEach(() => {
+            vi.mocked(getCurrentTime).mockReturnValue(1500);
+        });
+
+        it('should clamp death marker Y position to visible area for fall deaths', () => {
+            // Setup: Player falls below screen bounds (y > 600)
+            mockGameState.runtime.player.x = 300;
+            mockGameState.runtime.player.y = 750; // Below screen bounds
+            mockGameState.runtime.collisionResults.holeCollision = true;
+
+            // Action: Trigger death via hole collision
+            gameRuleSystem.update();
+
+            // Assert: Death marker Y position is clamped to visible area
+            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
+            expect(mockGameState.runtime.deathMarks[0]).toEqual({
+                x: 300,
+                y: 600, // Should be clamped to canvas height, not raw player.y (750)
+                timestamp: 1500
+            });
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+        });
+
+        it('should not clamp death marker Y position for deaths within screen bounds', () => {
+            // Setup: Player dies within screen bounds (y < 600)
+            mockGameState.runtime.player.x = 400;
+            mockGameState.runtime.player.y = 350; // Within screen bounds
+            mockGameState.runtime.collisionResults.boundaryCollision = true;
+
+            // Action: Trigger death via boundary collision
+            gameRuleSystem.update();
+
+            // Assert: Death marker Y position remains unchanged
+            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
+            expect(mockGameState.runtime.deathMarks[0]).toEqual({
+                x: 400,
+                y: 350, // Should remain at original position
+                timestamp: 1500
+            });
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+        });
+
+        it('should clamp death marker Y position for time-up deaths below screen bounds', () => {
+            // Setup: Player below screen bounds when time runs out
+            mockGameState.runtime.player.x = 200;
+            mockGameState.runtime.player.y = 680; // Below screen bounds
+            mockGameState.gameStartTime = 1000;
+            mockGameState.timeLimit = 0.5; // 0.5 seconds limit
+            vi.mocked(getCurrentTime).mockReturnValue(2000); // 1 second later
+
+            // Action: Trigger death via time up
+            gameRuleSystem.update();
+
+            // Assert: Death marker Y position is clamped to visible area
+            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.runtime.deathMarks).toHaveLength(1);
+            expect(mockGameState.runtime.deathMarks[0]).toEqual({
+                x: 200,
+                y: 600, // Should be clamped to canvas height
+                timestamp: 2000
+            });
+            expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
+        });
+    });
 });
