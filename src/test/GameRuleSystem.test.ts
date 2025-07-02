@@ -239,7 +239,7 @@ describe('GameRuleSystem', () => {
             expect(mockGameState.runtime.deathMarks).toHaveLength(1);
             expect(mockGameState.runtime.deathMarks[0]).toEqual({
                 x: 300,
-                y: 600, // Should be clamped to canvas height, not raw player.y (750)
+                y: 585, // Should be clamped above bottom edge for visibility
                 timestamp: 1500
             });
             expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
@@ -281,7 +281,7 @@ describe('GameRuleSystem', () => {
             expect(mockGameState.runtime.deathMarks).toHaveLength(1);
             expect(mockGameState.runtime.deathMarks[0]).toEqual({
                 x: 200,
-                y: 600, // Should be clamped to canvas height
+                y: 585, // Should be clamped above bottom edge for visibility
                 timestamp: 2000
             });
             expect(mockGameState.runtime.shouldStartDeathAnimation).toBe(true);
