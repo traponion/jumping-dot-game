@@ -59,9 +59,14 @@ mcp__serena__list_memories()        # Check existing knowledge
 - Cannot make decisions independently (aware of tendency toward quick implementations)
 - Must consult when uncertain ("What does Gemini think?")
 
-### 3. Test-First Development
+### 3. Test-First Development (t-wada Style)
+- Follow t-wada's TDD methodology: Red → Green → Refactor cycle
 - Strict TDD: Create tests first, verify failure, then implement
+- Write the simplest possible test that fails first
+- Make the test pass with minimal implementation
+- Refactor only after tests are green
 - Coverage requirements are sacred: utils 95%, systems 90%, core 80%
+- Reference: Follow @t_wada's TDD principles and practices
 
 ### 4. Issue-Driven Development
 - Mandatory issue creation before starting any work
@@ -106,6 +111,29 @@ expect(mockCanvas.add).toHaveBeenCalledWith(
 - **src/utils/**: 95% lines, 100% functions, 95% branches
 - **src/systems/**: 90% lines, 95% functions, 90% branches
 - **src/core/**: 80% lines, 85% functions, 70% branches
+
+### TDD Methodology (t-wada Style)
+**Red → Green → Refactor Cycle**
+1. **Red Phase**: Write a failing test that describes the desired behavior
+   - Start with the simplest possible failing test
+   - Focus on one specific behavior at a time
+   - Ensure the test fails for the right reason
+
+2. **Green Phase**: Write minimal code to make the test pass
+   - Don't write more code than necessary
+   - Resist the urge to add extra features
+   - Focus solely on making the current test pass
+
+3. **Refactor Phase**: Improve code quality while keeping tests green
+   - Remove duplication
+   - Improve naming and structure
+   - Ensure all tests remain passing
+
+**Key Principles (Following @t_wada)**:
+- Test behavior, not implementation
+- Write tests as documentation of expected behavior
+- Maintain fast feedback loops
+- Keep tests simple and focused
 
 ### Test Setup
 - Environment: jsdom
