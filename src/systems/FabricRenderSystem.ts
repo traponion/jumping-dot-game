@@ -1,6 +1,7 @@
 import * as fabric from 'fabric';
 import type { Goal, MovingPlatform, Spike, StageData } from '../core/StageLoader.js';
-import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { IRenderSystem, Position } from './IRenderSystem.js';
 
 // Landing prediction interface for render system
 export interface LandingPrediction {
@@ -10,7 +11,7 @@ export interface LandingPrediction {
     jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
-export class FabricRenderSystem {
+export class FabricRenderSystem implements IRenderSystem {
     protected canvas: fabric.Canvas;
     private playerShape: fabric.Circle | null = null;
     private platformShapes: fabric.Line[] = [];
@@ -353,7 +354,7 @@ export class FabricRenderSystem {
         }
     }
 
-    renderDeathMarks(deathMarks: DeathMark[]): void {
+    renderDeathMarks(deathMarks: Array<{ x: number; y: number }>): void {
         // 以前のパスが存在すれば、まずcanvasから削除する
         if (this.deathMarkPath) {
             this.canvas.remove(this.deathMarkPath);
@@ -401,18 +402,12 @@ export class FabricRenderSystem {
         }
 
         // Render real-time animated predictions (main crosshair)
-        for (let i = 0; i < this.animatedPredictions.length; i++) {
-            const animPred = this.animatedPredictions[i];
-
-            // More visible white that fades with distance and confidence
-            const baseAlpha = animPred.confidence * 0.8;
-            const alpha = Math.max(0.4, baseAlpha - i * 0.2); // Fade with distance
-
-            this.drawCrosshair(animPred.x, animPred.y, 8, alpha);
+        for (const animPred of this.animatedPredictions) {
+            this.drawCrosshair({ x: animPred.x, y: animPred.y });
         }
     }
 
-    private updateLandingPredictionAnimations(): void {
+    updateLandingPredictionAnimations(): void {
         // Update or create animated predictions
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
@@ -447,7 +442,7 @@ export class FabricRenderSystem {
         }
     }
 
-    private renderLandingHistory(): void {
+    renderLandingHistory(): void {
         const currentTime = Date.now();
         const HISTORY_FADE_TIME = 3000;
 
@@ -730,22 +725,26 @@ export class FabricRenderSystem {
         this.updateLandingPredictionAnimations();
     }
 
-    addLandingHistory(x: number, y: number): void {
+    addLandingHistory(position: Position): void {
         this.landingHistory.push({
-            x,
-            y,
+            x: position.x,
+            y: position.y,
             timestamp: Date.now()
         });
     }
 
-    private cleanupLandingHistory(): void {
+    cleanupLandingHistory(): void {
         const now = Date.now();
         this.landingHistory = this.landingHistory.filter(
             (landing) => now - landing.timestamp < this.HISTORY_FADE_TIME
         );
     }
 
-    private drawCrosshair(x: number, y: number, size: number, alpha: number): void {
+    drawCrosshair(position: Position): void {
+        const x = position.x;
+        const y = position.y;
+        const size = 8;
+        const alpha = 0.8;
         // Vertical line
         const verticalLine = new fabric.Line([x, y - size, x, y + size], {
             stroke: `rgba(255, 255, 255, ${alpha})`,

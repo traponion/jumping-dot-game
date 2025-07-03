@@ -5,7 +5,7 @@
  * Supports both production (Fabric.js) and test (Mock) environments.
  */
 
-import { FabricRenderSystem } from './FabricRenderSystem.js';
+import { FabricRenderAdapter } from './FabricRenderAdapter.js';
 import { MockRenderSystem } from './MockRenderSystem.js';
 
 /**
@@ -19,5 +19,5 @@ export function createGameRenderSystem(canvasElement: HTMLCanvasElement) {
     if (isTestEnvironment) {
         return new MockRenderSystem(canvasElement);
     }
-    return new FabricRenderSystem(canvasElement);
+    return new FabricRenderAdapter(canvasElement);
 }

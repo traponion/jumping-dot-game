@@ -1,165 +1,99 @@
 /**
- * IRenderSystem - Rendering abstraction interface
- *
- * Defines the contract for all rendering operations in the game.
- * This interface abstracts away the underlying rendering framework
- * (currently Fabric.js) and prepares for potential migration to
- * other rendering engines like Pixi.js.
- *
- * Design Principles:
- * - Framework agnostic: No library-specific types
- * - Single responsibility: Each method has one clear purpose
- * - Performance oriented: Maintains current rendering performance
- * - Future ready: Supports potential rendering engine migration
+ * @fileoverview Rendering abstraction interface - SOLID principles implementation
+ * @module systems/IRenderSystem
+ * @description Based on FabricRenderSystem public methods for dependency inversion
  */
 
-import type {
-    Goal,
-    MovingPlatform,
-    Platform,
-    Spike,
-    StageData as Stage
-} from '../core/StageLoader';
-import type { Camera, GameState, Player, TrailPoint } from '../types/GameTypes';
+import type { StageData } from '../core/StageLoader.js';
+import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
 /**
- * Landing prediction data structure
+ * Landing prediction interface (FabricRenderSystem compatible)
  */
 export interface LandingPrediction {
     x: number;
     y: number;
-    velocity: { x: number; y: number };
-    time: number;
-    isValid: boolean;
+    confidence: number; // 0-1, how certain we are about this prediction
+    jumpNumber: number; // Which jump this represents (1, 2, 3...)
 }
 
 /**
- * Animation effect data structures
+ * Position interface for crosshair and history
  */
-export interface DeathAnimation {
-    x: number;
-    y: number;
-    progress: number;
-    startTime: number;
-}
-
-export interface ClearAnimation {
-    progress: number;
-    startTime: number;
-}
-
-export interface DeathMark {
-    x: number;
-    y: number;
-    timestamp: number;
-}
-
 export interface Position {
     x: number;
     y: number;
 }
 
 /**
- * Main rendering system interface
+ * IRenderSystem - Complete rendering abstraction interface
  *
- * This interface defines all rendering operations required by the game.
- * Implementations must handle all visual aspects including game objects,
- * UI elements, visual effects, and analytics overlays.
+ * Design Philosophy:
+ * - Based on FabricRenderSystem's actual public methods
+ * - Matches GameManager's actual usage patterns
+ * - Enables dependency inversion principle (DIP)
+ * - Supports future renderer switching (Pixi.js, etc.)
+ *
+ * This interface provides the complete contract for game rendering,
+ * allowing core logic to be completely independent of rendering implementation.
  */
 export interface IRenderSystem {
     // ===== Canvas Management =====
 
     /**
-     * Initialize the rendering system with a canvas element
-     * @param canvas HTML canvas element to render to
+     * Clear the canvas for new rendering
      */
-    initialize(canvas: HTMLCanvasElement): void;
+    clearCanvas(): void;
 
     /**
-     * Clear the entire canvas
+     * Set drawing style for rendering context
      */
-    clear(): void;
+    setDrawingStyle(): void;
 
     /**
-     * Render the complete game state
-     * @param gameState Current game state to render
-     */
-    render(gameState: GameState): void;
-
-    /**
-     * Clean up rendering resources (shapes, objects, etc.)
-     */
-    cleanup(): void;
-
-    /**
-     * Dispose of the rendering system and release all resources
-     */
-    dispose(): void;
-
-    // ===== Camera Management =====
-
-    /**
-     * Apply camera transformation to the rendering context
-     * @param camera Camera state for transformation
+     * Apply camera transform to rendering context
+     * @param camera Camera position and properties
      */
     applyCameraTransform(camera: Camera): void;
 
     /**
-     * Restore the rendering context to original state
+     * Restore original camera transform
      */
     restoreCameraTransform(): void;
 
-    // ===== Game Objects Rendering =====
+    /**
+     * Render all pending objects to the canvas
+     */
+    renderAll(): void;
+
+    // ===== Game Objects =====
 
     /**
      * Render the player character
-     * @param player Player state to render
+     * @param player Player object to render
      */
     renderPlayer(player: Player): void;
 
     /**
      * Render the player's trail
      * @param trail Array of trail points to render
+     * @param playerRadius Player radius for trail scaling
      */
-    renderTrail(trail: TrailPoint[]): void;
+    renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
     /**
-     * Render static platforms
-     * @param platforms Array of platforms to render
+     * Render complete stage (platforms, goal, spikes, texts)
+     * @param stage Stage data object
      */
-    renderPlatforms(platforms: Platform[]): void;
+    renderStage(stage: StageData): void;
 
     /**
-     * Render moving platforms
-     * @param platforms Array of moving platforms to render
+     * Render death marks at previous death locations
+     * @param deathMarks Array of death mark positions
      */
-    renderMovingPlatforms(platforms: MovingPlatform[]): void;
+    renderDeathMarks(deathMarks: Array<{ x: number; y: number }>): void;
 
-    /**
-     * Render the goal area
-     * @param goal Goal state to render
-     */
-    renderGoal(goal: Goal): void;
-
-    /**
-     * Render spike obstacles
-     * @param spikes Array of spikes to render
-     */
-    renderSpikes(spikes: Spike[]): void;
-
-    /**
-     * Render stage boundaries and background
-     * @param stage Stage configuration to render
-     */
-    renderStage(stage: Stage): void;
-
-    // ===== UI Elements Rendering =====
-
-    /**
-     * Render stage-specific text elements
-     * @param stage Stage configuration containing text data
-     */
-    renderStageTexts(stage: Stage): void;
+    // ===== UI Elements =====
 
     /**
      * Render start instruction overlay
@@ -168,52 +102,51 @@ export interface IRenderSystem {
 
     /**
      * Render game over menu
-     * @param gameState Current game state for menu data
+     * @param options Menu options array
+     * @param selectedIndex Currently selected option index
+     * @param finalScore Final game score
      */
-    renderGameOverMenu(gameState: GameState): void;
-
-    /**
-     * Render game over screen
-     */
-    renderGameOver(): void;
+    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void;
 
     /**
      * Render credits screen
      */
     renderCredits(): void;
 
-    // ===== Visual Effects =====
+    // ===== Animations =====
 
     /**
-     * Render death animation effect
-     * @param animation Death animation state
+     * Render death animation particles
+     * @param particles Array of particle objects
      */
-    renderDeathAnimation(animation: DeathAnimation): void;
+    renderDeathAnimation(particles: Particle[]): void;
 
     /**
-     * Render stage clear animation effect
-     * @param animation Clear animation state
+     * Render stage clear animation
+     * @param particles Array of particle objects
+     * @param progress Animation progress (0-1)
+     * @param centerX Center X coordinate
+     * @param centerY Center Y coordinate
      */
-    renderClearAnimation(animation: ClearAnimation): void;
+    renderClearAnimation(
+        particles: Particle[],
+        progress: number,
+        centerX: number,
+        centerY: number
+    ): void;
+
+    // ===== Analytics & Predictions =====
 
     /**
-     * Render death marks at previous death locations
-     * @param deathMarks Array of death marks to render
+     * Render landing prediction visualization
      */
-    renderDeathMarks(deathMarks: DeathMark[]): void;
-
-    // ===== Analytics/Predictions =====
+    renderLandingPredictions(): void;
 
     /**
      * Set landing predictions for visualization
      * @param predictions Array of landing predictions
      */
     setLandingPredictions(predictions: LandingPrediction[]): void;
-
-    /**
-     * Render landing prediction visualization
-     */
-    renderLandingPredictions(): void;
 
     /**
      * Render landing history visualization
@@ -241,4 +174,16 @@ export interface IRenderSystem {
      * @param position Position to draw crosshair
      */
     drawCrosshair(position: Position): void;
+
+    // ===== System Management =====
+
+    /**
+     * Clean up rendering resources (async for complex cleanup)
+     */
+    cleanup(): Promise<void>;
+
+    /**
+     * Dispose of rendering system and release all resources
+     */
+    dispose(): void;
 }
