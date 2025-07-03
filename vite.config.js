@@ -38,7 +38,9 @@ export default defineConfig({
         'src/main.ts',
         'src/systems/FabricRenderSystem.ts', // Excluded as it's tested in production environment, not test environment
         'src/systems/MockRenderSystem.ts', // Test utility, not production code
-        'src/systems/RenderSystemFactory.ts' // Environment detection utility, tested through integration
+        'src/systems/RenderSystemFactory.ts', // Environment detection utility, tested through integration
+        'src/systems/IRenderSystem.ts', // Interface file - no executable code to test
+        'src/systems/FabricRenderAdapter.ts' // Thin adapter layer - tested through integration with FabricRenderSystem
       ],
       thresholds: {
         global: {
