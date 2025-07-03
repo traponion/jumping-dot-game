@@ -82,3 +82,7 @@ review.md
 
 # Claude AI working directory (temporary files, handovers, etc.)
 .claude/
+
+# Playwright test artifacts
+test-results/
+playwright-report/

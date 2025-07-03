@@ -1,3 +1,4 @@
+import type { StageData } from '../core/StageLoader.js';
 // Plain TypeScript GameState class - Library-independent state management
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
@@ -10,6 +11,15 @@ interface GameRuntimeState {
     particles: Particle[];
     deathMarks: DeathMark[];
     trail: TrailPoint[];
+
+    collisionResults: {
+        holeCollision: boolean;
+        boundaryCollision: boolean;
+        goalCollision: boolean;
+    };
+    // Animation trigger flags for autonomous system behavior
+    shouldStartDeathAnimation: boolean;
+    shouldStartClearAnimation: boolean;
     isInitialized: boolean;
     lastUpdateTime: number;
 }
@@ -43,6 +53,7 @@ export class GameState {
     public gameStartTime: number | null = null;
     public finalScore = 0;
     public hasMovedOnce = false;
+    public stage: StageData | null = null;
 
     // Runtime state
     public runtime!: GameRuntimeState;
@@ -66,6 +77,7 @@ export class GameState {
         this.gameStartTime = null;
         this.finalScore = 0;
         this.hasMovedOnce = false;
+        this.stage = null;
 
         this.runtime = {
             player: {
@@ -83,6 +95,14 @@ export class GameState {
             particles: [],
             deathMarks: [],
             trail: [],
+
+            collisionResults: {
+                holeCollision: false,
+                boundaryCollision: false,
+                goalCollision: false
+            },
+            shouldStartDeathAnimation: false,
+            shouldStartClearAnimation: false,
             isInitialized: false,
             lastUpdateTime: 0
         };

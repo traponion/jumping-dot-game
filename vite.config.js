@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    exclude: ['tests/**', 'node_modules/**'], // Exclude Playwright tests and node_modules
     setupFiles: [
       path.resolve(process.cwd(), 'vitest.setup.ts')
     ],

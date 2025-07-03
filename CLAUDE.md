@@ -111,6 +111,13 @@ expect(mockCanvas.add).toHaveBeenCalledWith(
 - Environment: jsdom
 - Timeout: 120 seconds (for CI stability)
 - Pool: forks with isolation enabled
+
+### E2E Testing with Playwright
+- **Platform Landing Test**: `tests/platform-landing.spec.ts`
+- **Purpose**: Detects platform collision/fall-through bugs automatically
+- **Usage**: `npx playwright test tests/platform-landing.spec.ts`
+- **Detection**: 3-second survival check identifies immediate death scenarios
+- **Evidence**: Automatic screenshot generation in `test-results/`
 </testing-guidelines>
 
 <project-stack>

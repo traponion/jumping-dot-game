@@ -7,8 +7,10 @@
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
+import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
+import { GameRuleSystem } from '../systems/GameRuleSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
@@ -18,7 +20,7 @@ import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
 import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
-import { type Platform, type StageData, StageLoader } from './StageLoader.js';
+import { type StageData, StageLoader } from './StageLoader.js';
 
 /**
  * GameManager - Manages game state, systems coordination, and game logic
@@ -47,8 +49,12 @@ export class GameManager {
     private playerSystem!: PlayerSystem;
     /** @private {PhysicsSystem} Physics calculations system */
     private physicsSystem!: PhysicsSystem;
+    /** @private {CameraSystem} Camera positioning system */
+    private cameraSystem!: CameraSystem;
     /** @private {CollisionSystem} Collision detection system */
     private collisionSystem!: CollisionSystem;
+    /** @private {GameRuleSystem} Game rule enforcement system */
+    private gameRuleSystem!: GameRuleSystem;
     /** @private {AnimationSystem} Animation and visual effects system */
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
@@ -65,10 +71,6 @@ export class GameManager {
     private stageLoader!: StageLoader;
     /** @private {StageData | null} Current stage data */
     private stage: StageData | null = null;
-
-    // Game state tracking
-    /** @private {number} Previous player Y position for collision detection */
-    private prevPlayerY = 0;
 
     /**
      * Creates a new GameManager instance
@@ -106,17 +108,20 @@ export class GameManager {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
+        this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
         this.collisionSystem = new CollisionSystem(this.gameState);
+        this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
-        this.movingPlatformSystem = new MovingPlatformSystem();
+        this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
         // Environment-aware rendering system
         this.renderSystem = createGameRenderSystem(this.canvas);
 
         // Initialize InputManager with canvas and game controller
         this.inputManager = new InputManager(this.gameState, this.canvas, gameController);
 
-        // Initialize PlayerSystem with InputManager
+        // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
+        this.playerSystem.setRenderSystem(this.renderSystem);
     }
 
     /**
@@ -125,6 +130,8 @@ export class GameManager {
     async loadStage(stageNumber: number): Promise<void> {
         try {
             this.stage = await this.stageLoader.loadStageWithFallback(stageNumber);
+            // Sync stage to GameState for CollisionSystem access
+            this.gameState.stage = this.stage;
 
             // Set timeLimit from stage data if available
             if (this.stage && this.stage.timeLimit !== undefined) {
@@ -139,6 +146,8 @@ export class GameManager {
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
+            // Sync stage to GameState for CollisionSystem access
+            this.gameState.stage = this.stage;
 
             // Set timeLimit from fallback stage data
             const fallbackTimeLimit = this.stage.timeLimit || this.gameState.timeLimit;
@@ -165,6 +174,8 @@ export class GameManager {
         // Reload stage to get clean initial data
         const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
         this.stage = await this.stageLoader.loadStageWithFallback(currentStageId);
+        // Sync stage to GameState for CollisionSystem access
+        this.gameState.stage = this.stage;
 
         this.playerSystem.reset(100, 400);
         this.animationSystem.reset();
@@ -174,7 +185,6 @@ export class GameManager {
 
         // Clear inputs first before changing game state
         this.inputManager.clearInputs();
-        this.prevPlayerY = 0;
     }
 
     /**
@@ -198,10 +208,9 @@ export class GameManager {
         }
 
         this.updateSystems(deltaTime);
-        this.handleCollisions();
-        this.updateCamera();
-        this.checkBoundaries();
-        this.updateLandingPredictions();
+        this.collisionSystem.update();
+        this.gameRuleSystem.update();
+        this.cameraSystem.update();
     }
 
     private updateSystems(deltaTime: number): void {
@@ -214,254 +223,10 @@ export class GameManager {
         this.physicsSystem.update(deltaTime);
 
         // Update moving platforms if stage has them
-        if (this.stage?.movingPlatforms) {
-            // Overwrite the old array with the new, updated array
-            this.stage.movingPlatforms = this.movingPlatformSystem.update(
-                this.stage.movingPlatforms,
-                deltaTime
-            );
-        }
-
-        // Clamp player speed directly on gameState
-        const player = this.gameState.runtime.player;
-        const maxSpeed = physicsConstants.moveSpeed;
-        if (player.vx > maxSpeed) player.vx = maxSpeed;
-        if (player.vx < -maxSpeed) player.vx = -maxSpeed;
+        this.movingPlatformSystem.update(deltaTime);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
-    }
-
-    private handleCollisions(): void {
-        if (!this.stage) return;
-
-        const player = this.gameState.runtime.player;
-        const prevPlayerFootY = this.prevPlayerY + player.radius;
-
-        // Handle moving platform collisions first (higher priority)
-        if (this.stage.movingPlatforms && this.stage.movingPlatforms.length > 0) {
-            const movingPlatformCollisionUpdate =
-                this.collisionSystem.handleMovingPlatformCollisions(
-                    this.stage.movingPlatforms,
-                    prevPlayerFootY
-                );
-
-            if (movingPlatformCollisionUpdate) {
-                // Apply collision update to player
-                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
-
-                if (
-                    movingPlatformCollisionUpdate.grounded &&
-                    movingPlatformCollisionUpdate.platform
-                ) {
-                    this.playerSystem.resetJumpTimer();
-
-                    // IMPORTANT: Move player with the platform!
-                    const movingPlatform = movingPlatformCollisionUpdate.platform;
-                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime (should use actual deltaTime)
-                    const platformMovement =
-                        movingPlatform.speed * movingPlatform.direction * dtFactor;
-
-                    // Get current player and apply platform movement
-                    const currentPlayer = this.gameState.runtime.player;
-                    currentPlayer.x += platformMovement;
-
-                    // Add landing history with updated position
-                    const finalPlayer = this.gameState.runtime.player;
-                    this.renderSystem.addLandingHistory(
-                        finalPlayer.x,
-                        finalPlayer.y + finalPlayer.radius
-                    );
-                }
-
-                // Skip static platform collision check if moving platform collision found
-                return;
-            }
-        }
-
-        // Handle static platform collisions (only if no moving platform collision)
-        const platformCollisionUpdate = this.collisionSystem.handlePlatformCollisions(
-            this.stage.platforms,
-            prevPlayerFootY
-        );
-
-        if (platformCollisionUpdate) {
-            // GameManager is responsible for updating the store
-            Object.assign(this.gameState.runtime.player, platformCollisionUpdate);
-
-            if (platformCollisionUpdate.grounded) {
-                this.playerSystem.resetJumpTimer();
-                // Get updated player state from store after collision
-                const updatedPlayer = this.gameState.runtime.player;
-                this.renderSystem.addLandingHistory(
-                    updatedPlayer.x,
-                    updatedPlayer.y + updatedPlayer.radius
-                );
-            }
-        }
-
-        // Get latest player state from store for other collision checks
-        const latestPlayer = this.gameState.runtime.player;
-        if (this.collisionSystem.checkSpikeCollisions(latestPlayer, this.stage.spikes)) {
-            this.handlePlayerDeath('Hit by spike! Press R to restart');
-            return;
-        }
-
-        if (this.collisionSystem.checkGoalCollision(latestPlayer, this.stage.goal)) {
-            this.handleGoalReached();
-            return;
-        }
-    }
-
-    private updateCamera(): void {
-        const player = this.gameState.runtime.player;
-        this.gameState.runtime.camera.x = player.x - this.canvas.width / 2;
-    }
-
-    private checkBoundaries(): void {
-        const player = this.gameState.runtime.player;
-        if (this.collisionSystem.checkHoleCollision(player, 600)) {
-            this.handlePlayerDeath('Fell into hole! Press R to restart', 'fall');
-        } else if (this.collisionSystem.checkBoundaryCollision(player, this.canvas.height)) {
-            this.handlePlayerDeath('Game Over - Press R to restart', 'fall');
-        }
-    }
-
-    private updateLandingPredictions(): void {
-        if (!this.stage) return;
-
-        // Simple input-based prediction that grows from landing spot
-        const inputKeys = this.inputManager.getMovementState();
-        const futureDistance = this.calculateFutureMovement(inputKeys);
-        const predictedX = this.gameState.runtime.player.x + futureDistance;
-
-        // Find the platform closest to predicted position
-        const targetPlatform = this.findNearestPlatform(predictedX);
-
-        if (targetPlatform) {
-            const simplePrediction = [
-                {
-                    x: predictedX,
-                    y: targetPlatform.y1,
-                    confidence: 0.8,
-                    jumpNumber: 1
-                }
-            ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
-        } else {
-            this.renderSystem.setLandingPredictions([]);
-        }
-    }
-
-    private calculateFutureMovement(keys: Record<string, boolean>): number {
-        // Estimate future movement for one jump (more realistic timing)
-        const jumpDuration = 400; // Shorter, more realistic jump duration
-        const baseMovement = this.gameState.runtime.player.vx * (jumpDuration / 16.67); // Movement during jump
-
-        // Add smaller input-based movement
-        let inputMovement = 0;
-        if (keys.ArrowLeft) {
-            inputMovement = -30; // Smaller left movement
-        } else if (keys.ArrowRight) {
-            inputMovement = 30; // Smaller right movement
-        }
-
-        return baseMovement + inputMovement;
-    }
-
-    private findNearestPlatform(targetX: number): Platform | null {
-        if (!this.stage) return null;
-
-        // Find platform that the player would likely land on
-        let bestPlatform = null;
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const platform of this.stage.platforms) {
-            // Check if target X is within platform bounds or nearby
-            const platformCenterX = (platform.x1 + platform.x2) / 2;
-            const distance = Math.abs(targetX - platformCenterX);
-
-            if (
-                distance < bestDistance &&
-                targetX >= platform.x1 - 30 &&
-                targetX <= platform.x2 + 30
-            ) {
-                bestDistance = distance;
-                bestPlatform = platform;
-            }
-        }
-
-        return bestPlatform;
-    }
-
-    /**
-     * Handle player death
-     */
-    handlePlayerDeath(
-        message: string,
-        deathType = 'normal'
-    ): { message: string; deathType: string } {
-        this.gameState.gameOver = true;
-
-        const player = this.gameState.runtime.player;
-        const camera = this.gameState.runtime.camera;
-        let deathMarkY = player.y;
-        if (deathType === 'fall') {
-            deathMarkY = camera.y + this.canvas.height - 20;
-        }
-
-        this.animationSystem.addDeathMark(player.x, deathMarkY);
-        this.animationSystem.startDeathAnimation(player);
-        this.playerSystem.clearTrail();
-
-        return { message, deathType };
-    }
-
-    /**
-     * Handle goal reached
-     */
-    handleGoalReached(): { finalScore: number } {
-        this.gameState.gameOver = true;
-        const finalScore = Math.ceil(this.gameState.timeRemaining);
-        this.gameState.finalScore = finalScore;
-
-        this.animationSystem.startClearAnimation(this.gameState.runtime.player);
-
-        // Set up auto-return to stage select after clear animation
-        setTimeout(() => {
-            const event = new CustomEvent('requestStageSelect');
-            if (typeof window.dispatchEvent === 'function') {
-                window.dispatchEvent(event);
-            }
-        }, 3000);
-
-        return { finalScore };
-    }
-
-    /**
-     * Check if time is up
-     */
-    checkTimeUp(): boolean {
-        const gameStartTime = this.gameState.gameStartTime;
-        if (gameStartTime) {
-            const currentTime = getCurrentTime();
-            const elapsedSeconds = (currentTime - gameStartTime) / 1000;
-            const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
-            this.gameState.timeRemaining = timeRemaining;
-
-            if (timeRemaining <= 0) {
-                this.handlePlayerDeath('Time Up! Press R to restart');
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Update previous player position (for collision detection)
-     */
-    updatePrevPlayerY(): void {
-        this.prevPlayerY = this.gameState.runtime.player.y;
     }
 
     /**

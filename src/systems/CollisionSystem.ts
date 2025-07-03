@@ -9,6 +9,16 @@ import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from '../utils/GameUtils.js';
 
+// Interface for PlayerSystem methods used by CollisionSystem
+interface IPlayerSystem {
+    resetJumpTimer(): void;
+}
+
+// Interface for RenderSystem methods used by CollisionSystem
+interface IRenderSystem {
+    addLandingHistory(x: number, y: number): void;
+}
+
 /**
  * Extended collision result that includes platform reference for moving platforms
  */
@@ -23,9 +33,12 @@ export interface MovingPlatformCollisionResult extends Partial<Player> {
  */
 export class CollisionSystem {
     private gameState: GameState;
+    private prevPlayerY = 0;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
+        // FIXED: Initialize with current player position instead of 0
+        this.prevPlayerY = this.gameState.runtime.player.y;
     }
 
     /**
@@ -236,5 +249,144 @@ export class CollisionSystem {
 
         // If no collision found, return null (don't interfere with other collision systems)
         return null;
+    }
+
+    /**
+     * Gets the previous player Y position
+     * @returns {number} Previous player Y position
+     */
+    getPrevPlayerY(): number {
+        return this.prevPlayerY;
+    }
+
+    /**
+     * Updates the previous player Y position with current player position
+     */
+    updatePrevPlayerY(): void {
+        this.prevPlayerY = this.gameState.runtime.player.y;
+    }
+
+    /**
+     * Autonomous collision update - directly mutates GameState
+     * Replaces GameManager.handleCollisions() logic
+     * @param playerSystem - Player system for jump timer reset
+     * @param renderSystem - Render system for landing history
+     * @param deathHandler - Optional death handler callback
+     * @param goalHandler - Optional goal reached handler callback
+     */
+    update(
+        playerSystem?: IPlayerSystem,
+        renderSystem?: IRenderSystem,
+        deathHandler?: () => void,
+        goalHandler?: () => void
+    ): void {
+        const stage = this.gameState.stage;
+        if (!stage) return;
+
+        const player = this.gameState.runtime.player;
+        const prevPlayerFootY = this.prevPlayerY + player.radius;
+
+        // Reset collision results at the start of each frame
+        this.gameState.runtime.collisionResults.holeCollision = false;
+        this.gameState.runtime.collisionResults.boundaryCollision = false;
+        this.gameState.runtime.collisionResults.goalCollision = false;
+
+        // Check boundary conditions and set flags
+        this.gameState.runtime.collisionResults.holeCollision = this.checkHoleCollision(
+            player,
+            600
+        );
+        this.gameState.runtime.collisionResults.boundaryCollision = this.checkBoundaryCollision(
+            player,
+            600
+        );
+
+        // Check goal collision and set flag
+        this.gameState.runtime.collisionResults.goalCollision = this.checkGoalCollision(
+            player,
+            stage.goal
+        );
+
+        // Handle moving platform collisions first (higher priority)
+        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
+            const movingPlatformCollisionUpdate = this.handleMovingPlatformCollisions(
+                stage.movingPlatforms,
+                prevPlayerFootY
+            );
+
+            if (movingPlatformCollisionUpdate) {
+                // FIXED: Use Object.assign to ensure all properties are set properly
+                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
+
+                if (
+                    movingPlatformCollisionUpdate.grounded &&
+                    movingPlatformCollisionUpdate.platform &&
+                    playerSystem
+                ) {
+                    playerSystem.resetJumpTimer();
+
+                    // Move player with the platform
+                    const movingPlatform = movingPlatformCollisionUpdate.platform;
+                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime
+                    const platformMovement =
+                        movingPlatform.speed * movingPlatform.direction * dtFactor;
+
+                    this.gameState.runtime.player.x += platformMovement;
+
+                    // Add landing history
+                    if (renderSystem) {
+                        renderSystem.addLandingHistory(
+                            this.gameState.runtime.player.x,
+                            this.gameState.runtime.player.y + this.gameState.runtime.player.radius
+                        );
+                    }
+                }
+
+                // Skip static platform collision check
+                this.updatePrevPlayerY();
+                return;
+            }
+        }
+
+        // Handle static platform collisions
+        const platformCollisionUpdate = this.handlePlatformCollisions(
+            stage.platforms,
+            prevPlayerFootY
+        );
+
+        // FIXED: Always apply platform collision result (including grounded: false)
+        Object.assign(this.gameState.runtime.player, platformCollisionUpdate);
+
+        if (platformCollisionUpdate?.grounded && playerSystem) {
+            playerSystem.resetJumpTimer();
+
+            if (renderSystem) {
+                renderSystem.addLandingHistory(
+                    this.gameState.runtime.player.x,
+                    this.gameState.runtime.player.y + this.gameState.runtime.player.radius
+                );
+            }
+        }
+
+        // Check spike collisions
+        if (this.checkSpikeCollisions(this.gameState.runtime.player, stage.spikes)) {
+            if (deathHandler) {
+                deathHandler();
+            }
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Check goal collision (legacy callback support)
+        if (this.gameState.runtime.collisionResults.goalCollision) {
+            if (goalHandler) {
+                goalHandler();
+            }
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Update previous player Y for next frame
+        this.updatePrevPlayerY();
     }
 }

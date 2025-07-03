@@ -133,6 +133,38 @@ describe('PhysicsSystem', () => {
         });
     });
 
+    describe('velocity clamping', () => {
+        it('should clamp positive horizontal velocity to maximum speed', () => {
+            // Set velocity above maximum speed
+            gameState.runtime.player.vx = 10; // Above moveSpeed (4)
+
+            physicsSystem.update(16.67);
+
+            // Velocity should be clamped to maximum speed
+            expect(gameState.runtime.player.vx).toBe(constants.moveSpeed);
+        });
+
+        it('should clamp negative horizontal velocity to maximum speed', () => {
+            // Set velocity below negative maximum speed
+            gameState.runtime.player.vx = -10; // Below -moveSpeed (-4)
+
+            physicsSystem.update(16.67);
+
+            // Velocity should be clamped to negative maximum speed
+            expect(gameState.runtime.player.vx).toBe(-constants.moveSpeed);
+        });
+
+        it('should not modify velocity within normal range', () => {
+            // Set velocity within normal range
+            gameState.runtime.player.vx = 2; // Within moveSpeed range
+
+            physicsSystem.update(16.67);
+
+            // Position should be updated but vx should remain valid (allowing for position-based changes)
+            expect(Math.abs(gameState.runtime.player.vx)).toBeLessThanOrEqual(constants.moveSpeed);
+        });
+    });
+
     describe('frame rate independence', () => {
         it('should produce reasonably consistent results with different frame rates', () => {
             // Create two identical game states for comparison

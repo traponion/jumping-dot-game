@@ -116,19 +116,12 @@ export class JumpingDotGame {
         // Update timer UI if game is running
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.gameUI.updateTimer();
-
-            // Check for time up
-            if (this.gameManager.checkTimeUp()) {
-                this.gameUI.showPlayerDeath('Time Up! Press R to restart');
-                return;
-            }
         }
 
         // Delegate main update logic to GameManager
         this.gameManager.update(deltaTime);
 
-        // Update previous player position for next frame
-        this.gameManager.updatePrevPlayerY();
+        // Previous player position update now handled by CollisionSystem.update()
     }
 
     private setupGameManagerCallbacks(): void {

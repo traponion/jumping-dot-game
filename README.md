@@ -1,20 +1,23 @@
 # 🎮 Jumping Dot Game
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0+-purple.svg)](https://vitejs.dev/)
 [![Fabric.js](https://img.shields.io/badge/Fabric.js-6.0+-green.svg)](http://fabricjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-2.0+-yellow.svg)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-3.2+-yellow.svg)](https://vitest.dev/)
+[![Biome](https://img.shields.io/badge/Biome-1.9+-orange.svg)](https://biomejs.dev/)
 
-A 2D platform-style jumping game with physics-based gameplay. High-quality web application built with TypeScript + Fabric.js.
+A 2D platform-style jumping game with physics-based gameplay and advanced visual effects. High-quality web application built with TypeScript + Fabric.js, featuring autonomous system architecture following SOLID principles.
 
 ## ✨ Features
 
 - 🎮 **Physics-Based Jumping**: Realistic jumping mechanics with gravity
-- 🏗️ **Clean Architecture**: MVC pattern with dependency inversion
-- 🚀 **High Performance**: Optimized with object pooling and efficient rendering
-- 🧪 **Comprehensive Testing**: Unit, integration, and performance tests
-- 📱 **Responsive Design**: Desktop and tablet support
+- 🏗️ **SOLID Architecture**: Autonomous systems with dependency inversion
+- ✨ **Visual Effects**: Death markers, particle systems, and trail effects
+- 🚀 **High Performance**: Optimized rendering with Fabric.js
+- 🧪 **Comprehensive Testing**: 280+ tests with 89%+ coverage
+- 📱 **Responsive Design**: Desktop and tablet support  
 - ⌨️ **Intuitive Controls**: Simple keyboard controls for smooth gameplay
+- 🎯 **Multiple Stages**: Progressive difficulty with time limits
 
 ## 🚀 Quick Start
 
@@ -31,7 +34,7 @@ npm install
 npm run dev
 
 # Open in browser
-# Game: http://localhost:5173/
+# Game: http://localhost:3000/
 ```
 
 ## 🎮 How to Play
@@ -55,25 +58,30 @@ npm run dev
 ### Project Structure
 ```
 src/
-├── core/              # Core game systems (Game, GameLoop, etc.)
-├── systems/           # Rendering and input systems
-├── stores/            # State management (Zustand)
-├── utils/             # Utility functions
+├── core/              # Core game systems (Game, GameLoop, GameManager)
+├── systems/           # Autonomous systems (Physics, Collision, Animation, etc.)
+├── stores/            # State management (GameState) 
+├── utils/             # Utility functions and error handling
 ├── types/             # TypeScript type definitions
-├── test/              # Test suite
+├── constants/         # Game configuration and constants
+├── test/              # Comprehensive test suite (280+ tests)
 └── main.ts           # Application entry point
 ```
 
 ### Main Commands
 ```bash
 # Development
-npm run dev          # Start development server
-npm run build        # Production build
+npm run dev          # Start development server (localhost:3000)
+npm run build        # Production build with type checking
 npm run preview      # Preview build result
 
 # Quality Control
-npm run typecheck    # TypeScript type checking
-npm run test         # Run tests
+npm run quality      # Run all quality checks (format + lint + typecheck + test)
+npm run test         # Run unit tests (280+ tests)
+npm run test:coverage # Run tests with coverage report
+npm run typecheck    # TypeScript type checking (strict mode)
+npm run format       # Format code with Biome
+npm run lint:fix     # Fix linting issues with Biome
 ```
 
 ### Documentation
@@ -115,12 +123,13 @@ All pull requests target `main` branch directly. See [Contributing Guide](CONTRI
 ## 🎯 Game Features
 
 ### Core Mechanics
-- **Physics Engine**: Realistic gravity and collision detection
+- **Physics Engine**: Realistic gravity and collision detection with autonomous systems
 - **Multiple Jump System**: Double and triple jumps for advanced movement
 - **Moving Platforms**: Dynamic platform mechanics for challenging gameplay
 - **Hazards**: Spike traps that reset player position
-- **Goal System**: Reach the goal to complete each stage
-- **Trail Effects**: Visual feedback for player movement
+- **Goal System**: Reach the goal to complete each stage with scoring
+- **Visual Effects**: Death markers, particle systems, and trail effects
+- **Time Limits**: Stage completion challenges with countdown timers
 
 ### Stage System
 - **Multiple Stages**: Pre-designed levels with increasing difficulty
@@ -131,14 +140,20 @@ All pull requests target `main` branch directly. See [Contributing Guide](CONTRI
 
 ### Running Tests
 ```bash
-# All tests
+# All tests (280+ unit tests)
 npm run test
 
-# With coverage
+# With coverage report (89%+ coverage)
 npm run test:coverage
 
 # Specific test file
 npm run test GameLoop
+
+# E2E tests with Playwright
+npx playwright test
+
+# Test with UI (interactive)
+npm run test:ui
 ```
 
 ## 🚀 Performance
@@ -153,12 +168,29 @@ npm run test GameLoop
 
 ## 🏗️ Architecture
 
-### Core Design
+### SOLID Principles Implementation
+This project follows **autonomous system architecture** with strict SOLID principles:
+
+#### Core Systems
 - **Game**: Main game orchestration and lifecycle management
 - **GameLoop**: Fixed timestep game loop with interpolation
-- **GameManager**: Game state and level management
-- **InputManager**: Keyboard input handling
-- **RenderSystem**: Canvas rendering with Fabric.js integration
+- **GameManager**: Reduced to system orchestration only
+- **GameState**: Centralized state management (no external dependencies)
+
+#### Autonomous Systems
+- **PhysicsSystem**: Gravity, velocity, and movement calculations
+- **CollisionSystem**: Platform, boundary, and hazard collision detection
+- **GameRuleSystem**: Victory/defeat conditions and rule enforcement
+- **CameraSystem**: Viewport management and player tracking
+- **AnimationSystem**: Particle effects, death markers, and visual feedback
+- **InputManager**: Keyboard input handling and player controls
+- **FabricRenderSystem**: Canvas rendering with Fabric.js integration
+
+#### Design Benefits
+- **Loose Coupling**: Systems communicate only through GameState
+- **High Cohesion**: Each system has a single, well-defined responsibility
+- **Testability**: Each system can be tested in isolation
+- **Maintainability**: Clear separation of concerns and responsibilities
 
 ## 🔧 Customization
 
@@ -182,17 +214,20 @@ const customStage: StageData = {
 
 ## 📊 Roadmap
 
-### Version 2.0
+### Version 2.0 (In Progress)
+- [x] Comprehensive particle effects system
+- [x] Death markers and visual feedback
+- [x] SOLID architecture implementation with autonomous systems
 - [ ] More stages with increasing difficulty
 - [ ] Power-ups and special items
 - [ ] Sound effects and background music
-- [ ] Particle effects for better visual feedback
 
 ### Version 3.0
 - [ ] Level progression system
-- [ ] Achievement system
-- [ ] Leaderboards
+- [ ] Achievement system and statistics tracking
+- [ ] Leaderboards and high scores
 - [ ] Custom stage creation tools
+- [ ] Mobile device support
 
 ## 📄 License
 

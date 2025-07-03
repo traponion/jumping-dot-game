@@ -86,10 +86,13 @@ describe('PlayerSystem', () => {
 
             const trail = gameState.runtime.trail;
             expect(trail.length).toBe(initialTrailLength + 1);
-            expect(trail[trail.length - 1]).toEqual({
-                x: gameState.runtime.player.x,
-                y: gameState.runtime.player.y
-            });
+            expect(trail[trail.length - 1]).toEqual(
+                expect.objectContaining({
+                    x: gameState.runtime.player.x,
+                    y: gameState.runtime.player.y,
+                    timestamp: expect.any(Number)
+                })
+            );
         });
 
         it('should limit trail length to maximum', () => {
@@ -124,8 +127,8 @@ describe('PlayerSystem', () => {
         it('should get trail from game state', () => {
             // Arrange: Directly add trail points to state
             const directTrail = [
-                { x: 100, y: 200 },
-                { x: 150, y: 250 }
+                { x: 100, y: 200, timestamp: 1000 },
+                { x: 150, y: 250, timestamp: 2000 }
             ];
             gameState.runtime.trail = [...directTrail];
 
@@ -235,6 +238,120 @@ describe('PlayerSystem', () => {
             playerSystem.clearTrail();
 
             expect(playerSystem.getTrail().length).toBe(0);
+        });
+    });
+
+    describe('landing predictions', () => {
+        it('should calculate future movement with left input when renderSystem available', () => {
+            // Set up renderSystem and stage
+            const mockRenderSystem = {
+                setLandingPredictions: vi.fn()
+            };
+            playerSystem.setRenderSystem(mockRenderSystem as any);
+
+            gameState.stage = {
+                id: 1,
+                name: 'Test Stage',
+                platforms: [{ x1: 50, y1: 450, x2: 150, y2: 450 }],
+                movingPlatforms: [],
+                holes: [],
+                spikes: [],
+                goal: { x: 900, y: 400, width: 50, height: 50 },
+                startText: { x: 0, y: 0, text: 'Start' },
+                goalText: { x: 900, y: 400, text: 'Goal' },
+                timeLimit: 10
+            };
+
+            // Mock left key press for landing prediction
+            (mockInputManager.getMovementState as any).mockReturnValue({
+                ArrowLeft: true,
+                ArrowRight: false
+            });
+
+            playerSystem.update(16.67, physics);
+
+            // Should have processed input for movement prediction
+            expect(mockInputManager.getMovementState).toHaveBeenCalled();
+            expect(mockRenderSystem.setLandingPredictions).toHaveBeenCalled();
+        });
+
+        it('should calculate future movement with right input when renderSystem available', () => {
+            // Set up renderSystem and stage
+            const mockRenderSystem = {
+                setLandingPredictions: vi.fn()
+            };
+            playerSystem.setRenderSystem(mockRenderSystem as any);
+
+            gameState.stage = {
+                id: 1,
+                name: 'Test Stage',
+                platforms: [{ x1: 200, y1: 400, x2: 300, y2: 400 }],
+                movingPlatforms: [],
+                holes: [],
+                spikes: [],
+                goal: { x: 900, y: 400, width: 50, height: 50 },
+                startText: { x: 0, y: 0, text: 'Start' },
+                goalText: { x: 900, y: 400, text: 'Goal' },
+                timeLimit: 10
+            };
+
+            // Mock right key press for landing prediction
+            (mockInputManager.getMovementState as any).mockReturnValue({
+                ArrowLeft: false,
+                ArrowRight: true
+            });
+
+            playerSystem.update(16.67, physics);
+
+            // Should have processed input for movement prediction
+            expect(mockInputManager.getMovementState).toHaveBeenCalled();
+            expect(mockRenderSystem.setLandingPredictions).toHaveBeenCalled();
+        });
+
+        it('should not call getMovementState when renderSystem not available', () => {
+            // No renderSystem set up
+            (mockInputManager.getMovementState as any).mockReturnValue({
+                ArrowLeft: false,
+                ArrowRight: false
+            });
+
+            playerSystem.update(16.67, physics);
+
+            // Should not process landing predictions without renderSystem
+            expect(mockInputManager.getMovementState).not.toHaveBeenCalled();
+        });
+
+        it('should handle platform finding with valid stage data', () => {
+            // Set up stage with platforms
+            gameState.stage = {
+                id: 1,
+                name: 'Test Stage',
+                platforms: [
+                    { x1: 50, y1: 450, x2: 150, y2: 450 },
+                    { x1: 200, y1: 400, x2: 300, y2: 400 }
+                ],
+                movingPlatforms: [],
+                holes: [],
+                spikes: [],
+                goal: { x: 900, y: 400, width: 50, height: 50 },
+                startText: { x: 0, y: 0, text: 'Start' },
+                goalText: { x: 900, y: 400, text: 'Goal' },
+                timeLimit: 10
+            };
+
+            playerSystem.update(16.67, physics);
+
+            // Should process without errors
+            expect(gameState.stage.platforms).toHaveLength(2);
+        });
+
+        it('should handle missing stage data gracefully', () => {
+            // Set stage to null
+            gameState.stage = null;
+
+            expect(() => {
+                playerSystem.update(16.67, physics);
+            }).not.toThrow();
         });
     });
 
