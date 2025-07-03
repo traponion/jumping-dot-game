@@ -134,19 +134,13 @@ export class UIRenderer {
     }
 
     renderStartInstruction(): void {
-        // HTML要素で表示するため、Canvas描画は不要
-        const startScreen = document.getElementById('startScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        if (startScreen) startScreen.classList.remove('hidden');
-        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        // HTML DOM operations moved to GameUI.showStartScreen()
+        // Canvas rendering responsibility only - no action needed for start instruction
     }
 
     renderGameOver(): void {
-        // HTML要素で表示するため、Canvas描画は不要
-        const startScreen = document.getElementById('startScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        if (startScreen) startScreen.classList.add('hidden');
-        if (gameOverScreen) gameOverScreen.classList.remove('hidden');
+        // HTML DOM operations moved to GameUI.showGameOverScreen()
+        // Canvas rendering responsibility only - no action needed for game over screen
     }
 
     renderCredits(): void {

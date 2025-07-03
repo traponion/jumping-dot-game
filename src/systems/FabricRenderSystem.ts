@@ -195,10 +195,6 @@ export class FabricRenderSystem implements IRenderSystem {
         this.uiRenderer.renderStartInstruction();
     }
 
-    renderGameOver(): void {
-        this.uiRenderer.renderGameOver();
-    }
-
     renderCredits(): void {
         this.uiRenderer.renderCredits();
     }

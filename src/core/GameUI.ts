@@ -149,6 +149,26 @@ export class GameUI {
     }
 
     /**
+     * Show start screen (moved from UIRenderer)
+     */
+    showStartScreen(): void {
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (startScreen) startScreen.classList.remove('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+    }
+
+    /**
+     * Show game over screen (moved from UIRenderer)
+     */
+    showGameOverScreen(): void {
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (startScreen) startScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.remove('hidden');
+    }
+
+    /**
      * Dispatch custom event for returning to stage select
      */
     requestStageSelect(): void {

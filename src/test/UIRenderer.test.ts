@@ -175,18 +175,7 @@ describe('UIRenderer', () => {
     });
 
     describe('renderStartInstruction', () => {
-        it('should show start screen and hide game over screen', () => {
-            renderer.renderStartInstruction();
-
-            expect(document.getElementById).toHaveBeenCalledWith('startScreen');
-            expect(document.getElementById).toHaveBeenCalledWith('gameOverScreen');
-            expect(mockElement.classList.remove).toHaveBeenCalledWith('hidden');
-            expect(mockElement.classList.add).toHaveBeenCalledWith('hidden');
-        });
-
-        it('should handle missing DOM elements gracefully', () => {
-            vi.mocked(document.getElementById).mockReturnValue(null);
-
+        it('should execute without errors (DOM operations moved to GameUI)', () => {
             expect(() => {
                 renderer.renderStartInstruction();
             }).not.toThrow();
@@ -194,18 +183,7 @@ describe('UIRenderer', () => {
     });
 
     describe('renderGameOver', () => {
-        it('should hide start screen and show game over screen', () => {
-            renderer.renderGameOver();
-
-            expect(document.getElementById).toHaveBeenCalledWith('startScreen');
-            expect(document.getElementById).toHaveBeenCalledWith('gameOverScreen');
-            expect(mockElement.classList.add).toHaveBeenCalledWith('hidden');
-            expect(mockElement.classList.remove).toHaveBeenCalledWith('hidden');
-        });
-
-        it('should handle missing DOM elements gracefully', () => {
-            vi.mocked(document.getElementById).mockReturnValue(null);
-
+        it('should execute without errors (DOM operations moved to GameUI)', () => {
             expect(() => {
                 renderer.renderGameOver();
             }).not.toThrow();

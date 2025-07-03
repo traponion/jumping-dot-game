@@ -28,7 +28,8 @@ const mockGameController = {
     returnToStageSelect: vi.fn(),
     handleGameOverNavigation: vi.fn(),
     handleGameOverSelection: vi.fn(),
-    getGameState: vi.fn(() => new GameState())
+    getGameState: vi.fn(() => new GameState()),
+    getGameUI: vi.fn()
 };
 
 describe('InputManager', () => {

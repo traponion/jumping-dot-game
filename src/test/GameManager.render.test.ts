@@ -77,7 +77,9 @@ describe('GameManager render with GameUI integration', () => {
             getGameOverMenuData: vi.fn().mockReturnValue({
                 options: ['RESTART STAGE', 'STAGE SELECT'],
                 selectedIndex: 0
-            })
+            }),
+            showStartScreen: vi.fn(),
+            showGameOverScreen: vi.fn()
         } as any;
 
         // Create mock render system with all required methods
@@ -134,35 +136,35 @@ describe('GameManager render with GameUI integration', () => {
             expect(renderMenuCall).toBeLessThan(renderAllCall);
         });
 
-        it('should not render start instruction when game is over', () => {
+        it('should not call showStartScreen when game is over', () => {
             // Setup: Set game to over state
             gameState.gameOver = true;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
-            // Assert: renderStartInstruction should not be called
-            expect(mockRenderSystem.renderStartInstruction).not.toHaveBeenCalled();
+            // Assert: showStartScreen should not be called when game is over
+            expect(mockGameUI.showStartScreen).not.toHaveBeenCalled();
         });
     });
 
     describe('when game is not running and not over (start screen)', () => {
-        it('should call renderStartInstruction and not renderGameOverMenu', () => {
+        it('should call showStartScreen and not renderGameOverMenu', () => {
             // Setup: Game not running, not over (initial state)
             gameState.gameRunning = false;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
 
-            // Assert: Should render start instruction, not game over menu
-            expect(mockRenderSystem.renderStartInstruction).toHaveBeenCalled();
+            // Assert: Should call showStartScreen, not game over menu
+            expect(mockGameUI.showStartScreen).toHaveBeenCalled();
             expect(mockRenderSystem.renderGameOverMenu).not.toHaveBeenCalled();
             expect(mockGameUI.getGameOverMenuData).not.toHaveBeenCalled();
         });
     });
 
     describe('when game is running', () => {
-        it('should not call renderGameOverMenu or renderStartInstruction', () => {
+        it('should not call renderGameOverMenu or showStartScreen', () => {
             // Setup: Game running
             gameState.gameRunning = true;
 
@@ -171,7 +173,7 @@ describe('GameManager render with GameUI integration', () => {
 
             // Assert: Should not render menus
             expect(mockRenderSystem.renderGameOverMenu).not.toHaveBeenCalled();
-            expect(mockRenderSystem.renderStartInstruction).not.toHaveBeenCalled();
+            expect(mockGameUI.showStartScreen).not.toHaveBeenCalled();
             expect(mockGameUI.getGameOverMenuData).not.toHaveBeenCalled();
         });
     });
