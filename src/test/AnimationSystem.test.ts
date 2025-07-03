@@ -187,6 +187,75 @@ describe('AnimationSystem', () => {
         });
     });
 
+    describe('autonomous death handling', () => {
+        it('should automatically start death animation when gameOver is true and animation not active', () => {
+            // Set game over state
+            gameState.gameOver = true;
+            gameState.runtime.player = mockPlayer;
+            gameState.runtime.shouldStartDeathAnimation = false;
+
+            // Call update method that should trigger autonomous death handling
+            animationSystem.updateDeathAnimation();
+
+            // Should have added death mark
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
+            expect(gameState.runtime.deathMarks[0]).toEqual({
+                x: mockPlayer.x,
+                y: Math.min(mockPlayer.y, 580),
+                timestamp: 1000
+            });
+
+            // Should have started death animation
+            const deathAnim = animationSystem.getDeathAnimation();
+            expect(deathAnim.active).toBe(true);
+        });
+
+        it('should handle legacy shouldStartDeathAnimation flag', () => {
+            // Set legacy flag
+            gameState.runtime.shouldStartDeathAnimation = true;
+            gameState.runtime.player = mockPlayer;
+
+            animationSystem.updateDeathAnimation();
+
+            // Should start death animation
+            const deathAnim = animationSystem.getDeathAnimation();
+            expect(deathAnim.active).toBe(true);
+
+            // Should reset the flag
+            expect(gameState.runtime.shouldStartDeathAnimation).toBe(false);
+        });
+
+        it('should not start death animation if already active', () => {
+            // Start animation first
+            animationSystem.startDeathAnimation(mockPlayer);
+            const initialParticleCount = animationSystem.getDeathAnimation().particles.length;
+
+            // Set game over
+            gameState.gameOver = true;
+            gameState.runtime.shouldStartDeathAnimation = false;
+
+            animationSystem.updateDeathAnimation();
+
+            // Should not add additional death marks
+            expect(gameState.runtime.deathMarks).toHaveLength(0);
+
+            // Particle count should remain the same
+            expect(animationSystem.getDeathAnimation().particles.length).toBe(initialParticleCount);
+        });
+
+        it('should clamp death mark Y position for visibility', () => {
+            // Set player below screen
+            gameState.runtime.player = { ...mockPlayer, y: 600 };
+            gameState.gameOver = true;
+            gameState.runtime.shouldStartDeathAnimation = false;
+
+            animationSystem.updateDeathAnimation();
+
+            // Y position should be clamped to 580
+            expect(gameState.runtime.deathMarks[0].y).toBe(580);
+        });
+    });
+
     describe('animation state management', () => {
         it('should reset all animations', () => {
             animationSystem.startClearAnimation(mockPlayer);
