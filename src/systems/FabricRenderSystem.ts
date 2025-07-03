@@ -2,6 +2,7 @@ import * as fabric from 'fabric';
 import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
+import { AnimationRenderer } from './renderers/AnimationRenderer.js';
 import { StageRenderer } from './renderers/StageRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
 
@@ -17,21 +18,10 @@ export class FabricRenderSystem implements IRenderSystem {
     protected canvas: fabric.Canvas;
     private stageRenderer: StageRenderer;
     private uiRenderer: UIRenderer;
+    private animationRenderer: AnimationRenderer;
     private playerShape: fabric.Circle | null = null;
     private trailShapes: fabric.Circle[] = [];
-    private landingPredictions: LandingPrediction[] = [];
-    private animatedPredictions: {
-        x: number;
-        y: number;
-        targetX: number;
-        targetY: number;
-        confidence: number;
-        jumpNumber: number;
-    }[] = [];
-    private landingHistory: { x: number; y: number; timestamp: number }[] = [];
-    private readonly LERP_SPEED = 0.1;
     private deathMarkPath: fabric.Path | null = null;
-    private readonly HISTORY_FADE_TIME = 3000;
 
     constructor(canvasElement: HTMLCanvasElement) {
         this.canvas = new fabric.Canvas(canvasElement, {
@@ -57,6 +47,9 @@ export class FabricRenderSystem implements IRenderSystem {
 
         // Initialize UIRenderer
         this.uiRenderer = new UIRenderer(this.canvas);
+
+        // Initialize AnimationRenderer
+        this.animationRenderer = new AnimationRenderer(this.canvas);
 
         // 初期描画を実行
         this.canvas.renderAll();
@@ -174,102 +167,15 @@ export class FabricRenderSystem implements IRenderSystem {
     }
 
     renderLandingPredictions(): void {
-        // Clean up old history first
-        this.cleanupLandingHistory();
-
-        // Render landing history (where player actually landed)
-        this.renderLandingHistory();
-
-        // Update animation positions for real-time crosshair
-        for (const animPred of this.animatedPredictions) {
-            // Smooth interpolation towards target position
-            animPred.x += (animPred.targetX - animPred.x) * this.LERP_SPEED;
-            animPred.y += (animPred.targetY - animPred.y) * this.LERP_SPEED;
-        }
-
-        // Render real-time animated predictions (main crosshair)
-        for (const animPred of this.animatedPredictions) {
-            this.drawCrosshair({ x: animPred.x, y: animPred.y });
-        }
+        this.animationRenderer.renderLandingPredictions();
     }
 
     updateLandingPredictionAnimations(): void {
-        // Update or create animated predictions
-        for (let i = 0; i < this.landingPredictions.length; i++) {
-            const prediction = this.landingPredictions[i];
-            // Show trajectory marker closer to ground level
-            const trajectoryOffsetX = -30; // Further ahead for trajectory visualization
-            const trajectoryOffsetY = -20; // Show closer to ground level
-            const targetX = prediction.x + trajectoryOffsetX;
-            const targetY = prediction.y + trajectoryOffsetY;
-
-            if (i < this.animatedPredictions.length) {
-                // Update existing animated prediction
-                this.animatedPredictions[i].targetX = targetX;
-                this.animatedPredictions[i].targetY = targetY;
-                this.animatedPredictions[i].confidence = prediction.confidence;
-                this.animatedPredictions[i].jumpNumber = prediction.jumpNumber;
-            } else {
-                // Create new animated prediction (start at target for immediate appearance)
-                this.animatedPredictions.push({
-                    x: targetX,
-                    y: targetY,
-                    targetX: targetX,
-                    targetY: targetY,
-                    confidence: prediction.confidence,
-                    jumpNumber: prediction.jumpNumber
-                });
-            }
-        }
-
-        // Remove excess animated predictions
-        if (this.animatedPredictions.length > this.landingPredictions.length) {
-            this.animatedPredictions.splice(this.landingPredictions.length);
-        }
-    }
-
-    renderLandingHistory(): void {
-        const currentTime = Date.now();
-        const HISTORY_FADE_TIME = 3000;
-
-        this.landingHistory = this.landingHistory.filter(
-            (history) => currentTime - history.timestamp < HISTORY_FADE_TIME
-        );
-
-        for (const history of this.landingHistory) {
-            const age = currentTime - history.timestamp;
-            const fadeProgress = age / HISTORY_FADE_TIME;
-            const alpha = Math.max(0.1, 0.6 * (1 - fadeProgress));
-            const lineHeight = 8;
-
-            // 元のデザインに合わせて白い縦線として描画
-            const historyLine = new fabric.Line(
-                [history.x, history.y, history.x, history.y - lineHeight],
-                {
-                    stroke: `rgba(255, 255, 255, ${alpha})`,
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false
-                }
-            );
-            this.canvas.add(historyLine);
-        }
+        this.animationRenderer.updateLandingPredictionAnimations();
     }
 
     renderDeathAnimation(particles: Particle[]): void {
-        for (const particle of particles) {
-            // レガシーレンダラーに合わせてサイズ計算を修正
-            const radius = particle.size || 2;
-            const particleShape = new fabric.Circle({
-                left: particle.x - radius,
-                top: particle.y - radius,
-                radius: radius,
-                fill: `rgba(255, 0, 0, ${particle.life})`,
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(particleShape);
-        }
+        this.animationRenderer.renderDeathAnimation(particles);
     }
 
     renderClearAnimation(
@@ -278,37 +184,7 @@ export class FabricRenderSystem implements IRenderSystem {
         playerX: number,
         playerY: number
     ): void {
-        // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
-        for (const particle of particles) {
-            const particleShape = new fabric.Circle({
-                left: particle.x - 2,
-                top: particle.y - 2,
-                radius: 2,
-                fill: `rgba(255, 255, 255, ${particle.life})`,
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(particleShape);
-        }
-
-        // "CLEAR!"テキストを描画
-        if (progress < 0.8) {
-            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 1;
-            const alpha = Math.max(0, 1 - progress / 0.8);
-
-            const clearText = new fabric.Text('CLEAR!', {
-                left: playerX,
-                top: playerY - 50,
-                fontSize: Math.floor(32 * pulse),
-                fill: `rgba(255, 255, 255, ${alpha})`,
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(clearText);
-        }
+        this.animationRenderer.renderClearAnimation(particles, progress, playerX, playerY);
     }
 
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
@@ -377,47 +253,11 @@ export class FabricRenderSystem implements IRenderSystem {
 
     // ランディング予測システム
     setLandingPredictions(predictions: LandingPrediction[]): void {
-        this.landingPredictions = predictions;
-        this.updateLandingPredictionAnimations();
+        this.animationRenderer.setLandingPredictions(predictions);
     }
 
     addLandingHistory(position: Position): void {
-        this.landingHistory.push({
-            x: position.x,
-            y: position.y,
-            timestamp: Date.now()
-        });
-    }
-
-    cleanupLandingHistory(): void {
-        const now = Date.now();
-        this.landingHistory = this.landingHistory.filter(
-            (landing) => now - landing.timestamp < this.HISTORY_FADE_TIME
-        );
-    }
-
-    drawCrosshair(position: Position): void {
-        const x = position.x;
-        const y = position.y;
-        const size = 8;
-        const alpha = 0.8;
-        // Vertical line
-        const verticalLine = new fabric.Line([x, y - size, x, y + size], {
-            stroke: `rgba(255, 255, 255, ${alpha})`,
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(verticalLine);
-
-        // Horizontal line
-        const horizontalLine = new fabric.Line([x - size, y, x + size, y], {
-            stroke: `rgba(255, 255, 255, ${alpha})`,
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(horizontalLine);
+        this.animationRenderer.addLandingHistory(position);
     }
 
     // Canvas更新

@@ -108,24 +108,12 @@ export class FabricRenderAdapter implements IRenderSystem {
         this.fabricRenderSystem.setLandingPredictions(predictions);
     }
 
-    renderLandingHistory(): void {
-        this.fabricRenderSystem.renderLandingHistory();
-    }
-
     addLandingHistory(position: Position): void {
         this.fabricRenderSystem.addLandingHistory(position);
     }
 
-    cleanupLandingHistory(): void {
-        this.fabricRenderSystem.cleanupLandingHistory();
-    }
-
     updateLandingPredictionAnimations(): void {
         this.fabricRenderSystem.updateLandingPredictionAnimations();
-    }
-
-    drawCrosshair(position: Position): void {
-        this.fabricRenderSystem.drawCrosshair(position);
     }
 
     // ===== System Management =====

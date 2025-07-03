@@ -208,12 +208,6 @@ describe('IRenderSystem Interface Contract', () => {
             expect(renderSystem.renderLandingPredictions).toHaveBeenCalled();
         });
 
-        test('should have renderLandingHistory method with no parameters', () => {
-            expect(renderSystem.renderLandingHistory).toBeDefined();
-            expect(() => renderSystem.renderLandingHistory()).not.toThrow();
-            expect(renderSystem.renderLandingHistory).toHaveBeenCalled();
-        });
-
         test('should have addLandingHistory method that accepts Position', () => {
             const mockPosition: Position = { x: 100, y: 200 };
             expect(renderSystem.addLandingHistory).toBeDefined();
@@ -221,23 +215,10 @@ describe('IRenderSystem Interface Contract', () => {
             expect(renderSystem.addLandingHistory).toHaveBeenCalledWith(mockPosition);
         });
 
-        test('should have cleanupLandingHistory method with no parameters', () => {
-            expect(renderSystem.cleanupLandingHistory).toBeDefined();
-            expect(() => renderSystem.cleanupLandingHistory()).not.toThrow();
-            expect(renderSystem.cleanupLandingHistory).toHaveBeenCalled();
-        });
-
         test('should have updateLandingPredictionAnimations method with no parameters', () => {
             expect(renderSystem.updateLandingPredictionAnimations).toBeDefined();
             expect(() => renderSystem.updateLandingPredictionAnimations()).not.toThrow();
             expect(renderSystem.updateLandingPredictionAnimations).toHaveBeenCalled();
-        });
-
-        test('should have drawCrosshair method that accepts Position', () => {
-            const mockPosition: Position = { x: 150, y: 250 };
-            expect(renderSystem.drawCrosshair).toBeDefined();
-            expect(() => renderSystem.drawCrosshair(mockPosition)).not.toThrow();
-            expect(renderSystem.drawCrosshair).toHaveBeenCalledWith(mockPosition);
         });
     });
 

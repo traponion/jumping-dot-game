@@ -149,31 +149,15 @@ export interface IRenderSystem {
     setLandingPredictions(predictions: LandingPrediction[]): void;
 
     /**
-     * Render landing history visualization
-     */
-    renderLandingHistory(): void;
-
-    /**
      * Add a new landing position to history
      * @param position Landing position to add
      */
     addLandingHistory(position: Position): void;
 
     /**
-     * Clean up old landing history entries
-     */
-    cleanupLandingHistory(): void;
-
-    /**
      * Update landing prediction animations
      */
     updateLandingPredictionAnimations(): void;
-
-    /**
-     * Draw crosshair at specified position
-     * @param position Position to draw crosshair
-     */
-    drawCrosshair(position: Position): void;
 
     // ===== System Management =====
 
