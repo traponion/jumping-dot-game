@@ -3,6 +3,7 @@ import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
 import { AnimationRenderer } from './renderers/AnimationRenderer.js';
+import { ResourceManager } from './renderers/ResourceManager.js';
 import { StageRenderer } from './renderers/StageRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
 
@@ -19,6 +20,7 @@ export class FabricRenderSystem implements IRenderSystem {
     private stageRenderer: StageRenderer;
     private uiRenderer: UIRenderer;
     private animationRenderer: AnimationRenderer;
+    private resourceManager: ResourceManager;
     private playerShape: fabric.Circle | null = null;
     private trailShapes: fabric.Circle[] = [];
     private deathMarkPath: fabric.Path | null = null;
@@ -51,17 +53,15 @@ export class FabricRenderSystem implements IRenderSystem {
         // Initialize AnimationRenderer
         this.animationRenderer = new AnimationRenderer(this.canvas);
 
+        // Initialize ResourceManager
+        this.resourceManager = new ResourceManager(this.canvas);
+
         // 初期描画を実行
         this.canvas.renderAll();
     }
 
     clearCanvas(): void {
-        if (!this.canvas) {
-            return; // Canvas already disposed or not initialized
-        }
-        this.canvas.backgroundColor = 'black';
-        this.canvas.clear();
-        this.canvas.renderAll();
+        this.resourceManager.clearCanvas();
     }
 
     setDrawingStyle(): void {
@@ -204,51 +204,31 @@ export class FabricRenderSystem implements IRenderSystem {
     }
 
     async cleanup(): Promise<void> {
-        // Dispose fabric canvas to prevent memory leaks and reinitialization errors
-        if (this.canvas) {
-            try {
-                const canvasElement = this.canvas.getElement();
+        // Clean up all renderer shapes first
+        this.stageRenderer.cleanup();
+        this.uiRenderer.cleanup();
+        this.animationRenderer.cleanup();
 
-                // Clean up stage renderer shapes
-                this.stageRenderer.cleanup();
-
-                // Clean up UI renderer shapes
-                this.uiRenderer.cleanup();
-
-                // deathMarkPathのクリーンアップを追加
-                if (this.deathMarkPath) {
-                    this.canvas.remove(this.deathMarkPath);
-                    this.deathMarkPath = null;
-                }
-
-                // In fabric.js v6, dispose is async and must be awaited
-                await this.canvas.dispose();
-
-                // Clear canvas element to prevent reinitialization errors
-                if (canvasElement) {
-                    const context = canvasElement.getContext('2d');
-                    if (context) {
-                        context.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                    }
-                    // Remove fabric-specific properties
-                    (
-                        canvasElement as HTMLCanvasElement & {
-                            __fabric?: unknown;
-                            _fabric?: unknown;
-                        }
-                    ).__fabric = undefined;
-                    (
-                        canvasElement as HTMLCanvasElement & {
-                            __fabric?: unknown;
-                            _fabric?: unknown;
-                        }
-                    )._fabric = undefined;
-                }
-            } catch (error) {
-                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
-            }
-            this.canvas = null as unknown as fabric.Canvas;
+        // Clean up local shapes
+        if (this.deathMarkPath) {
+            this.canvas.remove(this.deathMarkPath);
+            this.deathMarkPath = null;
         }
+
+        // Clean up player and trail shapes
+        if (this.playerShape) {
+            this.canvas.remove(this.playerShape);
+            this.playerShape = null;
+        }
+
+        for (const shape of this.trailShapes) {
+            this.canvas.remove(shape);
+        }
+        this.trailShapes = [];
+
+        // Delegate canvas resource cleanup to ResourceManager
+        await this.resourceManager.cleanup();
+        this.canvas = null as unknown as fabric.Canvas;
     }
 
     // ランディング予測システム
@@ -262,14 +242,13 @@ export class FabricRenderSystem implements IRenderSystem {
 
     // Canvas更新
     renderAll(): void {
-        if (!this.canvas) return;
-        this.canvas.renderAll();
+        this.resourceManager.renderAll();
     }
 
     // Editor methods removed - Editor functionality deprecated
 
     // クリーンアップ
     dispose(): void {
-        this.canvas.dispose();
+        this.resourceManager.dispose();
     }
 }
