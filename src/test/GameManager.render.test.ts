@@ -10,6 +10,52 @@ import type { GameController } from '../systems/InputManager.js';
 vi.mock('../ui/GameUI.js');
 vi.mock('../systems/FabricRenderSystem.js');
 
+// Mock DOM elements
+const mockCanvas = {
+    width: 800,
+    height: 600,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+    getContext: vi.fn((contextType) => {
+        if (contextType === '2d') {
+            return {
+                clearRect: vi.fn(),
+                fillRect: vi.fn(),
+                strokeRect: vi.fn(),
+                beginPath: vi.fn(),
+                moveTo: vi.fn(),
+                lineTo: vi.fn(),
+                stroke: vi.fn(),
+                fill: vi.fn(),
+                closePath: vi.fn(),
+                arc: vi.fn(),
+                canvas: mockCanvas
+            };
+        }
+        return null;
+    })
+};
+
+// Mock document.createElement
+Object.defineProperty(global, 'document', {
+    value: {
+        createElement: vi.fn(() => mockCanvas),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+    }
+});
+
+// Mock window.document
+Object.defineProperty(global, 'window', {
+    value: {
+        document: {
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn()
+        }
+    }
+});
+
 describe('GameManager render with GameUI integration', () => {
     let gameManager: GameManager;
     let gameState: GameState;
@@ -22,7 +68,7 @@ describe('GameManager render with GameUI integration', () => {
         // Note: gameState is already created fresh in GameManager constructor
 
         // Create canvas
-        canvas = document.createElement('canvas');
+        canvas = document.createElement('canvas') as HTMLCanvasElement;
         canvas.width = 800;
         canvas.height = 600;
 

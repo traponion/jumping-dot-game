@@ -9,8 +9,8 @@ import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
-import type { FabricRenderSystem } from '../systems/FabricRenderSystem.js';
 import { GameRuleSystem } from '../systems/GameRuleSystem.js';
+import type { IRenderSystem } from '../systems/IRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
 import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
@@ -59,10 +59,8 @@ export class GameManager {
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
     private movingPlatformSystem!: MovingPlatformSystem;
-    /** @private {FabricRenderSystem | MockRenderSystem} Rendering system */
-    private renderSystem!:
-        | FabricRenderSystem
-        | import('../systems/MockRenderSystem.js').MockRenderSystem;
+    /** @private {IRenderSystem} Rendering system */
+    private renderSystem!: IRenderSystem;
     /** @private {InputManager} Input handling system */
     private inputManager!: InputManager;
 
@@ -291,13 +289,7 @@ export class GameManager {
      * Render game over menu
      */
     renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        if (this.renderSystem && 'renderGameOverMenu' in this.renderSystem) {
-            (this.renderSystem as FabricRenderSystem).renderGameOverMenu(
-                options,
-                selectedIndex,
-                finalScore
-            );
-        }
+        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore);
     }
 
     /**
@@ -321,9 +313,7 @@ export class GameManager {
         this.inputManager.cleanup();
 
         // Cleanup render system to prevent canvas reinitialization issues
-        if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as FabricRenderSystem).cleanup();
-        }
+        await this.renderSystem.cleanup();
 
         this.gameState.gameOver = true;
     }
@@ -333,9 +323,7 @@ export class GameManager {
      */
     private async cleanupSystems(): Promise<void> {
         this.inputManager.cleanup();
-        if (this.renderSystem && 'cleanup' in this.renderSystem) {
-            await (this.renderSystem as FabricRenderSystem).cleanup();
-        }
+        await this.renderSystem.cleanup();
     }
     /**
      * Get animation system (for external access)

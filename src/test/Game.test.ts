@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JumpingDotGame } from '../core/Game.ts';
+import type { IRenderSystem } from '../systems/IRenderSystem';
 
 // Mock Fabric Canvas for tracking objects
 interface MockFabricCanvas {
@@ -12,7 +13,7 @@ interface MockFabricCanvas {
     remove: (obj: unknown) => void;
 }
 
-class MockRenderSystem {
+class MockRenderSystem implements IRenderSystem {
     private mockCanvas: MockFabricCanvas;
 
     constructor(_canvas: HTMLCanvasElement) {
@@ -43,40 +44,41 @@ class MockRenderSystem {
         return this.mockCanvas;
     }
 
-    // Mock all render system methods to avoid function not found errors
+    // IRenderSystem interface implementation
     clearCanvas = vi.fn();
+    setDrawingStyle = vi.fn();
+    applyCameraTransform = vi.fn();
+    restoreCameraTransform = vi.fn();
+    renderAll = vi.fn();
+
     renderPlayer = vi.fn();
+    renderTrail = vi.fn();
     renderStage = vi.fn(() => {
         // Simulate adding objects to canvas when rendering stage
         this.mockCanvas.add({ type: 'text', text: 'START' });
         this.mockCanvas.add({ type: 'text', text: 'GOAL' });
     });
-    renderGameOver = vi.fn();
-    renderGameOverMenu = vi.fn();
-    renderStartInstruction = vi.fn();
-    renderCredits = vi.fn();
-    setLandingPredictions = vi.fn();
-    setDrawingStyle = vi.fn();
-    applyCameraTransform = vi.fn();
-    restoreCameraTransform = vi.fn();
-    renderAll = vi.fn();
-    // Editor methods removed - Editor functionality deprecated
-    dispose = vi.fn();
-
-    // Additional methods found in FabricRenderSystem
     renderDeathMarks = vi.fn();
-    renderTrail = vi.fn();
-    renderLandingPredictions = vi.fn();
-    renderClearAnimation = vi.fn();
+
+    renderStartInstruction = vi.fn();
+    renderGameOverMenu = vi.fn();
+    renderCredits = vi.fn();
+
     renderDeathAnimation = vi.fn();
+    renderClearAnimation = vi.fn();
+
+    renderLandingPredictions = vi.fn();
+    setLandingPredictions = vi.fn();
     renderLandingHistory = vi.fn();
     addLandingHistory = vi.fn();
     cleanupLandingHistory = vi.fn();
     updateLandingPredictionAnimations = vi.fn();
+    drawCrosshair = vi.fn();
 
     cleanup = vi.fn(async () => {
         this.mockCanvas.clear();
     });
+    dispose = vi.fn();
 }
 
 // Mock RenderSystemFactory to return MockRenderSystem

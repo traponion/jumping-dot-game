@@ -43,15 +43,15 @@ npm run dev
 | Key | Action |
 |-----|--------|
 | ← → / A D | Move left/right |
-| ↑ / W / Space | Jump |
 | Space | Start game |
 | R | Restart |
 
 ### Gameplay
 - Navigate through platforms to reach the goal
+- The dot automatically jumps continuously - control horizontal movement only
 - Avoid spikes that will reset your progress
-- Use double/triple jumping to reach higher platforms
 - Time your movements to land on moving platforms
+- Master the automatic jumping rhythm to reach higher platforms
 
 ## 🛠️ Development Guide
 
@@ -124,7 +124,7 @@ All pull requests target `main` branch directly. See [Contributing Guide](CONTRI
 
 ### Core Mechanics
 - **Physics Engine**: Realistic gravity and collision detection with autonomous systems
-- **Multiple Jump System**: Double and triple jumps for advanced movement
+- **Automatic Jumping**: The dot continuously jumps with realistic physics - control horizontal movement only
 - **Moving Platforms**: Dynamic platform mechanics for challenging gameplay
 - **Hazards**: Spike traps that reset player position
 - **Goal System**: Reach the goal to complete each stage with scoring

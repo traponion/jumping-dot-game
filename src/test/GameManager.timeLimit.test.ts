@@ -12,10 +12,17 @@ describe('GameManager timeLimit integration', () => {
         // Reset store to clean state
         // Note: gameState is created fresh in GameManager constructor
 
-        // Create canvas
-        canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 600;
+        // Create mock canvas (CI-safe approach)
+        canvas = {
+            width: 800,
+            height: 600,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            getContext: vi.fn(() => ({
+                clearRect: vi.fn(),
+                fillRect: vi.fn()
+            }))
+        } as unknown as HTMLCanvasElement;
 
         // Create GameManager
         const mockGameController = {
