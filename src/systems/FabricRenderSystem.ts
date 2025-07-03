@@ -1,7 +1,8 @@
 import * as fabric from 'fabric';
-import type { Goal, MovingPlatform, Spike, StageData } from '../core/StageLoader.js';
+import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
+import { StageRenderer } from './renderers/StageRenderer.js';
 
 // Landing prediction interface for render system
 export interface LandingPrediction {
@@ -13,14 +14,10 @@ export interface LandingPrediction {
 
 export class FabricRenderSystem implements IRenderSystem {
     protected canvas: fabric.Canvas;
+    private stageRenderer: StageRenderer;
     private playerShape: fabric.Circle | null = null;
-    private platformShapes: fabric.Line[] = [];
-    private movingPlatformShapes: fabric.Line[] = [];
-    private spikeShapes: fabric.Polygon[] = [];
-    private goalShape: fabric.Rect | null = null;
     private trailShapes: fabric.Circle[] = [];
     private landingPredictions: LandingPrediction[] = [];
-    private textShapes: fabric.Text[] = [];
     private animatedPredictions: {
         x: number;
         y: number;
@@ -52,6 +49,9 @@ export class FabricRenderSystem implements IRenderSystem {
         if (upperCanvas) {
             upperCanvas.style.backgroundColor = 'transparent';
         }
+
+        // Initialize StageRenderer
+        this.stageRenderer = new StageRenderer(this.canvas);
 
         // 初期描画を実行
         this.canvas.renderAll();
@@ -132,226 +132,7 @@ export class FabricRenderSystem implements IRenderSystem {
     }
 
     renderStage(stage: StageData): void {
-        this.renderPlatforms(stage.platforms);
-        // Render moving platforms if they exist
-        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
-            this.renderMovingPlatforms(stage.movingPlatforms);
-        }
-        this.renderSpikes(stage.spikes);
-        this.renderGoal(stage.goal);
-        this.renderStageTexts(stage);
-    }
-
-    private renderPlatforms(
-        platforms: Array<{ x1: number; y1: number; x2: number; y2: number }>
-    ): void {
-        // 既存のプラットフォームを削除
-        for (const shape of this.platformShapes) {
-            this.canvas.remove(shape);
-        }
-        this.platformShapes = [];
-
-        for (const platform of platforms) {
-            // レガシーレンダラーに合わせてラインとして描画
-            const platformLine = new fabric.Line(
-                [platform.x1, platform.y1, platform.x2, platform.y2],
-                {
-                    stroke: 'white',
-                    strokeWidth: 2,
-                    selectable: false,
-                    evented: false
-                }
-            );
-
-            this.platformShapes.push(platformLine);
-            this.canvas.add(platformLine);
-        }
-    }
-
-    /**
-     * Renders moving platforms with distinct visual styling
-     * @param movingPlatforms - Array of moving platforms to render
-     */
-    private renderMovingPlatforms(movingPlatforms: MovingPlatform[]): void {
-        // Remove existing moving platform shapes
-        for (const shape of this.movingPlatformShapes) {
-            this.canvas.remove(shape);
-        }
-        this.movingPlatformShapes = [];
-
-        for (const platform of movingPlatforms) {
-            // Render moving platforms with different color to distinguish from static ones
-            const platformLine = new fabric.Line(
-                [platform.x1, platform.y1, platform.x2, platform.y2],
-                {
-                    stroke: '#FFD700', // Gold color for moving platforms
-                    strokeWidth: 3, // Slightly thicker to indicate movement
-                    selectable: false,
-                    evented: false
-                }
-            );
-
-            this.movingPlatformShapes.push(platformLine);
-            this.canvas.add(platformLine);
-        }
-    }
-
-    private renderSpikes(spikes: Spike[]): void {
-        // 既存のスパイクを削除
-        for (const shape of this.spikeShapes) {
-            this.canvas.remove(shape);
-        }
-        this.spikeShapes = [];
-
-        for (const spike of spikes) {
-            // 三角形のスパイクを作成
-            const points = [
-                { x: spike.x, y: spike.y + spike.height },
-                { x: spike.x + spike.width / 2, y: spike.y },
-                { x: spike.x + spike.width, y: spike.y + spike.height }
-            ];
-
-            const spikeShape = new fabric.Polygon(points, {
-                fill: 'white',
-                stroke: 'white',
-                strokeWidth: 1,
-                selectable: false,
-                evented: false
-            });
-
-            this.spikeShapes.push(spikeShape);
-            this.canvas.add(spikeShape);
-        }
-    }
-
-    private renderGoal(goal: Goal): void {
-        if (this.goalShape) {
-            this.canvas.remove(this.goalShape);
-        }
-
-        // ゴールの枠を描画（元のデザインに合わせて白い枠）
-        this.goalShape = new fabric.Rect({
-            left: goal.x,
-            top: goal.y,
-            width: goal.width,
-            height: goal.height,
-            fill: 'transparent',
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
-
-        this.canvas.add(this.goalShape);
-
-        // フラッグパターンを追加（×印）
-        const line1 = new fabric.Line([goal.x, goal.y, goal.x + goal.width, goal.y + goal.height], {
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
-
-        const line2 = new fabric.Line([goal.x + goal.width, goal.y, goal.x, goal.y + goal.height], {
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
-
-        this.canvas.add(line1);
-        this.canvas.add(line2);
-    }
-
-    private renderStageTexts(stage: StageData): void {
-        // 古いテキストオブジェクトを削除
-        for (const shape of this.textShapes) {
-            this.canvas.remove(shape);
-        }
-        this.textShapes = [];
-
-        // startTextを描画
-        const startText = new fabric.Text(stage.startText.text, {
-            left: stage.startText.x,
-            top: stage.startText.y,
-            fontSize: 16,
-            fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(startText);
-        this.textShapes.push(startText);
-
-        // goalTextを描画
-        const goalText = new fabric.Text(stage.goalText.text, {
-            left: stage.goalText.x,
-            top: stage.goalText.y,
-            fontSize: 16,
-            fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false
-        });
-        this.canvas.add(goalText);
-        this.textShapes.push(goalText);
-
-        // leftEdgeMessageを描画（逆走の皮肉文章）
-        if (stage.leftEdgeMessage) {
-            const edgeMessage = new fabric.Text(stage.leftEdgeMessage.text, {
-                left: stage.leftEdgeMessage.x,
-                top: stage.leftEdgeMessage.y,
-                fontSize: 14,
-                fill: 'white',
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(edgeMessage);
-            this.textShapes.push(edgeMessage);
-        }
-
-        // leftEdgeSubMessageを描画
-        if (stage.leftEdgeSubMessage) {
-            const edgeSubMessage = new fabric.Text(stage.leftEdgeSubMessage.text, {
-                left: stage.leftEdgeSubMessage.x,
-                top: stage.leftEdgeSubMessage.y,
-                fontSize: 12,
-                fill: 'white',
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(edgeSubMessage);
-            this.textShapes.push(edgeSubMessage);
-        }
-
-        // tutorialMessagesを描画
-        if (stage.tutorialMessages) {
-            for (const message of stage.tutorialMessages) {
-                const tutorialText = new fabric.Text(message.text, {
-                    left: message.x,
-                    top: message.y,
-                    fontSize: 12,
-                    fill: 'white',
-                    fontFamily: 'monospace',
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false,
-                    evented: false
-                });
-                this.canvas.add(tutorialText);
-                this.textShapes.push(tutorialText);
-            }
-        }
+        this.stageRenderer.renderStage(stage);
     }
 
     renderDeathMarks(deathMarks: Array<{ x: number; y: number }>): void {
@@ -672,16 +453,8 @@ export class FabricRenderSystem implements IRenderSystem {
             try {
                 const canvasElement = this.canvas.getElement();
 
-                // Clean up all shape arrays before disposing canvas
-                for (const shape of this.movingPlatformShapes) {
-                    this.canvas.remove(shape);
-                }
-                this.movingPlatformShapes = [];
-
-                for (const shape of this.textShapes) {
-                    this.canvas.remove(shape);
-                }
-                this.textShapes = [];
+                // Clean up stage renderer shapes
+                this.stageRenderer.cleanup();
 
                 // deathMarkPathのクリーンアップを追加
                 if (this.deathMarkPath) {
