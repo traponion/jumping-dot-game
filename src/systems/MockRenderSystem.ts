@@ -2,7 +2,8 @@
 // Based on Fabric.js official testing patterns
 
 import type { StageData } from '../core/StageLoader.js';
-import type { Camera, Player } from '../types/GameTypes.js';
+import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { IRenderSystem, LandingPrediction, Position } from './IRenderSystem.js';
 
 export interface MockFabricCanvas {
     width: number;
@@ -16,10 +17,10 @@ export interface MockFabricCanvas {
     setViewportTransform(transform: number[]): void;
 }
 
-export class MockRenderSystem {
+export class MockRenderSystem implements IRenderSystem {
     private canvasElement: HTMLCanvasElement;
     private mockCanvas: MockFabricCanvas;
-    private landingPredictions: unknown[] = [];
+    private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
     constructor(canvasElement: HTMLCanvasElement) {
@@ -48,7 +49,8 @@ export class MockRenderSystem {
         };
     }
 
-    // Public API matching FabricRenderSystem
+    // ===== Canvas Management =====
+
     clearCanvas(): void {
         this.mockCanvas.clear();
     }
@@ -69,41 +71,32 @@ export class MockRenderSystem {
         this.mockCanvas.setViewportTransform(transform);
     }
 
-    renderStage(_stage: StageData): void {
-        // Mock stage rendering
+    renderAll(): void {
+        this.mockCanvas.renderAll();
     }
+
+    // ===== Game Objects =====
 
     renderPlayer(_player: Player): void {
         // Mock player rendering
     }
 
-    renderTrail(_trail: unknown[], _playerRadius: number): void {
+    renderTrail(_trail: TrailPoint[], _playerRadius: number): void {
         // Mock trail rendering
     }
 
-    renderDeathMarks(_deathMarks: unknown[]): void {
+    renderStage(_stage: StageData): void {
+        // Mock stage rendering
+    }
+
+    renderDeathMarks(_deathMarks: Array<{ x: number; y: number }>): void {
         // Mock death marks rendering
     }
 
-    renderDeathAnimation(_particles: unknown[]): void {
-        // Mock death animation rendering
-    }
-
-    renderClearAnimation(
-        _particles: unknown[],
-        _progress: number,
-        _playerX: number,
-        _playerY: number
-    ): void {
-        // Mock clear animation rendering
-    }
+    // ===== UI Elements =====
 
     renderStartInstruction(): void {
         // Mock start instruction rendering
-    }
-
-    renderGameOver(): void {
-        // Mock game over rendering
     }
 
     renderGameOverMenu(_options: string[], _selectedIndex: number, _finalScore: number): void {
@@ -114,20 +107,59 @@ export class MockRenderSystem {
         // Mock credits rendering
     }
 
+    // ===== Animations =====
+
+    renderDeathAnimation(_particles: Particle[]): void {
+        // Mock death animation rendering
+    }
+
+    renderClearAnimation(
+        _particles: Particle[],
+        _progress: number,
+        _centerX: number,
+        _centerY: number
+    ): void {
+        // Mock clear animation rendering
+    }
+
+    // ===== Analytics & Predictions =====
+
     renderLandingPredictions(): void {
         // Mock landing predictions rendering
     }
 
-    renderAll(): void {
-        this.mockCanvas.renderAll();
-    }
-
-    setLandingPredictions(predictions: unknown[]): void {
+    setLandingPredictions(predictions: LandingPrediction[]): void {
         this.landingPredictions = [...predictions];
     }
 
-    addLandingHistory(x: number, y: number): void {
-        this.landingHistory.push({ x, y, time: Date.now() });
+    renderLandingHistory(): void {
+        // Mock landing history rendering
+    }
+
+    addLandingHistory(position: Position): void {
+        this.landingHistory.push({ x: position.x, y: position.y, time: Date.now() });
+    }
+
+    cleanupLandingHistory(): void {
+        // Mock cleanup - remove old entries
+        const cutoffTime = Date.now() - 30000; // Keep last 30 seconds
+        this.landingHistory = this.landingHistory.filter((entry) => entry.time > cutoffTime);
+    }
+
+    updateLandingPredictionAnimations(): void {
+        // Mock animation update
+    }
+
+    drawCrosshair(_position: Position): void {
+        // Mock crosshair drawing
+    }
+
+    // ===== System Management =====
+
+    async cleanup(): Promise<void> {
+        // Mock async cleanup
+        this.landingPredictions = [];
+        this.landingHistory = [];
     }
 
     dispose(): void {
@@ -136,12 +168,13 @@ export class MockRenderSystem {
         this.landingHistory = [];
     }
 
-    // Test utilities
+    // ===== Test Utilities =====
+
     getMockCanvas(): MockFabricCanvas {
         return this.mockCanvas;
     }
 
-    getLandingPredictions(): unknown[] {
+    getLandingPredictions(): LandingPrediction[] {
         return [...this.landingPredictions];
     }
 

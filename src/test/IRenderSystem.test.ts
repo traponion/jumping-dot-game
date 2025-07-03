@@ -10,58 +10,35 @@
  */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import type {
-    Goal,
-    MovingPlatform,
-    Platform,
-    Spike,
-    StageData as Stage
-} from '../core/StageLoader';
-import type {
-    ClearAnimation,
-    DeathAnimation,
-    DeathMark,
-    IRenderSystem,
-    LandingPrediction,
-    Position
-} from '../systems/IRenderSystem';
-import type { Camera, GameState, Player, TrailPoint } from '../types/GameTypes';
+import type { StageData } from '../core/StageLoader';
+import type { IRenderSystem, LandingPrediction, Position } from '../systems/IRenderSystem';
+import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes';
 
 /**
  * Mock implementation of IRenderSystem for contract testing
  */
 class MockRenderSystem implements IRenderSystem {
     // Canvas Management
-    initialize = vi.fn();
-    clear = vi.fn();
-    render = vi.fn();
-    cleanup = vi.fn();
-    dispose = vi.fn();
-
-    // Camera Management
+    clearCanvas = vi.fn();
+    setDrawingStyle = vi.fn();
     applyCameraTransform = vi.fn();
     restoreCameraTransform = vi.fn();
+    renderAll = vi.fn();
 
     // Game Objects Rendering
     renderPlayer = vi.fn();
     renderTrail = vi.fn();
-    renderPlatforms = vi.fn();
-    renderMovingPlatforms = vi.fn();
-    renderGoal = vi.fn();
-    renderSpikes = vi.fn();
     renderStage = vi.fn();
+    renderDeathMarks = vi.fn();
 
     // UI Elements Rendering
-    renderStageTexts = vi.fn();
     renderStartInstruction = vi.fn();
     renderGameOverMenu = vi.fn();
-    renderGameOver = vi.fn();
     renderCredits = vi.fn();
 
     // Visual Effects
     renderDeathAnimation = vi.fn();
     renderClearAnimation = vi.fn();
-    renderDeathMarks = vi.fn();
 
     // Analytics/Predictions
     setLandingPredictions = vi.fn();
@@ -71,56 +48,44 @@ class MockRenderSystem implements IRenderSystem {
     cleanupLandingHistory = vi.fn();
     updateLandingPredictionAnimations = vi.fn();
     drawCrosshair = vi.fn();
+
+    // System Management
+    cleanup = vi.fn().mockResolvedValue(undefined);
+    dispose = vi.fn();
 }
 
 describe('IRenderSystem Interface Contract', () => {
     let renderSystem: IRenderSystem;
-    let mockCanvas: HTMLCanvasElement;
-    let mockGameState: GameState;
     let mockPlayer: Player;
     let mockCamera: Camera;
-    let mockStage: Stage;
+    let mockStage: StageData;
 
     beforeEach(() => {
         renderSystem = new MockRenderSystem();
 
         // Create basic mocks for required types
-        mockCanvas = document.createElement('canvas');
-        mockGameState = {} as GameState;
         mockPlayer = {} as Player;
         mockCamera = {} as Camera;
-        mockStage = {} as Stage;
+        mockStage = {} as StageData;
     });
 
     describe('Canvas Management Methods', () => {
-        test('should have initialize method that accepts HTMLCanvasElement', () => {
-            expect(renderSystem.initialize).toBeDefined();
-            expect(() => renderSystem.initialize(mockCanvas)).not.toThrow();
-            expect(renderSystem.initialize).toHaveBeenCalledWith(mockCanvas);
+        test('should have clearCanvas method with no parameters', () => {
+            expect(renderSystem.clearCanvas).toBeDefined();
+            expect(() => renderSystem.clearCanvas()).not.toThrow();
+            expect(renderSystem.clearCanvas).toHaveBeenCalled();
         });
 
-        test('should have clear method with no parameters', () => {
-            expect(renderSystem.clear).toBeDefined();
-            expect(() => renderSystem.clear()).not.toThrow();
-            expect(renderSystem.clear).toHaveBeenCalled();
+        test('should have setDrawingStyle method with no parameters', () => {
+            expect(renderSystem.setDrawingStyle).toBeDefined();
+            expect(() => renderSystem.setDrawingStyle()).not.toThrow();
+            expect(renderSystem.setDrawingStyle).toHaveBeenCalled();
         });
 
-        test('should have render method that accepts GameState', () => {
-            expect(renderSystem.render).toBeDefined();
-            expect(() => renderSystem.render(mockGameState)).not.toThrow();
-            expect(renderSystem.render).toHaveBeenCalledWith(mockGameState);
-        });
-
-        test('should have cleanup method with no parameters', () => {
-            expect(renderSystem.cleanup).toBeDefined();
-            expect(() => renderSystem.cleanup()).not.toThrow();
-            expect(renderSystem.cleanup).toHaveBeenCalled();
-        });
-
-        test('should have dispose method with no parameters', () => {
-            expect(renderSystem.dispose).toBeDefined();
-            expect(() => renderSystem.dispose()).not.toThrow();
-            expect(renderSystem.dispose).toHaveBeenCalled();
+        test('should have renderAll method with no parameters', () => {
+            expect(renderSystem.renderAll).toBeDefined();
+            expect(() => renderSystem.renderAll()).not.toThrow();
+            expect(renderSystem.renderAll).toHaveBeenCalled();
         });
     });
 
@@ -145,71 +110,48 @@ describe('IRenderSystem Interface Contract', () => {
             expect(renderSystem.renderPlayer).toHaveBeenCalledWith(mockPlayer);
         });
 
-        test('should have renderTrail method that accepts TrailPoint array', () => {
+        test('should have renderTrail method that accepts TrailPoint array and playerRadius', () => {
             const mockTrail: TrailPoint[] = [];
+            const playerRadius = 10;
             expect(renderSystem.renderTrail).toBeDefined();
-            expect(() => renderSystem.renderTrail(mockTrail)).not.toThrow();
-            expect(renderSystem.renderTrail).toHaveBeenCalledWith(mockTrail);
+            expect(() => renderSystem.renderTrail(mockTrail, playerRadius)).not.toThrow();
+            expect(renderSystem.renderTrail).toHaveBeenCalledWith(mockTrail, playerRadius);
         });
 
-        test('should have renderPlatforms method that accepts Platform array', () => {
-            const mockPlatforms: Platform[] = [];
-            expect(renderSystem.renderPlatforms).toBeDefined();
-            expect(() => renderSystem.renderPlatforms(mockPlatforms)).not.toThrow();
-            expect(renderSystem.renderPlatforms).toHaveBeenCalledWith(mockPlatforms);
-        });
-
-        test('should have renderMovingPlatforms method that accepts MovingPlatform array', () => {
-            const mockMovingPlatforms: MovingPlatform[] = [];
-            expect(renderSystem.renderMovingPlatforms).toBeDefined();
-            expect(() => renderSystem.renderMovingPlatforms(mockMovingPlatforms)).not.toThrow();
-            expect(renderSystem.renderMovingPlatforms).toHaveBeenCalledWith(mockMovingPlatforms);
-        });
-
-        test('should have renderGoal method that accepts Goal', () => {
-            const mockGoal = {} as Goal;
-            expect(renderSystem.renderGoal).toBeDefined();
-            expect(() => renderSystem.renderGoal(mockGoal)).not.toThrow();
-            expect(renderSystem.renderGoal).toHaveBeenCalledWith(mockGoal);
-        });
-
-        test('should have renderSpikes method that accepts Spike array', () => {
-            const mockSpikes: Spike[] = [];
-            expect(renderSystem.renderSpikes).toBeDefined();
-            expect(() => renderSystem.renderSpikes(mockSpikes)).not.toThrow();
-            expect(renderSystem.renderSpikes).toHaveBeenCalledWith(mockSpikes);
-        });
-
-        test('should have renderStage method that accepts Stage', () => {
+        test('should have renderStage method that accepts StageData', () => {
             expect(renderSystem.renderStage).toBeDefined();
             expect(() => renderSystem.renderStage(mockStage)).not.toThrow();
             expect(renderSystem.renderStage).toHaveBeenCalledWith(mockStage);
         });
+
+        test('should have renderDeathMarks method that accepts death mark array', () => {
+            const mockDeathMarks: Array<{ x: number; y: number }> = [{ x: 100, y: 200 }];
+            expect(renderSystem.renderDeathMarks).toBeDefined();
+            expect(() => renderSystem.renderDeathMarks(mockDeathMarks)).not.toThrow();
+            expect(renderSystem.renderDeathMarks).toHaveBeenCalledWith(mockDeathMarks);
+        });
     });
 
     describe('UI Elements Rendering Methods', () => {
-        test('should have renderStageTexts method that accepts Stage', () => {
-            expect(renderSystem.renderStageTexts).toBeDefined();
-            expect(() => renderSystem.renderStageTexts(mockStage)).not.toThrow();
-            expect(renderSystem.renderStageTexts).toHaveBeenCalledWith(mockStage);
-        });
-
         test('should have renderStartInstruction method with no parameters', () => {
             expect(renderSystem.renderStartInstruction).toBeDefined();
             expect(() => renderSystem.renderStartInstruction()).not.toThrow();
             expect(renderSystem.renderStartInstruction).toHaveBeenCalled();
         });
 
-        test('should have renderGameOverMenu method that accepts GameState', () => {
+        test('should have renderGameOverMenu method that accepts options, selectedIndex, and finalScore', () => {
+            const options = ['Restart', 'Main Menu'];
+            const selectedIndex = 0;
+            const finalScore = 1000;
             expect(renderSystem.renderGameOverMenu).toBeDefined();
-            expect(() => renderSystem.renderGameOverMenu(mockGameState)).not.toThrow();
-            expect(renderSystem.renderGameOverMenu).toHaveBeenCalledWith(mockGameState);
-        });
-
-        test('should have renderGameOver method with no parameters', () => {
-            expect(renderSystem.renderGameOver).toBeDefined();
-            expect(() => renderSystem.renderGameOver()).not.toThrow();
-            expect(renderSystem.renderGameOver).toHaveBeenCalled();
+            expect(() =>
+                renderSystem.renderGameOverMenu(options, selectedIndex, finalScore)
+            ).not.toThrow();
+            expect(renderSystem.renderGameOverMenu).toHaveBeenCalledWith(
+                options,
+                selectedIndex,
+                finalScore
+            );
         });
 
         test('should have renderCredits method with no parameters', () => {
@@ -220,33 +162,28 @@ describe('IRenderSystem Interface Contract', () => {
     });
 
     describe('Visual Effects Methods', () => {
-        test('should have renderDeathAnimation method that accepts DeathAnimation', () => {
-            const mockDeathAnimation: DeathAnimation = {
-                x: 100,
-                y: 200,
-                progress: 0.5,
-                startTime: Date.now()
-            };
+        test('should have renderDeathAnimation method that accepts Particle array', () => {
+            const mockParticles: Particle[] = [];
             expect(renderSystem.renderDeathAnimation).toBeDefined();
-            expect(() => renderSystem.renderDeathAnimation(mockDeathAnimation)).not.toThrow();
-            expect(renderSystem.renderDeathAnimation).toHaveBeenCalledWith(mockDeathAnimation);
+            expect(() => renderSystem.renderDeathAnimation(mockParticles)).not.toThrow();
+            expect(renderSystem.renderDeathAnimation).toHaveBeenCalledWith(mockParticles);
         });
 
-        test('should have renderClearAnimation method that accepts ClearAnimation', () => {
-            const mockClearAnimation: ClearAnimation = {
-                progress: 0.7,
-                startTime: Date.now()
-            };
+        test('should have renderClearAnimation method that accepts particles, progress, centerX, centerY', () => {
+            const mockParticles: Particle[] = [];
+            const progress = 0.5;
+            const centerX = 100;
+            const centerY = 200;
             expect(renderSystem.renderClearAnimation).toBeDefined();
-            expect(() => renderSystem.renderClearAnimation(mockClearAnimation)).not.toThrow();
-            expect(renderSystem.renderClearAnimation).toHaveBeenCalledWith(mockClearAnimation);
-        });
-
-        test('should have renderDeathMarks method that accepts DeathMark array', () => {
-            const mockDeathMarks: DeathMark[] = [{ x: 100, y: 200, timestamp: Date.now() }];
-            expect(renderSystem.renderDeathMarks).toBeDefined();
-            expect(() => renderSystem.renderDeathMarks(mockDeathMarks)).not.toThrow();
-            expect(renderSystem.renderDeathMarks).toHaveBeenCalledWith(mockDeathMarks);
+            expect(() =>
+                renderSystem.renderClearAnimation(mockParticles, progress, centerX, centerY)
+            ).not.toThrow();
+            expect(renderSystem.renderClearAnimation).toHaveBeenCalledWith(
+                mockParticles,
+                progress,
+                centerX,
+                centerY
+            );
         });
     });
 
@@ -256,9 +193,8 @@ describe('IRenderSystem Interface Contract', () => {
                 {
                     x: 100,
                     y: 200,
-                    velocity: { x: 5, y: 10 },
-                    time: 1000,
-                    isValid: true
+                    confidence: 0.8,
+                    jumpNumber: 1
                 }
             ];
             expect(renderSystem.setLandingPredictions).toBeDefined();
@@ -305,37 +241,35 @@ describe('IRenderSystem Interface Contract', () => {
         });
     });
 
+    describe('System Management Methods', () => {
+        test('should have cleanup method that returns Promise<void>', async () => {
+            expect(renderSystem.cleanup).toBeDefined();
+            const result = renderSystem.cleanup();
+            expect(result).toBeInstanceOf(Promise);
+            await expect(result).resolves.toBeUndefined();
+            expect(renderSystem.cleanup).toHaveBeenCalled();
+        });
+
+        test('should have dispose method with no parameters', () => {
+            expect(renderSystem.dispose).toBeDefined();
+            expect(() => renderSystem.dispose()).not.toThrow();
+            expect(renderSystem.dispose).toHaveBeenCalled();
+        });
+    });
+
     describe('Interface Type Safety', () => {
         test('should enforce LandingPrediction structure', () => {
             const validPrediction: LandingPrediction = {
                 x: 100,
                 y: 200,
-                velocity: { x: 5, y: 10 },
-                time: 1000,
-                isValid: true
+                confidence: 0.8,
+                jumpNumber: 1
             };
 
             expect(validPrediction.x).toBeDefined();
             expect(validPrediction.y).toBeDefined();
-            expect(validPrediction.velocity).toBeDefined();
-            expect(validPrediction.velocity.x).toBeDefined();
-            expect(validPrediction.velocity.y).toBeDefined();
-            expect(validPrediction.time).toBeDefined();
-            expect(validPrediction.isValid).toBeDefined();
-        });
-
-        test('should enforce DeathAnimation structure', () => {
-            const validAnimation: DeathAnimation = {
-                x: 100,
-                y: 200,
-                progress: 0.5,
-                startTime: Date.now()
-            };
-
-            expect(validAnimation.x).toBeDefined();
-            expect(validAnimation.y).toBeDefined();
-            expect(validAnimation.progress).toBeDefined();
-            expect(validAnimation.startTime).toBeDefined();
+            expect(validPrediction.confidence).toBeDefined();
+            expect(validPrediction.jumpNumber).toBeDefined();
         });
 
         test('should enforce Position structure', () => {
