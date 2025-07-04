@@ -1,9 +1,9 @@
 import * as fabric from 'fabric';
-import { RENDERING_CONSTANTS } from '../constants/GameConstants';
 import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
 import { AnimationRenderer } from './renderers/AnimationRenderer.js';
+import { PlayerRenderer } from './renderers/PlayerRenderer.js';
 import { ResourceManager } from './renderers/ResourceManager.js';
 import { StageRenderer } from './renderers/StageRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
@@ -20,10 +20,9 @@ export class FabricRenderSystem implements IRenderSystem {
     protected canvas: fabric.Canvas;
     private stageRenderer: StageRenderer;
     private uiRenderer: UIRenderer;
+    private playerRenderer: PlayerRenderer;
     private animationRenderer: AnimationRenderer;
     private resourceManager: ResourceManager;
-    private playerShape: fabric.Circle | null = null;
-    private trailShapes: fabric.Circle[] = [];
     private deathMarkPath: fabric.Path | null = null;
 
     constructor(canvasElement: HTMLCanvasElement) {
@@ -50,6 +49,9 @@ export class FabricRenderSystem implements IRenderSystem {
 
         // Initialize UIRenderer
         this.uiRenderer = new UIRenderer(this.canvas);
+
+        // Initialize PlayerRenderer
+        this.playerRenderer = new PlayerRenderer(this.canvas);
 
         // Initialize AnimationRenderer
         this.animationRenderer = new AnimationRenderer(this.canvas);
@@ -81,53 +83,11 @@ export class FabricRenderSystem implements IRenderSystem {
     }
 
     renderPlayer(player: Player): void {
-        if (this.playerShape) {
-            // 既存のプレイヤーシェイプを更新
-            this.playerShape.set({
-                left: player.x - player.radius,
-                top: player.y - player.radius
-            });
-        } else {
-            // 新しいプレイヤーシェイプを作成
-            this.playerShape = new fabric.Circle({
-                left: player.x - player.radius,
-                top: player.y - player.radius,
-                radius: player.radius,
-                fill: 'white',
-                selectable: false,
-                evented: false
-            });
-            this.canvas.add(this.playerShape);
-        }
+        this.playerRenderer.renderPlayer(player);
     }
 
     renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        // オブジェクト作成を最小限に
-        for (const shape of this.trailShapes) {
-            this.canvas.remove(shape);
-        }
-        this.trailShapes = [];
-
-        // トレイルポイント数を制限（元の設定に戻す）
-        const maxTrailPoints = Math.min(trail.length, RENDERING_CONSTANTS.MAX_TRAIL_POINTS);
-
-        for (let i = 0; i < maxTrailPoints; i++) {
-            const point = trail[trail.length - 1 - i]; // 最新から
-            const alpha = (maxTrailPoints - i) / maxTrailPoints;
-            const radius = playerRadius * alpha * 0.8;
-
-            const trailShape = new fabric.Circle({
-                left: point.x - radius,
-                top: point.y - radius,
-                radius: radius,
-                fill: `rgba(255, 255, 255, ${alpha * 0.6})`,
-                selectable: false,
-                evented: false
-            });
-
-            this.trailShapes.push(trailShape);
-            this.canvas.add(trailShape);
-        }
+        this.playerRenderer.renderTrail(trail, playerRadius);
     }
 
     renderStage(stage: StageData): void {
@@ -206,22 +166,14 @@ export class FabricRenderSystem implements IRenderSystem {
         this.uiRenderer.cleanup();
         this.animationRenderer.cleanup();
 
+        // Clean up player renderer
+        this.playerRenderer.cleanup();
+
         // Clean up local shapes
         if (this.deathMarkPath) {
             this.canvas.remove(this.deathMarkPath);
             this.deathMarkPath = null;
         }
-
-        // Clean up player and trail shapes
-        if (this.playerShape) {
-            this.canvas.remove(this.playerShape);
-            this.playerShape = null;
-        }
-
-        for (const shape of this.trailShapes) {
-            this.canvas.remove(shape);
-        }
-        this.trailShapes = [];
 
         // Delegate canvas resource cleanup to ResourceManager
         await this.resourceManager.cleanup();
