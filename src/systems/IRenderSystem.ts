@@ -105,8 +105,14 @@ export interface IRenderSystem {
      * @param options Menu options array
      * @param selectedIndex Currently selected option index
      * @param finalScore Final game score
+     * @param deathCount Optional death count for this stage
      */
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void;
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void;
 
     /**
      * Render credits screen
@@ -120,6 +126,12 @@ export interface IRenderSystem {
      * @param particles Array of particle objects
      */
     renderDeathAnimation(particles: Particle[]): void;
+
+    /**
+     * Render soul animation flying to death counter
+     * @param particles Array of soul particle objects
+     */
+    renderSoulAnimation(particles: Particle[]): void;
 
     /**
      * Render stage clear animation

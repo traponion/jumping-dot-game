@@ -20,8 +20,12 @@ export class AnimationSystem {
     private clearAnimation: AnimationData;
     /** @private {AnimationData} Player death explosion animation */
     private deathAnimation: AnimationData;
+    /** @private {AnimationData} Soul flying to death counter animation */
+    private soulAnimation: AnimationData;
     /** @private {GameState} Game state instance for dependency injection */
     private gameState: GameState;
+    /** @private {boolean} Flag to prevent death animation from triggering multiple times */
+    private deathAnimationTriggered: boolean;
 
     /**
      * Creates a new AnimationSystem instance
@@ -31,6 +35,7 @@ export class AnimationSystem {
      */
     constructor(gameState: GameState) {
         this.gameState = gameState;
+        this.deathAnimationTriggered = false;
         this.clearAnimation = {
             active: false,
             startTime: null,
@@ -42,6 +47,13 @@ export class AnimationSystem {
             active: false,
             startTime: null,
             duration: 2000,
+            particles: []
+        };
+
+        this.soulAnimation = {
+            active: false,
+            startTime: null,
+            duration: 1000, // 1 second for soul to reach counter
             particles: []
         };
     }
@@ -142,7 +154,8 @@ export class AnimationSystem {
         if (
             this.gameState.gameOver &&
             !this.deathAnimation.active &&
-            !this.gameState.runtime.shouldStartDeathAnimation
+            !this.gameState.runtime.shouldStartDeathAnimation &&
+            !this.deathAnimationTriggered
         ) {
             // Add death marker with position adjustment for visibility
             const player = this.gameState.runtime.player;
@@ -154,6 +167,12 @@ export class AnimationSystem {
 
             // Start death animation
             this.startDeathAnimation(player);
+
+            // Set flag to prevent retriggering
+            this.deathAnimationTriggered = true;
+
+            // No soul animation - just death count is handled by GameRuleSystem
+
             return;
         }
 
@@ -203,6 +222,83 @@ export class AnimationSystem {
     }
 
     /**
+     * Start soul animation flying to death counter
+     * @param {Player} player - Player object for soul spawn position
+     * @param {Function} [onComplete] - Optional callback when animation completes
+     * @returns {void}
+     * @description Creates a soul particle that flies from death location to death counter
+     */
+    startSoulAnimation(player: Player, onComplete?: () => void): void {
+        this.soulAnimation.active = true;
+        this.soulAnimation.startTime = getCurrentTime();
+        this.soulAnimation.particles = [];
+
+        // Get death counter position from DOM
+        let targetX = 750; // Default right side
+        let targetY = 25; // Default top
+
+        if (typeof document !== 'undefined' && document && document.getElementById) {
+            const deathCountElement = document.getElementById('deathCount');
+            if (deathCountElement) {
+                const rect = deathCountElement.getBoundingClientRect();
+                targetX = rect.left + rect.width / 2;
+                targetY = rect.top + rect.height / 2;
+            }
+        }
+
+        // Create soul particle with conditional onComplete
+        this.soulAnimation.particles.push({
+            x: player.x,
+            y: player.y,
+            targetX,
+            targetY,
+            vx: 0,
+            vy: 0,
+            life: 1.0,
+            decay: 0,
+            ...(onComplete && { onComplete })
+        });
+    }
+
+    /**
+     * Update soul animation particles
+     * @returns {void}
+     * @description Updates soul particle movement towards death counter
+     */
+    updateSoulAnimation(): void {
+        if (!this.soulAnimation.active || this.soulAnimation.startTime === null) return;
+
+        const currentTime = getCurrentTime();
+        const elapsed = currentTime - this.soulAnimation.startTime;
+        const progress = Math.min(elapsed / this.soulAnimation.duration, 1.0);
+
+        for (let i = this.soulAnimation.particles.length - 1; i >= 0; i--) {
+            const particle = this.soulAnimation.particles[i];
+
+            // Smooth easing movement to target (with null checks)
+            const easeProgress = 1 - (1 - progress) ** 3; // ease-out cubic
+            if (particle.targetX !== undefined && particle.targetY !== undefined) {
+                particle.x = particle.x + (particle.targetX - particle.x) * easeProgress;
+                particle.y = particle.y + (particle.targetY - particle.y) * easeProgress;
+            }
+
+            // Check if animation completed
+            if (progress >= 1.0) {
+                // Call completion callback if provided
+                if (particle.onComplete) {
+                    particle.onComplete();
+                }
+                this.soulAnimation.particles.splice(i, 1);
+            }
+        }
+
+        // End animation when all particles are done
+        if (progress >= 1.0) {
+            this.soulAnimation.active = false;
+        }
+    }
+
+    /**
      * Get stage clear animation data
      * @returns {AnimationData} Current clear animation state
      */
@@ -219,6 +315,14 @@ export class AnimationSystem {
     }
 
     /**
+     * Get soul animation data
+     * @returns {AnimationData} Current soul animation state
+     */
+    getSoulAnimation(): AnimationData {
+        return this.soulAnimation;
+    }
+
+    /**
      * Reset all animations to initial state
      * @returns {void}
      * @description Stops all animations and clears particles
@@ -231,6 +335,13 @@ export class AnimationSystem {
         this.deathAnimation.active = false;
         this.deathAnimation.startTime = null;
         this.deathAnimation.particles = [];
+
+        this.soulAnimation.active = false;
+        this.soulAnimation.startTime = null;
+        this.soulAnimation.particles = [];
+
+        // Reset death animation trigger flag for new game
+        this.deathAnimationTriggered = false;
     }
 
     /**
@@ -238,6 +349,8 @@ export class AnimationSystem {
      * @returns {boolean} True if any animation is running
      */
     isAnyAnimationActive(): boolean {
-        return this.clearAnimation.active || this.deathAnimation.active;
+        return (
+            this.clearAnimation.active || this.deathAnimation.active || this.soulAnimation.active
+        );
     }
 }

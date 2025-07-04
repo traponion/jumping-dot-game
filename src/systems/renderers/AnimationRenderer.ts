@@ -77,6 +77,29 @@ export class AnimationRenderer {
         }
     }
 
+    renderSoulAnimation(particles: Particle[]): void {
+        for (const particle of particles) {
+            // Soul particle with glowing effect
+            const soulShape = new fabric.Circle({
+                left: particle.x - 3,
+                top: particle.y - 3,
+                radius: 3,
+                fill: `rgba(255, 255, 255, ${particle.life})`,
+                stroke: `rgba(255, 255, 255, ${particle.life * 0.5})`,
+                strokeWidth: 2,
+                selectable: false,
+                evented: false,
+                shadow: new fabric.Shadow({
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    offsetX: 0,
+                    offsetY: 0,
+                    blur: 5
+                })
+            });
+            this.canvas.add(soulShape);
+        }
+    }
+
     renderLandingPredictions(): void {
         // Clean up old history first
         this.cleanupLandingHistory();

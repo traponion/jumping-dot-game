@@ -114,6 +114,7 @@ describe('GameManager render with GameUI integration', () => {
             // Setup: Set game to over state
             gameState.gameOver = true;
             gameState.finalScore = 150;
+            gameState.deathCount = 3;
 
             // Act: Call render with GameUI
             (gameManager as unknown as { render: (ui: GameUI) => void }).render(mockGameUI);
@@ -123,7 +124,8 @@ describe('GameManager render with GameUI integration', () => {
             expect(mockRenderSystem.renderGameOverMenu).toHaveBeenCalledWith(
                 ['RESTART STAGE', 'STAGE SELECT'],
                 0,
-                150
+                150,
+                3
             );
 
             // Assert: renderAll should be called after renderGameOverMenu

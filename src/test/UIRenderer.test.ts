@@ -172,6 +172,76 @@ describe('UIRenderer', () => {
 
             expect(cleanupSpy).toHaveBeenCalled();
         });
+
+        it('should render death count when deathCount parameter is provided', () => {
+            const options = ['Retry'];
+            const selectedIndex = 0;
+            const finalScore = 1500;
+            const deathCount = 7;
+
+            renderer.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
+
+            expect(fabric.Text).toHaveBeenCalledWith(
+                'Deaths: 7',
+                expect.objectContaining({
+                    fontSize: 20,
+                    fill: 'white',
+                    originX: 'center',
+                    originY: 'center'
+                })
+            );
+        });
+
+        it('should render death count even when finalScore is 0', () => {
+            const options = ['Retry'];
+            const selectedIndex = 0;
+            const finalScore = 0;
+            const deathCount = 3;
+
+            renderer.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
+
+            expect(fabric.Text).toHaveBeenCalledWith(
+                'Deaths: 3',
+                expect.objectContaining({
+                    fontSize: 20,
+                    fill: 'white'
+                })
+            );
+        });
+
+        it('should handle zero death count correctly', () => {
+            const options = ['Retry'];
+            const selectedIndex = 0;
+            const finalScore = 1000;
+            const deathCount = 0;
+
+            renderer.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
+
+            expect(fabric.Text).toHaveBeenCalledWith(
+                'Deaths: 0',
+                expect.objectContaining({
+                    fontSize: 20,
+                    fill: 'white'
+                })
+            );
+        });
+
+        it('should handle high death count correctly', () => {
+            const options = ['Retry'];
+            const selectedIndex = 0;
+            const finalScore = 500;
+            const deathCount = 99;
+
+            renderer.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
+
+            expect(fabric.Text).toHaveBeenCalledWith(
+                'Deaths: 99',
+                expect.objectContaining({
+                    fontSize: 20,
+                    fill: 'white'
+                })
+            );
+        });
     });
 
     describe('renderStartInstruction', () => {

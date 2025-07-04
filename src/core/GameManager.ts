@@ -202,6 +202,7 @@ export class GameManager {
         if (!this.gameState.gameRunning || this.gameState.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
+            this.animationSystem.updateSoulAnimation();
             return;
         }
 
@@ -225,6 +226,7 @@ export class GameManager {
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
+        this.animationSystem.updateSoulAnimation();
     }
 
     /**
@@ -255,6 +257,11 @@ export class GameManager {
             renderer.renderDeathAnimation(deathAnim.particles);
         }
 
+        const soulAnim = this.animationSystem.getSoulAnimation();
+        if (soulAnim.active) {
+            renderer.renderSoulAnimation(soulAnim.particles);
+        }
+
         const clearAnim = this.animationSystem.getClearAnimation();
         if (clearAnim.active && clearAnim.startTime) {
             const elapsed = getCurrentTime() - clearAnim.startTime;
@@ -272,7 +279,8 @@ export class GameManager {
                 renderer.renderGameOverMenu(
                     menuData.options,
                     menuData.selectedIndex,
-                    this.gameState.finalScore
+                    this.gameState.finalScore,
+                    this.gameState.deathCount
                 );
             }
         } else if (!this.gameState.gameRunning) {
@@ -288,8 +296,13 @@ export class GameManager {
     /**
      * Render game over menu
      */
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore);
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void {
+        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
     }
 
     /**

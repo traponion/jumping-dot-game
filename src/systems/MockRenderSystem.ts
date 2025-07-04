@@ -99,7 +99,12 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock start instruction rendering
     }
 
-    renderGameOverMenu(_options: string[], _selectedIndex: number, _finalScore: number): void {
+    renderGameOverMenu(
+        _options: string[],
+        _selectedIndex: number,
+        _finalScore: number,
+        _deathCount?: number
+    ): void {
         // Mock game over menu rendering
     }
 
@@ -111,6 +116,10 @@ export class MockRenderSystem implements IRenderSystem {
 
     renderDeathAnimation(_particles: Particle[]): void {
         // Mock death animation rendering
+    }
+
+    renderSoulAnimation(_particles: Particle[]): void {
+        // Mock soul animation rendering
     }
 
     renderClearAnimation(

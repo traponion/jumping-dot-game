@@ -21,6 +21,50 @@ vi.mock('../systems/RenderSystemFactory', () => ({
     }))
 }));
 
+// Mock DOM elements
+const mockCanvas = {
+    width: 800,
+    height: 600,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn(),
+    getBoundingClientRect: vi.fn(() => ({ left: 0, top: 0, width: 800, height: 600 })),
+    getContext: vi.fn(() => ({
+        fillRect: vi.fn(),
+        clearRect: vi.fn(),
+        fillStyle: '',
+        strokeStyle: '',
+        lineWidth: 1,
+        font: '',
+        textAlign: '',
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        fillText: vi.fn(),
+        strokeRect: vi.fn(),
+        ellipse: vi.fn(),
+        closePath: vi.fn()
+    }))
+} as unknown as HTMLCanvasElement;
+
+// Mock document.createElement
+Object.defineProperty(global, 'document', {
+    value: {
+        createElement: vi.fn(() => mockCanvas),
+        getElementById: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+    },
+    writable: true
+});
+
 describe('GameManager', () => {
     let gameManager: GameManager;
     let gameState: GameState;

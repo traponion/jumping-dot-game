@@ -38,6 +38,7 @@ class MockRenderSystem implements IRenderSystem {
 
     // Visual Effects
     renderDeathAnimation = vi.fn();
+    renderSoulAnimation = vi.fn();
     renderClearAnimation = vi.fn();
 
     // Analytics/Predictions

@@ -65,6 +65,7 @@ class MockRenderSystem implements IRenderSystem {
     renderCredits = vi.fn();
 
     renderDeathAnimation = vi.fn();
+    renderSoulAnimation = vi.fn();
     renderClearAnimation = vi.fn();
 
     renderLandingPredictions = vi.fn();
@@ -168,6 +169,14 @@ const mockScore = {
     setAttribute: vi.fn()
 } as unknown as HTMLElement;
 
+const mockDeathCount = {
+    textContent: '',
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getAttribute: vi.fn(),
+    setAttribute: vi.fn()
+} as unknown as HTMLElement;
+
 describe('JumpingDotGame', () => {
     let game: JumpingDotGame;
     let originalGetElementById: typeof document.getElementById;
@@ -189,6 +198,7 @@ describe('JumpingDotGame', () => {
             if (id === 'gameStatus') return mockGameStatus;
             if (id === 'timer') return mockTimer;
             if (id === 'score') return mockScore;
+            if (id === 'deathCount') return mockDeathCount;
             return null;
         }) as typeof document.getElementById;
 

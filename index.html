@@ -41,6 +41,15 @@
             z-index: 10;
         }
         
+        .death-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+        }
+        
         .controls {
             color: white;
             font-size: 12px;
@@ -81,6 +90,10 @@
             .info {
                 font-size: 12px;
             }
+            
+            .death-info {
+                font-size: 12px;
+            }
         }
         
         @media (max-height: 600px) {
@@ -98,6 +111,10 @@
             <div id="gameStatus">Ready</div>
             <div id="timer">Time: 20</div>
             <div id="score">Score: 0</div>
+        </div>
+        
+        <div class="death-info">
+            <div id="deathCount">Deaths: 0</div>
         </div>
         
         <canvas id="gameCanvas" width="800" height="600"></canvas>

@@ -53,6 +53,9 @@ export interface Particle {
     life: number;
     decay: number;
     size?: number;
+    targetX?: number;
+    targetY?: number;
+    onComplete?: () => void;
 }
 
 /**
@@ -112,6 +115,7 @@ export interface GameState {
     timeRemaining: number;
     gameStartTime: number | null;
     finalScore: number;
+    deathCount: number;
     hasMovedOnce: boolean;
 }
 

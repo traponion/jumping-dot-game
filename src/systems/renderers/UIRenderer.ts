@@ -6,7 +6,12 @@ export class UIRenderer {
 
     constructor(private canvas: fabric.Canvas) {}
 
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void {
         this.cleanup();
 
         // Get current camera position from transform
@@ -31,6 +36,13 @@ export class UIRenderer {
         if (scoreText) {
             this.canvas.add(scoreText);
             this.uiShapes.push(scoreText);
+        }
+
+        // Create death count display
+        if (deathCount !== undefined) {
+            const deathText = this.createDeathDisplay(screenCenterX, screenCenterY, deathCount);
+            this.canvas.add(deathText);
+            this.uiShapes.push(deathText);
         }
 
         // Create menu options
@@ -84,6 +96,30 @@ export class UIRenderer {
             left: screenCenterX,
             top: screenCenterY - 40,
             fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.SMALL_SIZE + 6, // 20px for score display
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+            shadow: new fabric.Shadow({
+                color: 'rgba(0,0,0,0.8)',
+                offsetX: 1,
+                offsetY: 1,
+                blur: 2
+            })
+        });
+    }
+
+    private createDeathDisplay(
+        screenCenterX: number,
+        screenCenterY: number,
+        deathCount: number
+    ): fabric.Text {
+        return new fabric.Text(`Deaths: ${deathCount}`, {
+            left: screenCenterX,
+            top: screenCenterY - 15, // Position below score display
+            fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.SMALL_SIZE + 6, // 20px for death count display
             fill: 'white',
             fontFamily: 'monospace',
             originX: 'center',

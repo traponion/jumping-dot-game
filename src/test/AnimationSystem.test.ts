@@ -210,6 +210,21 @@ describe('AnimationSystem', () => {
             expect(deathAnim.active).toBe(true);
         });
 
+        it('should not trigger death animation multiple times with deathAnimationTriggered flag', () => {
+            // Set game over state
+            gameState.gameOver = true;
+            gameState.runtime.player = mockPlayer;
+            gameState.runtime.shouldStartDeathAnimation = false;
+
+            // First call should trigger animation
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
+
+            // Second call should NOT trigger again (infinite loop prevention)
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1); // Still only 1
+        });
+
         it('should handle legacy shouldStartDeathAnimation flag', () => {
             // Set legacy flag
             gameState.runtime.shouldStartDeathAnimation = true;
@@ -265,9 +280,10 @@ describe('AnimationSystem', () => {
 
             expect(animationSystem.getClearAnimation().active).toBe(false);
             expect(animationSystem.getDeathAnimation().active).toBe(false);
+            expect(animationSystem.getSoulAnimation().active).toBe(false);
             expect(animationSystem.getClearAnimation().particles.length).toBe(0);
             expect(animationSystem.getDeathAnimation().particles.length).toBe(0);
-            // Note: AnimationSystem no longer manages death marks - they're in the store
+            expect(animationSystem.getSoulAnimation().particles.length).toBe(0);
         });
 
         it('should check if any animation is active', () => {
@@ -282,6 +298,22 @@ describe('AnimationSystem', () => {
 
             animationSystem.reset();
             expect(animationSystem.isAnyAnimationActive()).toBe(false);
+        });
+
+        it('should reset deathAnimationTriggered flag on reset', () => {
+            // Trigger death animation
+            gameState.gameOver = true;
+            gameState.runtime.player = mockPlayer;
+            gameState.runtime.shouldStartDeathAnimation = false;
+            animationSystem.updateDeathAnimation();
+
+            // Reset should clear the flag
+            animationSystem.reset();
+
+            // Should be able to trigger again after reset
+            gameState.runtime.deathMarks = []; // Clear previous marks
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
         });
     });
 });
