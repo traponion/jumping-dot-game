@@ -75,8 +75,13 @@ export class FabricRenderAdapter implements IRenderSystem {
         this.fabricRenderSystem.renderStartInstruction();
     }
 
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        this.fabricRenderSystem.renderGameOverMenu(options, selectedIndex, finalScore);
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void {
+        this.fabricRenderSystem.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
     }
 
     renderCredits(): void {

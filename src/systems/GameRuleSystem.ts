@@ -58,8 +58,9 @@ export class GameRuleSystem {
      * Handle player death: set game over, add death marker, and trigger death animation.
      */
     private handlePlayerDeath(): void {
-        // Pure rule enforcement: only set the game over flag
+        // Pure rule enforcement: set the game over flag and increment death count
         this.gameState.gameOver = true;
+        this.gameState.deathCount++;
     }
 
     /**

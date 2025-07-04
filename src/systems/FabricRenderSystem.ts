@@ -148,8 +148,13 @@ export class FabricRenderSystem implements IRenderSystem {
         this.animationRenderer.renderClearAnimation(particles, progress, playerX, playerY);
     }
 
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        this.uiRenderer.renderGameOverMenu(options, selectedIndex, finalScore);
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void {
+        this.uiRenderer.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
     }
 
     renderStartInstruction(): void {

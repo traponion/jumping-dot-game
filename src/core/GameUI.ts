@@ -16,6 +16,7 @@ export class GameUI {
     private gameStatus: HTMLElement;
     private timerDisplay: HTMLElement;
     private scoreDisplay: HTMLElement;
+    private deathDisplay: HTMLElement;
 
     // Game over menu state
     private gameOverMenuIndex = 0;
@@ -25,6 +26,7 @@ export class GameUI {
         this.gameStatus = this.getRequiredElement('gameStatus');
         this.timerDisplay = this.getRequiredElement('timer');
         this.scoreDisplay = this.getRequiredElement('score');
+        this.deathDisplay = this.getRequiredElement('deathCount');
     }
 
     private getRequiredElement(id: string): HTMLElement {
@@ -48,12 +50,17 @@ export class GameUI {
         }
     }
 
+    updateDeathCount(): void {
+        this.deathDisplay.textContent = `Deaths: ${this.gameState.deathCount}`;
+    }
+
     /**
      * Update initial UI state
      */
     updateInitialUI(): void {
         this.timerDisplay.textContent = `Time: ${this.gameState.timeLimit}`;
         this.scoreDisplay.textContent = 'Score: 0';
+        this.updateDeathCount();
     }
 
     /**

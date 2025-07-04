@@ -38,6 +38,7 @@ describe('GameRuleSystem', () => {
             timeRemaining: 10,
             gameStartTime: null,
             finalScore: 0,
+            deathCount: 0,
             stage: null,
             hasMovedOnce: false,
             performance: { fps: 60, deltaTime: 16.67 },
@@ -208,6 +209,82 @@ describe('GameRuleSystem', () => {
             // Assert: Time not updated when game over
             expect(mockGameState.timeRemaining).toBe(originalTimeRemaining);
             expect(getCurrentTime).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('death count tracking', () => {
+        it('should increment death count when player dies from hole collision', () => {
+            // Setup: Initial death count
+            expect(mockGameState.deathCount).toBe(0);
+            mockGameState.runtime.collisionResults.holeCollision = true;
+
+            // Action: Trigger death via hole collision
+            gameRuleSystem.update();
+
+            // Assert: Death count incremented and game over
+            expect(mockGameState.deathCount).toBe(1);
+            expect(mockGameState.gameOver).toBe(true);
+        });
+
+        it('should increment death count when player dies from boundary collision', () => {
+            // Setup: Initial death count
+            expect(mockGameState.deathCount).toBe(0);
+            mockGameState.runtime.collisionResults.boundaryCollision = true;
+
+            // Action: Trigger death via boundary collision
+            gameRuleSystem.update();
+
+            // Assert: Death count incremented and game over
+            expect(mockGameState.deathCount).toBe(1);
+            expect(mockGameState.gameOver).toBe(true);
+        });
+
+        it('should increment death count when player dies from time up', () => {
+            // Setup: Initial death count and time limit exceeded
+            expect(mockGameState.deathCount).toBe(0);
+            mockGameState.gameStartTime = 1000;
+            mockGameState.timeLimit = 0.5;
+            vi.mocked(getCurrentTime).mockReturnValue(2000); // 1 second later
+
+            // Action: Trigger death via time up
+            gameRuleSystem.update();
+
+            // Assert: Death count incremented and game over
+            expect(mockGameState.deathCount).toBe(1);
+            expect(mockGameState.gameOver).toBe(true);
+        });
+
+        it('should not increment death count when no death occurs', () => {
+            // Setup: No collision or time violations
+            expect(mockGameState.deathCount).toBe(0);
+            mockGameState.runtime.collisionResults.holeCollision = false;
+            mockGameState.runtime.collisionResults.boundaryCollision = false;
+            mockGameState.gameStartTime = 1000;
+            mockGameState.timeLimit = 10;
+            vi.mocked(getCurrentTime).mockReturnValue(2000); // 1 second later, within limit
+
+            // Action: Run rule checking
+            gameRuleSystem.update();
+
+            // Assert: Death count unchanged and game continues
+            expect(mockGameState.deathCount).toBe(0);
+            expect(mockGameState.gameOver).toBe(false);
+        });
+
+        it('should not increment death count when goal is reached', () => {
+            // Setup: Goal reached
+            expect(mockGameState.deathCount).toBe(0);
+            mockGameState.timeRemaining = 7.3;
+            mockGameState.stage = { goal: { x: 700, y: 400, width: 40, height: 50 } } as any;
+            mockGameState.runtime.collisionResults.goalCollision = true;
+
+            // Action: Run rule checking
+            gameRuleSystem.update();
+
+            // Assert: Death count unchanged, game over due to goal completion
+            expect(mockGameState.deathCount).toBe(0);
+            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.finalScore).toBe(8);
         });
     });
 

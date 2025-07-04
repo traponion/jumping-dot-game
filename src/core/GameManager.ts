@@ -272,7 +272,8 @@ export class GameManager {
                 renderer.renderGameOverMenu(
                     menuData.options,
                     menuData.selectedIndex,
-                    this.gameState.finalScore
+                    this.gameState.finalScore,
+                    this.gameState.deathCount
                 );
             }
         } else if (!this.gameState.gameRunning) {
@@ -288,8 +289,13 @@ export class GameManager {
     /**
      * Render game over menu
      */
-    renderGameOverMenu(options: string[], selectedIndex: number, finalScore: number): void {
-        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore);
+    renderGameOverMenu(
+        options: string[],
+        selectedIndex: number,
+        finalScore: number,
+        deathCount?: number
+    ): void {
+        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
     }
 
     /**

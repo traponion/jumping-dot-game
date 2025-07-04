@@ -112,6 +112,7 @@ export interface GameState {
     timeRemaining: number;
     gameStartTime: number | null;
     finalScore: number;
+    deathCount: number;
     hasMovedOnce: boolean;
 }
 
