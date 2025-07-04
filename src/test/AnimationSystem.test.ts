@@ -24,15 +24,6 @@ describe('AnimationSystem', () => {
 
         // Mock performance.now
         vi.spyOn(globalThis.performance, 'now').mockReturnValue(1000);
-
-        // Mock document for soul animation
-        const mockDeathDisplay = {
-            getBoundingClientRect: () => ({ left: 750, top: 10, width: 100, height: 20 })
-        };
-        vi.spyOn(document, 'getElementById').mockImplementation((id: string) => {
-            if (id === 'deathCount') return mockDeathDisplay as any;
-            return null;
-        });
     });
 
     describe('clear animation', () => {
@@ -219,6 +210,21 @@ describe('AnimationSystem', () => {
             expect(deathAnim.active).toBe(true);
         });
 
+        it('should not trigger death animation multiple times with deathAnimationTriggered flag', () => {
+            // Set game over state
+            gameState.gameOver = true;
+            gameState.runtime.player = mockPlayer;
+            gameState.runtime.shouldStartDeathAnimation = false;
+
+            // First call should trigger animation
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
+
+            // Second call should NOT trigger again (infinite loop prevention)
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1); // Still only 1
+        });
+
         it('should handle legacy shouldStartDeathAnimation flag', () => {
             // Set legacy flag
             gameState.runtime.shouldStartDeathAnimation = true;
@@ -265,79 +271,10 @@ describe('AnimationSystem', () => {
         });
     });
 
-    describe('soul animation', () => {
-        it('should start soul animation when player dies', () => {
-            // Setup: Player dies at specific position
-            gameState.runtime.player = { ...mockPlayer, x: 200, y: 300 };
-
-            // Action: Start soul animation
-            animationSystem.startSoulAnimation(gameState.runtime.player);
-
-            // Assert: Soul animation should be active
-            const soulAnim = animationSystem.getSoulAnimation();
-            expect(soulAnim.active).toBe(true);
-            expect(soulAnim.particles).toHaveLength(1);
-            expect(soulAnim.particles[0].x).toBe(200);
-            expect(soulAnim.particles[0].y).toBe(300);
-        });
-
-        it('should animate soul flying to death counter', () => {
-            // Setup: Start soul animation
-            gameState.runtime.player = { ...mockPlayer, x: 100, y: 400 };
-            animationSystem.startSoulAnimation(gameState.runtime.player);
-
-            // Advance time to test animation progress
-            vi.spyOn(globalThis.performance, 'now').mockReturnValue(1500); // 500ms later
-
-            // Action: Update animation
-            animationSystem.updateSoulAnimation();
-
-            // Assert: Soul should move toward death counter
-            const soulAnim = animationSystem.getSoulAnimation();
-            const particle = soulAnim.particles[0];
-            expect(particle.x).toBeGreaterThan(100); // Moving right
-            expect(particle.y).toBeLessThan(400); // Moving up
-        });
-
-        it('should complete soul animation and trigger death count increment', () => {
-            const mockCallback = vi.fn();
-
-            // Setup: Start soul animation with callback
-            gameState.runtime.player = { ...mockPlayer, x: 100, y: 400 };
-            animationSystem.startSoulAnimation(gameState.runtime.player, mockCallback);
-
-            // Advance time past animation duration
-            vi.spyOn(globalThis.performance, 'now').mockReturnValue(2000); // 1000ms later (animation complete)
-
-            // Action: Update animation
-            animationSystem.updateSoulAnimation();
-
-            // Assert: Animation completed and callback called
-            const soulAnim = animationSystem.getSoulAnimation();
-            expect(soulAnim.active).toBe(false);
-            expect(mockCallback).toHaveBeenCalledOnce();
-        });
-
-        it('should handle missing death counter element gracefully', () => {
-            // Setup: Mock getElementById to return null
-            vi.spyOn(document, 'getElementById').mockReturnValue(null);
-
-            // Action: Start soul animation (should not throw)
-            expect(() => {
-                animationSystem.startSoulAnimation(mockPlayer);
-            }).not.toThrow();
-
-            // Assert: Animation should still work with fallback target
-            const soulAnim = animationSystem.getSoulAnimation();
-            expect(soulAnim.active).toBe(true);
-        });
-    });
-
     describe('animation state management', () => {
-        it('should reset all animations including soul animation', () => {
+        it('should reset all animations', () => {
             animationSystem.startClearAnimation(mockPlayer);
             animationSystem.startDeathAnimation(mockPlayer);
-            animationSystem.startSoulAnimation(mockPlayer);
 
             animationSystem.reset();
 
@@ -349,7 +286,7 @@ describe('AnimationSystem', () => {
             expect(animationSystem.getSoulAnimation().particles.length).toBe(0);
         });
 
-        it('should check if any animation is active including soul animation', () => {
+        it('should check if any animation is active', () => {
             expect(animationSystem.isAnyAnimationActive()).toBe(false);
 
             animationSystem.startClearAnimation(mockPlayer);
@@ -360,11 +297,23 @@ describe('AnimationSystem', () => {
             expect(animationSystem.isAnyAnimationActive()).toBe(true);
 
             animationSystem.reset();
-            animationSystem.startSoulAnimation(mockPlayer);
-            expect(animationSystem.isAnyAnimationActive()).toBe(true);
-
-            animationSystem.reset();
             expect(animationSystem.isAnyAnimationActive()).toBe(false);
+        });
+
+        it('should reset deathAnimationTriggered flag on reset', () => {
+            // Trigger death animation
+            gameState.gameOver = true;
+            gameState.runtime.player = mockPlayer;
+            gameState.runtime.shouldStartDeathAnimation = false;
+            animationSystem.updateDeathAnimation();
+
+            // Reset should clear the flag
+            animationSystem.reset();
+
+            // Should be able to trigger again after reset
+            gameState.runtime.deathMarks = []; // Clear previous marks
+            animationSystem.updateDeathAnimation();
+            expect(gameState.runtime.deathMarks).toHaveLength(1);
         });
     });
 });

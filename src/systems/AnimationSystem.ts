@@ -24,6 +24,8 @@ export class AnimationSystem {
     private soulAnimation: AnimationData;
     /** @private {GameState} Game state instance for dependency injection */
     private gameState: GameState;
+    /** @private {boolean} Flag to prevent death animation from triggering multiple times */
+    private deathAnimationTriggered: boolean;
 
     /**
      * Creates a new AnimationSystem instance
@@ -33,6 +35,7 @@ export class AnimationSystem {
      */
     constructor(gameState: GameState) {
         this.gameState = gameState;
+        this.deathAnimationTriggered = false;
         this.clearAnimation = {
             active: false,
             startTime: null,
@@ -151,7 +154,8 @@ export class AnimationSystem {
         if (
             this.gameState.gameOver &&
             !this.deathAnimation.active &&
-            !this.gameState.runtime.shouldStartDeathAnimation
+            !this.gameState.runtime.shouldStartDeathAnimation &&
+            !this.deathAnimationTriggered
         ) {
             // Add death marker with position adjustment for visibility
             const player = this.gameState.runtime.player;
@@ -164,16 +168,10 @@ export class AnimationSystem {
             // Start death animation
             this.startDeathAnimation(player);
 
-            // Start soul animation with callback to increment death count UI
-            this.startSoulAnimation(player, () => {
-                // Trigger UI update when soul reaches counter
-                // The death count was already incremented in GameRuleSystem
-                // This just ensures the visual counter updates
-                if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('soulReachedCounter');
-                    window.dispatchEvent(event);
-                }
-            });
+            // Set flag to prevent retriggering
+            this.deathAnimationTriggered = true;
+
+            // No soul animation - just death count is handled by GameRuleSystem
 
             return;
         }
@@ -236,14 +234,16 @@ export class AnimationSystem {
         this.soulAnimation.particles = [];
 
         // Get death counter position from DOM
-        const deathCountElement = document.getElementById('deathCount');
         let targetX = 750; // Default right side
         let targetY = 25; // Default top
 
-        if (deathCountElement) {
-            const rect = deathCountElement.getBoundingClientRect();
-            targetX = rect.left + rect.width / 2;
-            targetY = rect.top + rect.height / 2;
+        if (typeof document !== 'undefined' && document && document.getElementById) {
+            const deathCountElement = document.getElementById('deathCount');
+            if (deathCountElement) {
+                const rect = deathCountElement.getBoundingClientRect();
+                targetX = rect.left + rect.width / 2;
+                targetY = rect.top + rect.height / 2;
+            }
         }
 
         // Create soul particle with conditional onComplete
@@ -278,8 +278,8 @@ export class AnimationSystem {
             // Smooth easing movement to target (with null checks)
             const easeProgress = 1 - (1 - progress) ** 3; // ease-out cubic
             if (particle.targetX !== undefined && particle.targetY !== undefined) {
-                particle.x = particle.x + (particle.targetX - particle.x) * easeProgress * 0.1;
-                particle.y = particle.y + (particle.targetY - particle.y) * easeProgress * 0.1;
+                particle.x = particle.x + (particle.targetX - particle.x) * easeProgress;
+                particle.y = particle.y + (particle.targetY - particle.y) * easeProgress;
             }
 
             // Check if animation completed
@@ -339,6 +339,9 @@ export class AnimationSystem {
         this.soulAnimation.active = false;
         this.soulAnimation.startTime = null;
         this.soulAnimation.particles = [];
+
+        // Reset death animation trigger flag for new game
+        this.deathAnimationTriggered = false;
     }
 
     /**
