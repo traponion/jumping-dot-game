@@ -33,7 +33,8 @@ describe('GameManager timeLimit integration', () => {
             handleGameOverSelection: vi.fn(),
             getGameState: vi
                 .fn()
-                .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 })
+                .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 }),
+            getGameUI: vi.fn()
         };
         gameState = new GameState();
         gameManager = new GameManager(canvas, mockGameController, gameState);

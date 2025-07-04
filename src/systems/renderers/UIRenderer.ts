@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 
 export class UIRenderer {
     private uiShapes: fabric.Object[] = [];
@@ -20,11 +21,41 @@ export class UIRenderer {
         const screenCenterX = cameraX + canvasWidth / 2;
         const screenCenterY = cameraY + canvasHeight / 2;
 
-        // Game Over title with shadow for visibility
-        const gameOverText = new fabric.Text('GAME OVER', {
+        // Create game over title
+        const gameOverText = this.createGameOverTitle(screenCenterX, screenCenterY);
+        this.canvas.add(gameOverText);
+        this.uiShapes.push(gameOverText);
+
+        // Create score display
+        const scoreText = this.createScoreDisplay(screenCenterX, screenCenterY, finalScore);
+        if (scoreText) {
+            this.canvas.add(scoreText);
+            this.uiShapes.push(scoreText);
+        }
+
+        // Create menu options
+        const menuShapes = this.createMenuOptions(
+            options,
+            selectedIndex,
+            screenCenterX,
+            screenCenterY
+        );
+        for (const shape of menuShapes) {
+            this.canvas.add(shape);
+            this.uiShapes.push(shape);
+        }
+
+        // Create instructions
+        const instructionText = this.createInstructions(screenCenterX, cameraY, canvasHeight);
+        this.canvas.add(instructionText);
+        this.uiShapes.push(instructionText);
+    }
+
+    private createGameOverTitle(screenCenterX: number, screenCenterY: number): fabric.Text {
+        return new fabric.Text('GAME OVER', {
             left: screenCenterX,
             top: screenCenterY - 80,
-            fontSize: 32,
+            fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.TITLE_SIZE,
             fill: 'white',
             fontFamily: 'monospace',
             originX: 'center',
@@ -38,33 +69,43 @@ export class UIRenderer {
                 blur: 4
             })
         });
-        this.canvas.add(gameOverText);
-        this.uiShapes.push(gameOverText);
+    }
 
-        // Score display
-        if (finalScore > 0) {
-            const scoreText = new fabric.Text(`Score: ${finalScore}`, {
-                left: screenCenterX,
-                top: screenCenterY - 40,
-                fontSize: 20,
-                fill: 'white',
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false,
-                shadow: new fabric.Shadow({
-                    color: 'rgba(0,0,0,0.8)',
-                    offsetX: 1,
-                    offsetY: 1,
-                    blur: 2
-                })
-            });
-            this.canvas.add(scoreText);
-            this.uiShapes.push(scoreText);
+    private createScoreDisplay(
+        screenCenterX: number,
+        screenCenterY: number,
+        finalScore: number
+    ): fabric.Text | null {
+        if (finalScore <= 0) {
+            return null;
         }
 
-        // Menu options
+        return new fabric.Text(`Score: ${finalScore}`, {
+            left: screenCenterX,
+            top: screenCenterY - 40,
+            fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.SMALL_SIZE + 6, // 20px for score display
+            fill: 'white',
+            fontFamily: 'monospace',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+            shadow: new fabric.Shadow({
+                color: 'rgba(0,0,0,0.8)',
+                offsetX: 1,
+                offsetY: 1,
+                blur: 2
+            })
+        });
+    }
+
+    private createMenuOptions(
+        options: string[],
+        selectedIndex: number,
+        screenCenterX: number,
+        screenCenterY: number
+    ): fabric.Object[] {
+        const shapes: fabric.Object[] = [];
         const startY = screenCenterY;
         const itemHeight = 50;
 
@@ -83,15 +124,14 @@ export class UIRenderer {
                     selectable: false,
                     evented: false
                 });
-                this.canvas.add(selectionRect);
-                this.uiShapes.push(selectionRect);
+                shapes.push(selectionRect);
             }
 
             // Option text
             const optionText = new fabric.Text(option, {
                 left: screenCenterX,
                 top: y,
-                fontSize: 24,
+                fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.MENU_SIZE,
                 fill: isSelected ? 'black' : 'white',
                 fontFamily: 'monospace',
                 originX: 'center',
@@ -107,15 +147,21 @@ export class UIRenderer {
                           blur: 2
                       })
             });
-            this.canvas.add(optionText);
-            this.uiShapes.push(optionText);
+            shapes.push(optionText);
         });
 
-        // Instructions
-        const instructionText = new fabric.Text('↑↓ Navigate  ENTER/R/SPACE Select', {
+        return shapes;
+    }
+
+    private createInstructions(
+        screenCenterX: number,
+        cameraY: number,
+        canvasHeight: number
+    ): fabric.Text {
+        return new fabric.Text('↑↓ Navigate  ENTER/R/SPACE Select', {
             left: screenCenterX,
             top: cameraY + canvasHeight - 50,
-            fontSize: 16,
+            fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.INSTRUCTION_SIZE,
             fill: '#aaa',
             fontFamily: 'monospace',
             originX: 'center',
@@ -129,24 +175,16 @@ export class UIRenderer {
                 blur: 2
             })
         });
-        this.canvas.add(instructionText);
-        this.uiShapes.push(instructionText);
     }
 
     renderStartInstruction(): void {
-        // HTML要素で表示するため、Canvas描画は不要
-        const startScreen = document.getElementById('startScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        if (startScreen) startScreen.classList.remove('hidden');
-        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        // HTML DOM operations moved to GameUI.showStartScreen()
+        // Canvas rendering responsibility only - no action needed for start instruction
     }
 
     renderGameOver(): void {
-        // HTML要素で表示するため、Canvas描画は不要
-        const startScreen = document.getElementById('startScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        if (startScreen) startScreen.classList.add('hidden');
-        if (gameOverScreen) gameOverScreen.classList.remove('hidden');
+        // HTML DOM operations moved to GameUI.showGameOverScreen()
+        // Canvas rendering responsibility only - no action needed for game over screen
     }
 
     renderCredits(): void {

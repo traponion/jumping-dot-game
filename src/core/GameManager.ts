@@ -276,7 +276,7 @@ export class GameManager {
                 );
             }
         } else if (!this.gameState.gameRunning) {
-            renderer.renderStartInstruction();
+            ui?.showStartScreen();
         }
 
         renderer.renderCredits();

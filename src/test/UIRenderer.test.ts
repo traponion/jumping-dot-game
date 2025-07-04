@@ -175,18 +175,7 @@ describe('UIRenderer', () => {
     });
 
     describe('renderStartInstruction', () => {
-        it('should show start screen and hide game over screen', () => {
-            renderer.renderStartInstruction();
-
-            expect(document.getElementById).toHaveBeenCalledWith('startScreen');
-            expect(document.getElementById).toHaveBeenCalledWith('gameOverScreen');
-            expect(mockElement.classList.remove).toHaveBeenCalledWith('hidden');
-            expect(mockElement.classList.add).toHaveBeenCalledWith('hidden');
-        });
-
-        it('should handle missing DOM elements gracefully', () => {
-            vi.mocked(document.getElementById).mockReturnValue(null);
-
+        it('should execute without errors (DOM operations moved to GameUI)', () => {
             expect(() => {
                 renderer.renderStartInstruction();
             }).not.toThrow();
@@ -194,18 +183,7 @@ describe('UIRenderer', () => {
     });
 
     describe('renderGameOver', () => {
-        it('should hide start screen and show game over screen', () => {
-            renderer.renderGameOver();
-
-            expect(document.getElementById).toHaveBeenCalledWith('startScreen');
-            expect(document.getElementById).toHaveBeenCalledWith('gameOverScreen');
-            expect(mockElement.classList.add).toHaveBeenCalledWith('hidden');
-            expect(mockElement.classList.remove).toHaveBeenCalledWith('hidden');
-        });
-
-        it('should handle missing DOM elements gracefully', () => {
-            vi.mocked(document.getElementById).mockReturnValue(null);
-
+        it('should execute without errors (DOM operations moved to GameUI)', () => {
             expect(() => {
                 renderer.renderGameOver();
             }).not.toThrow();
@@ -247,6 +225,96 @@ describe('UIRenderer', () => {
             expect(() => {
                 renderer.cleanup();
             }).not.toThrow();
+        });
+    });
+
+    describe('helper methods for renderGameOverMenu', () => {
+        describe('createGameOverTitle', () => {
+            it('should create game over title with correct properties', () => {
+                (renderer as any).createGameOverTitle(400, 300);
+
+                expect(fabric.Text).toHaveBeenCalledWith(
+                    'GAME OVER',
+                    expect.objectContaining({
+                        left: 400,
+                        top: 220, // screenCenterY - 80
+                        fontSize: 32,
+                        fill: 'white',
+                        fontFamily: 'monospace',
+                        originX: 'center',
+                        originY: 'center',
+                        selectable: false,
+                        evented: false
+                    })
+                );
+            });
+        });
+
+        describe('createScoreDisplay', () => {
+            it('should create score display when score > 0', () => {
+                (renderer as any).createScoreDisplay(400, 300, 1500);
+
+                expect(fabric.Text).toHaveBeenCalledWith(
+                    'Score: 1500',
+                    expect.objectContaining({
+                        left: 400,
+                        top: 260, // screenCenterY - 40
+                        fontSize: 20,
+                        fill: 'white',
+                        fontFamily: 'monospace',
+                        originX: 'center',
+                        originY: 'center',
+                        selectable: false,
+                        evented: false
+                    })
+                );
+            });
+
+            it('should return null when score is 0', () => {
+                const score = (renderer as any).createScoreDisplay(400, 300, 0);
+                expect(score).toBeNull();
+            });
+        });
+
+        describe('createMenuOptions', () => {
+            it('should create menu options with selection highlighting', () => {
+                const options = ['Retry', 'Main Menu'];
+                const selectedIndex = 0;
+                const shapes = (renderer as any).createMenuOptions(
+                    options,
+                    selectedIndex,
+                    400,
+                    300
+                );
+
+                expect(Array.isArray(shapes)).toBe(true);
+                expect(fabric.Rect).toHaveBeenCalled(); // Selection rectangle
+                expect(fabric.Text).toHaveBeenCalledWith('Retry', expect.any(Object));
+                expect(fabric.Text).toHaveBeenCalledWith('Main Menu', expect.any(Object));
+            });
+        });
+
+        describe('createInstructions', () => {
+            it('should create instruction text at bottom of screen', () => {
+                const cameraY = -50;
+                const canvasHeight = 600;
+                (renderer as any).createInstructions(400, cameraY, canvasHeight);
+
+                expect(fabric.Text).toHaveBeenCalledWith(
+                    '↑↓ Navigate  ENTER/R/SPACE Select',
+                    expect.objectContaining({
+                        left: 400,
+                        top: 500, // cameraY + canvasHeight - 50
+                        fontSize: 16,
+                        fill: '#aaa',
+                        fontFamily: 'monospace',
+                        originX: 'center',
+                        originY: 'center',
+                        selectable: false,
+                        evented: false
+                    })
+                );
+            });
         });
     });
 });

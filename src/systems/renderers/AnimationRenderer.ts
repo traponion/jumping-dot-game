@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { Particle } from '../../types/GameTypes.js';
 import type { Position } from '../IRenderSystem.js';
 
@@ -29,7 +30,7 @@ export class AnimationRenderer {
     renderDeathAnimation(particles: Particle[]): void {
         for (const particle of particles) {
             // レガシーレンダラーに合わせてサイズ計算を修正
-            const radius = particle.size || 2;
+            const radius = particle.size || RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS;
             const particleShape = new fabric.Circle({
                 left: particle.x - radius,
                 top: particle.y - radius,
@@ -51,9 +52,9 @@ export class AnimationRenderer {
         // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
         for (const particle of particles) {
             const particleShape = new fabric.Circle({
-                left: particle.x - 2,
-                top: particle.y - 2,
-                radius: 2,
+                left: particle.x - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
+                top: particle.y - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
+                radius: RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
                 fill: `rgba(255, 255, 255, ${particle.life})`,
                 selectable: false,
                 evented: false
@@ -101,8 +102,8 @@ export class AnimationRenderer {
         for (let i = 0; i < this.landingPredictions.length; i++) {
             const prediction = this.landingPredictions[i];
             // Show trajectory marker closer to ground level
-            const trajectoryOffsetX = -30; // Further ahead for trajectory visualization
-            const trajectoryOffsetY = -20; // Show closer to ground level
+            const trajectoryOffsetX = RENDERING_CONSTANTS.ANIMATION.TRAJECTORY_OFFSET_X; // Further ahead for trajectory visualization
+            const trajectoryOffsetY = RENDERING_CONSTANTS.ANIMATION.TRAJECTORY_OFFSET_Y; // Show closer to ground level
             const targetX = prediction.x + trajectoryOffsetX;
             const targetY = prediction.y + trajectoryOffsetY;
 
@@ -161,7 +162,12 @@ export class AnimationRenderer {
             const opacity = Math.max(0, 1 - age / this.HISTORY_FADE_TIME);
 
             const historyLine = new fabric.Line(
-                [landing.x - 10, landing.y, landing.x + 10, landing.y],
+                [
+                    landing.x - RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
+                    landing.y,
+                    landing.x + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
+                    landing.y
+                ],
                 {
                     stroke: `rgba(0, 255, 0, ${opacity})`,
                     strokeWidth: 1,
@@ -178,19 +184,35 @@ export class AnimationRenderer {
         const y = position.y;
 
         // 十字線を描画
-        const horizontalLine = new fabric.Line([x - 10, y, x + 10, y], {
-            stroke: 'rgba(255, 255, 255, 0.8)',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
+        const horizontalLine = new fabric.Line(
+            [
+                x - RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
+                y,
+                x + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
+                y
+            ],
+            {
+                stroke: 'rgba(255, 255, 255, 0.8)',
+                strokeWidth: 2,
+                selectable: false,
+                evented: false
+            }
+        );
 
-        const verticalLine = new fabric.Line([x, y - 10, x, y + 10], {
-            stroke: 'rgba(255, 255, 255, 0.8)',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
+        const verticalLine = new fabric.Line(
+            [
+                x,
+                y - RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
+                x,
+                y + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE
+            ],
+            {
+                stroke: 'rgba(255, 255, 255, 0.8)',
+                strokeWidth: 2,
+                selectable: false,
+                evented: false
+            }
+        );
 
         this.canvas.add(horizontalLine);
         this.canvas.add(verticalLine);

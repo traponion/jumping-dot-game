@@ -75,3 +75,45 @@ export const GAME_CONFIG = {
         deathAnimationDuration: 1000
     }
 } as const;
+
+/**
+ * Rendering constants for UI and visual elements
+ * @constant {Object} RENDERING_CONSTANTS
+ * @property {number} MAX_TRAIL_POINTS - Maximum number of trail points to render
+ * @property {number} TARGET_FRAME_TIME - Target frame time in milliseconds for smooth animation
+ * @property {Object} TYPOGRAPHY - Font size constants for UI text elements
+ * @property {number} TYPOGRAPHY.TITLE_SIZE - Font size for main titles (game over, etc.)
+ * @property {number} TYPOGRAPHY.MENU_SIZE - Font size for menu options
+ * @property {number} TYPOGRAPHY.INSTRUCTION_SIZE - Font size for instruction text
+ * @property {number} TYPOGRAPHY.SMALL_SIZE - Font size for small text elements
+ * @property {Object} ANIMATION - Animation-specific rendering constants
+ * @property {number} ANIMATION.TRAJECTORY_OFFSET_X - X offset for trajectory prediction rendering
+ * @property {number} ANIMATION.TRAJECTORY_OFFSET_Y - Y offset for trajectory prediction rendering
+ * @property {number} ANIMATION.CROSSHAIR_SIZE - Size of crosshair elements in pixels
+ * @property {number} ANIMATION.PARTICLE_RADIUS - Radius of particle effects in pixels
+ * @example
+ * // Use typography constants for consistent UI text
+ * const titleText = new fabric.Text('GAME OVER', {
+ *   fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.TITLE_SIZE
+ * });
+ *
+ * // Apply animation constants for trajectory rendering
+ * const trajectoryX = playerX + RENDERING_CONSTANTS.ANIMATION.TRAJECTORY_OFFSET_X;
+ * const trajectoryY = playerY + RENDERING_CONSTANTS.ANIMATION.TRAJECTORY_OFFSET_Y;
+ */
+export const RENDERING_CONSTANTS = {
+    MAX_TRAIL_POINTS: 50,
+    TARGET_FRAME_TIME: 16.67,
+    TYPOGRAPHY: {
+        TITLE_SIZE: 32,
+        MENU_SIZE: 24,
+        INSTRUCTION_SIZE: 16,
+        SMALL_SIZE: 14
+    },
+    ANIMATION: {
+        TRAJECTORY_OFFSET_X: -30,
+        TRAJECTORY_OFFSET_Y: -20,
+        CROSSHAIR_SIZE: 10,
+        PARTICLE_RADIUS: 2
+    }
+} as const;

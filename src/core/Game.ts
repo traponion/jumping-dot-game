@@ -137,6 +137,10 @@ export class JumpingDotGame {
         return this.gameState;
     }
 
+    getGameUI(): GameUI {
+        return this.gameUI;
+    }
+
     public handleGameOverNavigation(direction: 'up' | 'down'): void {
         this.gameUI.handleGameOverNavigation(direction);
     }

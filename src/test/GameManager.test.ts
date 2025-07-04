@@ -42,7 +42,8 @@ describe('GameManager', () => {
                 returnToStageSelect: vi.fn(),
                 handleGameOverNavigation: vi.fn(),
                 handleGameOverSelection: vi.fn(),
-                getGameState: vi.fn().mockReturnValue(gameState)
+                getGameState: vi.fn().mockReturnValue(gameState),
+                getGameUI: vi.fn()
             },
             gameState
         );

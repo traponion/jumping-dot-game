@@ -25,6 +25,9 @@ export interface GameController {
     handleGameOverSelection(): void;
     /** Get current game state information */
     getGameState(): import('../stores/GameState.js').GameState;
+
+    /** Get GameUI instance for DOM operations */
+    getGameUI(): import('../core/GameUI.js').GameUI;
 }
 
 /**
