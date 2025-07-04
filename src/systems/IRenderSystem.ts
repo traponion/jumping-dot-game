@@ -128,6 +128,12 @@ export interface IRenderSystem {
     renderDeathAnimation(particles: Particle[]): void;
 
     /**
+     * Render soul animation flying to death counter
+     * @param particles Array of soul particle objects
+     */
+    renderSoulAnimation(particles: Particle[]): void;
+
+    /**
      * Render stage clear animation
      * @param particles Array of particle objects
      * @param progress Animation progress (0-1)

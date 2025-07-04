@@ -202,6 +202,7 @@ export class GameManager {
         if (!this.gameState.gameRunning || this.gameState.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
+            this.animationSystem.updateSoulAnimation();
             return;
         }
 
@@ -225,6 +226,7 @@ export class GameManager {
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
+        this.animationSystem.updateSoulAnimation();
     }
 
     /**
@@ -253,6 +255,11 @@ export class GameManager {
         const deathAnim = this.animationSystem.getDeathAnimation();
         if (deathAnim.active) {
             renderer.renderDeathAnimation(deathAnim.particles);
+        }
+
+        const soulAnim = this.animationSystem.getSoulAnimation();
+        if (soulAnim.active) {
+            renderer.renderSoulAnimation(soulAnim.particles);
         }
 
         const clearAnim = this.animationSystem.getClearAnimation();

@@ -118,6 +118,10 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock death animation rendering
     }
 
+    renderSoulAnimation(_particles: Particle[]): void {
+        // Mock soul animation rendering
+    }
+
     renderClearAnimation(
         _particles: Particle[],
         _progress: number,

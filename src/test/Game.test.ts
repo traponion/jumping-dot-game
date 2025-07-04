@@ -65,6 +65,7 @@ class MockRenderSystem implements IRenderSystem {
     renderCredits = vi.fn();
 
     renderDeathAnimation = vi.fn();
+    renderSoulAnimation = vi.fn();
     renderClearAnimation = vi.fn();
 
     renderLandingPredictions = vi.fn();

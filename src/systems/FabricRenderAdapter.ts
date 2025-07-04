@@ -94,6 +94,10 @@ export class FabricRenderAdapter implements IRenderSystem {
         this.fabricRenderSystem.renderDeathAnimation(particles);
     }
 
+    renderSoulAnimation(particles: Particle[]): void {
+        this.fabricRenderSystem.renderSoulAnimation(particles);
+    }
+
     renderClearAnimation(
         particles: Particle[],
         progress: number,

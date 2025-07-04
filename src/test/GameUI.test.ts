@@ -7,7 +7,9 @@ const mockElements = {
     gameStatus: { textContent: '', style: { display: 'block' } },
     timer: { textContent: 'Time: 20' },
     score: { textContent: 'Score: 0' },
-    deathCount: { textContent: 'Deaths: 0' }
+    deathCount: { textContent: 'Deaths: 0', parentElement: { style: { display: 'block' } } },
+    startScreen: { textContent: '', classList: { add: vi.fn(), remove: vi.fn() } },
+    gameOverScreen: { textContent: '', classList: { add: vi.fn(), remove: vi.fn() } }
 };
 
 Object.defineProperty(global, 'document', {
@@ -97,6 +99,50 @@ describe('GameUI', () => {
             expect(document.getElementById).toHaveBeenCalledWith('timer');
             expect(document.getElementById).toHaveBeenCalledWith('score');
             expect(document.getElementById).toHaveBeenCalledWith('deathCount');
+        });
+    });
+
+    describe('death count visibility control', () => {
+        it('should show death count only during gameplay', () => {
+            // Action: Set game running state
+            gameUI.updateUIVisibility(true, false);
+
+            // Assert: Death count should be visible during gameplay
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('block');
+        });
+
+        it('should hide death count on title screen', () => {
+            // Action: Set not running state (title screen)
+            gameUI.updateUIVisibility(false, false);
+
+            // Assert: Death count should be hidden on title screen
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('none');
+        });
+
+        it('should show death count on game over screen', () => {
+            // Action: Set game over state
+            gameUI.updateUIVisibility(false, true);
+
+            // Assert: Death count should be visible on game over screen
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('block');
+        });
+
+        it('should handle multiple visibility state changes', () => {
+            // Initial: Hide on title screen
+            gameUI.updateUIVisibility(false, false);
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('none');
+
+            // Show during gameplay
+            gameUI.updateUIVisibility(true, false);
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('block');
+
+            // Show on game over
+            gameUI.updateUIVisibility(false, true);
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('block');
+
+            // Hide again on title screen
+            gameUI.updateUIVisibility(false, false);
+            expect(mockElements.deathCount.parentElement?.style.display).toBe('none');
         });
     });
 });

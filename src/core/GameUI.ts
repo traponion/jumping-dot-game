@@ -27,6 +27,13 @@ export class GameUI {
         this.timerDisplay = this.getRequiredElement('timer');
         this.scoreDisplay = this.getRequiredElement('score');
         this.deathDisplay = this.getRequiredElement('deathCount');
+
+        // Listen for soul animation completion to update death count display
+        if (typeof window !== 'undefined') {
+            window.addEventListener('soulReachedCounter', () => {
+                this.updateDeathCount();
+            });
+        }
     }
 
     private getRequiredElement(id: string): HTMLElement {
@@ -146,11 +153,20 @@ export class GameUI {
     updateUIVisibility(gameRunning: boolean, gameOver: boolean): void {
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const deathInfo = this.deathDisplay.parentElement;
 
         if (gameRunning && !gameOver) {
             // Hide UI elements during gameplay
             if (startScreen) startScreen.classList.add('hidden');
             if (gameOverScreen) gameOverScreen.classList.add('hidden');
+            // Show death count during gameplay
+            if (deathInfo) deathInfo.style.display = 'block';
+        } else if (gameOver) {
+            // Show death count on game over screen
+            if (deathInfo) deathInfo.style.display = 'block';
+        } else {
+            // Hide death count on title screen
+            if (deathInfo) deathInfo.style.display = 'none';
         }
         // Other states are handled by the render system
     }
