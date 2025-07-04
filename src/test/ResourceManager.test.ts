@@ -118,16 +118,11 @@ describe('ResourceManager', () => {
         });
 
         it('should handle disposal errors gracefully', async () => {
-            const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
             mockCanvas.dispose = vi.fn().mockRejectedValue(new Error('Disposal failed'));
 
+            // Should not throw errors even when disposal fails
             await expect(resourceManager.cleanup()).resolves.not.toThrow();
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                '⚠️ Canvas cleanup error (already disposed?):',
-                expect.any(Error)
-            );
-
-            consoleLogSpy.mockRestore();
+            expect(mockCanvas.dispose).toHaveBeenCalledOnce();
         });
 
         it('should handle null canvas gracefully', async () => {

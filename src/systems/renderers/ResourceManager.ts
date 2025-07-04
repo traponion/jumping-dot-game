@@ -50,8 +50,9 @@ export class ResourceManager {
                         }
                     )._fabric = undefined;
                 }
-            } catch (error) {
-                console.log('⚠️ Canvas cleanup error (already disposed?):', error);
+            } catch (_error) {
+                // Silent fail - this error is expected in normal cleanup scenarios
+                // Canvas may already be disposed by the time cleanup is called
             }
             this.canvas = null as unknown as fabric.Canvas;
         }

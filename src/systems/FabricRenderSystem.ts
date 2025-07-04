@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { RENDERING_CONSTANTS } from '../constants/GameConstants';
 import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
@@ -108,7 +109,7 @@ export class FabricRenderSystem implements IRenderSystem {
         this.trailShapes = [];
 
         // トレイルポイント数を制限（元の設定に戻す）
-        const maxTrailPoints = Math.min(trail.length, 50);
+        const maxTrailPoints = Math.min(trail.length, RENDERING_CONSTANTS.MAX_TRAIL_POINTS);
 
         for (let i = 0; i < maxTrailPoints; i++) {
             const point = trail[trail.length - 1 - i]; // 最新から

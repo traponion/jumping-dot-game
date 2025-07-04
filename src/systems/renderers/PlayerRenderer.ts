@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { Player, TrailPoint } from '../../types/GameTypes';
 
 /**
@@ -45,8 +46,8 @@ export class PlayerRenderer {
         }
         this.trailShapes = [];
 
-        // Limit trail points to maximum of 50
-        const maxTrailPoints = Math.min(trail.length, 50);
+        // Limit trail points to maximum of RENDERING_CONSTANTS.MAX_TRAIL_POINTS
+        const maxTrailPoints = Math.min(trail.length, RENDERING_CONSTANTS.MAX_TRAIL_POINTS);
 
         for (let i = 0; i < maxTrailPoints; i++) {
             const point = trail[trail.length - 1 - i]; // Latest first
