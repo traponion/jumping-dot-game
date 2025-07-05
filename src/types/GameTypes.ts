@@ -120,19 +120,6 @@ export interface GameState {
 }
 
 /**
- * Trail point interface for tracking player movement history
- * @interface TrailPoint
- * @property {number} x - Trail point X coordinate
- * @property {number} y - Trail point Y coordinate
- * @property {number} timestamp - Creation timestamp for aging
- */
-export interface TrailPoint {
-    x: number;
-    y: number;
-    timestamp: number;
-}
-
-/**
  * Physics constants configuration interface
  * @interface PhysicsConstants
  * @property {number} gravity - Gravity acceleration value

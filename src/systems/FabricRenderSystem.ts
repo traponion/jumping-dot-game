@@ -1,6 +1,6 @@
 import * as fabric from 'fabric';
 import type { StageData } from '../core/StageLoader.js';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
 import { AnimationRenderer } from './renderers/AnimationRenderer.js';
 import { PlayerRenderer } from './renderers/PlayerRenderer.js';
@@ -84,10 +84,6 @@ export class FabricRenderSystem implements IRenderSystem {
 
     renderPlayer(player: Player): void {
         this.playerRenderer.renderPlayer(player);
-    }
-
-    renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        this.playerRenderer.renderTrail(trail, playerRadius);
     }
 
     renderStage(stage: StageData): void {

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Player system for managing player movement, input processing, and trail management
+ * @fileoverview Player system for managing player movement and input processing
  * @module systems/PlayerSystem
  * @description Domain Layer - Pure player logic and physics management using Zustand store
  */
@@ -7,15 +7,15 @@
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { Platform } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
-import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
 import type { LandingPrediction } from './FabricRenderSystem.js';
 import type { InputManager } from './InputManager.js';
 
 /**
- * Player system responsible for handling player movement, input processing, auto-jump mechanics, and trail management
+ * Player system responsible for handling player movement, input processing, and auto-jump mechanics
  * @class PlayerSystem
- * @description Manages all player-related logic including movement, auto-jumping, and trail tracking through Zustand store
+ * @description Manages all player-related logic including movement and auto-jumping through Zustand store
  */
 export class PlayerSystem {
     /** @private {InputManager | null} Input manager instance for handling user input */
@@ -76,7 +76,6 @@ export class PlayerSystem {
 
         this.handleInput(dtFactor);
         this.handleAutoJump(physics);
-        this.updateTrail();
 
         this.updateLandingPredictions();
     }
@@ -252,45 +251,6 @@ export class PlayerSystem {
 
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        this.gameState.runtime.trail.length = 0;
-    }
-
-    /**
-     * Updates the player trail by adding current position
-     * @private
-     * @returns {void}
-     */
-    private updateTrail(): void {
-        const player = this.gameState.runtime.player;
-        const currentTime = getCurrentTime();
-
-        // Add current position to trail
-        this.gameState.runtime.trail.push({
-            x: player.x,
-            y: player.y,
-            timestamp: currentTime
-        });
-
-        // Limit trail length
-        if (this.gameState.runtime.trail.length > GAME_CONFIG.player.maxTrailLength) {
-            this.gameState.runtime.trail.shift();
-        }
-    }
-
-    /**
-     * Gets the current player trail
-     * @returns {TrailPoint[]} Array of trail points
-     */
-    getTrail(): TrailPoint[] {
-        return this.gameState.runtime.trail;
-    }
-
-    /**
-     * Clears the player trail
-     * @returns {void}
-     */
-    clearTrail(): void {
-        this.gameState.runtime.trail.length = 0;
     }
 
     /**

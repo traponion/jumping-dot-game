@@ -37,7 +37,6 @@ export const DEFAULT_PHYSICS_CONSTANTS = {
  * @property {number} canvas.defaultHeight - Default canvas height in pixels
  * @property {Object} player - Player entity configuration
  * @property {number} player.defaultRadius - Default player collision radius in pixels
- * @property {number} player.maxTrailLength - Maximum number of trail points to maintain
  * @property {number} player.acceleration - Player acceleration rate (pixels/frame²)
  * @property {number} player.minVelocity - Minimum velocity threshold for movement detection
  * @property {Object} animation - Animation and visual effect settings
@@ -65,7 +64,6 @@ export const GAME_CONFIG = {
     },
     player: {
         defaultRadius: 3,
-        maxTrailLength: 8,
         acceleration: 0.5,
         minVelocity: 0.2
     },
@@ -79,7 +77,6 @@ export const GAME_CONFIG = {
 /**
  * Rendering constants for UI and visual elements
  * @constant {Object} RENDERING_CONSTANTS
- * @property {number} MAX_TRAIL_POINTS - Maximum number of trail points to render
  * @property {number} TARGET_FRAME_TIME - Target frame time in milliseconds for smooth animation
  * @property {Object} TYPOGRAPHY - Font size constants for UI text elements
  * @property {number} TYPOGRAPHY.TITLE_SIZE - Font size for main titles (game over, etc.)
@@ -102,7 +99,6 @@ export const GAME_CONFIG = {
  * const trajectoryY = playerY + RENDERING_CONSTANTS.ANIMATION.TRAJECTORY_OFFSET_Y;
  */
 export const RENDERING_CONSTANTS = {
-    MAX_TRAIL_POINTS: 50,
     TARGET_FRAME_TIME: 16.67,
     TYPOGRAPHY: {
         TITLE_SIZE: 32,

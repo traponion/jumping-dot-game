@@ -1,14 +1,13 @@
 import * as fabric from 'fabric';
-import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
-import type { Player, TrailPoint } from '../../types/GameTypes';
+
+import type { Player } from '../../types/GameTypes';
 
 /**
- * PlayerRenderer - Handles player and trail rendering
+ * PlayerRenderer - Handles player rendering
  * Extracted from FabricRenderSystem for single responsibility
  */
 export class PlayerRenderer {
     private playerShape: fabric.Circle | null = null;
-    private trailShapes: fabric.Circle[] = [];
 
     constructor(private canvas: fabric.Canvas) {}
 
@@ -37,38 +36,6 @@ export class PlayerRenderer {
     }
 
     /**
-     * Render player trail with fading effect
-     */
-    renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        // Clear existing trail shapes
-        for (const shape of this.trailShapes) {
-            this.canvas.remove(shape);
-        }
-        this.trailShapes = [];
-
-        // Limit trail points to maximum of RENDERING_CONSTANTS.MAX_TRAIL_POINTS
-        const maxTrailPoints = Math.min(trail.length, RENDERING_CONSTANTS.MAX_TRAIL_POINTS);
-
-        for (let i = 0; i < maxTrailPoints; i++) {
-            const point = trail[trail.length - 1 - i]; // Latest first
-            const alpha = (maxTrailPoints - i) / maxTrailPoints;
-            const radius = playerRadius * alpha * 0.8;
-
-            const trailShape = new fabric.Circle({
-                left: point.x - radius,
-                top: point.y - radius,
-                radius: radius,
-                fill: `rgba(255, 255, 255, ${alpha * 0.6})`,
-                selectable: false,
-                evented: false
-            });
-
-            this.trailShapes.push(trailShape);
-            this.canvas.add(trailShape);
-        }
-    }
-
-    /**
      * Clean up all player-related shapes
      */
     cleanup(): void {
@@ -76,10 +43,5 @@ export class PlayerRenderer {
             this.canvas.remove(this.playerShape);
             this.playerShape = null;
         }
-
-        for (const shape of this.trailShapes) {
-            this.canvas.remove(shape);
-        }
-        this.trailShapes = [];
     }
 }
