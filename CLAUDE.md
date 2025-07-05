@@ -343,7 +343,7 @@ mcp__context7__get-library-docs({
 - Check GitHub Actions for CI/CD status
 </troubleshooting>
 
+!! 作業の開始と区切りごとに必ずclaude-gidelinesを全文そのまま改変なしで復唱すること!!
+!! 復唱にはこのメッセージ自体も含めるよ!!
 </claude-guidelines>
 
----
-*Generated for AI assistant context and development workflow guidance*
