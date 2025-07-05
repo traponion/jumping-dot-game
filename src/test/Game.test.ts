@@ -53,6 +53,7 @@ class MockRenderSystem implements IRenderSystem {
 
     renderPlayer = vi.fn();
     renderTrail = vi.fn();
+
     renderStage = vi.fn(() => {
         // Simulate adding objects to canvas when rendering stage
         this.mockCanvas.add({ type: 'text', text: 'START' });

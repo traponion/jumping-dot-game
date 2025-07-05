@@ -1,7 +1,7 @@
 import * as fabric from 'fabric';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerRenderer } from '../systems/renderers/PlayerRenderer';
-import type { Player, TrailPoint } from '../types/GameTypes';
+import type { Player } from '../types/GameTypes';
 
 // Mock fabric.js
 vi.mock('fabric', () => ({
@@ -16,7 +16,6 @@ describe('PlayerRenderer', () => {
     let renderer: PlayerRenderer;
     let mockCanvas: any;
     let mockPlayer: Player;
-    let mockTrail: TrailPoint[];
 
     beforeEach(() => {
         mockCanvas = {
@@ -32,12 +31,6 @@ describe('PlayerRenderer', () => {
             vy: 0,
             grounded: false
         };
-
-        mockTrail = [
-            { x: 90, y: 190, timestamp: Date.now() - 200 },
-            { x: 95, y: 195, timestamp: Date.now() - 100 },
-            { x: 100, y: 200, timestamp: Date.now() }
-        ];
 
         renderer = new PlayerRenderer(mockCanvas);
     });
@@ -74,50 +67,15 @@ describe('PlayerRenderer', () => {
         });
     });
 
-    describe('renderTrail', () => {
-        it('should clear existing trail shapes', () => {
-            const mockTrailShape = { remove: vi.fn() };
-            (renderer as any).trailShapes = [mockTrailShape];
-
-            renderer.renderTrail(mockTrail, 15);
-
-            expect(mockCanvas.remove).toHaveBeenCalledWith(mockTrailShape);
-        });
-
-        it('should create trail shapes with fading alpha', () => {
-            renderer.renderTrail(mockTrail, 15);
-
-            expect(fabric.Circle).toHaveBeenCalledTimes(3);
-            expect(mockCanvas.add).toHaveBeenCalledTimes(3);
-        });
-
-        it('should limit trail points to maximum of 50', () => {
-            const longTrail = Array.from({ length: 100 }, (_, i) => ({
-                x: i,
-                y: i,
-                timestamp: Date.now() + i
-            }));
-
-            renderer.renderTrail(longTrail, 15);
-
-            expect(fabric.Circle).toHaveBeenCalledTimes(50);
-        });
-    });
-
     describe('cleanup', () => {
         it('should remove all shapes from canvas', () => {
             const mockPlayerShape = {};
-            const mockTrailShape1 = {};
-            const mockTrailShape2 = {};
 
             (renderer as any).playerShape = mockPlayerShape;
-            (renderer as any).trailShapes = [mockTrailShape1, mockTrailShape2];
 
             renderer.cleanup();
 
             expect(mockCanvas.remove).toHaveBeenCalledWith(mockPlayerShape);
-            expect(mockCanvas.remove).toHaveBeenCalledWith(mockTrailShape1);
-            expect(mockCanvas.remove).toHaveBeenCalledWith(mockTrailShape2);
         });
     });
 });

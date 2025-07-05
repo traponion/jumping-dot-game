@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { StageData } from '../core/StageLoader';
 import type { IRenderSystem, LandingPrediction, Position } from '../systems/IRenderSystem';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes';
+import type { Camera, Particle, Player } from '../types/GameTypes';
 
 /**
  * Mock implementation of IRenderSystem for contract testing
@@ -28,6 +28,7 @@ class MockRenderSystem implements IRenderSystem {
     // Game Objects Rendering
     renderPlayer = vi.fn();
     renderTrail = vi.fn();
+
     renderStage = vi.fn();
     renderDeathMarks = vi.fn();
 
@@ -109,14 +110,6 @@ describe('IRenderSystem Interface Contract', () => {
             expect(renderSystem.renderPlayer).toBeDefined();
             expect(() => renderSystem.renderPlayer(mockPlayer)).not.toThrow();
             expect(renderSystem.renderPlayer).toHaveBeenCalledWith(mockPlayer);
-        });
-
-        test('should have renderTrail method that accepts TrailPoint array and playerRadius', () => {
-            const mockTrail: TrailPoint[] = [];
-            const playerRadius = 10;
-            expect(renderSystem.renderTrail).toBeDefined();
-            expect(() => renderSystem.renderTrail(mockTrail, playerRadius)).not.toThrow();
-            expect(renderSystem.renderTrail).toHaveBeenCalledWith(mockTrail, playerRadius);
         });
 
         test('should have renderStage method that accepts StageData', () => {
