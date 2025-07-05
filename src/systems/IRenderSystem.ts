@@ -5,7 +5,7 @@
  */
 
 import type { StageData } from '../core/StageLoader.js';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../types/GameTypes.js';
 
 /**
  * Landing prediction interface (FabricRenderSystem compatible)
@@ -73,13 +73,6 @@ export interface IRenderSystem {
      * @param player Player object to render
      */
     renderPlayer(player: Player): void;
-
-    /**
-     * Render the player's trail
-     * @param trail Array of trail points to render
-     * @param playerRadius Player radius for trail scaling
-     */
-    renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
     /**
      * Render complete stage (platforms, goal, spikes, texts)

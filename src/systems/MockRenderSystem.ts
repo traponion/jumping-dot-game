@@ -2,7 +2,7 @@
 // Based on Fabric.js official testing patterns
 
 import type { StageData } from '../core/StageLoader.js';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../types/GameTypes.js';
 import type { IRenderSystem, LandingPrediction, Position } from './IRenderSystem.js';
 
 export interface MockFabricCanvas {
@@ -79,10 +79,6 @@ export class MockRenderSystem implements IRenderSystem {
 
     renderPlayer(_player: Player): void {
         // Mock player rendering
-    }
-
-    renderTrail(_trail: TrailPoint[], _playerRadius: number): void {
-        // Mock trail rendering
     }
 
     renderStage(_stage: StageData): void {

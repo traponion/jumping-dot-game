@@ -247,7 +247,7 @@ export class GameManager {
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             const player = this.gameState.runtime.player;
-            renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
+
             renderer.renderLandingPredictions();
             renderer.renderPlayer(player);
         }

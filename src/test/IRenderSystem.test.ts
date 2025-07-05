@@ -27,7 +27,6 @@ class MockRenderSystem implements IRenderSystem {
 
     // Game Objects Rendering
     renderPlayer = vi.fn();
-    renderTrail = vi.fn();
 
     renderStage = vi.fn();
     renderDeathMarks = vi.fn();

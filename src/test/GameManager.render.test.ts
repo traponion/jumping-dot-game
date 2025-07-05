@@ -89,7 +89,6 @@ describe('GameManager render with GameUI integration', () => {
             applyCameraTransform: vi.fn(),
             renderStage: vi.fn(),
             renderDeathMarks: vi.fn(),
-            renderTrail: vi.fn(),
 
             renderLandingPredictions: vi.fn(),
             renderPlayer: vi.fn(),

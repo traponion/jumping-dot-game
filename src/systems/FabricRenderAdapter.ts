@@ -5,7 +5,7 @@
  */
 
 import type { StageData } from '../core/StageLoader.js';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../types/GameTypes.js';
 import { FabricRenderSystem } from './FabricRenderSystem.js';
 import type { IRenderSystem, LandingPrediction, Position } from './IRenderSystem.js';
 
@@ -55,10 +55,6 @@ export class FabricRenderAdapter implements IRenderSystem {
 
     renderPlayer(player: Player): void {
         this.fabricRenderSystem.renderPlayer(player);
-    }
-
-    renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        this.fabricRenderSystem.renderTrail(trail, playerRadius);
     }
 
     renderStage(stage: StageData): void {
