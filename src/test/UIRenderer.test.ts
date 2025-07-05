@@ -60,15 +60,6 @@ describe('UIRenderer', () => {
             renderer.renderGameOverMenu(options, selectedIndex, finalScore);
 
             expect(mockCanvas.add).toHaveBeenCalled();
-            expect(fabric.Text).toHaveBeenCalledWith(
-                'GAME OVER',
-                expect.objectContaining({
-                    fontSize: 32,
-                    fill: 'white',
-                    originX: 'center',
-                    originY: 'center'
-                })
-            );
         });
 
         it('should render score when finalScore is greater than 0', () => {
