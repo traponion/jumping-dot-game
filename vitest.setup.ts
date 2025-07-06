@@ -1,5 +1,7 @@
 // Vitest setup file for Fabric.js testing (based on official pattern)
-import { beforeAll, beforeEach } from 'vitest';
+import { beforeAll, beforeEach, vi } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 
 // Environment detection utility
 export function isJSDOM(): boolean {
@@ -116,6 +118,42 @@ beforeAll(() => {
       window.document = document;
     }
   }
+
+  // Mock fetch for stage data loading in test environment
+  // Always mock fetch in vitest environment
+    const stage1Data = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage1.json'), 'utf-8'));
+    const stage2Data = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage2.json'), 'utf-8'));
+    
+    globalThis.fetch = vi.fn((url: string) => {
+      const urlStr = url.toString();
+      
+      // Handle stage data requests - support various URL patterns
+      if (urlStr.includes('stage1.json') || urlStr.includes('/stages/stage1.json') || urlStr.endsWith('stages/stage1.json')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          json: () => Promise.resolve(stage1Data)
+        } as Response);
+      }
+      
+      if (urlStr.includes('stage2.json') || urlStr.includes('/stages/stage2.json') || urlStr.endsWith('stages/stage2.json')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          json: () => Promise.resolve(stage2Data)
+        } as Response);
+      }
+      
+      // Default: return 404 for other requests
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.reject(new Error('Not Found'))
+      } as Response);
+    }) as any;
 });
 
 // DOM element creation is handled by individual test files for consistency
