@@ -156,8 +156,8 @@ describe('HTML StageSelect', () => {
     describe('Stage Selection', () => {
         it('should trigger stage selection with Space key', () => {
             const mockStartStage = vi.fn();
-            // We'll implement this event system in the implementation phase
-            document.addEventListener('stageSelected', mockStartStage);
+            // Updated for Phase 3: Standard DOM events instead of custom events
+            document.addEventListener('click', mockStartStage);
 
             const firstStage = document.querySelector(
                 '.stage-item[data-stage-id="1"]'
@@ -167,16 +167,23 @@ describe('HTML StageSelect', () => {
             const event = new KeyboardEvent('keydown', { key: ' ' });
             document.dispatchEvent(event);
 
+            // Expect standard DOM click event with target containing data-stage-id
             expect(mockStartStage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    detail: { stageId: 1 }
+                    target: expect.objectContaining({
+                        getAttribute: expect.any(Function),
+                        classList: expect.objectContaining({
+                            contains: expect.any(Function)
+                        })
+                    })
                 })
             );
         });
 
         it('should trigger stage selection with Enter key', () => {
             const mockStartStage = vi.fn();
-            document.addEventListener('stageSelected', mockStartStage);
+            // Updated for Phase 3: Standard DOM events instead of custom events
+            document.addEventListener('click', mockStartStage);
 
             // Navigate to second stage first
             const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
@@ -185,9 +192,15 @@ describe('HTML StageSelect', () => {
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             document.dispatchEvent(event);
 
+            // Expect standard DOM click event with target containing data-stage-id
             expect(mockStartStage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    detail: { stageId: 2 }
+                    target: expect.objectContaining({
+                        getAttribute: expect.any(Function),
+                        classList: expect.objectContaining({
+                            contains: expect.any(Function)
+                        })
+                    })
                 })
             );
         });

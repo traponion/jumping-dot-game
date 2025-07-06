@@ -137,12 +137,15 @@ export class HtmlStageSelect {
     /**
      * Start selected stage and initialize game
      */
-    private async startStage(stageId: number): Promise<void> {
-        // Dispatch custom event for stage selection
-        const event = new CustomEvent('stageSelected', {
-            detail: { stageId }
-        });
-        document.dispatchEvent(event);
+    private async startStage(_stageId: number): Promise<void> {
+        // Updated for Phase 3: Use standard DOM click event instead of custom event
+        // Simulate click on the current stage element to trigger main.ts event handler
+        const currentStageElement = this.stageElements[this.selectedStageIndex];
+        if (currentStageElement) {
+            // Use the simple click() method to trigger the event
+            // This works reliably in both browser and test environments
+            currentStageElement.click();
+        }
 
         this.hideStageSelect();
         this.showGameElements();
