@@ -137,10 +137,7 @@ describe('JumpingDotGame', () => {
         globalThis.cancelAnimationFrame = vi.fn();
         global.cancelAnimationFrame = vi.fn();
 
-        global.fetch = vi.fn().mockResolvedValue({
-            ok: false,
-            status: 404
-        });
+        // Use the global fetch mock from vitest.setup.ts instead of overriding with 404
 
         global.performance = {
             now: vi.fn(() => Date.now())
@@ -219,8 +216,8 @@ describe('JumpingDotGame', () => {
                     platforms: [],
                     spikes: [],
                     goal: { x: 700, y: 400, width: 50, height: 50 },
-                    holes: [],
-                    text: []
+                    startText: { x: 50, y: 450, text: 'START' },
+                    goalText: { x: 720, y: 380, text: 'GOAL' }
                 })
             });
 
@@ -291,8 +288,8 @@ describe('JumpingDotGame', () => {
                     platforms: [],
                     spikes: [],
                     goal: { x: 700, y: 400, width: 50, height: 50 },
-                    holes: [],
-                    text: []
+                    startText: { x: 50, y: 450, text: 'START' },
+                    goalText: { x: 720, y: 380, text: 'GOAL' }
                 })
             });
 
