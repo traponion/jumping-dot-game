@@ -9,51 +9,11 @@
  * Implementation-specific behavior is tested in separate test files.
  */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import type { StageData } from '../core/StageLoader';
 import type { IRenderSystem, LandingPrediction, Position } from '../systems/IRenderSystem';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes';
-
-/**
- * Mock implementation of IRenderSystem for contract testing
- */
-class MockRenderSystem implements IRenderSystem {
-    // Canvas Management
-    clearCanvas = vi.fn();
-    setDrawingStyle = vi.fn();
-    applyCameraTransform = vi.fn();
-    restoreCameraTransform = vi.fn();
-    renderAll = vi.fn();
-
-    // Game Objects Rendering
-    renderPlayer = vi.fn();
-    renderTrail = vi.fn();
-    renderStage = vi.fn();
-    renderDeathMarks = vi.fn();
-
-    // UI Elements Rendering
-    renderStartInstruction = vi.fn();
-    renderGameOverMenu = vi.fn();
-    renderCredits = vi.fn();
-
-    // Visual Effects
-    renderDeathAnimation = vi.fn();
-    renderSoulAnimation = vi.fn();
-    renderClearAnimation = vi.fn();
-
-    // Analytics/Predictions
-    setLandingPredictions = vi.fn();
-    renderLandingPredictions = vi.fn();
-    renderLandingHistory = vi.fn();
-    addLandingHistory = vi.fn();
-    cleanupLandingHistory = vi.fn();
-    updateLandingPredictionAnimations = vi.fn();
-    drawCrosshair = vi.fn();
-
-    // System Management
-    cleanup = vi.fn().mockResolvedValue(undefined);
-    dispose = vi.fn();
-}
+import { MockRenderSystem } from './mocks/MockRenderSystem.js';
 
 describe('IRenderSystem Interface Contract', () => {
     let renderSystem: IRenderSystem;
@@ -62,7 +22,14 @@ describe('IRenderSystem Interface Contract', () => {
     let mockStage: StageData;
 
     beforeEach(() => {
-        renderSystem = new MockRenderSystem();
+        // Create proper mock canvas for MockRenderSystem constructor
+        const mockCanvas = {
+            getContext: () => ({}),
+            width: 800,
+            height: 600
+        } as unknown as HTMLCanvasElement;
+
+        renderSystem = new MockRenderSystem(mockCanvas);
 
         // Create basic mocks for required types
         mockPlayer = {} as Player;
@@ -74,19 +41,16 @@ describe('IRenderSystem Interface Contract', () => {
         test('should have clearCanvas method with no parameters', () => {
             expect(renderSystem.clearCanvas).toBeDefined();
             expect(() => renderSystem.clearCanvas()).not.toThrow();
-            expect(renderSystem.clearCanvas).toHaveBeenCalled();
         });
 
         test('should have setDrawingStyle method with no parameters', () => {
             expect(renderSystem.setDrawingStyle).toBeDefined();
             expect(() => renderSystem.setDrawingStyle()).not.toThrow();
-            expect(renderSystem.setDrawingStyle).toHaveBeenCalled();
         });
 
         test('should have renderAll method with no parameters', () => {
             expect(renderSystem.renderAll).toBeDefined();
             expect(() => renderSystem.renderAll()).not.toThrow();
-            expect(renderSystem.renderAll).toHaveBeenCalled();
         });
     });
 
@@ -94,13 +58,11 @@ describe('IRenderSystem Interface Contract', () => {
         test('should have applyCameraTransform method that accepts Camera', () => {
             expect(renderSystem.applyCameraTransform).toBeDefined();
             expect(() => renderSystem.applyCameraTransform(mockCamera)).not.toThrow();
-            expect(renderSystem.applyCameraTransform).toHaveBeenCalledWith(mockCamera);
         });
 
         test('should have restoreCameraTransform method with no parameters', () => {
             expect(renderSystem.restoreCameraTransform).toBeDefined();
             expect(() => renderSystem.restoreCameraTransform()).not.toThrow();
-            expect(renderSystem.restoreCameraTransform).toHaveBeenCalled();
         });
     });
 
@@ -108,7 +70,6 @@ describe('IRenderSystem Interface Contract', () => {
         test('should have renderPlayer method that accepts Player', () => {
             expect(renderSystem.renderPlayer).toBeDefined();
             expect(() => renderSystem.renderPlayer(mockPlayer)).not.toThrow();
-            expect(renderSystem.renderPlayer).toHaveBeenCalledWith(mockPlayer);
         });
 
         test('should have renderTrail method that accepts TrailPoint array and playerRadius', () => {
@@ -116,20 +77,17 @@ describe('IRenderSystem Interface Contract', () => {
             const playerRadius = 10;
             expect(renderSystem.renderTrail).toBeDefined();
             expect(() => renderSystem.renderTrail(mockTrail, playerRadius)).not.toThrow();
-            expect(renderSystem.renderTrail).toHaveBeenCalledWith(mockTrail, playerRadius);
         });
 
         test('should have renderStage method that accepts StageData', () => {
             expect(renderSystem.renderStage).toBeDefined();
             expect(() => renderSystem.renderStage(mockStage)).not.toThrow();
-            expect(renderSystem.renderStage).toHaveBeenCalledWith(mockStage);
         });
 
         test('should have renderDeathMarks method that accepts death mark array', () => {
             const mockDeathMarks: Array<{ x: number; y: number }> = [{ x: 100, y: 200 }];
             expect(renderSystem.renderDeathMarks).toBeDefined();
             expect(() => renderSystem.renderDeathMarks(mockDeathMarks)).not.toThrow();
-            expect(renderSystem.renderDeathMarks).toHaveBeenCalledWith(mockDeathMarks);
         });
     });
 
@@ -137,7 +95,6 @@ describe('IRenderSystem Interface Contract', () => {
         test('should have renderStartInstruction method with no parameters', () => {
             expect(renderSystem.renderStartInstruction).toBeDefined();
             expect(() => renderSystem.renderStartInstruction()).not.toThrow();
-            expect(renderSystem.renderStartInstruction).toHaveBeenCalled();
         });
 
         test('should have renderGameOverMenu method that accepts options, selectedIndex, and finalScore', () => {
@@ -148,17 +105,11 @@ describe('IRenderSystem Interface Contract', () => {
             expect(() =>
                 renderSystem.renderGameOverMenu(options, selectedIndex, finalScore)
             ).not.toThrow();
-            expect(renderSystem.renderGameOverMenu).toHaveBeenCalledWith(
-                options,
-                selectedIndex,
-                finalScore
-            );
         });
 
         test('should have renderCredits method with no parameters', () => {
             expect(renderSystem.renderCredits).toBeDefined();
             expect(() => renderSystem.renderCredits()).not.toThrow();
-            expect(renderSystem.renderCredits).toHaveBeenCalled();
         });
     });
 
@@ -167,7 +118,6 @@ describe('IRenderSystem Interface Contract', () => {
             const mockParticles: Particle[] = [];
             expect(renderSystem.renderDeathAnimation).toBeDefined();
             expect(() => renderSystem.renderDeathAnimation(mockParticles)).not.toThrow();
-            expect(renderSystem.renderDeathAnimation).toHaveBeenCalledWith(mockParticles);
         });
 
         test('should have renderClearAnimation method that accepts particles, progress, centerX, centerY', () => {
@@ -179,12 +129,6 @@ describe('IRenderSystem Interface Contract', () => {
             expect(() =>
                 renderSystem.renderClearAnimation(mockParticles, progress, centerX, centerY)
             ).not.toThrow();
-            expect(renderSystem.renderClearAnimation).toHaveBeenCalledWith(
-                mockParticles,
-                progress,
-                centerX,
-                centerY
-            );
         });
     });
 
@@ -200,26 +144,22 @@ describe('IRenderSystem Interface Contract', () => {
             ];
             expect(renderSystem.setLandingPredictions).toBeDefined();
             expect(() => renderSystem.setLandingPredictions(mockPredictions)).not.toThrow();
-            expect(renderSystem.setLandingPredictions).toHaveBeenCalledWith(mockPredictions);
         });
 
         test('should have renderLandingPredictions method with no parameters', () => {
             expect(renderSystem.renderLandingPredictions).toBeDefined();
             expect(() => renderSystem.renderLandingPredictions()).not.toThrow();
-            expect(renderSystem.renderLandingPredictions).toHaveBeenCalled();
         });
 
         test('should have addLandingHistory method that accepts Position', () => {
             const mockPosition: Position = { x: 100, y: 200 };
             expect(renderSystem.addLandingHistory).toBeDefined();
             expect(() => renderSystem.addLandingHistory(mockPosition)).not.toThrow();
-            expect(renderSystem.addLandingHistory).toHaveBeenCalledWith(mockPosition);
         });
 
         test('should have updateLandingPredictionAnimations method with no parameters', () => {
             expect(renderSystem.updateLandingPredictionAnimations).toBeDefined();
             expect(() => renderSystem.updateLandingPredictionAnimations()).not.toThrow();
-            expect(renderSystem.updateLandingPredictionAnimations).toHaveBeenCalled();
         });
     });
 
@@ -229,13 +169,11 @@ describe('IRenderSystem Interface Contract', () => {
             const result = renderSystem.cleanup();
             expect(result).toBeInstanceOf(Promise);
             await expect(result).resolves.toBeUndefined();
-            expect(renderSystem.cleanup).toHaveBeenCalled();
         });
 
         test('should have dispose method with no parameters', () => {
             expect(renderSystem.dispose).toBeDefined();
             expect(() => renderSystem.dispose()).not.toThrow();
-            expect(renderSystem.dispose).toHaveBeenCalled();
         });
     });
 

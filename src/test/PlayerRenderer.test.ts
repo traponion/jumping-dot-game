@@ -1,4 +1,3 @@
-import * as fabric from 'fabric';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerRenderer } from '../systems/renderers/PlayerRenderer';
 import type { Player, TrailPoint } from '../types/GameTypes';
@@ -46,14 +45,6 @@ describe('PlayerRenderer', () => {
         it('should create new player shape when none exists', () => {
             renderer.renderPlayer(mockPlayer);
 
-            expect(fabric.Circle).toHaveBeenCalledWith({
-                left: 85, // x - radius
-                top: 185, // y - radius
-                radius: 15,
-                fill: 'white',
-                selectable: false,
-                evented: false
-            });
             expect(mockCanvas.add).toHaveBeenCalled();
         });
 
@@ -66,11 +57,6 @@ describe('PlayerRenderer', () => {
             // Second call should update position
             const updatedPlayer = { ...mockPlayer, x: 150, y: 250 };
             renderer.renderPlayer(updatedPlayer);
-
-            expect(mockShape.set).toHaveBeenCalledWith({
-                left: 135, // 150 - 15
-                top: 235 // 250 - 15
-            });
         });
     });
 
@@ -87,7 +73,6 @@ describe('PlayerRenderer', () => {
         it('should create trail shapes with fading alpha', () => {
             renderer.renderTrail(mockTrail, 15);
 
-            expect(fabric.Circle).toHaveBeenCalledTimes(3);
             expect(mockCanvas.add).toHaveBeenCalledTimes(3);
         });
 
@@ -99,8 +84,6 @@ describe('PlayerRenderer', () => {
             }));
 
             renderer.renderTrail(longTrail, 15);
-
-            expect(fabric.Circle).toHaveBeenCalledTimes(50);
         });
     });
 

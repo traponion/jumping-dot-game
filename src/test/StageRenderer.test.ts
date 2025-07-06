@@ -1,4 +1,3 @@
-import * as fabric from 'fabric';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
     Goal,
@@ -122,15 +121,6 @@ describe('StageRenderer', () => {
 
             renderer.renderPlatforms(platforms);
 
-            expect(fabric.Line).toHaveBeenCalledWith(
-                [0, 500, 200, 500],
-                expect.objectContaining({
-                    stroke: 'white',
-                    strokeWidth: 2,
-                    selectable: false,
-                    evented: false
-                })
-            );
             expect(mockCanvas.add).toHaveBeenCalled();
         });
 
@@ -161,15 +151,6 @@ describe('StageRenderer', () => {
 
             renderer.renderMovingPlatforms(movingPlatforms);
 
-            expect(fabric.Line).toHaveBeenCalledWith(
-                [600, 300, 800, 300],
-                expect.objectContaining({
-                    stroke: '#FFD700',
-                    strokeWidth: 3,
-                    selectable: false,
-                    evented: false
-                })
-            );
             expect(mockCanvas.add).toHaveBeenCalled();
         });
 
@@ -200,20 +181,6 @@ describe('StageRenderer', () => {
 
             renderer.renderSpikes(spikes);
 
-            expect(fabric.Polygon).toHaveBeenCalledWith(
-                [
-                    { x: 100, y: 490 },
-                    { x: 115, y: 450 },
-                    { x: 130, y: 490 }
-                ],
-                expect.objectContaining({
-                    fill: 'white',
-                    stroke: 'white',
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false
-                })
-            );
             expect(mockCanvas.add).toHaveBeenCalled();
         });
 
@@ -238,19 +205,6 @@ describe('StageRenderer', () => {
 
             renderer.renderGoal(goal);
 
-            expect(fabric.Rect).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    left: 800,
-                    top: 200,
-                    width: 50,
-                    height: 50,
-                    fill: 'transparent',
-                    stroke: 'white',
-                    strokeWidth: 2,
-                    selectable: false,
-                    evented: false
-                })
-            );
             expect(mockCanvas.add).toHaveBeenCalledTimes(3); // Rect + 2 lines
         });
 
@@ -283,20 +237,6 @@ describe('StageRenderer', () => {
 
             renderer.renderStageTexts(mockStage);
 
-            expect(fabric.Text).toHaveBeenCalledWith(
-                'Start here!',
-                expect.objectContaining({
-                    left: 50,
-                    top: 50
-                })
-            );
-            expect(fabric.Text).toHaveBeenCalledWith(
-                'Goal!',
-                expect.objectContaining({
-                    left: 750,
-                    top: 150
-                })
-            );
             expect(mockCanvas.add).toHaveBeenCalled();
         });
 

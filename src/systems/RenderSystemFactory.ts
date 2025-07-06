@@ -5,8 +5,8 @@
  * Supports both production (Fabric.js) and test (Mock) environments.
  */
 
+import { MockRenderSystem } from '../test/mocks/MockRenderSystem.js';
 import { FabricRenderAdapter } from './FabricRenderAdapter.js';
-import { MockRenderSystem } from './MockRenderSystem.js';
 
 /**
  * Creates appropriate render system based on environment

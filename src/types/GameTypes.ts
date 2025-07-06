@@ -87,15 +87,6 @@ export interface DeathMark {
 }
 
 /**
- * Key state mapping for input management
- * @interface KeyState
- * @property {boolean} [key] - Dynamic key mapping to boolean state
- */
-export interface KeyState {
-    [key: string]: boolean;
-}
-
-/**
  * Main game state interface
  * @interface GameState
  * @property {boolean} gameRunning - Whether game is currently running
