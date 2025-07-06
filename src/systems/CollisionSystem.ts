@@ -33,10 +33,12 @@ export interface MovingPlatformCollisionResult extends Partial<Player> {
  */
 export class CollisionSystem {
     private gameState: GameState;
+    private canvas: HTMLCanvasElement | undefined;
     private prevPlayerY = 0;
 
-    constructor(gameState: GameState) {
+    constructor(gameState: GameState, canvas?: HTMLCanvasElement) {
         this.gameState = gameState;
+        this.canvas = canvas;
         // FIXED: Initialize with current player position instead of 0
         this.prevPlayerY = this.gameState.runtime.player.y;
     }
@@ -292,13 +294,14 @@ export class CollisionSystem {
         this.gameState.runtime.collisionResults.goalCollision = false;
 
         // Check boundary conditions and set flags
+        const canvasHeight = this.canvas?.height ?? 600; // Fallback to 600 for backwards compatibility
         this.gameState.runtime.collisionResults.holeCollision = this.checkHoleCollision(
             player,
-            600
+            canvasHeight
         );
         this.gameState.runtime.collisionResults.boundaryCollision = this.checkBoundaryCollision(
             player,
-            600
+            canvasHeight
         );
 
         // Check goal collision and set flag

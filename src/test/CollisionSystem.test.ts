@@ -763,4 +763,62 @@ describe('CollisionSystem', () => {
             expect(prevPlayerFootY).toBe(155);
         });
     });
+
+    describe('canvas height integration', () => {
+        let mockCanvas: HTMLCanvasElement;
+
+        beforeEach(() => {
+            mockCanvas = {
+                height: 600,
+                width: 800
+            } as HTMLCanvasElement;
+        });
+
+        it('should use canvas height for boundary collision detection', () => {
+            // This test will fail until we modify the constructor
+            const canvasAwareCollisionSystem = new CollisionSystem(gameState, mockCanvas);
+
+            // Player just below canvas boundary threshold
+            player.y = mockCanvas.height + 99;
+
+            const result = canvasAwareCollisionSystem.checkBoundaryCollision(
+                player,
+                mockCanvas.height
+            );
+            expect(result).toBe(false);
+
+            // Player above canvas boundary threshold
+            player.y = mockCanvas.height + 101;
+
+            const result2 = canvasAwareCollisionSystem.checkBoundaryCollision(
+                player,
+                mockCanvas.height
+            );
+            expect(result2).toBe(true);
+        });
+
+        it('should use canvas height in update method for dynamic boundary detection', () => {
+            // This test will fail until we integrate canvas height into update()
+            const canvasAwareCollisionSystem = new CollisionSystem(gameState, mockCanvas);
+
+            // Set up stage
+            gameState.stage = {
+                id: 1,
+                name: 'Test Stage',
+                startText: { x: 0, y: 0, text: 'Test Start' },
+                goalText: { x: 0, y: 0, text: 'Test Goal' },
+                platforms: [],
+                movingPlatforms: [],
+                spikes: [],
+                goal: { x: 400, y: 300, width: 20, height: 20 }
+            };
+
+            // Player falling below canvas boundary
+            gameState.runtime.player.y = mockCanvas.height + 150;
+
+            canvasAwareCollisionSystem.update();
+
+            expect(gameState.runtime.collisionResults.boundaryCollision).toBe(true);
+        });
+    });
 });
