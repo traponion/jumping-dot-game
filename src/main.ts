@@ -1,48 +1,35 @@
 /**
- * @fileoverview Main entry point for the jumping dot game application
+ * @fileoverview Simplified main entry point for the jumping dot game application
  * @module main
- * @description Application Layer - Provides stage selection UI and game initialization.
- * Implements a stage selection screen with keyboard navigation and game instance management.
+ * @description Simple application bootstrapping with standard DOM events
  */
 
 import { JumpingDotGame } from './core/Game.js';
 import { HtmlStageSelect } from './core/HtmlStageSelect.js';
 
 /**
- * Window interface extension for global StageSelect access
- * @interface Window
- * @property {HtmlStageSelect} stageSelect - Global stage select instance
- */
-declare global {
-    interface Window {
-        stageSelect: HtmlStageSelect;
-    }
-}
-
-/**
- * Global stage select instance
+ * Current stage select instance
  * @type {HtmlStageSelect | null}
- * @description Single instance of stage selection manager
  */
 let stageSelect: HtmlStageSelect | null = null;
 
 /**
- * Initialize stage select when page loads
- * @description Creates and initializes stage selection interface on window load
+ * Initialize application when page loads
  */
 window.addEventListener('load', async () => {
+    // Initialize stage select
     stageSelect = new HtmlStageSelect();
     await stageSelect.init();
 
-    // Set up stage selection event listener
-    document.addEventListener('stageSelected', async (event: Event) => {
-        const customEvent = event as CustomEvent;
-        const { stageId } = customEvent.detail;
-        await startGame(stageId);
-    });
+    // Set up stage selection through event delegation
+    document.addEventListener('click', async (event: Event) => {
+        const target = event.target as HTMLElement;
+        const stageId = target.getAttribute('data-stage-id');
 
-    // Export for global access
-    window.stageSelect = stageSelect;
+        if (stageId && target.classList.contains('stage-item')) {
+            await startGame(Number.parseInt(stageId));
+        }
+    });
 });
 
 /**
