@@ -11,8 +11,10 @@ describe('HTML StageSelect', () => {
     let htmlStageSelect: HtmlStageSelect;
 
     beforeEach(() => {
-        // Setup DOM environment
-        document.body.innerHTML = '';
+        // Setup DOM environment - ensure body exists in CI
+        if (document.body) {
+            document.body.innerHTML = '';
+        }
 
         // Create the stage select HTML structure for testing
         const stageSelectHTML = `
@@ -37,11 +39,15 @@ describe('HTML StageSelect', () => {
             </div>
         `;
 
-        document.body.innerHTML = stageSelectHTML;
+        if (document.body) {
+            document.body.innerHTML = stageSelectHTML;
+        }
 
         container = document.createElement('div');
         container.className = 'game-container';
-        document.body.appendChild(container);
+        if (document.body) {
+            document.body.appendChild(container);
+        }
 
         // Create and initialize HtmlStageSelect instance
         htmlStageSelect = new HtmlStageSelect();
@@ -49,7 +55,10 @@ describe('HTML StageSelect', () => {
     });
 
     afterEach(() => {
-        document.body.innerHTML = '';
+        // Safe cleanup for both local and CI environments
+        if (document.body) {
+            document.body.innerHTML = '';
+        }
         vi.clearAllMocks();
     });
 
