@@ -25,8 +25,8 @@ export default defineConfig({
         testTimeout: 120000, // 120 second timeout for CI (increased from 60s)
         hookTimeout: 120000, // 120 second timeout for setup/teardown
         coverage: {
-            provider: 'v8',
-            reporter: ['text', 'html', 'lcov'],
+            provider: 'istanbul',
+            reporter: process.env.CI ? ['json', 'lcov'] : ['text', 'html'],
             exclude: [
                 'node_modules/**',
                 'src/test/**',
@@ -41,6 +41,7 @@ export default defineConfig({
                 'src/systems/FabricRenderAdapter.ts' // Thin adapter layer - tested through integration with FabricRenderSystem
             ],
             thresholds: {
+                autoUpdate: true,
                 global: {
                     branches: 80,
                     functions: 80,
@@ -49,27 +50,27 @@ export default defineConfig({
                 },
                 'src/systems/**': {
                     branches: 90,
-                    functions: 90,
+                    functions: 93.22,
                     lines: 90,
                     statements: 90
                 },
                 'src/core/**': {
-                    branches: 70,
+                    branches: 76.07,
                     functions: 85,
-                    lines: 80,
-                    statements: 80
+                    lines: 88.8,
+                    statements: 85.61
                 },
                 'src/utils/**': {
-                    branches: 95,
+                    branches: 100,
                     functions: 100,
-                    lines: 95,
-                    statements: 95
+                    lines: 100,
+                    statements: 100
                 },
                 'src/constants/**': {
-                    branches: 0,
-                    functions: 0,
-                    lines: 0,
-                    statements: 0
+                    branches: 100,
+                    functions: 100,
+                    lines: 100,
+                    statements: 100
                 }
             }
         }
