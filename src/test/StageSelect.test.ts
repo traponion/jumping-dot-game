@@ -14,7 +14,9 @@ describe('HTML StageSelect', () => {
         // Setup DOM environment - ensure body exists in CI
         if (!document.body) {
             document.body = document.createElement('body');
-            document.documentElement.appendChild(document.body);
+            if (document.documentElement?.appendChild) {
+                document.documentElement.appendChild(document.body);
+            }
         }
         document.body.innerHTML = '';
 
@@ -45,7 +47,9 @@ describe('HTML StageSelect', () => {
 
         container = document.createElement('div');
         container.className = 'game-container';
-        document.body.appendChild(container);
+        if (document.body?.appendChild) {
+            document.body.appendChild(container);
+        }
 
         // Create and initialize HtmlStageSelect instance
         htmlStageSelect = new HtmlStageSelect();
