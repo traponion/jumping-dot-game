@@ -17,10 +17,14 @@ vi.mock('../core/HtmlStageSelect.js', () => ({
 }));
 
 // Mock JumpingDotGame
+const mockGameCleanup = vi.fn().mockResolvedValue(undefined);
+const mockInitWithStage = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('../core/Game.js', () => ({
     JumpingDotGame: vi.fn(() => ({
-        initWithStage: vi.fn().mockResolvedValue(undefined),
-        setGameOver: vi.fn()
+        initWithStage: mockInitWithStage,
+        setGameOver: vi.fn(),
+        cleanup: mockGameCleanup
     }))
 }));
 
@@ -163,6 +167,64 @@ describe('main.ts event handling', () => {
             // Should not call returnToStageSelect when stageSelect is null
             // But should not throw error either
             expect(() => eventListener(mockEvent)).not.toThrow();
+        }
+    });
+
+    it('should cleanup previous game instance before returning to stage select', async () => {
+        // Import main.ts to trigger initialization
+        await import('../main.js');
+
+        // Find the 'load' event listener and simulate it
+        const loadEventCall = mockWindowAddEventListener.mock.calls.find(
+            (call) => call[0] === 'load'
+        );
+
+        if (loadEventCall) {
+            const loadEventListener = loadEventCall[1] as EventListener;
+            const mockLoadEvent = new Event('load');
+            await loadEventListener(mockLoadEvent);
+
+            // Simulate starting a game by clicking a stage
+            const clickEventCall = mockDocumentAddEventListener.mock.calls.find(
+                (call) => call[0] === 'click'
+            );
+
+            if (clickEventCall) {
+                const clickEventListener = clickEventCall[1] as EventListener;
+
+                // Mock stage element with data-stage-id
+                const mockStageElement = {
+                    getAttribute: vi.fn().mockReturnValue('1'),
+                    classList: { contains: vi.fn().mockReturnValue(true) }
+                };
+
+                const mockClickEvent = {
+                    target: mockStageElement
+                } as unknown as Event;
+
+                // Start game
+                await clickEventListener(mockClickEvent);
+
+                // Verify game was initialized
+                expect(mockInitWithStage).toHaveBeenCalledWith(1);
+
+                // Now simulate requestStageSelect event
+                const requestStageSelectCall = mockWindowAddEventListener.mock.calls.find(
+                    (call) => call[0] === 'requestStageSelect'
+                );
+
+                if (requestStageSelectCall) {
+                    const eventListener = requestStageSelectCall[1] as EventListener;
+                    const mockEvent = new CustomEvent('requestStageSelect');
+
+                    // Trigger the event
+                    await eventListener(mockEvent);
+
+                    // Verify cleanup was called before returning to stage select
+                    expect(mockGameCleanup).toHaveBeenCalled();
+                    expect(mockReturnToStageSelect).toHaveBeenCalled();
+                }
+            }
         }
     });
 });

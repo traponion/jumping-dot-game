@@ -14,6 +14,12 @@ import { HtmlStageSelect } from './core/HtmlStageSelect.js';
 let stageSelect: HtmlStageSelect | null = null;
 
 /**
+ * Current game instance
+ * @type {JumpingDotGame | null}
+ */
+let currentGame: JumpingDotGame | null = null;
+
+/**
  * Initialize application when page loads
  */
 window.addEventListener('load', async () => {
@@ -22,7 +28,18 @@ window.addEventListener('load', async () => {
     await stageSelect.init();
 
     // Set up requestStageSelect event listener for Game Over → Stage Select navigation
-    window.addEventListener('requestStageSelect', () => {
+    window.addEventListener('requestStageSelect', async () => {
+        // Clean up current game instance first to prevent canvas reinitialization errors
+        if (currentGame) {
+            try {
+                await currentGame.cleanup();
+            } catch (error) {
+                console.error('Error during game cleanup:', error);
+            } finally {
+                currentGame = null;
+            }
+        }
+
         if (stageSelect) {
             stageSelect.returnToStageSelect();
         }
@@ -45,17 +62,27 @@ window.addEventListener('load', async () => {
  */
 async function startGame(stageId: number): Promise<void> {
     try {
+        // Clean up previous game instance if exists
+        if (currentGame) {
+            try {
+                await currentGame.cleanup();
+            } catch (error) {
+                console.error('Error during previous game cleanup:', error);
+            }
+        }
+
         // Create new game instance
-        const gameInstance = new JumpingDotGame();
-        await gameInstance.initWithStage(stageId);
+        currentGame = new JumpingDotGame();
+        await currentGame.initWithStage(stageId);
 
         // Set up game over navigation back to stage select
-        gameInstance.setGameOver = () => {
+        currentGame.setGameOver = () => {
             if (stageSelect) {
                 stageSelect.returnToStageSelect();
             }
         };
     } catch (error) {
         console.error(`❌ Failed to start stage ${stageId}:`, error);
+        currentGame = null;
     }
 }
