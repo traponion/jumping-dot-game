@@ -57,6 +57,9 @@ export class HtmlStageSelect {
             this.focusStage(0);
         }
 
+        // Show stage select element
+        this.showStageSelectElement();
+
         // Hide game UI elements
         this.hideGameElements();
     }
@@ -170,6 +173,18 @@ export class HtmlStageSelect {
      */
     public async returnToStageSelect(): Promise<void> {
         this.showStageSelect();
+    }
+
+    /**
+     * Show stage select element
+     */
+    private showStageSelectElement(): void {
+        const stageSelectElement = document?.getElementById
+            ? document.getElementById('stageSelect')
+            : null;
+        if (stageSelectElement) {
+            stageSelectElement.style.display = 'block';
+        }
     }
 
     /**

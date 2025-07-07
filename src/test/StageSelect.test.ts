@@ -381,4 +381,51 @@ describe('HTML StageSelect', () => {
             expect(firstStage?.matches?.(':focus')).toBe(true);
         });
     });
+
+    describe('Stage Select Display Management', () => {
+        it('should show stage select element when returning to stage select', () => {
+            if (!requireDOM()) return;
+
+            // Use existing stage select element created in beforeEach
+            const stageSelectElement = document.getElementById('stageSelect');
+            if (!stageSelectElement) return;
+
+            // Set to hidden initially
+            stageSelectElement.style.display = 'none';
+
+            // Call returnToStageSelect
+            htmlStageSelect.returnToStageSelect();
+
+            // Verify that stage select element is shown
+            expect(stageSelectElement.style.display).not.toBe('none');
+        });
+
+        it('should hide game elements when showing stage select', () => {
+            if (!requireDOM()) return;
+
+            // Create game UI elements
+            const gameUI = document.createElement('div');
+            gameUI.id = 'gameUI';
+            gameUI.style.display = 'block';
+            container.appendChild(gameUI);
+
+            const info = document.createElement('div');
+            info.className = 'info';
+            info.style.display = 'block';
+            container.appendChild(info);
+
+            const controls = document.createElement('div');
+            controls.className = 'controls';
+            controls.style.display = 'block';
+            container.appendChild(controls);
+
+            // Call returnToStageSelect
+            htmlStageSelect.returnToStageSelect();
+
+            // Verify that game elements are hidden
+            expect(gameUI.style.display).toBe('none');
+            expect(info.style.display).toBe('none');
+            expect(controls.style.display).toBe('none');
+        });
+    });
 });
