@@ -26,7 +26,7 @@ export default defineConfig({
         testTimeout: 120000, // 120 second timeout for CI (increased from 60s)
         hookTimeout: 120000, // 120 second timeout for setup/teardown
         coverage: {
-            provider: 'istanbul',
+            provider: 'v8',
             reporter: process.env.CI ? ['json', 'lcov'] : ['text', 'html'],
             exclude: [
                 'node_modules/**',
@@ -50,16 +50,16 @@ export default defineConfig({
                     statements: 75
                 },
                 'src/systems/**': {
-                    branches: 90,
-                    functions: 93.22,
-                    lines: 90,
-                    statements: 90
+                    branches: 93.16,
+                    functions: 96.42,
+                    lines: 90.01,
+                    statements: 90.01
                 },
                 'src/core/**': {
-                    branches: 76.07,
-                    functions: 85,
-                    lines: 88.8,
-                    statements: 85.61
+                    branches: 87.43,
+                    functions: 88.63,
+                    lines: 89.92,
+                    statements: 89.92
                 },
                 'src/utils/**': {
                     branches: 100,
