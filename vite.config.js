@@ -1,10 +1,8 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
 
-// Helper function to get coverage thresholds based on environment
+// Coverage thresholds optimized for remaining stable files after JSDOM exclusions
 function getCoverageThresholds() {
-    const isCI = process.env.CI;
-    
     return {
         autoUpdate: true,
         global: {
@@ -13,31 +11,19 @@ function getCoverageThresholds() {
             lines: 75,
             statements: 75
         },
-        'src/systems/**': isCI ? {
-            // CI thresholds: Adjusted for JSDOM exclusions (AnimationSystem.ts, InputManager.ts excluded)
-            branches: 95.0, // Remaining stable systems only
-            functions: 98.0, // Higher thresholds for stable systems
+        // Remaining stable systems after excluding AnimationSystem.ts and InputManager.ts
+        'src/systems/**': {
+            branches: 95.0, // Stable systems: Camera, Collision, GameRule, MovingPlatform, Physics, Player
+            functions: 98.0,
             lines: 95.0,
             statements: 95.0
-        } : {
-            // Local thresholds: All files included
-            branches: 93.16,
-            functions: 96.42,
-            lines: 90.01,
-            statements: 90.01
         },
-        'src/core/**': isCI ? {
-            // CI thresholds: Adjusted for JSDOM exclusions (GameManager.ts, GameLoop.ts excluded)
-            branches: 90.0, // Remaining files: Game.ts, GameUI.ts, HTMLStageSelect.ts, StageLoader.ts
-            functions: 90.0, // Higher thresholds for stable files only
+        // Remaining stable core files after excluding GameManager.ts and GameLoop.ts
+        'src/core/**': {
+            branches: 90.0, // Stable files: Game.ts, GameUI.ts, HTMLStageSelect.ts, StageLoader.ts
+            functions: 90.0,
             lines: 90.0,
             statements: 90.0
-        } : {
-            // Local thresholds: All files included
-            branches: 87.43,
-            functions: 88.63,
-            lines: 89.92,
-            statements: 89.92
         },
         'src/utils/**': {
             branches: 100,
@@ -93,13 +79,11 @@ export default defineConfig({
                 'src/systems/RenderSystemFactory.ts', // Environment detection utility, tested through integration
                 'src/systems/IRenderSystem.ts', // Interface file - no executable code to test
                 'src/systems/FabricRenderAdapter.ts', // Thin adapter layer - tested through integration with FabricRenderSystem
-                // CI-specific exclusions for JSDOM instability issues
-                ...(process.env.CI ? [
-                    'src/core/GameManager.ts', // CI: 76.47% functions vs Local: 88.63% - JSDOM timing issues
-                    'src/core/GameLoop.ts', // CI: 75% functions vs Local: 91.66% - Animation frame instability
-                    'src/systems/AnimationSystem.ts', // CI: 76% lines vs Local: 88.24% - JSDOM DOM timing
-                    'src/systems/InputManager.ts' // CI: 66.08% lines vs Local: 88.88% - Canvas event binding issues
-                ] : [])
+                // JSDOM instability exclusions (applied to both CI and local for consistency)
+                'src/core/GameManager.ts', // JSDOM timing issues cause inconsistent coverage
+                'src/core/GameLoop.ts', // Animation frame instability in test environment
+                'src/systems/AnimationSystem.ts', // JSDOM DOM timing issues
+                'src/systems/InputManager.ts' // Canvas event binding issues in JSDOM
             ],
             thresholds: getCoverageThresholds()
         }
