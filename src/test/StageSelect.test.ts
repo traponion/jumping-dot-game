@@ -296,8 +296,12 @@ describe('HTML StageSelect', () => {
 
     describe('Accessibility', () => {
         it('should have proper ARIA roles', () => {
-            const stageList = document?.querySelector ? document.querySelector('.stage-list') : null;
-            const stageItems = document?.querySelectorAll ? document.querySelectorAll('.stage-item') : [];
+            const stageList = document?.querySelector
+                ? document.querySelector('.stage-list')
+                : null;
+            const stageItems = document?.querySelectorAll
+                ? document.querySelectorAll('.stage-item')
+                : [];
 
             expect(stageList?.getAttribute('role')).toBe('menu');
             for (const item of stageItems) {
@@ -307,7 +311,9 @@ describe('HTML StageSelect', () => {
         });
 
         it('should support screen reader navigation', () => {
-            const stageItems = document?.querySelectorAll ? document.querySelectorAll('.stage-item') : [];
+            const stageItems = document?.querySelectorAll
+                ? document.querySelectorAll('.stage-item')
+                : [];
             for (const item of stageItems) {
                 expect(item.getAttribute('tabindex')).toBe('0');
             }
@@ -316,13 +322,13 @@ describe('HTML StageSelect', () => {
 
     describe('Visual State', () => {
         it('should apply selected styling to focused element', () => {
-            const firstStage = document?.querySelector ? document.querySelector(
-                '.stage-item[data-stage-id="1"]'
-            ) as HTMLElement : null;
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="1"]') as HTMLElement)
+                : null;
             firstStage?.focus();
 
             // We'll implement CSS classes for focus state
-            expect(firstStage?.matches && firstStage.matches(':focus')).toBe(true);
+            expect(firstStage?.matches?.(':focus')).toBe(true);
         });
     });
 });
