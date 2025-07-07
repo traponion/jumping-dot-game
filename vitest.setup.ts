@@ -15,20 +15,48 @@ beforeAll(() => {
         if (typeof globalThis.fabric === 'undefined') {
             globalThis.fabric = { env: { window, document } };
         }
+        
+        // DEFENSIVE: Check JSDOM capabilities without breaking tests
+        // In CI environments, JSDOM may be partially initialized
+        const isJSCoreAvailable = typeof document !== 'undefined' && 
+                                 typeof document.createElement === 'function' &&
+                                 document.documentElement;
+        
+        if (!isJSCoreAvailable) {
+            console.warn('⚠️ JSDOM core features not fully available - some DOM tests may be skipped');
+            // Don't throw error - allow tests to run with limited DOM functionality
+        } else {
+            // Only proceed with body creation if JSDOM fundamentals are working
+            if (!document.body) {
+                console.log('🔧 Creating missing document.body in CI environment');
+                try {
+                    const body = document.createElement('body');
+                    if (typeof document.documentElement.appendChild === 'function') {
+                        document.documentElement.appendChild(body);
+                        console.log('✅ Successfully created document.body');
+                    } else {
+                        console.warn('⚠️ document.documentElement.appendChild not available');
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Failed to create document.body: ${error.message}`);
+                }
+            }
+        }
     }
 
-    // CI environment specific logging
+    // CI environment specific logging (AFTER DOM setup)
     if (typeof process !== 'undefined' && (process.env.CI || process.env.GITHUB_ACTIONS)) {
         console.log('Vitest setup: CI environment detected');
         console.log('JSDOM environment:', isJSDOM());
         console.log('Global fabric setup:', typeof globalThis.fabric);
         
         // 🔍 Deep JSDOM Debug Info (as recommended in handover)
-        console.log('🔍 JSDOM Debug Info:');
+        console.log('🔍 JSDOM Debug Info (AFTER setup):');
         console.log('document type:', typeof document);
         console.log('createElement available:', typeof document.createElement);
         console.log('body exists:', !!document.body);
         console.log('body innerHTML settable:', typeof document.body?.innerHTML);
+        console.log('body appendChild available:', typeof document.body?.appendChild);
         
         // Test element creation and query capability
         try {
@@ -38,19 +66,19 @@ beforeAll(() => {
             if (document.body) {
                 document.body.appendChild(testEl);
                 const found = document.getElementById('test-element-ci-debug');
-                console.log('Element creation/query test - Found:', !!found);
-                console.log('Element textContent readable:', found?.textContent);
-                console.log('querySelector works:', !!document.querySelector('#test-element-ci-debug'));
+                console.log('✅ Element creation/query test - Found:', !!found);
+                console.log('✅ Element textContent readable:', found?.textContent);
+                console.log('✅ querySelector works:', !!document.querySelector('#test-element-ci-debug'));
                 
                 // Clean up test element
-                if (found) {
+                if (found && document.body.removeChild) {
                     document.body.removeChild(found);
                 }
             } else {
-                console.log('❌ document.body not available for appendChild test');
+                console.log('❌ document.body STILL not available after setup');
             }
         } catch (error) {
-            console.log('❌ DOM element creation/query test failed:', error);
+            console.log('❌ DOM element creation/query test failed after setup:', error);
         }
     }
 
