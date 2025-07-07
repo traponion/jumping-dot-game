@@ -71,15 +71,19 @@ describe('HTML StageSelect', () => {
         });
 
         it('should contain title and subtitle', () => {
-            const title = document.querySelector('.stage-title');
-            const subtitle = document.querySelector('.stage-subtitle');
+            const title = document?.querySelector ? document.querySelector('.stage-title') : null;
+            const subtitle = document?.querySelector
+                ? document.querySelector('.stage-subtitle')
+                : null;
 
             expect(title?.textContent).toBe('JUMPING DOT GAME');
             expect(subtitle?.textContent).toBe('SELECT STAGE');
         });
 
         it('should contain stage list with two stages', () => {
-            const stageItems = document.querySelectorAll('.stage-item');
+            const stageItems = document?.querySelectorAll
+                ? document.querySelectorAll('.stage-item')
+                : [];
             expect(stageItems).toHaveLength(2);
 
             // Check first stage
@@ -100,7 +104,9 @@ describe('HTML StageSelect', () => {
         });
 
         it('should contain navigation instructions', () => {
-            const instructions = document.querySelector('.stage-instructions');
+            const instructions = document?.querySelector
+                ? document.querySelector('.stage-instructions')
+                : null;
             expect(instructions?.textContent).toBe('↑↓ Navigate  SPACE Select');
         });
     });
@@ -112,51 +118,53 @@ describe('HTML StageSelect', () => {
         });
 
         it('should focus first stage by default', () => {
-            const firstStage = document.querySelector('.stage-item') as HTMLElement;
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item') as HTMLElement)
+                : null;
             expect(document.activeElement).toBe(firstStage);
         });
 
         it('should navigate down with ArrowDown key', () => {
-            const firstStage = document.querySelector(
-                '.stage-item[data-stage-id="1"]'
-            ) as HTMLElement;
-            const secondStage = document.querySelector(
-                '.stage-item[data-stage-id="2"]'
-            ) as HTMLElement;
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="1"]') as HTMLElement)
+                : null;
+            const secondStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="2"]') as HTMLElement)
+                : null;
 
-            firstStage.focus();
+            firstStage?.focus();
 
             const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-            document.dispatchEvent(event);
+            document?.dispatchEvent?.(event);
 
             expect(document.activeElement).toBe(secondStage);
         });
 
         it('should navigate up with ArrowUp key', () => {
-            const firstStage = document.querySelector(
-                '.stage-item[data-stage-id="1"]'
-            ) as HTMLElement;
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="1"]') as HTMLElement)
+                : null;
 
             // First navigate down to second stage
             const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-            document.dispatchEvent(downEvent);
+            document?.dispatchEvent?.(downEvent);
 
             // Then navigate up to first stage
             const upEvent = new KeyboardEvent('keydown', { key: 'ArrowUp' });
-            document.dispatchEvent(upEvent);
+            document?.dispatchEvent?.(upEvent);
 
             expect(document.activeElement).toBe(firstStage);
         });
 
         it('should not navigate beyond boundaries', () => {
-            const firstStage = document.querySelector(
-                '.stage-item[data-stage-id="1"]'
-            ) as HTMLElement;
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="1"]') as HTMLElement)
+                : null;
 
-            firstStage.focus();
+            firstStage?.focus();
 
             const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
-            document.dispatchEvent(event);
+            document?.dispatchEvent?.(event);
 
             expect(document.activeElement).toBe(firstStage);
         });
@@ -168,13 +176,13 @@ describe('HTML StageSelect', () => {
             // Updated for Phase 3: Standard DOM events instead of custom events
             document.addEventListener('click', mockStartStage);
 
-            const firstStage = document.querySelector(
-                '.stage-item[data-stage-id="1"]'
-            ) as HTMLElement;
-            firstStage.focus();
+            const firstStage = document?.querySelector
+                ? (document.querySelector('.stage-item[data-stage-id="1"]') as HTMLElement)
+                : null;
+            firstStage?.focus();
 
             const event = new KeyboardEvent('keydown', { key: ' ' });
-            document.dispatchEvent(event);
+            document?.dispatchEvent?.(event);
 
             // Expect standard DOM click event with target containing data-stage-id
             expect(mockStartStage).toHaveBeenCalledWith(
@@ -196,10 +204,10 @@ describe('HTML StageSelect', () => {
 
             // Navigate to second stage first
             const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-            document.dispatchEvent(downEvent);
+            document?.dispatchEvent?.(downEvent);
 
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            document.dispatchEvent(event);
+            document?.dispatchEvent?.(event);
 
             // Expect standard DOM click event with target containing data-stage-id
             expect(mockStartStage).toHaveBeenCalledWith(

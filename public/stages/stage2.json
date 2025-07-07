@@ -1,63 +1,67 @@
 {
-  "id": 2,
-  "name": "Stage 2",
-  "description": "Moving Platform Tutorial - Mathematically Optimized Design",
-  "platforms": [
-    { "x1": -500, "y1": 500, "x2": 750, "y2": 500 },
-    { "x1": 1500, "y1": 500, "x2": 2400, "y2": 500 }
-  ],
-  "movingPlatforms": [
-    { 
-      "x1": 750, "y1": 500, "x2": 880, "y2": 500,
-      "startX": 750, "endX": 1400, "speed": 0.6, "direction": 1
-    }
-  ],
-  "holes": [
-    { "x1": 750, "x2": 1500 }
-  ],
-  "spikes": [],
-  "movingSpikes": [],
-  "goal": {
-    "x": 2450,
-    "y": 360,
-    "width": 40,
-    "height": 50
-  },
-  "startText": {
-    "x": 50,
-    "y": 450,
-    "text": "STAGE 2"
-  },
-  "goalText": {
-    "x": 2470,
-    "y": 340,
-    "text": "GOAL"
-  },
-  "leftEdgeMessage": {
-    "x": -400,
-    "y": 450,
-    "text": "MOVING PLATFORM TUTORIAL!"
-  },
-  "leftEdgeSubMessage": {
-    "x": -400,
-    "y": 470,
-    "text": "ENJOY THE RIDE →"
-  },
-  "tutorialMessages": [
-    {
-      "x": 600,
-      "y": 450,
-      "text": "HURRY! THE SHIP IS LEAVING!"
+    "id": 2,
+    "name": "Stage 2",
+    "description": "Moving Platform Tutorial - Mathematically Optimized Design",
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 750, "y2": 500 },
+        { "x1": 1500, "y1": 500, "x2": 2400, "y2": 500 }
+    ],
+    "movingPlatforms": [
+        {
+            "x1": 750,
+            "y1": 500,
+            "x2": 880,
+            "y2": 500,
+            "startX": 750,
+            "endX": 1400,
+            "speed": 0.6,
+            "direction": 1
+        }
+    ],
+    "holes": [{ "x1": 750, "x2": 1500 }],
+    "spikes": [],
+    "movingSpikes": [],
+    "goal": {
+        "x": 2450,
+        "y": 360,
+        "width": 40,
+        "height": 50
     },
-    {
-      "x": 1100,
-      "y": 450,
-      "text": "ENJOYING THE ENDLESS RIDE?"
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 2"
     },
-    {
-      "x": 1600,
-      "y": 450,
-      "text": "OH, SOLID GROUND AT LAST!"
-    }
-  ]
+    "goalText": {
+        "x": 2470,
+        "y": 340,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "MOVING PLATFORM TUTORIAL!"
+    },
+    "leftEdgeSubMessage": {
+        "x": -400,
+        "y": 470,
+        "text": "ENJOY THE RIDE →"
+    },
+    "tutorialMessages": [
+        {
+            "x": 600,
+            "y": 450,
+            "text": "HURRY! THE SHIP IS LEAVING!"
+        },
+        {
+            "x": 1100,
+            "y": 450,
+            "text": "ENJOYING THE ENDLESS RIDE?"
+        },
+        {
+            "x": 1600,
+            "y": 450,
+            "text": "OH, SOLID GROUND AT LAST!"
+        }
+    ]
 }
