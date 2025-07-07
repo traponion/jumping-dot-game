@@ -38,11 +38,19 @@ export class HtmlStageSelect {
         this.isActive = true;
         this.selectedStageIndex = 0;
 
-        // Get stage item elements
-        this.stageElements = Array.from(document.querySelectorAll('.stage-item')) as HTMLElement[];
+        // Get stage item elements - safe for test environment
+        if (document?.querySelectorAll) {
+            this.stageElements = Array.from(
+                document.querySelectorAll('.stage-item')
+            ) as HTMLElement[];
+        } else {
+            this.stageElements = [];
+        }
 
-        // Set up keyboard event listener
-        document.addEventListener('keydown', this.boundHandleKeyboard);
+        // Set up keyboard event listener - safe for test environment
+        if (document?.addEventListener) {
+            document.addEventListener('keydown', this.boundHandleKeyboard);
+        }
 
         // Focus first stage by default
         if (this.stageElements.length > 0) {
@@ -58,10 +66,16 @@ export class HtmlStageSelect {
      */
     private hideStageSelect(): void {
         this.isActive = false;
-        document.removeEventListener('keydown', this.boundHandleKeyboard);
 
-        // Hide stage select element
-        const stageSelectElement = document.getElementById('stageSelect');
+        // Safe cleanup for test environment
+        if (document?.removeEventListener) {
+            document.removeEventListener('keydown', this.boundHandleKeyboard);
+        }
+
+        // Hide stage select element - safe for test environment
+        const stageSelectElement = document?.getElementById
+            ? document.getElementById('stageSelect')
+            : null;
         if (stageSelectElement) {
             stageSelectElement.style.display = 'none';
         }
@@ -162,9 +176,15 @@ export class HtmlStageSelect {
      * Hide game UI elements during stage selection
      */
     private hideGameElements(): void {
-        const gameUI = document.getElementById('gameUI') as HTMLElement;
-        const info = document.querySelector('.info') as HTMLElement;
-        const controls = document.querySelector('.controls') as HTMLElement;
+        const gameUI = document?.getElementById
+            ? (document.getElementById('gameUI') as HTMLElement)
+            : null;
+        const info = document?.querySelector
+            ? (document.querySelector('.info') as HTMLElement)
+            : null;
+        const controls = document?.querySelector
+            ? (document.querySelector('.controls') as HTMLElement)
+            : null;
 
         if (gameUI) gameUI.style.display = 'none';
         if (info) info.style.display = 'none';
@@ -175,9 +195,15 @@ export class HtmlStageSelect {
      * Show game UI elements when starting game
      */
     private showGameElements(): void {
-        const gameUI = document.getElementById('gameUI') as HTMLElement;
-        const info = document.querySelector('.info') as HTMLElement;
-        const controls = document.querySelector('.controls') as HTMLElement;
+        const gameUI = document?.getElementById
+            ? (document.getElementById('gameUI') as HTMLElement)
+            : null;
+        const info = document?.querySelector
+            ? (document.querySelector('.info') as HTMLElement)
+            : null;
+        const controls = document?.querySelector
+            ? (document.querySelector('.controls') as HTMLElement)
+            : null;
 
         if (gameUI) gameUI.style.display = 'block';
         if (info) info.style.display = 'block';
