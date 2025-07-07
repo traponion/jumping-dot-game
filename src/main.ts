@@ -21,6 +21,13 @@ window.addEventListener('load', async () => {
     stageSelect = new HtmlStageSelect();
     await stageSelect.init();
 
+    // Set up requestStageSelect event listener for Game Over → Stage Select navigation
+    window.addEventListener('requestStageSelect', () => {
+        if (stageSelect) {
+            stageSelect.returnToStageSelect();
+        }
+    });
+
     // Set up stage selection through event delegation
     document.addEventListener('click', async (event: Event) => {
         const target = event.target as HTMLElement;
