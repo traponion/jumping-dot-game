@@ -18,11 +18,17 @@ function getCoverageThresholds() {
             lines: 93.0,
             statements: 93.0
         },
-        // Adjusted thresholds for core files to account for JSDOM variability
+        // CI Environment Threshold: Based on actual CI measurements and technical constraints
+        // - CI Results: 73.99% lines, 71.18% functions (V8 provider + JSDOM environment)
+        // - Local Results: 93.14% lines, 91.52% functions (same code, different environment)
+        // - Root Cause: JSDOM DOM manipulation variance (HTMLStageSelect.ts: 17.18% CI vs 91.4% local)
+        // - V8 Provider Bug: autoUpdate: true causes TypeError, requires autoUpdate: false
+        // - Quality Maintained: Core files still achieve 93%+ locally, no functionality compromised
+        // - See: Issue #122 CI Coverage Variance Resolution (2025-07-07)
         'src/core/**': {
-            branches: 70.0, // Allow for HTMLStageSelect.ts DOM instability
-            functions: 70.0, // Allow for CI variance in DOM-dependent code (CI: 71.18%)
-            lines: 70.0,     // Allow for CI variance (CI: 73.99%)
+            branches: 70.0,
+            functions: 70.0,
+            lines: 70.0,
             statements: 70.0
         },
         'src/utils/**': {
