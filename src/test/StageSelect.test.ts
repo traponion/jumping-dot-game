@@ -12,9 +12,11 @@ describe('HTML StageSelect', () => {
 
     beforeEach(() => {
         // Setup DOM environment - ensure body exists in CI
-        if (document.body) {
-            document.body.innerHTML = '';
+        if (!document.body) {
+            document.body = document.createElement('body');
+            document.documentElement.appendChild(document.body);
         }
+        document.body.innerHTML = '';
 
         // Create the stage select HTML structure for testing
         const stageSelectHTML = `
@@ -39,15 +41,11 @@ describe('HTML StageSelect', () => {
             </div>
         `;
 
-        if (document.body) {
-            document.body.innerHTML = stageSelectHTML;
-        }
+        document.body.innerHTML = stageSelectHTML;
 
         container = document.createElement('div');
         container.className = 'game-container';
-        if (document.body) {
-            document.body.appendChild(container);
-        }
+        document.body.appendChild(container);
 
         // Create and initialize HtmlStageSelect instance
         htmlStageSelect = new HtmlStageSelect();
