@@ -22,6 +22,36 @@ beforeAll(() => {
         console.log('Vitest setup: CI environment detected');
         console.log('JSDOM environment:', isJSDOM());
         console.log('Global fabric setup:', typeof globalThis.fabric);
+        
+        // 🔍 Deep JSDOM Debug Info (as recommended in handover)
+        console.log('🔍 JSDOM Debug Info:');
+        console.log('document type:', typeof document);
+        console.log('createElement available:', typeof document.createElement);
+        console.log('body exists:', !!document.body);
+        console.log('body innerHTML settable:', typeof document.body?.innerHTML);
+        
+        // Test element creation and query capability
+        try {
+            const testEl = document.createElement('div');
+            testEl.id = 'test-element-ci-debug';
+            testEl.textContent = 'CI Debug Test';
+            if (document.body) {
+                document.body.appendChild(testEl);
+                const found = document.getElementById('test-element-ci-debug');
+                console.log('Element creation/query test - Found:', !!found);
+                console.log('Element textContent readable:', found?.textContent);
+                console.log('querySelector works:', !!document.querySelector('#test-element-ci-debug'));
+                
+                // Clean up test element
+                if (found) {
+                    document.body.removeChild(found);
+                }
+            } else {
+                console.log('❌ document.body not available for appendChild test');
+            }
+        } catch (error) {
+            console.log('❌ DOM element creation/query test failed:', error);
+        }
     }
 
     // Mock Canvas API for testing
