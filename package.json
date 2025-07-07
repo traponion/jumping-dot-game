@@ -9,6 +9,7 @@
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest --coverage",
+        "test:coverage:ci": "vitest run --coverage --pool forks --reporter=json",
         "test:coverage:open": "vitest --coverage && open coverage/index.html",
         "lint": "biome check src",
         "lint:fix": "biome check src --write",

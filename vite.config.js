@@ -17,7 +17,8 @@ export default defineConfig({
         poolOptions: {
             forks: {
                 singleFork: true, // Use single fork for stability
-                isolate: false // Disable isolation - CI JSDOM compatibility fix
+                isolate: false, // Disable isolation - CI JSDOM compatibility fix
+                execArgv: [] // Clear any Node.js execution arguments
             }
         },
         clearMocks: true,
