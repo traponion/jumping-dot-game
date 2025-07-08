@@ -58,27 +58,45 @@ beforeAll(() => {
         console.log('body innerHTML settable:', typeof document.body?.innerHTML);
         console.log('body appendChild available:', typeof document.body?.appendChild);
         
-        // Test element creation and query capability
+        // Test element creation and query capability with defensive checks
         try {
-            const testEl = document.createElement('div');
-            testEl.id = 'test-element-ci-debug';
-            testEl.textContent = 'CI Debug Test';
-            if (document.body) {
-                document.body.appendChild(testEl);
-                const found = document.getElementById('test-element-ci-debug');
-                console.log('✅ Element creation/query test - Found:', !!found);
-                console.log('✅ Element textContent readable:', found?.textContent);
-                console.log('✅ querySelector works:', !!document.querySelector('#test-element-ci-debug'));
+            // CI-safe element creation: Check function availability first
+            if (typeof document.createElement === 'function') {
+                const testEl = document.createElement('div');
+                testEl.id = 'test-element-ci-debug';
+                testEl.textContent = 'CI Debug Test';
                 
-                // Clean up test element
-                if (found && document.body.removeChild) {
-                    document.body.removeChild(found);
+                if (document.body && typeof document.body.appendChild === 'function') {
+                    document.body.appendChild(testEl);
+                    
+                    // Safe element querying with fallbacks
+                    const found = typeof document.getElementById === 'function' 
+                        ? document.getElementById('test-element-ci-debug')
+                        : null;
+                    
+                    console.log('✅ Element creation/query test - Found:', !!found);
+                    console.log('✅ Element textContent readable:', found?.textContent);
+                    
+                    // Safe querySelector check
+                    if (typeof document.querySelector === 'function') {
+                        console.log('✅ querySelector works:', !!document.querySelector('#test-element-ci-debug'));
+                    } else {
+                        console.log('⚠️ querySelector not available in CI environment');
+                    }
+                    
+                    // Clean up test element with defensive check
+                    if (found && typeof document.body.removeChild === 'function') {
+                        document.body.removeChild(found);
+                    }
+                } else {
+                    console.log('❌ document.body STILL not available after setup');
                 }
             } else {
-                console.log('❌ document.body STILL not available after setup');
+                console.log('⚠️ document.createElement not available - CI environment limitation');
             }
         } catch (error) {
             console.log('❌ DOM element creation/query test failed after setup:', error);
+            // Continue execution - don't let CI debug code break the tests
         }
     }
 

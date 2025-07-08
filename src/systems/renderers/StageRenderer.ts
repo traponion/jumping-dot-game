@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import type { Goal, MovingPlatform, Platform, Spike, StageData } from '../../core/StageLoader';
+import { FABRIC_DEFAULTS, createNonInteractiveShape } from '../../utils/FabricObjectFactory';
 
 /**
  * StageRenderer - Handles stage element rendering
@@ -44,12 +45,10 @@ export class StageRenderer {
         for (const platform of platforms) {
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
-                {
+                createNonInteractiveShape({
                     stroke: 'white',
-                    strokeWidth: 2,
-                    selectable: false,
-                    evented: false
-                }
+                    strokeWidth: 2
+                })
             );
 
             this.platformShapes.push(platformLine);
@@ -70,12 +69,10 @@ export class StageRenderer {
         for (const platform of movingPlatforms) {
             const platformLine = new fabric.Line(
                 [platform.x1, platform.y1, platform.x2, platform.y2],
-                {
+                createNonInteractiveShape({
                     stroke: '#FFD700', // Gold color for moving platforms
-                    strokeWidth: 3, // Slightly thicker to indicate movement
-                    selectable: false,
-                    evented: false
-                }
+                    strokeWidth: 3 // Slightly thicker to indicate movement
+                })
             );
 
             this.movingPlatformShapes.push(platformLine);
@@ -101,13 +98,14 @@ export class StageRenderer {
                 { x: spike.x + spike.width, y: spike.y + spike.height }
             ];
 
-            const spikeShape = new fabric.Polygon(points, {
-                fill: 'white',
-                stroke: 'white',
-                strokeWidth: 1,
-                selectable: false,
-                evented: false
-            });
+            const spikeShape = new fabric.Polygon(
+                points,
+                createNonInteractiveShape({
+                    fill: 'white',
+                    stroke: 'white',
+                    strokeWidth: 1
+                })
+            );
 
             this.spikeShapes.push(spikeShape);
             this.canvas.add(spikeShape);
@@ -124,34 +122,36 @@ export class StageRenderer {
         }
 
         // Create goal frame
-        this.goalShape = new fabric.Rect({
-            left: goal.x,
-            top: goal.y,
-            width: goal.width,
-            height: goal.height,
-            fill: 'transparent',
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
+        this.goalShape = new fabric.Rect(
+            createNonInteractiveShape({
+                left: goal.x,
+                top: goal.y,
+                width: goal.width,
+                height: goal.height,
+                fill: 'transparent',
+                stroke: 'white',
+                strokeWidth: 2
+            })
+        );
 
         this.canvas.add(this.goalShape);
 
         // Add cross pattern
-        const line1 = new fabric.Line([goal.x, goal.y, goal.x + goal.width, goal.y + goal.height], {
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
+        const line1 = new fabric.Line(
+            [goal.x, goal.y, goal.x + goal.width, goal.y + goal.height],
+            createNonInteractiveShape({
+                stroke: 'white',
+                strokeWidth: 2
+            })
+        );
 
-        const line2 = new fabric.Line([goal.x + goal.width, goal.y, goal.x, goal.y + goal.height], {
-            stroke: 'white',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false
-        });
+        const line2 = new fabric.Line(
+            [goal.x + goal.width, goal.y, goal.x, goal.y + goal.height],
+            createNonInteractiveShape({
+                stroke: 'white',
+                strokeWidth: 2
+            })
+        );
 
         this.canvas.add(line1);
         this.canvas.add(line2);
@@ -168,59 +168,63 @@ export class StageRenderer {
         this.textShapes = [];
 
         // Render start text
-        const startText = new fabric.Text(stage.startText.text, {
-            left: stage.startText.x,
-            top: stage.startText.y,
-            fill: 'white',
-            fontSize: 16,
-            fontFamily: 'Arial',
-            selectable: false,
-            evented: false
-        });
+        const startText = new fabric.Text(
+            stage.startText.text,
+            createNonInteractiveShape({
+                left: stage.startText.x,
+                top: stage.startText.y,
+                fill: 'white',
+                fontSize: 16,
+                ...FABRIC_DEFAULTS.ARIAL_FONT
+            })
+        );
 
         this.textShapes.push(startText);
         this.canvas.add(startText);
 
         // Render goal text
-        const goalText = new fabric.Text(stage.goalText.text, {
-            left: stage.goalText.x,
-            top: stage.goalText.y,
-            fill: 'white',
-            fontSize: 16,
-            fontFamily: 'Arial',
-            selectable: false,
-            evented: false
-        });
+        const goalText = new fabric.Text(
+            stage.goalText.text,
+            createNonInteractiveShape({
+                left: stage.goalText.x,
+                top: stage.goalText.y,
+                fill: 'white',
+                fontSize: 16,
+                ...FABRIC_DEFAULTS.ARIAL_FONT
+            })
+        );
 
         this.textShapes.push(goalText);
         this.canvas.add(goalText);
 
         // Render optional text elements
         if (stage.leftEdgeMessage) {
-            const leftEdgeText = new fabric.Text(stage.leftEdgeMessage.text, {
-                left: stage.leftEdgeMessage.x,
-                top: stage.leftEdgeMessage.y,
-                fill: 'white',
-                fontSize: 14,
-                fontFamily: 'Arial',
-                selectable: false,
-                evented: false
-            });
+            const leftEdgeText = new fabric.Text(
+                stage.leftEdgeMessage.text,
+                createNonInteractiveShape({
+                    left: stage.leftEdgeMessage.x,
+                    top: stage.leftEdgeMessage.y,
+                    fill: 'white',
+                    fontSize: 14,
+                    ...FABRIC_DEFAULTS.ARIAL_FONT
+                })
+            );
 
             this.textShapes.push(leftEdgeText);
             this.canvas.add(leftEdgeText);
         }
 
         if (stage.leftEdgeSubMessage) {
-            const leftEdgeSubText = new fabric.Text(stage.leftEdgeSubMessage.text, {
-                left: stage.leftEdgeSubMessage.x,
-                top: stage.leftEdgeSubMessage.y,
-                fill: 'white',
-                fontSize: 12,
-                fontFamily: 'Arial',
-                selectable: false,
-                evented: false
-            });
+            const leftEdgeSubText = new fabric.Text(
+                stage.leftEdgeSubMessage.text,
+                createNonInteractiveShape({
+                    left: stage.leftEdgeSubMessage.x,
+                    top: stage.leftEdgeSubMessage.y,
+                    fill: 'white',
+                    fontSize: 12,
+                    ...FABRIC_DEFAULTS.ARIAL_FONT
+                })
+            );
 
             this.textShapes.push(leftEdgeSubText);
             this.canvas.add(leftEdgeSubText);

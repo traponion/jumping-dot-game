@@ -17,6 +17,23 @@ vi.mock('fabric', () => ({
     Shadow: vi.fn(() => ({}))
 }));
 
+// Mock FabricObjectFactory
+vi.mock('../utils/FabricObjectFactory', () => ({
+    createStandardShadow: vi.fn(() => ({ type: 'standard-shadow' })),
+    createTitleShadow: vi.fn(() => ({ type: 'title-shadow' })),
+    createGlowShadow: vi.fn(() => ({ type: 'glow-shadow' })),
+    createNonInteractiveShape: vi.fn((options) => ({
+        ...options,
+        selectable: false,
+        evented: false
+    })),
+    FABRIC_DEFAULTS: {
+        NON_INTERACTIVE: { selectable: false, evented: false },
+        CENTERED_TEXT: { originX: 'center', originY: 'center' },
+        MONOSPACE_FONT: { fontFamily: 'monospace' }
+    }
+}));
+
 // Mock DOM elements
 const mockElement = {
     classList: {
