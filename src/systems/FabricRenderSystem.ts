@@ -2,6 +2,7 @@ import * as fabric from 'fabric';
 import type { StageData } from '../core/StageLoader.js';
 import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import { FABRIC_DEFAULTS } from '../utils/FabricObjectFactory';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
 import type {
     IAnalyticsRenderer,
@@ -132,8 +133,7 @@ export class FabricRenderSystem
         this.deathMarkPath = new fabric.Path(pathData, {
             stroke: 'rgba(255, 0, 0, 0.8)',
             strokeWidth: 3,
-            selectable: false,
-            evented: false,
+            ...FABRIC_DEFAULTS.NON_INTERACTIVE,
             objectCaching: false
         });
 

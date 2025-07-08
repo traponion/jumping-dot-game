@@ -141,8 +141,7 @@ export class UIRenderer {
                     width: 300,
                     height: 40,
                     fill: 'white',
-                    selectable: false,
-                    evented: false
+                    ...FABRIC_DEFAULTS.NON_INTERACTIVE
                 });
                 shapes.push(selectionRect);
             }
