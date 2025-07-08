@@ -55,15 +55,21 @@ export default defineConfig({
         setupFiles: [path.resolve(process.cwd(), 'vitest.setup.ts')],
         environmentOptions: {
             jsdom: {
-                resources: 'usable'
+                resources: 'usable',
+                // CI stability improvements
+                runScripts: 'dangerously',
+                pretendToBeVisual: false // Reduce CI resource overhead
             }
         },
         pool: 'forks',
         poolOptions: {
             forks: {
                 singleFork: true, // Use single fork for stability
-                isolate: false, // Disable isolation - CI JSDOM compatibility fix
-                execArgv: [] // Clear any Node.js execution arguments
+                isolate: true, // Re-enable isolation for better CI environment separation
+                execArgv: [], // Clear any Node.js execution arguments
+                // CI-specific memory and timeout settings
+                minWorkers: 1,
+                maxWorkers: 1
             }
         },
         clearMocks: true,
