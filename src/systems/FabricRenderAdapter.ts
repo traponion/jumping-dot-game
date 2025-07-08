@@ -5,9 +5,10 @@
  */
 
 import type { StageData } from '../core/StageLoader.js';
+import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import { FabricRenderSystem } from './FabricRenderSystem.js';
-import type { IRenderSystem, LandingPrediction, Position } from './IRenderSystem.js';
+import type { IRenderSystem, Position } from './IRenderSystem.js';
 
 /**
  * FabricRenderAdapter - Simple delegation pattern implementation

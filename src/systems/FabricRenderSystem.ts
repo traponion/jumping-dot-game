@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import type { StageData } from '../core/StageLoader.js';
+import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
 import { AnimationRenderer } from './renderers/AnimationRenderer.js';
@@ -9,12 +10,7 @@ import { StageRenderer } from './renderers/StageRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
 
 // Landing prediction interface for render system
-export interface LandingPrediction {
-    x: number;
-    y: number;
-    confidence: number; // 0-1, how certain we are about this prediction
-    jumpNumber: number; // Which jump this represents (1, 2, 3...)
-}
+// LandingPrediction moved to domain layer: src/types/AnalyticsTypes.ts
 
 export class FabricRenderSystem implements IRenderSystem {
     protected canvas: fabric.Canvas;

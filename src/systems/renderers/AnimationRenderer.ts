@@ -1,15 +1,11 @@
 import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
+import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
 import type { Particle } from '../../types/GameTypes.js';
 import type { Position } from '../IRenderSystem.js';
 
 // Landing prediction interface for animation renderer
-export interface LandingPrediction {
-    x: number;
-    y: number;
-    confidence: number; // 0-1, how certain we are about this prediction
-    jumpNumber: number; // Which jump this represents (1, 2, 3...)
-}
+// LandingPrediction moved to domain layer: src/types/AnalyticsTypes.ts
 
 export class AnimationRenderer {
     private landingPredictions: LandingPrediction[] = [];
