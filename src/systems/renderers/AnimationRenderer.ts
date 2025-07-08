@@ -2,7 +2,7 @@ import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
 import type { Particle } from '../../types/GameTypes.js';
-import { createGlowShadow } from '../../utils/FabricObjectFactory';
+import { createGlowShadow, createNonInteractiveShape } from '../../utils/FabricObjectFactory';
 import type { Position } from '../IRenderSystem.js';
 
 // Landing prediction interface for animation renderer
@@ -28,14 +28,14 @@ export class AnimationRenderer {
         for (const particle of particles) {
             // レガシーレンダラーに合わせてサイズ計算を修正
             const radius = particle.size || RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS;
-            const particleShape = new fabric.Circle({
-                left: particle.x - radius,
-                top: particle.y - radius,
-                radius: radius,
-                fill: `rgba(255, 0, 0, ${particle.life})`,
-                selectable: false,
-                evented: false
-            });
+            const particleShape = new fabric.Circle(
+                createNonInteractiveShape({
+                    left: particle.x - radius,
+                    top: particle.y - radius,
+                    radius: radius,
+                    fill: `rgba(255, 0, 0, ${particle.life})`
+                })
+            );
             this.canvas.add(particleShape);
         }
     }
@@ -48,28 +48,29 @@ export class AnimationRenderer {
     ): void {
         // パーティクルを描画（レガシーレンダラーに合わせて固定サイズ2）
         for (const particle of particles) {
-            const particleShape = new fabric.Circle({
-                left: particle.x - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
-                top: particle.y - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
-                radius: RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
-                fill: `rgba(255, 255, 255, ${particle.life})`,
-                selectable: false,
-                evented: false
-            });
+            const particleShape = new fabric.Circle(
+                createNonInteractiveShape({
+                    left: particle.x - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
+                    top: particle.y - RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
+                    radius: RENDERING_CONSTANTS.ANIMATION.PARTICLE_RADIUS,
+                    fill: `rgba(255, 255, 255, ${particle.life})`
+                })
+            );
             this.canvas.add(particleShape);
         }
 
         // "CLEAR!"テキストを描画
         if (progress < 0.8) {
-            const clearText = new fabric.Text('CLEAR!', {
-                left: playerX - 50,
-                top: playerY - 100,
-                fontSize: 40,
-                fontFamily: 'Arial',
-                fill: 'yellow',
-                selectable: false,
-                evented: false
-            });
+            const clearText = new fabric.Text(
+                'CLEAR!',
+                createNonInteractiveShape({
+                    left: playerX - 50,
+                    top: playerY - 100,
+                    fontSize: 40,
+                    fontFamily: 'Arial',
+                    fill: 'yellow'
+                })
+            );
             this.canvas.add(clearText);
         }
     }
@@ -77,17 +78,17 @@ export class AnimationRenderer {
     renderSoulAnimation(particles: Particle[]): void {
         for (const particle of particles) {
             // Soul particle with glowing effect
-            const soulShape = new fabric.Circle({
-                left: particle.x - 3,
-                top: particle.y - 3,
-                radius: 3,
-                fill: `rgba(255, 255, 255, ${particle.life})`,
-                stroke: `rgba(255, 255, 255, ${particle.life * 0.5})`,
-                strokeWidth: 2,
-                selectable: false,
-                evented: false,
-                shadow: createGlowShadow()
-            });
+            const soulShape = new fabric.Circle(
+                createNonInteractiveShape({
+                    left: particle.x - 3,
+                    top: particle.y - 3,
+                    radius: 3,
+                    fill: `rgba(255, 255, 255, ${particle.life})`,
+                    stroke: `rgba(255, 255, 255, ${particle.life * 0.5})`,
+                    strokeWidth: 2,
+                    shadow: createGlowShadow()
+                })
+            );
             this.canvas.add(soulShape);
         }
     }
@@ -183,12 +184,10 @@ export class AnimationRenderer {
                     landing.x + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
                     landing.y
                 ],
-                {
+                createNonInteractiveShape({
                     stroke: `rgba(0, 255, 0, ${opacity})`,
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false
-                }
+                    strokeWidth: 1
+                })
             );
             this.canvas.add(historyLine);
         }
@@ -206,12 +205,10 @@ export class AnimationRenderer {
                 x + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE,
                 y
             ],
-            {
+            createNonInteractiveShape({
                 stroke: 'rgba(255, 255, 255, 0.8)',
-                strokeWidth: 2,
-                selectable: false,
-                evented: false
-            }
+                strokeWidth: 2
+            })
         );
 
         const verticalLine = new fabric.Line(
@@ -221,12 +218,10 @@ export class AnimationRenderer {
                 x,
                 y + RENDERING_CONSTANTS.ANIMATION.CROSSHAIR_SIZE
             ],
-            {
+            createNonInteractiveShape({
                 stroke: 'rgba(255, 255, 255, 0.8)',
-                strokeWidth: 2,
-                selectable: false,
-                evented: false
-            }
+                strokeWidth: 2
+            })
         );
 
         this.canvas.add(horizontalLine);

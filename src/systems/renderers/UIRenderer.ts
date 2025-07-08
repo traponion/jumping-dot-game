@@ -1,6 +1,10 @@
 import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
-import { createStandardShadow, createTitleShadow } from '../../utils/FabricObjectFactory';
+import {
+    FABRIC_DEFAULTS,
+    createStandardShadow,
+    createTitleShadow
+} from '../../utils/FabricObjectFactory';
 
 export class UIRenderer {
     private uiShapes: fabric.Object[] = [];
@@ -70,11 +74,9 @@ export class UIRenderer {
             top: screenCenterY - 80,
             fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.TITLE_SIZE,
             fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false,
+            ...FABRIC_DEFAULTS.MONOSPACE_FONT,
+            ...FABRIC_DEFAULTS.CENTERED_TEXT,
+            ...FABRIC_DEFAULTS.NON_INTERACTIVE,
             shadow: createTitleShadow()
         });
     }
@@ -93,11 +95,9 @@ export class UIRenderer {
             top: screenCenterY - 40,
             fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.SMALL_SIZE + 6, // 20px for score display
             fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false,
+            ...FABRIC_DEFAULTS.MONOSPACE_FONT,
+            ...FABRIC_DEFAULTS.CENTERED_TEXT,
+            ...FABRIC_DEFAULTS.NON_INTERACTIVE,
             shadow: createStandardShadow()
         });
     }
@@ -112,11 +112,9 @@ export class UIRenderer {
             top: screenCenterY - 15, // Position below score display
             fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.SMALL_SIZE + 6, // 20px for death count display
             fill: 'white',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false,
+            ...FABRIC_DEFAULTS.MONOSPACE_FONT,
+            ...FABRIC_DEFAULTS.CENTERED_TEXT,
+            ...FABRIC_DEFAULTS.NON_INTERACTIVE,
             shadow: createStandardShadow()
         });
     }
@@ -155,11 +153,9 @@ export class UIRenderer {
                 top: y,
                 fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.MENU_SIZE,
                 fill: isSelected ? 'black' : 'white',
-                fontFamily: 'monospace',
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false,
+                ...FABRIC_DEFAULTS.MONOSPACE_FONT,
+                ...FABRIC_DEFAULTS.CENTERED_TEXT,
+                ...FABRIC_DEFAULTS.NON_INTERACTIVE,
                 shadow: isSelected ? null : createStandardShadow()
             });
             shapes.push(optionText);
@@ -178,11 +174,9 @@ export class UIRenderer {
             top: cameraY + canvasHeight - 50,
             fontSize: RENDERING_CONSTANTS.TYPOGRAPHY.INSTRUCTION_SIZE,
             fill: '#aaa',
-            fontFamily: 'monospace',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            evented: false,
+            ...FABRIC_DEFAULTS.MONOSPACE_FONT,
+            ...FABRIC_DEFAULTS.CENTERED_TEXT,
+            ...FABRIC_DEFAULTS.NON_INTERACTIVE,
             shadow: createStandardShadow()
         });
     }

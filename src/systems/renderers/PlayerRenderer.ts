@@ -1,6 +1,7 @@
 import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { Player, TrailPoint } from '../../types/GameTypes';
+import { createNonInteractiveShape } from '../../utils/FabricObjectFactory';
 
 /**
  * PlayerRenderer - Handles player and trail rendering
@@ -24,14 +25,14 @@ export class PlayerRenderer {
             });
         } else {
             // Create new player shape
-            this.playerShape = new fabric.Circle({
-                left: player.x - player.radius,
-                top: player.y - player.radius,
-                radius: player.radius,
-                fill: 'white',
-                selectable: false,
-                evented: false
-            });
+            this.playerShape = new fabric.Circle(
+                createNonInteractiveShape({
+                    left: player.x - player.radius,
+                    top: player.y - player.radius,
+                    radius: player.radius,
+                    fill: 'white'
+                })
+            );
             this.canvas.add(this.playerShape);
         }
     }
@@ -54,14 +55,14 @@ export class PlayerRenderer {
             const alpha = (maxTrailPoints - i) / maxTrailPoints;
             const radius = playerRadius * alpha * 0.8;
 
-            const trailShape = new fabric.Circle({
-                left: point.x - radius,
-                top: point.y - radius,
-                radius: radius,
-                fill: `rgba(255, 255, 255, ${alpha * 0.6})`,
-                selectable: false,
-                evented: false
-            });
+            const trailShape = new fabric.Circle(
+                createNonInteractiveShape({
+                    left: point.x - radius,
+                    top: point.y - radius,
+                    radius: radius,
+                    fill: `rgba(255, 255, 255, ${alpha * 0.6})`
+                })
+            );
 
             this.trailShapes.push(trailShape);
             this.canvas.add(trailShape);
