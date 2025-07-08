@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GameState } from '../stores/GameState.js';
+import { GameState } from '../../../stores/GameState.js';
 
 describe('GameState', () => {
     describe('deathCount property', () => {
