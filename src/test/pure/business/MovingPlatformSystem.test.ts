@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { MovingPlatform } from '../core/StageLoader';
-import type { GameState } from '../stores/GameState';
-import { MovingPlatformSystem } from '../systems/MovingPlatformSystem';
+import type { MovingPlatform } from '../../../core/StageLoader.js';
+import type { GameState } from '../../../stores/GameState.js';
+import { MovingPlatformSystem } from '../../../systems/MovingPlatformSystem.js';
 
 describe('MovingPlatformSystem', () => {
     let movingPlatformSystem: MovingPlatformSystem;
