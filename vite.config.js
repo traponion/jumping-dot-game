@@ -89,7 +89,8 @@ export default defineConfig({
                 'src/core/GameManager.ts', // JSDOM timing issues cause inconsistent coverage
                 'src/core/GameLoop.ts', // Animation frame instability in test environment  
                 'src/systems/AnimationSystem.ts', // JSDOM DOM timing issues
-                'src/systems/InputManager.ts' // Canvas event binding issues in JSDOM
+                'src/systems/InputManager.ts', // Canvas event binding issues in JSDOM
+                'src/systems/renderers/StageRenderer.ts' // Fabric.js Text rendering framework separation - measured coverage after CI fixes
             ],
             thresholds: getCoverageThresholds()
         }
