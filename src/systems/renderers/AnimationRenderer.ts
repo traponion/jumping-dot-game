@@ -2,7 +2,11 @@ import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
 import type { Particle } from '../../types/GameTypes.js';
-import { createGlowShadow, createNonInteractiveShape } from '../../utils/FabricObjectFactory';
+import {
+    FABRIC_DEFAULTS,
+    createGlowShadow,
+    createNonInteractiveShape
+} from '../../utils/FabricObjectFactory';
 import type { Position } from '../IRenderSystem.js';
 
 // Landing prediction interface for animation renderer
@@ -67,7 +71,7 @@ export class AnimationRenderer {
                     left: playerX - 50,
                     top: playerY - 100,
                     fontSize: 40,
-                    fontFamily: 'Arial',
+                    ...FABRIC_DEFAULTS.ARIAL_FONT,
                     fill: 'yellow'
                 })
             );

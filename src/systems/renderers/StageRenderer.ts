@@ -1,6 +1,6 @@
 import * as fabric from 'fabric';
 import type { Goal, MovingPlatform, Platform, Spike, StageData } from '../../core/StageLoader';
-import { createNonInteractiveShape } from '../../utils/FabricObjectFactory';
+import { FABRIC_DEFAULTS, createNonInteractiveShape } from '../../utils/FabricObjectFactory';
 
 /**
  * StageRenderer - Handles stage element rendering
@@ -175,7 +175,7 @@ export class StageRenderer {
                 top: stage.startText.y,
                 fill: 'white',
                 fontSize: 16,
-                fontFamily: 'Arial'
+                ...FABRIC_DEFAULTS.ARIAL_FONT
             })
         );
 
@@ -190,7 +190,7 @@ export class StageRenderer {
                 top: stage.goalText.y,
                 fill: 'white',
                 fontSize: 16,
-                fontFamily: 'Arial'
+                ...FABRIC_DEFAULTS.ARIAL_FONT
             })
         );
 
@@ -206,7 +206,7 @@ export class StageRenderer {
                     top: stage.leftEdgeMessage.y,
                     fill: 'white',
                     fontSize: 14,
-                    fontFamily: 'Arial'
+                    ...FABRIC_DEFAULTS.ARIAL_FONT
                 })
             );
 
@@ -222,7 +222,7 @@ export class StageRenderer {
                     top: stage.leftEdgeSubMessage.y,
                     fill: 'white',
                     fontSize: 12,
-                    fontFamily: 'Arial'
+                    ...FABRIC_DEFAULTS.ARIAL_FONT
                 })
             );
 

@@ -3,7 +3,8 @@ import * as fabric from 'fabric';
 export const FABRIC_DEFAULTS = {
     NON_INTERACTIVE: { selectable: false, evented: false },
     CENTERED_TEXT: { originX: 'center', originY: 'center' },
-    MONOSPACE_FONT: { fontFamily: 'monospace' }
+    MONOSPACE_FONT: { fontFamily: 'monospace' },
+    ARIAL_FONT: { fontFamily: 'Arial' }
 } as const;
 
 export const SHADOW_PRESETS = {
