@@ -35,12 +35,14 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Run tests with coverage
-        run: npm run test:coverage:ci
-        env:
-          CI: true
-          NODE_ENV: test
-          VITEST_POOL: forks
+      # Temporary - JSDOM deletion pending
+      # Coverage step disabled due to JSDOM/Fabric.js incompatibility in CI
+      # - name: Run tests with coverage
+      #   run: npm run test:coverage:ci
+      #   env:
+      #     CI: true
+      #     NODE_ENV: test
+      #     VITEST_POOL: forks
         
       - name: Build
         run: npm run build
