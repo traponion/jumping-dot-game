@@ -3,6 +3,14 @@ import type { StageData } from '../core/StageLoader.js';
 import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 import type { IRenderSystem, Position } from './IRenderSystem.js';
+import type {
+    IAnalyticsRenderer,
+    IAnimationRenderer,
+    ICanvasManager,
+    IGameObjectRenderer,
+    IRenderSystemManager,
+    IUIRenderer
+} from './interfaces/index.js';
 import { AnimationRenderer } from './renderers/AnimationRenderer.js';
 import { PlayerRenderer } from './renderers/PlayerRenderer.js';
 import { ResourceManager } from './renderers/ResourceManager.js';
@@ -12,7 +20,16 @@ import { UIRenderer } from './renderers/UIRenderer.js';
 // Landing prediction interface for render system
 // LandingPrediction moved to domain layer: src/types/AnalyticsTypes.ts
 
-export class FabricRenderSystem implements IRenderSystem {
+export class FabricRenderSystem
+    implements
+        IRenderSystem,
+        ICanvasManager,
+        IGameObjectRenderer,
+        IUIRenderer,
+        IAnimationRenderer,
+        IAnalyticsRenderer,
+        IRenderSystemManager
+{
     protected canvas: fabric.Canvas;
     private stageRenderer: StageRenderer;
     private uiRenderer: UIRenderer;
