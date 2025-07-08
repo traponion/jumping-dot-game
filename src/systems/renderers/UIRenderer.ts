@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
+import { createStandardShadow, createTitleShadow } from '../../utils/FabricObjectFactory';
 
 export class UIRenderer {
     private uiShapes: fabric.Object[] = [];
@@ -74,12 +75,7 @@ export class UIRenderer {
             originY: 'center',
             selectable: false,
             evented: false,
-            shadow: new fabric.Shadow({
-                color: 'rgba(0,0,0,0.8)',
-                offsetX: 2,
-                offsetY: 2,
-                blur: 4
-            })
+            shadow: createTitleShadow()
         });
     }
 
@@ -102,12 +98,7 @@ export class UIRenderer {
             originY: 'center',
             selectable: false,
             evented: false,
-            shadow: new fabric.Shadow({
-                color: 'rgba(0,0,0,0.8)',
-                offsetX: 1,
-                offsetY: 1,
-                blur: 2
-            })
+            shadow: createStandardShadow()
         });
     }
 
@@ -126,12 +117,7 @@ export class UIRenderer {
             originY: 'center',
             selectable: false,
             evented: false,
-            shadow: new fabric.Shadow({
-                color: 'rgba(0,0,0,0.8)',
-                offsetX: 1,
-                offsetY: 1,
-                blur: 2
-            })
+            shadow: createStandardShadow()
         });
     }
 
@@ -174,14 +160,7 @@ export class UIRenderer {
                 originY: 'center',
                 selectable: false,
                 evented: false,
-                shadow: isSelected
-                    ? null
-                    : new fabric.Shadow({
-                          color: 'rgba(0,0,0,0.8)',
-                          offsetX: 1,
-                          offsetY: 1,
-                          blur: 2
-                      })
+                shadow: isSelected ? null : createStandardShadow()
             });
             shapes.push(optionText);
         });
@@ -204,12 +183,7 @@ export class UIRenderer {
             originY: 'center',
             selectable: false,
             evented: false,
-            shadow: new fabric.Shadow({
-                color: 'rgba(0,0,0,0.8)',
-                offsetX: 1,
-                offsetY: 1,
-                blur: 2
-            })
+            shadow: createStandardShadow()
         });
     }
 

@@ -17,6 +17,13 @@ vi.mock('fabric', () => ({
     Shadow: vi.fn(() => ({}))
 }));
 
+// Mock FabricObjectFactory
+vi.mock('../utils/FabricObjectFactory', () => ({
+    createStandardShadow: vi.fn(() => ({ type: 'standard-shadow' })),
+    createTitleShadow: vi.fn(() => ({ type: 'title-shadow' })),
+    createGlowShadow: vi.fn(() => ({ type: 'glow-shadow' }))
+}));
+
 // Mock DOM elements
 const mockElement = {
     classList: {

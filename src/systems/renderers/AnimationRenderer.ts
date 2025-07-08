@@ -2,6 +2,7 @@ import * as fabric from 'fabric';
 import { RENDERING_CONSTANTS } from '../../constants/GameConstants';
 import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
 import type { Particle } from '../../types/GameTypes.js';
+import { createGlowShadow } from '../../utils/FabricObjectFactory';
 import type { Position } from '../IRenderSystem.js';
 
 // Landing prediction interface for animation renderer
@@ -85,12 +86,7 @@ export class AnimationRenderer {
                 strokeWidth: 2,
                 selectable: false,
                 evented: false,
-                shadow: new fabric.Shadow({
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    offsetX: 0,
-                    offsetY: 0,
-                    blur: 5
-                })
+                shadow: createGlowShadow()
             });
             this.canvas.add(soulShape);
         }
