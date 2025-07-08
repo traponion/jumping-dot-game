@@ -7,9 +7,9 @@
 import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { Platform } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
+import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
-import type { LandingPrediction } from './FabricRenderSystem.js';
 import type { InputManager } from './InputManager.js';
 
 /**

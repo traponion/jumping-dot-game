@@ -5,17 +5,13 @@
  */
 
 import type { StageData } from '../core/StageLoader.js';
+import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
 /**
  * Landing prediction interface (FabricRenderSystem compatible)
  */
-export interface LandingPrediction {
-    x: number;
-    y: number;
-    confidence: number; // 0-1, how certain we are about this prediction
-    jumpNumber: number; // Which jump this represents (1, 2, 3...)
-}
+// LandingPrediction moved to domain layer: src/types/AnalyticsTypes.ts
 
 /**
  * Position interface for crosshair and history

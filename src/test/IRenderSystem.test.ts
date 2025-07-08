@@ -11,7 +11,8 @@
 
 import { beforeEach, describe, expect, test } from 'vitest';
 import type { StageData } from '../core/StageLoader';
-import type { IRenderSystem, LandingPrediction, Position } from '../systems/IRenderSystem';
+import type { IRenderSystem, Position } from '../systems/IRenderSystem';
+import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes';
 import { MockRenderSystem } from './mocks/MockRenderSystem.js';
 
