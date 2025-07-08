@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameState } from '../stores/GameState.js';
-import { AnimationSystem } from '../systems/AnimationSystem.js';
-import type { Player } from '../types/GameTypes.js';
+import { GameState } from '../../../stores/GameState.js';
+import { AnimationSystem } from '../../../systems/AnimationSystem.js';
+import type { Player } from '../../../types/GameTypes.js';
 
 describe('AnimationSystem', () => {
     let animationSystem: AnimationSystem;
