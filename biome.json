@@ -112,6 +112,17 @@
             "quoteStyle": "single",
             "semicolons": "always",
             "trailingCommas": "none"
-        }
+        },
+        "globals": [
+            "describe",
+            "test",
+            "it",
+            "expect",
+            "beforeEach",
+            "afterEach",
+            "beforeAll",
+            "afterAll",
+            "vi"
+        ]
     }
 }

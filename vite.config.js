@@ -51,7 +51,14 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         globals: true,
-        exclude: ['tests/**', 'node_modules/**'], // Exclude Playwright tests and node_modules
+        exclude: [
+            'tests/**', 
+            'node_modules/**',
+            // New layered test architecture - run via dedicated scripts
+            'src/test/pure/**/*.test.ts',
+            'src/test/adapters/**/*.test.ts', 
+            'src/test/integration/**/*.test.ts'
+        ], // Exclude Playwright tests, node_modules, and new layered tests
         setupFiles: [path.resolve(process.cwd(), 'vitest.setup.ts')],
         environmentOptions: {
             jsdom: {
