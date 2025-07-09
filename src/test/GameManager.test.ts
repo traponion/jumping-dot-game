@@ -93,13 +93,13 @@ describe('GameManager', () => {
         );
 
         // Get mock instances
-        mockCollisionSystem = (gameManager as any).systems.collisionSystem;
-        mockAnimationSystem = (gameManager as any).systems.animationSystem;
-        mockPlayerSystem = (gameManager as any).systems.playerSystem;
-        mockPhysicsSystem = (gameManager as any).systems.physicsSystem;
+        mockCollisionSystem = (gameManager as any).collisionSystem;
+        mockAnimationSystem = (gameManager as any).animationSystem;
+        mockPlayerSystem = (gameManager as any).playerSystem;
+        mockPhysicsSystem = (gameManager as any).physicsSystem;
 
         // Setup InputManager mock
-        const mockInputManager = (gameManager as any).systems.inputManager;
+        const mockInputManager = (gameManager as any).inputManager;
         (mockInputManager as any).getMovementState = vi.fn().mockReturnValue({
             ArrowLeft: false,
             ArrowRight: false
@@ -144,7 +144,10 @@ describe('GameManager', () => {
         it('should not call updateSystems when game is not running', () => {
             // Arrange: Game is stopped
             gameState.gameRunning = false;
-            const updateSystemsSpy = vi.spyOn((gameManager as any).core as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -157,7 +160,10 @@ describe('GameManager', () => {
             // Arrange: Game is over
             gameState.gameRunning = true;
             gameState.gameOver = true;
-            const updateSystemsSpy = vi.spyOn((gameManager as any).core as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -169,7 +175,10 @@ describe('GameManager', () => {
         it('should call updateSystems when game is running and not over', () => {
             // Arrange: Game is running
             gameState.gameRunning = true;
-            const updateSystemsSpy = vi.spyOn((gameManager as any).core as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -223,7 +232,7 @@ describe('GameManager', () => {
                 startText: { x: 50, y: 450, text: 'START' },
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
-            const mockStageLoader = (gameManager as any).initialization.getStageLoader();
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             (mockStageLoader as any).loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
 
             // Act
@@ -246,7 +255,7 @@ describe('GameManager', () => {
                 startText: { x: 50, y: 450, text: 'START' },
                 goalText: { x: 720, y: 430, text: 'GOAL' }
             };
-            const mockStageLoader = (gameManager as any).initialization.getStageLoader();
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             (mockStageLoader as any).loadStageWithFallback = vi.fn().mockResolvedValue(mockStage);
             const defaultTimeLimit = gameState.timeLimit;
 
@@ -270,7 +279,10 @@ describe('GameManager', () => {
 
         it('should update all systems in correct order', () => {
             // Arrange
-            const updateSystemsSpy = vi.spyOn((gameManager as any).core as any, 'updateSystems');
+            const updateSystemsSpy = vi.spyOn(
+                gameManager as unknown as { updateSystems: () => void },
+                'updateSystems'
+            );
 
             // Act
             gameManager.update(16.67);
@@ -315,7 +327,7 @@ describe('GameManager', () => {
                     }
                 ]
             };
-            const mockStageLoader = (gameManager as any).initialization.getStageLoader();
+            const mockStageLoader = (gameManager as unknown as Record<string, unknown>).stageLoader;
             // Return a deep copy each time to avoid reference sharing
             (mockStageLoader as any).loadStageWithFallback = vi
                 .fn()
