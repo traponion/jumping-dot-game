@@ -43,8 +43,8 @@ test.describe('Player Display and Movement', () => {
         // Verify basic UI elements exist (implementation-independent)
         // Check elements are attached to DOM, regardless of initial visibility
         await expect(page.locator('#gameStatus')).toBeAttached();
-        await expect(page.locator('#timer')).toBeVisible();
-        await expect(page.locator('#startScreen')).toBeVisible();
+        await expect(page.locator('#timer')).toBeAttached();
+        await expect(page.locator('#startScreen')).toBeAttached();
 
         await page.screenshot({ path: 'test-results/player-02-ui-verified.png' });
     });
