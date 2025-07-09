@@ -3,6 +3,7 @@ import type { Platform } from '../core/StageLoader.js';
 import { GameState } from '../stores/GameState.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import type { Player } from '../types/GameTypes.js';
+import { checkBoundaryCollision } from '../utils/CollisionUtils.js';
 
 describe('CollisionSystem', () => {
     let player: Player;
@@ -287,25 +288,16 @@ describe('CollisionSystem', () => {
         });
 
         it('should use canvas height for boundary collision detection', () => {
-            // This test will fail until we modify the constructor
-            const canvasAwareCollisionSystem = new CollisionSystem(gameState, mockCanvas);
-
             // Player just below canvas boundary threshold
             player.y = mockCanvas.height + 99;
 
-            const result = canvasAwareCollisionSystem.checkBoundaryCollision(
-                player,
-                mockCanvas.height
-            );
+            const result = checkBoundaryCollision(player, mockCanvas.height);
             expect(result).toBe(false);
 
             // Player above canvas boundary threshold
             player.y = mockCanvas.height + 101;
 
-            const result2 = canvasAwareCollisionSystem.checkBoundaryCollision(
-                player,
-                mockCanvas.height
-            );
+            const result2 = checkBoundaryCollision(player, mockCanvas.height);
             expect(result2).toBe(true);
         });
 
