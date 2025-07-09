@@ -1,12 +1,12 @@
+/**
+ * @fileoverview Physics system for player movement and gravity calculations
+ * @module systems/PhysicsSystem
+ * @description Domain Layer - Pure physics calculations for player movement
+ */
+
+import { DEFAULT_PHYSICS_CONSTANTS } from '../constants/GameConstants.js';
 import type { GameState } from '../stores/GameState.js';
-import type { PhysicsConstants } from '../types/GameTypes.js';
-import {
-    type PlayerPhysicsState,
-    copyPhysicsConstants,
-    resetPhysicsConstants,
-    updatePhysicsConstants,
-    updatePlayerPhysics
-} from '../utils/PhysicsUtils.js';
+import type { PhysicsConstants, Player } from '../types/GameTypes.js';
 
 /**
  * Physics system responsible for applying gravity and movement calculations
@@ -37,23 +37,57 @@ export class PhysicsSystem {
      * @returns {void}
      */
     update(deltaTime: number): void {
+        const dtFactor = (deltaTime / (1000 / 60)) * this.constants.gameSpeed;
+
+        // Get current player state from game state
         const player = this.gameState.runtime.player;
 
-        // Convert to pure state
-        const playerState: PlayerPhysicsState = {
-            x: player.x,
-            y: player.y,
-            vx: player.vx,
-            vy: player.vy,
-            radius: player.radius,
-            grounded: player.grounded
+        // Calculate physics updates
+        const newVy = this.calculateGravity(player, dtFactor);
+        const newPosition = this.calculatePosition(player, newVy, dtFactor);
+
+        // Update game state with new values
+        player.x = newPosition.x;
+        player.y = newPosition.y;
+        player.vy = newVy;
+
+        // Clamp horizontal velocity to maximum speed
+        const maxSpeed = this.constants.moveSpeed;
+        if (player.vx > maxSpeed) player.vx = maxSpeed;
+        if (player.vx < -maxSpeed) player.vx = -maxSpeed;
+    }
+
+    /**
+     * Calculates gravity effect on player velocity
+     * @private
+     * @param {Player} player - Current player state
+     * @param {number} dtFactor - Delta time factor for frame-rate independent calculations
+     * @returns {number} New vertical velocity after gravity application
+     */
+    private calculateGravity(player: Player, dtFactor: number): number {
+        if (!player.grounded) {
+            return player.vy + this.constants.gravity * dtFactor;
+        }
+        return player.vy;
+    }
+
+    /**
+     * Calculates new player position based on velocity
+     * @private
+     * @param {Player} player - Current player state
+     * @param {number} newVy - New vertical velocity
+     * @param {number} dtFactor - Delta time factor for frame-rate independent calculations
+     * @returns {{ x: number, y: number }} New position coordinates
+     */
+    private calculatePosition(
+        player: Player,
+        newVy: number,
+        dtFactor: number
+    ): { x: number; y: number } {
+        return {
+            x: player.x + player.vx * dtFactor,
+            y: player.y + newVy * dtFactor
         };
-
-        // Apply pure physics calculations
-        const updatedState = updatePlayerPhysics(playerState, this.constants, deltaTime);
-
-        // Update game state
-        Object.assign(player, updatedState);
     }
 
     /**
@@ -61,7 +95,7 @@ export class PhysicsSystem {
      * @returns {PhysicsConstants} Copy of current physics constants
      */
     getPhysicsConstants(): PhysicsConstants {
-        return copyPhysicsConstants(this.constants);
+        return { ...this.constants };
     }
 
     /**
@@ -70,7 +104,7 @@ export class PhysicsSystem {
      * @returns {void}
      */
     updateConstants(newConstants: Partial<PhysicsConstants>): void {
-        this.constants = updatePhysicsConstants(this.constants, newConstants);
+        this.constants = { ...this.constants, ...newConstants };
     }
 
     /**
@@ -78,6 +112,6 @@ export class PhysicsSystem {
      * @returns {void}
      */
     resetConstants(): void {
-        this.constants = resetPhysicsConstants();
+        this.constants = { ...DEFAULT_PHYSICS_CONSTANTS };
     }
 }

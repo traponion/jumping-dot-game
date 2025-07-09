@@ -116,10 +116,6 @@ export class JumpingDotGame {
         // Update timer UI if game is running
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             this.gameUI.updateTimer();
-        }
-
-        // Always update death count UI when game is running (including after death)
-        if (this.gameState.gameRunning) {
             this.gameUI.updateDeathCount();
         }
 
