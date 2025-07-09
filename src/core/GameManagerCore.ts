@@ -47,6 +47,9 @@ export class GameManagerCore {
     async loadStage(stageId: number): Promise<StageData> {
         const stage = await this.stageLoader.loadStageWithFallback(stageId);
 
+        // Sync stage to GameState for CollisionSystem access
+        this.gameState.stage = stage;
+
         // Set time limit from stage data
         if (stage.timeLimit) {
             this.gameState.timeLimit = stage.timeLimit;
