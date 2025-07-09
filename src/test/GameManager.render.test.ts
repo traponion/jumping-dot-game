@@ -105,8 +105,25 @@ describe('GameManager render with GameUI integration', () => {
         const mockGameController = {} as GameController;
         gameState = new GameState();
         gameManager = new GameManager(canvas, mockGameController, gameState);
-        (gameManager as unknown as { renderSystem: Partial<FabricRenderSystem> }).renderSystem =
-            mockRenderSystem;
+        (gameManager as any).systems.renderSystem = mockRenderSystem;
+        // Recreate renderer with mock render system
+        (gameManager as any).renderer = {
+            render: vi.fn((ui, _stage) => {
+                if (gameState.gameOver && ui) {
+                    const menuData = ui.getGameOverMenuData();
+                    mockRenderSystem.renderGameOverMenu?.(
+                        menuData.options,
+                        menuData.selectedIndex,
+                        gameState.finalScore,
+                        gameState.deathCount
+                    );
+                } else if (!gameState.gameRunning && ui) {
+                    ui.showStartScreen?.();
+                }
+                mockRenderSystem.renderAll?.();
+            }),
+            renderGameOverMenu: vi.fn()
+        };
     });
 
     describe('when game is over', () => {
