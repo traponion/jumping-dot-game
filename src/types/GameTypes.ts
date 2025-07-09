@@ -53,8 +53,8 @@ export interface Particle {
     life: number;
     decay: number;
     size?: number;
-    targetX?: number;
-    targetY?: number;
+    targetX?: number | undefined;
+    targetY?: number | undefined;
     onComplete?: () => void;
 }
 

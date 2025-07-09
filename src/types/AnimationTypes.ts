@@ -85,13 +85,15 @@ export interface DeathParticle extends Particle {
 export interface SoulParticle extends Particle {
     x: number;
     y: number;
-    targetX: number;
-    targetY: number;
+    targetX?: number | undefined;
+    targetY?: number | undefined;
     vx: number;
     vy: number;
     life: number;
     decay: number;
     onComplete?: () => void;
+    initialX?: number;
+    initialY?: number;
 }
 
 /**
