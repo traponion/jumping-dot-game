@@ -10,6 +10,11 @@ import type { GameState } from '../stores/GameState.js';
 import type { LandingPrediction } from '../types/AnalyticsTypes.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
+import {
+    type PlayerPhysicsState,
+    applyMinimumVelocity,
+    clampVelocity
+} from '../utils/PhysicsUtils.js';
 import type { InputManager } from './InputManager.js';
 
 /**
@@ -102,14 +107,23 @@ export class PlayerSystem {
             this.hasMovedOnce = true;
         }
 
-        // Apply minimum velocity if player has moved once
-        if (
-            this.hasMovedOnce &&
-            Math.abs(this.gameState.runtime.player.vx) < GAME_CONFIG.player.minVelocity
-        ) {
-            const sign = this.gameState.runtime.player.vx >= 0 ? 1 : -1;
-            this.gameState.runtime.player.vx = GAME_CONFIG.player.minVelocity * sign;
-        }
+        // Apply minimum velocity using pure function
+        const player = this.gameState.runtime.player;
+        const playerState: PlayerPhysicsState = {
+            x: player.x,
+            y: player.y,
+            vx: player.vx,
+            vy: player.vy,
+            radius: player.radius,
+            grounded: player.grounded
+        };
+
+        const updatedState = applyMinimumVelocity(
+            playerState,
+            GAME_CONFIG.player.minVelocity,
+            this.hasMovedOnce
+        );
+        player.vx = updatedState.vx;
     }
 
     /**
@@ -223,9 +237,19 @@ export class PlayerSystem {
      */
     clampSpeed(maxSpeed: number): void {
         const player = this.gameState.runtime.player;
-        if (Math.abs(player.vx) > maxSpeed) {
-            player.vx = player.vx >= 0 ? maxSpeed : -maxSpeed;
-        }
+        const playerState: PlayerPhysicsState = {
+            x: player.x,
+            y: player.y,
+            vx: player.vx,
+            vy: player.vy,
+            radius: player.radius,
+            grounded: player.grounded
+        };
+
+        const clampedState = clampVelocity(playerState, {
+            moveSpeed: maxSpeed
+        } as PhysicsConstants);
+        player.vx = clampedState.vx;
     }
 
     /**
