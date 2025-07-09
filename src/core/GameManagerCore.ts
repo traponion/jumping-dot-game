@@ -64,7 +64,8 @@ export class GameManagerCore {
         this.gameState.gameRunning = false;
         this.gameState.gameOver = false;
         this.gameState.finalScore = 0;
-        // Note: deathCount and deathMarks are NOT reset - they persist across restarts as cumulative data
+        this.gameState.deathCount = 0;
+        this.gameState.runtime.deathMarks = [];
 
         // Reset player trail and jump timer
         this.systems.playerSystem.clearTrail();
