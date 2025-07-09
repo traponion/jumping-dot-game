@@ -77,8 +77,6 @@ export class JumpingDotGame {
 
         await this.gameManager.loadStage(this.gameState.currentStage);
 
-        // Hide game over screen and show start screen
-        this.gameUI.showStartScreen();
         this.gameUI.showReadyToStart();
         await this.gameManager.resetGameState();
         this.gameUI.updateInitialUI();
