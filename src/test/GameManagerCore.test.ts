@@ -203,6 +203,10 @@ describe('GameManagerCore', () => {
             gameState.gameOver = true;
             gameState.finalScore = 100;
             gameState.deathCount = 5;
+            gameState.runtime.deathMarks = [
+                { x: 150, y: 400, timestamp: 1000 },
+                { x: 200, y: 450, timestamp: 2000 }
+            ];
 
             // Act
             const result = await gameManagerCore.resetGameState();
@@ -211,7 +215,10 @@ describe('GameManagerCore', () => {
             expect(gameState.gameRunning).toBe(false);
             expect(gameState.gameOver).toBe(false);
             expect(gameState.finalScore).toBe(0);
-            expect(gameState.deathCount).toBe(0);
+            expect(gameState.deathCount).toBe(5); // Should preserve death count across restarts
+            expect(gameState.runtime.deathMarks).toHaveLength(2); // Should preserve death marks across restarts
+            expect(gameState.runtime.deathMarks[0]).toEqual({ x: 150, y: 400, timestamp: 1000 });
+            expect(gameState.runtime.deathMarks[1]).toEqual({ x: 200, y: 450, timestamp: 2000 });
             expect(mockSystems.playerSystem.clearTrail).toHaveBeenCalled();
             expect(mockSystems.playerSystem.resetJumpTimer).toHaveBeenCalled();
             expect(mockSystems.playerSystem.reset).toHaveBeenCalledWith(100, 300);
