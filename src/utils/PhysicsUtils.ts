@@ -37,7 +37,7 @@ export function applyGravity(
         return { ...player };
     }
 
-    const gravityAmount = constants.gravity * constants.gameSpeed * (deltaTime / 16.67); // Normalize to 60fps and apply gameSpeed
+    const gravityAmount = constants.gravity * (deltaTime / 16.67); // Normalize to 60fps
     return {
         ...player,
         vy: player.vy + gravityAmount
