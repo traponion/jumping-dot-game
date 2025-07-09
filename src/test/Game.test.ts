@@ -7,6 +7,17 @@ vi.mock('../systems/RenderSystemFactory.js', () => ({
     createGameRenderSystem: vi.fn((canvas: HTMLCanvasElement) => new MockRenderSystem(canvas))
 }));
 
+// Mock InputManager to track clearInputs calls
+vi.mock('../systems/InputManager.js', () => ({
+    InputManager: vi.fn(() => ({
+        clearInputs: vi.fn(),
+        update: vi.fn(),
+        getMovementState: vi.fn(() => ({ ArrowLeft: false, ArrowRight: false })),
+        isPressed: vi.fn(() => false),
+        cleanup: vi.fn()
+    }))
+}));
+
 // Mock window.dispatchEvent for CustomEvent testing
 if (typeof window !== 'undefined' && !window.dispatchEvent) {
     window.dispatchEvent = vi.fn(() => true);
@@ -581,18 +592,20 @@ describe('JumpingDotGame', () => {
             await game.init();
 
             const gameManager = (game as any).gameManager;
-            const initialInputManager = (gameManager as any).inputManager;
-            const cleanupSpy = vi.spyOn(initialInputManager, 'cleanup');
+            const initialInputManager = gameManager.getInputManager();
 
             // Second initialization (restart)
             await game.init();
 
-            // Assert - old InputManager's cleanup should have been called
-            expect(cleanupSpy).toHaveBeenCalledOnce();
+            // Wait for setTimeout to execute clearInputs
+            await new Promise((resolve) => setTimeout(resolve, 10));
 
-            // Verify that we get a new InputManager instance (proper system recreation)
-            const newInputManager = (gameManager as any).inputManager;
-            expect(newInputManager).not.toBe(initialInputManager);
+            // Assert - Same InputManager instance should be reused (no resource leak)
+            const reuseInputManager = gameManager.getInputManager();
+            expect(reuseInputManager).toBe(initialInputManager);
+
+            // Verify that clearInputs was called to reset state
+            expect(initialInputManager.clearInputs).toHaveBeenCalled();
         });
     });
 });
