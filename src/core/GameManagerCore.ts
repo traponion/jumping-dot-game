@@ -71,6 +71,9 @@ export class GameManagerCore {
         this.systems.playerSystem.clearTrail();
         this.systems.playerSystem.resetJumpTimer();
 
+        // Reset player position to initial coordinates
+        this.systems.playerSystem.reset(100, 300);
+
         // Reload current stage to reset stage state
         const stage = await this.loadStage(this.gameState.currentStage);
 

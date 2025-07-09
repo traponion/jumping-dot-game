@@ -55,7 +55,8 @@ describe('GameManagerCore', () => {
             playerSystem: {
                 update: vi.fn(),
                 clearTrail: vi.fn(),
-                resetJumpTimer: vi.fn()
+                resetJumpTimer: vi.fn(),
+                reset: vi.fn()
             }
         } as any;
 
@@ -213,6 +214,7 @@ describe('GameManagerCore', () => {
             expect(gameState.deathCount).toBe(0);
             expect(mockSystems.playerSystem.clearTrail).toHaveBeenCalled();
             expect(mockSystems.playerSystem.resetJumpTimer).toHaveBeenCalled();
+            expect(mockSystems.playerSystem.reset).toHaveBeenCalledWith(100, 300);
             expect(mockStageLoader.loadStageWithFallback).toHaveBeenCalledWith(2);
             expect(result).toBeDefined();
         });
