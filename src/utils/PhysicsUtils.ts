@@ -77,6 +77,29 @@ export function clampVelocity(
 }
 
 /**
+ * Apply minimum velocity threshold when player has moved
+ */
+export function applyMinimumVelocity(
+    player: PlayerPhysicsState,
+    minVelocity: number,
+    hasMovedOnce: boolean
+): PlayerPhysicsState {
+    if (!hasMovedOnce) {
+        return { ...player };
+    }
+
+    if (Math.abs(player.vx) < minVelocity) {
+        const sign = player.vx >= 0 ? 1 : -1;
+        return {
+            ...player,
+            vx: minVelocity * sign
+        };
+    }
+
+    return { ...player };
+}
+
+/**
  * Create a copy of physics constants
  */
 export function copyPhysicsConstants(constants: PhysicsConstants): PhysicsConstants {
