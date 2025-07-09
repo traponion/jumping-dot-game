@@ -1,9 +1,14 @@
+/**
+ * PhysicsSystem integration tests
+ * Tests framework-dependent system integration and GameState interactions
+ */
+
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameState } from '../stores/GameState.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
 
-describe('PhysicsSystem', () => {
+describe('PhysicsSystem - Framework Integration', () => {
     let gameState: GameState;
     let physicsSystem: PhysicsSystem;
     let constants: PhysicsConstants;
@@ -33,173 +38,85 @@ describe('PhysicsSystem', () => {
         physicsSystem = new PhysicsSystem(gameState, constants);
     });
 
-    describe('gravity application', () => {
-        it('should apply gravity when player is not grounded', () => {
-            // Set player as not grounded
-            gameState.runtime.player.grounded = false;
-            const initialVy = gameState.runtime.player.vy;
-
-            physicsSystem.update(16.67); // 60fps frame
-
-            // Gravity should increase downward velocity
-            expect(gameState.runtime.player.vy).toBeGreaterThan(initialVy);
-        });
-
-        it('should not apply gravity when player is grounded', () => {
-            // Set player as grounded
-            gameState.runtime.player.grounded = true;
-            const initialVy = gameState.runtime.player.vy;
+    describe('GameState integration', () => {
+        it('should directly modify GameState player properties', () => {
+            // Test that PhysicsSystem modifies the actual GameState
+            const initialState = { ...gameState.runtime.player };
 
             physicsSystem.update(16.67);
 
-            expect(gameState.runtime.player.vy).toBe(initialVy);
+            // GameState should be modified directly (not a copy)
+            expect(gameState.runtime.player).not.toEqual(initialState);
+            expect(gameState.runtime.player.x).not.toBe(initialState.x);
+            expect(gameState.runtime.player.y).not.toBe(initialState.y);
+        });
+
+        it('should maintain reference integrity with GameState', () => {
+            // Ensure PhysicsSystem maintains proper reference to GameState
+            const playerRef = gameState.runtime.player;
+
+            physicsSystem.update(16.67);
+
+            // Should be the same object reference
+            expect(gameState.runtime.player).toBe(playerRef);
         });
     });
 
-    describe('position updates', () => {
-        it('should update player position based on velocity', () => {
+    describe('system lifecycle', () => {
+        it('should properly initialize with GameState and constants', () => {
+            // Test system initialization
+            expect(physicsSystem).toBeDefined();
+            expect(physicsSystem.getPhysicsConstants()).toEqual(constants);
+
+            // System should not modify state during initialization
+            expect(gameState.runtime.player.x).toBe(100);
+            expect(gameState.runtime.player.y).toBe(400);
+        });
+
+        it('should handle multiple consecutive updates', () => {
+            // Test system behavior over multiple frames
             const initialX = gameState.runtime.player.x;
-            const initialY = gameState.runtime.player.y;
 
             physicsSystem.update(16.67);
+            const firstX = gameState.runtime.player.x;
 
-            // Position should change based on velocity and game speed
-            expect(gameState.runtime.player.x).not.toBe(initialX);
-            expect(gameState.runtime.player.y).not.toBe(initialY);
-        });
+            physicsSystem.update(16.67);
+            const secondX = gameState.runtime.player.x;
 
-        it('should account for game speed in position updates', () => {
-            const slowConstants = { ...constants, gameSpeed: 1.0 };
-            const fastConstants = { ...constants, gameSpeed: 2.0 };
-
-            // Create separate game states for isolated testing
-            const slowGameState = new GameState();
-            const fastGameState = new GameState();
-
-            // Set up identical initial conditions
-            const initialPlayer = {
-                x: 100,
-                y: 400,
-                vx: 2,
-                vy: -5,
-                radius: 3,
-                grounded: false
-            };
-
-            slowGameState.runtime.player = { ...initialPlayer };
-            fastGameState.runtime.player = { ...initialPlayer };
-
-            const slowPhysics = new PhysicsSystem(slowGameState, slowConstants);
-            const fastPhysics = new PhysicsSystem(fastGameState, fastConstants);
-
-            slowPhysics.update(16.67);
-            const slowDistance = Math.abs(slowGameState.runtime.player.x - initialPlayer.x);
-
-            fastPhysics.update(16.67);
-            const fastDistance = Math.abs(fastGameState.runtime.player.x - initialPlayer.x);
-
-            // Fast physics should move player further
-            expect(fastDistance).toBeGreaterThan(slowDistance);
+            // Position should continue changing
+            expect(firstX).not.toBe(initialX);
+            expect(secondX).not.toBe(firstX);
         });
     });
 
-    describe('constants management', () => {
-        it('should return copy of physics constants', () => {
-            const returned = physicsSystem.getPhysicsConstants();
+    describe('constants management integration', () => {
+        it('should reflect constant changes in subsequent updates', () => {
+            // Update constants through system
+            physicsSystem.updateConstants({ gameSpeed: 4.0 });
 
-            expect(returned).toEqual(constants);
-            expect(returned).not.toBe(constants); // Should be a copy
+            const initialX = gameState.runtime.player.x;
+            physicsSystem.update(16.67);
+            const fastMovement = Math.abs(gameState.runtime.player.x - initialX);
+
+            // Reset and test with slower speed
+            gameState.runtime.player.x = initialX;
+            physicsSystem.updateConstants({ gameSpeed: 1.0 });
+            physicsSystem.update(16.67);
+            const slowMovement = Math.abs(gameState.runtime.player.x - initialX);
+
+            expect(fastMovement).toBeGreaterThan(slowMovement);
         });
 
-        it('should update physics constants partially', () => {
+        it('should persist constant updates across multiple frames', () => {
             const newGravity = 1.2;
-
             physicsSystem.updateConstants({ gravity: newGravity });
 
-            const updated = physicsSystem.getPhysicsConstants();
-            expect(updated.gravity).toBe(newGravity);
-            expect(updated.gameSpeed).toBe(constants.gameSpeed); // Other values unchanged
-        });
+            // Multiple updates should use the new gravity
+            for (let i = 0; i < 5; i++) {
+                physicsSystem.update(16.67);
+            }
 
-        it('should reset constants to defaults', () => {
-            physicsSystem.updateConstants({ gravity: 999, gameSpeed: 10 });
-
-            physicsSystem.resetConstants();
-
-            const reset = physicsSystem.getPhysicsConstants();
-            expect(reset.gravity).toBe(0.6);
-            expect(reset.gameSpeed).toBe(2.0);
-            expect(reset.jumpForce).toBe(-12);
-        });
-    });
-
-    describe('velocity clamping', () => {
-        it('should clamp positive horizontal velocity to maximum speed', () => {
-            // Set velocity above maximum speed
-            gameState.runtime.player.vx = 10; // Above moveSpeed (4)
-
-            physicsSystem.update(16.67);
-
-            // Velocity should be clamped to maximum speed
-            expect(gameState.runtime.player.vx).toBe(constants.moveSpeed);
-        });
-
-        it('should clamp negative horizontal velocity to maximum speed', () => {
-            // Set velocity below negative maximum speed
-            gameState.runtime.player.vx = -10; // Below -moveSpeed (-4)
-
-            physicsSystem.update(16.67);
-
-            // Velocity should be clamped to negative maximum speed
-            expect(gameState.runtime.player.vx).toBe(-constants.moveSpeed);
-        });
-
-        it('should not modify velocity within normal range', () => {
-            // Set velocity within normal range
-            gameState.runtime.player.vx = 2; // Within moveSpeed range
-
-            physicsSystem.update(16.67);
-
-            // Position should be updated but vx should remain valid (allowing for position-based changes)
-            expect(Math.abs(gameState.runtime.player.vx)).toBeLessThanOrEqual(constants.moveSpeed);
-        });
-    });
-
-    describe('frame rate independence', () => {
-        it('should produce reasonably consistent results with different frame rates', () => {
-            // Create two identical game states for comparison
-            const gameState1 = new GameState();
-            const gameState2 = new GameState();
-
-            const initialPlayer = {
-                x: 100,
-                y: 400,
-                vx: 2,
-                vy: -5,
-                radius: 3,
-                grounded: false
-            };
-
-            gameState1.runtime.player = { ...initialPlayer };
-            gameState2.runtime.player = { ...initialPlayer };
-
-            const physics1 = new PhysicsSystem(gameState1, constants);
-            const physics2 = new PhysicsSystem(gameState2, constants);
-
-            // Simulate 30fps (33.33ms per frame)
-            physics1.update(33.33);
-
-            // Simulate 60fps (16.67ms per frame) x2
-            physics2.update(16.67);
-            physics2.update(16.67);
-
-            // Results should be reasonably close (allowing for gravity accumulation)
-            expect(
-                Math.abs(gameState1.runtime.player.x - gameState2.runtime.player.x)
-            ).toBeLessThan(1.0);
-            expect(
-                Math.abs(gameState1.runtime.player.y - gameState2.runtime.player.y)
-            ).toBeLessThan(3.0);
+            expect(physicsSystem.getPhysicsConstants().gravity).toBe(newGravity);
         });
     });
 });
