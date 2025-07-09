@@ -1,0 +1,3 @@
+This is a test file to verify branch protection is working.
+Created at: 2025-07-10
+Purpose: Test that direct push to main is blocked.
