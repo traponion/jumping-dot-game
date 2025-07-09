@@ -96,7 +96,8 @@ export class InputManager {
         this.inputs.bind('jump', 'ArrowUp');
         this.inputs.bind('jump', 'KeyW');
 
-        // Game control (KeyR handling moved to menu-select)
+        // Game control
+        this.inputs.bind('restart', 'KeyR');
 
         // Menu navigation (handles both game over menu and game start)
         this.inputs.bind('menu-up', 'ArrowUp');
