@@ -9,7 +9,6 @@ import type { GameController } from '../systems/InputManager.js';
 import type { GameUI } from './GameUI.js';
 import type { StageData } from './StageLoader.js';
 
-import { getCurrentTime } from '../utils/GameUtils.js';
 import { GameManagerCore } from './GameManagerCore.js';
 import { GameManagerInitialization, type GameSystems } from './GameManagerInitialization.js';
 import { GameManagerRenderer } from './GameManagerRenderer.js';
@@ -117,7 +116,6 @@ export class GameManager {
      */
     startGame(): void {
         this.gameState.gameRunning = true;
-        this.gameState.gameStartTime = getCurrentTime();
     }
 
     /**
