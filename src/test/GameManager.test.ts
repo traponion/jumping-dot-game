@@ -9,7 +9,6 @@ vi.mock('../systems/AnimationSystem');
 vi.mock('../systems/PlayerSystem');
 vi.mock('../systems/PhysicsSystem');
 vi.mock('../systems/InputManager');
-vi.mock('../systems/MovingPlatformSystem');
 vi.mock('../core/StageLoader');
 
 // Mock RenderSystemFactory to return a mock render system
@@ -132,20 +131,6 @@ describe('GameManager', () => {
         (mockAnimationSystem as any).addDeathMark = vi.fn();
         (mockAnimationSystem as any).startDeathAnimation = vi.fn();
         (mockAnimationSystem as any).startClearAnimation = vi.fn();
-
-        // Setup MovingPlatformSystem mock
-        const mockMovingPlatformSystem = (gameManager as any).systems.movingPlatformSystem;
-        (mockMovingPlatformSystem as any).update = vi.fn((deltaTime: number) => {
-            // Mock implementation that actually moves platforms
-            const stage = gameManager.getCurrentStage();
-            if (stage?.movingPlatforms) {
-                for (const platform of stage.movingPlatforms) {
-                    // Simple movement simulation for testing
-                    platform.x1 += platform.speed * platform.direction * (deltaTime / 16.67);
-                    platform.x2 += platform.speed * platform.direction * (deltaTime / 16.67);
-                }
-            }
-        });
 
         // Reset store
         // Note: gameState is created fresh in GameManager constructor

@@ -121,10 +121,10 @@ describe('GameManager timeLimit integration', () => {
         });
 
         it('should handle fallback to hardcoded stage with timeLimit', async () => {
-            // Mock stage loader's loadStage to throw error, triggering fallback
+            // Mock stage loader to throw error, triggering fallback
             vi.spyOn(
                 (gameManager as any).initialization.getStageLoader(),
-                'loadStage'
+                'loadStageWithFallback'
             ).mockRejectedValue(new Error('Network error'));
 
             // Mock getHardcodedStage to return stage with timeLimit
