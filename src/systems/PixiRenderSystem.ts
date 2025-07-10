@@ -68,6 +68,14 @@ export class PixiRenderSystem implements IRenderSystem {
 
             // Set up main stage
             this.app.stage.addChild(this.stage);
+            console.log(
+                'PixiRenderSystem initialized: app.stage children count:',
+                this.app.stage.children.length
+            );
+            console.log(
+                'PixiRenderSystem initialized: our stage added to app.stage:',
+                this.app.stage.children.includes(this.stage)
+            );
 
             this.initialized = true;
         } catch (error) {
@@ -81,8 +89,18 @@ export class PixiRenderSystem implements IRenderSystem {
     clearCanvas(): void {
         this.ensureInitialized();
 
+        console.log(
+            'PixiRenderSystem.clearCanvas called, stage children before:',
+            this.stage.children.length
+        );
+
         // Clear all children from stage
         this.stage.removeChildren();
+
+        console.log(
+            'PixiRenderSystem.clearCanvas called, stage children after:',
+            this.stage.children.length
+        );
     }
 
     private ensureInitialized(): void {
@@ -98,16 +116,24 @@ export class PixiRenderSystem implements IRenderSystem {
     }
 
     private waitForInitialization(): void {
-        // Simple check - if still not initialized, just continue with warning
-        // The async initialization should complete very quickly in most cases
+        // Block execution until initialization completes (synchronous waiting)
+        // This is a workaround for the async initialization vs sync interface issue
+        const maxWaitTime = 5000; // 5 seconds max wait
+        const checkInterval = 10; // Check every 10ms
+        const startTime = Date.now();
+
+        while (!this.initialized && Date.now() - startTime < maxWaitTime) {
+            // Synchronous busy wait - not ideal but necessary for sync interface
+            // Use synchronous delay to avoid blocking the event loop completely
+            const now = Date.now();
+            while (Date.now() - now < checkInterval) {
+                // Busy wait for short interval
+            }
+        }
+
         if (!this.initialized) {
-            console.warn('PixiRenderSystem still initializing, proceeding anyway');
-            // Set a fallback to prevent further warnings
-            setTimeout(() => {
-                if (!this.initialized) {
-                    console.error('PixiRenderSystem initialization failed or taking too long');
-                }
-            }, 1000);
+            console.error('PixiRenderSystem initialization timeout after', maxWaitTime, 'ms');
+            throw new Error('PixiRenderSystem initialization timeout');
         }
     }
 
@@ -139,14 +165,29 @@ export class PixiRenderSystem implements IRenderSystem {
     renderAll(): void {
         this.ensureInitialized();
 
+        console.log('PixiRenderSystem.renderAll called');
+
         // Force a render of the current stage
         this.app.renderer.render(this.app.stage);
+
+        // Force WebGL to finish all operations and flush to canvas
+        // Check if using WebGL renderer and access context safely
+        if ('gl' in this.app.renderer && this.app.renderer.gl) {
+            const gl = this.app.renderer.gl as WebGLRenderingContext;
+            gl.finish();
+            gl.flush();
+            console.log('WebGL flush and finish completed');
+        }
+
+        console.log('renderAll completed, stage children:', this.stage.children.length);
     }
 
     // ===== Game Objects =====
 
     renderPlayer(player: Player): void {
         this.ensureInitialized();
+
+        console.log('PixiRenderSystem.renderPlayer called:', player.x, player.y, player.radius);
 
         // Create player graphics
         const playerGraphics = new PIXI.Graphics();
