@@ -324,57 +324,6 @@ export class PixiRenderSystem implements IRenderSystem {
         this.app.renderer.render(this.app.stage);
     }
 
-    renderGameOverMenu(options: string[], selectedIndex: number, deathCount?: number): void {
-        if (!this.initialized) return;
-
-        // Render game over title
-        const title = new PIXI.Text({
-            text: 'Game Over',
-            style: {
-                fontSize: 32,
-                fill: '#ffffff',
-                fontFamily: 'Arial'
-            }
-        });
-        title.anchor.set(0.5);
-        title.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 100);
-        this.stage.addChild(title);
-
-        // Render death count if provided
-        if (deathCount !== undefined) {
-            const deaths = new PIXI.Text({
-                text: `Deaths: ${deathCount}`,
-                style: {
-                    fontSize: 20,
-                    fill: '#ffffff',
-                    fontFamily: 'Arial'
-                }
-            });
-            deaths.anchor.set(0.5);
-            deaths.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 30);
-            this.stage.addChild(deaths);
-        }
-
-        // Render menu options
-        options.forEach((option, index) => {
-            const isSelected = index === selectedIndex;
-            const optionText = new PIXI.Text({
-                text: option,
-                style: {
-                    fontSize: 18,
-                    fill: isSelected ? '#ffff00' : '#ffffff',
-                    fontFamily: 'Arial'
-                }
-            });
-            optionText.anchor.set(0.5);
-            optionText.position.set(
-                this.app.screen.width / 2,
-                this.app.screen.height / 2 + index * 30
-            );
-            this.stage.addChild(optionText);
-        });
-    }
-
     renderCredits(): void {
         if (!this.initialized) return;
 

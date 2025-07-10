@@ -122,6 +122,9 @@ export class GameUI {
         }
 
         console.log(`🎮 Game over menu selection: ${this.gameOverOptions[this.gameOverMenuIndex]}`);
+
+        // Update HTML menu highlighting
+        this.highlightMenuOption(this.gameOverMenuIndex);
     }
 
     /**
@@ -193,5 +196,38 @@ export class GameUI {
         if (typeof window.dispatchEvent === 'function') {
             window.dispatchEvent(event);
         }
+    }
+
+    /**
+     * Update HTML game over menu with current game state
+     */
+    updateGameOverMenu(): void {
+        if (!this.gameState.gameOver) return;
+
+        // Update death count in game over screen
+        const gameOverDeathCount = document.getElementById('gameOverDeathCount');
+        if (gameOverDeathCount) {
+            gameOverDeathCount.textContent = this.gameState.deathCount.toString();
+        }
+
+        // Update menu selection highlighting
+        this.highlightMenuOption(this.gameOverMenuIndex);
+    }
+
+    /**
+     * Highlight the selected menu option in HTML
+     */
+    highlightMenuOption(selectedIndex: number): void {
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (!gameOverScreen) return;
+
+        const allOptions = gameOverScreen.querySelectorAll('.game-over-menu-option');
+        allOptions.forEach((option, index) => {
+            if (index === selectedIndex) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
     }
 }

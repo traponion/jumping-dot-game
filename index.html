@@ -75,6 +75,52 @@
         
         .game-over-screen {
             font-size: 24px;
+            text-align: center;
+        }
+        
+        .game-over-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .game-over-stats {
+            margin-bottom: 30px;
+        }
+        
+        .death-count-display {
+            font-size: 18px;
+            color: #ffff88;
+        }
+        
+        .game-over-menu {
+            margin-bottom: 20px;
+        }
+        
+        .game-over-menu-option {
+            font-size: 20px;
+            padding: 8px 20px;
+            margin: 5px 0;
+            cursor: pointer;
+            color: #cccccc;
+            transition: all 0.2s ease;
+        }
+        
+        .game-over-menu-option.selected {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid white;
+        }
+        
+        .game-over-menu-option:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .game-over-instructions {
+            font-size: 14px;
+            color: #aaaaaa;
+            margin-top: 20px;
         }
         
         .hidden {
@@ -210,7 +256,15 @@
                 Press SPACE to Start
             </div>
             <div id="gameOverScreen" class="game-over-screen hidden">
-                Game Over - Press R to restart
+                <div class="game-over-title">Game Over</div>
+                <div class="game-over-stats">
+                    <div class="death-count-display">Deaths: <span id="gameOverDeathCount">0</span></div>
+                </div>
+                <div class="game-over-menu">
+                    <div class="game-over-menu-option selected" data-index="0">RESTART STAGE</div>
+                    <div class="game-over-menu-option" data-index="1">STAGE SELECT</div>
+                </div>
+                <div class="game-over-instructions">↑↓ Navigate • SPACE Select</div>
             </div>
         </div>
         
