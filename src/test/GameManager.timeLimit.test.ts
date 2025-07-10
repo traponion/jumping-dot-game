@@ -31,9 +31,7 @@ describe('GameManager timeLimit integration', () => {
             returnToStageSelect: vi.fn(),
             handleGameOverNavigation: vi.fn(),
             handleGameOverSelection: vi.fn(),
-            getGameState: vi
-                .fn()
-                .mockReturnValue({ gameRunning: false, gameOver: false, finalScore: 0 }),
+            getGameState: vi.fn().mockReturnValue({ gameRunning: false, gameOver: false }),
             getGameUI: vi.fn()
         };
         gameState = new GameState();

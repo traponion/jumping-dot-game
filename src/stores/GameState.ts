@@ -51,7 +51,6 @@ export class GameState {
     public timeLimit = 20;
     public timeRemaining = 20;
     public gameStartTime: number | null = null;
-    public finalScore = 0;
     public deathCount = 0;
     public hasMovedOnce = false;
     public stage: StageData | null = null;
@@ -76,7 +75,6 @@ export class GameState {
         this.timeLimit = 20;
         this.timeRemaining = 20;
         this.gameStartTime = null;
-        this.finalScore = 0;
         this.deathCount = 0;
         this.hasMovedOnce = false;
         this.stage = null;
