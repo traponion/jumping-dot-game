@@ -201,6 +201,9 @@ export class GameManager {
      * Update game systems and logic
      */
     update(deltaTime: number): void {
+        // Always update camera system for smooth scrolling in all game states
+        this.cameraSystem.update();
+
         if (!this.gameState.gameRunning || this.gameState.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
@@ -211,7 +214,6 @@ export class GameManager {
         this.updateSystems(deltaTime);
         this.collisionSystem.update();
         this.gameRuleSystem.update();
-        this.cameraSystem.update();
     }
 
     private updateSystems(deltaTime: number): void {
