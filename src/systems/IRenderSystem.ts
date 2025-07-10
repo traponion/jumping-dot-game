@@ -170,6 +170,11 @@ export interface IRenderSystem {
     // ===== System Management =====
 
     /**
+     * Wait for render system initialization to complete
+     */
+    waitForInitialization(): Promise<void>;
+
+    /**
      * Clean up rendering resources (async for complex cleanup)
      */
     cleanup(): Promise<void>;

@@ -236,8 +236,11 @@ export class GameManager {
     /**
      * Render the game
      */
-    render(ui?: GameUI): void {
+    async render(ui?: GameUI): Promise<void> {
         const renderer = this.renderSystem;
+
+        // Wait for PixiRenderSystem initialization before applying camera
+        await renderer.waitForInitialization();
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();

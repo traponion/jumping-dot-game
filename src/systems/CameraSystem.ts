@@ -56,7 +56,10 @@ export class CameraSystem {
         const player = this.gameState.runtime.player;
 
         // Center camera on player position (both X and Y axes)
-        this.gameState.runtime.camera.x = player.x - this.canvas.width / 2;
-        this.gameState.runtime.camera.y = player.y - this.canvas.height / 2;
+        const newCameraX = player.x - this.canvas.width / 2;
+        const newCameraY = player.y - this.canvas.height / 2;
+
+        this.gameState.runtime.camera.x = newCameraX;
+        this.gameState.runtime.camera.y = newCameraY;
     }
 }

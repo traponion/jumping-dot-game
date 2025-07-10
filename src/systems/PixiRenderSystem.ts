@@ -185,8 +185,6 @@ export class PixiRenderSystem implements IRenderSystem {
 
         // Note: Camera type doesn't have zoom property, using default scale
         this.stage.scale.set(1, 1);
-
-        // Camera transform applied (log removed to reduce spam)
     }
 
     restoreCameraTransform(): void {

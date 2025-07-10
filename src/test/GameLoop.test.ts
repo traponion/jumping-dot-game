@@ -23,7 +23,7 @@ describe('GameLoop', () => {
 
         gameLoop = new GameLoop();
         mockUpdateCallback = vi.fn();
-        mockRenderCallback = vi.fn();
+        mockRenderCallback = vi.fn().mockResolvedValue(undefined);
 
         // Setup requestAnimationFrame to return an ID
         mockRequestAnimationFrame.mockImplementation((_callback: (time: number) => void) => {
@@ -89,6 +89,9 @@ describe('GameLoop', () => {
             // Act
             gameLoop.start();
 
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
+
             // Assert
             expect(mockRequestAnimationFrame).toHaveBeenCalled();
             expect(gameLoop.isRunning()).toBe(true);
@@ -102,6 +105,9 @@ describe('GameLoop', () => {
 
             // Act
             gameLoop.start();
+
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
 
             // Assert
             expect(mockCancelAnimationFrame).toHaveBeenCalledWith(123);
@@ -175,6 +181,9 @@ describe('GameLoop', () => {
             // Act
             gameLoop.start();
 
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
+
             // Assert
             expect(gameLoop.isRunning()).toBe(true);
         });
@@ -201,6 +210,9 @@ describe('GameLoop', () => {
 
             // Act: Start the game loop
             gameLoop.start();
+
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
 
             // Assert: Check that requestAnimationFrame was called
             expect(mockRequestAnimationFrame).toHaveBeenCalled();
@@ -299,12 +311,20 @@ describe('GameLoop', () => {
 
             // Act: Multiple start/stop cycles
             gameLoop.start();
+
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
+
             expect(gameLoop.isRunning()).toBe(true);
 
             gameLoop.stop();
             expect(gameLoop.isRunning()).toBe(false);
 
             gameLoop.start();
+
+            // Advance timers to execute setTimeout
+            vi.advanceTimersByTime(0);
+
             expect(gameLoop.isRunning()).toBe(true);
 
             // Assert: Should work correctly

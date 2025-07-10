@@ -155,6 +155,11 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock animation update
     }
 
+    async waitForInitialization(): Promise<void> {
+        // Mock implementation - immediately resolves
+        return Promise.resolve();
+    }
+
     drawCrosshair(_position: Position): void {
         // Mock crosshair drawing
     }

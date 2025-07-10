@@ -161,14 +161,14 @@ export class JumpingDotGame {
         }
     }
 
-    private render(): void {
+    private async render(): Promise<void> {
         // Prevent rendering if game loop has been cleaned up
         if (this.gameLoop.isCleanedUpState()) {
             return;
         }
 
         // Delegate all rendering to GameManager, including UI state management
-        this.gameManager.render(this.gameUI);
+        await this.gameManager.render(this.gameUI);
 
         // Update UI visibility during gameplay
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
@@ -194,8 +194,8 @@ export class JumpingDotGame {
         this.update(deltaTime);
     }
 
-    testRender(): void {
-        this.render();
+    async testRender(): Promise<void> {
+        await this.render();
     }
 
     async testLoadStage(stageNumber: number): Promise<void> {
