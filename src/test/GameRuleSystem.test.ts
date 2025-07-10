@@ -33,7 +33,7 @@ function createFreshGameState(): GameState {
         timeLimit: 10,
         timeRemaining: 10,
         gameStartTime: null,
-        finalScore: 0,
+
         deathCount: 0,
         stage: null,
         hasMovedOnce: false,
@@ -161,7 +161,7 @@ describe('GameRuleSystem', () => {
     });
 
     describe('goal checking', () => {
-        it('should detect goal reached and set final score', () => {
+        it('should detect goal reached without setting final score (score feature removed)', () => {
             // Setup: Player reaches goal with 7 seconds remaining via collision results flag
             mockGameState.timeRemaining = 7.3;
             mockGameState.stage = { goal: { x: 700, y: 400, width: 40, height: 50 } } as any;
@@ -170,22 +170,21 @@ describe('GameRuleSystem', () => {
             // Action: Run rule checking
             gameRuleSystem.update();
 
-            // Assert: Goal completion state set
+            // Assert: Goal completion state set but no finalScore (feature removed)
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockGameState.finalScore).toBe(8); // Math.ceil(7.3) = 8
+            expect('finalScore' in mockGameState).toBe(false); // Should not have finalScore property
         });
 
         it('should not affect game state when goal not reached', () => {
             // Setup: Player not at goal via collision results flag
-            const originalScore = mockGameState.finalScore;
             mockGameState.runtime.collisionResults.goalCollision = false;
 
             // Action: Run rule checking
             gameRuleSystem.update();
 
-            // Assert: Game state unchanged
+            // Assert: Game state unchanged, no finalScore property
             expect(mockGameState.gameOver).toBe(false);
-            expect(mockGameState.finalScore).toBe(originalScore);
+            expect('finalScore' in mockGameState).toBe(false); // Should not have finalScore property
         });
     });
 
@@ -295,7 +294,7 @@ describe('GameRuleSystem', () => {
             // Assert: Death count unchanged, game over due to goal completion
             expect(mockGameState.deathCount).toBe(0);
             expect(mockGameState.gameOver).toBe(true);
-            expect(mockGameState.finalScore).toBe(8);
+            // finalScore feature removed - no longer testing score
         });
     });
 

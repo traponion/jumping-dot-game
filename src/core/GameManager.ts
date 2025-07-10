@@ -279,7 +279,6 @@ export class GameManager {
                 renderer.renderGameOverMenu(
                     menuData.options,
                     menuData.selectedIndex,
-                    this.gameState.finalScore,
                     this.gameState.deathCount
                 );
             }
@@ -296,13 +295,8 @@ export class GameManager {
     /**
      * Render game over menu
      */
-    renderGameOverMenu(
-        options: string[],
-        selectedIndex: number,
-        finalScore: number,
-        deathCount?: number
-    ): void {
-        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
+    renderGameOverMenu(options: string[], selectedIndex: number, deathCount?: number): void {
+        this.renderSystem.renderGameOverMenu(options, selectedIndex, deathCount);
     }
 
     /**

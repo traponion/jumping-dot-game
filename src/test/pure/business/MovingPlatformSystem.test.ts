@@ -38,7 +38,7 @@ describe('MovingPlatformSystem', () => {
             currentStage: 1,
             timeLimit: 10,
             timeRemaining: 10,
-            finalScore: 0,
+
             deathCount: 0,
             gameStartTime: null,
             hasMovedOnce: false,

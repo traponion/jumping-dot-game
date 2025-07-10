@@ -6,7 +6,6 @@ import { GameState } from '../stores/GameState.js';
 const mockElements = {
     gameStatus: { textContent: '', style: { display: 'block' } },
     timer: { textContent: 'Time: 20' },
-    score: { textContent: 'Score: 0' },
     deathCount: { textContent: 'Deaths: 0', parentElement: { style: { display: 'block' } } },
     startScreen: { textContent: '', classList: { add: vi.fn(), remove: vi.fn() } },
     gameOverScreen: { textContent: '', classList: { add: vi.fn(), remove: vi.fn() } }
@@ -93,12 +92,13 @@ describe('GameUI', () => {
     });
 
     describe('DOM element management', () => {
-        it('should manage deathDisplay property similar to scoreDisplay', () => {
-            // Assert: All required display elements should be managed
+        it('should manage required UI elements (score display removed)', () => {
+            // Assert: All required display elements should be managed (no score after removal)
             expect(document.getElementById).toHaveBeenCalledWith('gameStatus');
             expect(document.getElementById).toHaveBeenCalledWith('timer');
-            expect(document.getElementById).toHaveBeenCalledWith('score');
             expect(document.getElementById).toHaveBeenCalledWith('deathCount');
+            // score element should NOT be called since it was removed
+            expect(document.getElementById).not.toHaveBeenCalledWith('score');
         });
     });
 

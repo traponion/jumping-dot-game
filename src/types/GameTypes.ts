@@ -95,7 +95,7 @@ export interface DeathMark {
  * @property {number} timeLimit - Stage time limit in seconds
  * @property {number} timeRemaining - Time remaining in current stage
  * @property {number | null} gameStartTime - Game start timestamp
- * @property {number} finalScore - Final score when game ends
+
  * @property {boolean} hasMovedOnce - Whether player has moved at least once
  */
 export interface GameState {
@@ -105,7 +105,7 @@ export interface GameState {
     timeLimit: number;
     timeRemaining: number;
     gameStartTime: number | null;
-    finalScore: number;
+
     deathCount: number;
     hasMovedOnce: boolean;
 }

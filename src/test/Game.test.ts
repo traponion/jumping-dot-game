@@ -81,14 +81,6 @@ const mockTimer = {
     setAttribute: vi.fn()
 } as unknown as HTMLElement;
 
-const mockScore = {
-    textContent: '',
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    getAttribute: vi.fn(),
-    setAttribute: vi.fn()
-} as unknown as HTMLElement;
-
 const mockDeathCount = {
     textContent: '',
     addEventListener: vi.fn(),
@@ -117,7 +109,7 @@ describe('JumpingDotGame', () => {
             if (id === 'gameCanvas') return mockCanvas;
             if (id === 'gameStatus') return mockGameStatus;
             if (id === 'timer') return mockTimer;
-            if (id === 'score') return mockScore;
+
             if (id === 'deathCount') return mockDeathCount;
             return null;
         }) as typeof document.getElementById;
@@ -162,7 +154,6 @@ describe('JumpingDotGame', () => {
             expect(global.document.getElementById).toHaveBeenCalledWith('gameCanvas');
             expect(global.document.getElementById).toHaveBeenCalledWith('gameStatus');
             expect(global.document.getElementById).toHaveBeenCalledWith('timer');
-            expect(global.document.getElementById).toHaveBeenCalledWith('score');
         });
     });
 

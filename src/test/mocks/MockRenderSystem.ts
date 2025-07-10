@@ -100,12 +100,7 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock start instruction rendering
     }
 
-    renderGameOverMenu(
-        _options: string[],
-        _selectedIndex: number,
-        _finalScore: number,
-        _deathCount?: number
-    ): void {
+    renderGameOverMenu(_options: string[], _selectedIndex: number, _deathCount?: number): void {
         // Mock game over menu rendering
     }
 

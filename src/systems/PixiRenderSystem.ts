@@ -324,12 +324,7 @@ export class PixiRenderSystem implements IRenderSystem {
         this.app.renderer.render(this.app.stage);
     }
 
-    renderGameOverMenu(
-        options: string[],
-        selectedIndex: number,
-        finalScore: number,
-        deathCount?: number
-    ): void {
+    renderGameOverMenu(options: string[], selectedIndex: number, deathCount?: number): void {
         if (!this.initialized) return;
 
         // Render game over title
@@ -344,19 +339,6 @@ export class PixiRenderSystem implements IRenderSystem {
         title.anchor.set(0.5);
         title.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 100);
         this.stage.addChild(title);
-
-        // Render score
-        const score = new PIXI.Text({
-            text: `Score: ${finalScore}`,
-            style: {
-                fontSize: 20,
-                fill: '#ffffff',
-                fontFamily: 'Arial'
-            }
-        });
-        score.anchor.set(0.5);
-        score.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 60);
-        this.stage.addChild(score);
 
         // Render death count if provided
         if (deathCount !== undefined) {
