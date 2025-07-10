@@ -25,11 +25,16 @@
             align-items: center;
         }
         
-        canvas {
+        #gameCanvas {
             border: 2px solid white;
             background-color: black;
             max-width: 100vw;
             max-height: 70vh;
+        }
+        
+        #gameCanvas canvas {
+            width: 100%;
+            height: 100%;
         }
         
         .info {
@@ -146,7 +151,7 @@
         }
         
 @media (max-width: 768px) {
-            canvas {
+            #gameCanvas {
                 width: 95vw;
                 height: 60vh;
             }
@@ -161,7 +166,7 @@
         }
         
         @media (max-height: 600px) {
-            canvas {
+            #gameCanvas {
                 height: 50vh;
             }
         }
@@ -202,7 +207,7 @@
             <div id="deathCount">Deaths: 0</div>
         </div>
         
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="gameCanvas" style="width: 800px; height: 600px;"></div>
         
         <!-- ゲームUI要素 -->
         <div id="gameUI" class="game-ui">

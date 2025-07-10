@@ -11,13 +11,13 @@ import { PixiRenderSystem } from './PixiRenderSystem.js';
 /**
  * Creates appropriate render system based on environment
  */
-export function createGameRenderSystem(canvasElement: HTMLCanvasElement) {
+export function createGameRenderSystem(containerElement: HTMLElement) {
     // Environment detection for test vs production
     const isTestEnvironment =
         typeof globalThis.window === 'undefined' || globalThis.process?.env?.NODE_ENV === 'test';
 
     if (isTestEnvironment) {
-        return new MockRenderSystem(canvasElement);
+        return new MockRenderSystem(containerElement);
     }
-    return new PixiRenderSystem(canvasElement);
+    return new PixiRenderSystem(containerElement);
 }

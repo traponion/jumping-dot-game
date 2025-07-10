@@ -45,12 +45,16 @@ export class GameLoop {
             throw new Error('Update and render callbacks must be set before starting game loop');
         }
 
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-        }
+        // More aggressive cleanup of previous loop
+        this.stop();
 
-        this.lastTime = null;
-        this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
+        // Wait a frame before starting new loop to ensure cleanup
+        setTimeout(() => {
+            if (!this.isCleanedUp) {
+                this.lastTime = null;
+                this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
+            }
+        }, 0);
     }
 
     /**

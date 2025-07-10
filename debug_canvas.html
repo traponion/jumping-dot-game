@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PixiJS Canvas Debug</title>
+    <style>
+        #gameCanvas {
+            border: 2px solid white;
+            background-color: black;
+            width: 800px;
+            height: 600px;
+        }
+        body { background-color: black; color: white; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>PixiJS Canvas Debug Test</h1>
+    <div id="gameCanvas"></div>
+    <div id="debug-info"></div>
+    
+    <script type="module">
+        import * as PIXI from 'https://cdn.skypack.dev/pixi.js@8.0.0';
+        
+        async function testPixiInit() {
+            const debugInfo = document.getElementById('debug-info');
+            const container = document.getElementById('gameCanvas');
+            
+            try {
+                debugInfo.innerHTML += '<p>Starting PixiJS test...</p>';
+                
+                const app = new PIXI.Application();
+                debugInfo.innerHTML += '<p>Application created</p>';
+                
+                await app.init({
+                    width: 800,
+                    height: 600,
+                    backgroundColor: '#333333'
+                });
+                debugInfo.innerHTML += '<p>Application initialized</p>';
+                
+                container.appendChild(app.canvas);
+                debugInfo.innerHTML += '<p>Canvas added to container</p>';
+                
+                // Add a simple test sprite
+                const graphics = new PIXI.Graphics();
+                graphics.circle(400, 300, 50);
+                graphics.fill(0xff0000);
+                app.stage.addChild(graphics);
+                
+                debugInfo.innerHTML += '<p>Test circle added - SUCCESS!</p>';
+                
+            } catch (error) {
+                debugInfo.innerHTML += `<p style="color: red;">ERROR: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+        
+        testPixiInit();
+    </script>
+</body>
+</html>

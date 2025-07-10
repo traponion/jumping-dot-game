@@ -246,4 +246,77 @@ describe('CameraSystem', () => {
             expect(minimalGameState.runtime.camera.x).toBe(expectedCameraX);
         });
     });
+
+    describe('Y-axis camera tracking', () => {
+        it('should center camera on player Y position', () => {
+            // Arrange: Player at specific Y position
+            mockGameState.runtime.player.y = 300;
+            mockGameState.runtime.camera.y = 0; // Initial camera position
+
+            // Act: Update camera
+            cameraSystem.update();
+
+            // Assert: Camera should be centered on player
+            const expectedCameraY = 300 - mockCanvas.height / 2; // 300 - 300 = 0
+            expect(mockGameState.runtime.camera.y).toBe(expectedCameraY);
+        });
+
+        it('should update camera when player moves up', () => {
+            // Arrange: Player moves upward
+            mockGameState.runtime.player.y = 100;
+            mockGameState.runtime.camera.y = 0;
+
+            // Act: Update camera
+            cameraSystem.update();
+
+            // Assert: Camera follows player upward
+            const expectedCameraY = 100 - mockCanvas.height / 2; // 100 - 300 = -200
+            expect(mockGameState.runtime.camera.y).toBe(expectedCameraY);
+        });
+
+        it('should update camera when player moves down', () => {
+            // Arrange: Player moves downward
+            mockGameState.runtime.player.y = 800;
+            mockGameState.runtime.camera.y = 0;
+
+            // Act: Update camera
+            cameraSystem.update();
+
+            // Assert: Camera follows player downward
+            const expectedCameraY = 800 - mockCanvas.height / 2; // 800 - 300 = 500
+            expect(mockGameState.runtime.camera.y).toBe(expectedCameraY);
+        });
+
+        it('should work with different canvas heights', () => {
+            // Arrange: Different canvas size
+            const tallCanvas = { width: 800, height: 1000 };
+            const system = new CameraSystem(mockGameState, tallCanvas);
+            mockGameState.runtime.player.y = 600;
+            mockGameState.runtime.camera.y = 0;
+
+            // Act: Update camera
+            system.update();
+
+            // Assert: Camera calculation uses correct canvas height
+            const expectedCameraY = 600 - tallCanvas.height / 2; // 600 - 500 = 100
+            expect(mockGameState.runtime.camera.y).toBe(expectedCameraY);
+        });
+
+        it('should handle combined X and Y movement', () => {
+            // Arrange: Player moves in both X and Y directions
+            mockGameState.runtime.player.x = 600;
+            mockGameState.runtime.player.y = 400;
+            mockGameState.runtime.camera.x = 0;
+            mockGameState.runtime.camera.y = 0;
+
+            // Act: Update camera
+            cameraSystem.update();
+
+            // Assert: Camera follows player in both directions
+            const expectedCameraX = 600 - mockCanvas.width / 2; // 600 - 400 = 200
+            const expectedCameraY = 400 - mockCanvas.height / 2; // 400 - 300 = 100
+            expect(mockGameState.runtime.camera.x).toBe(expectedCameraX);
+            expect(mockGameState.runtime.camera.y).toBe(expectedCameraY);
+        });
+    });
 });

@@ -62,13 +62,13 @@ export class InputManager {
      */
     constructor(
         private gameState: GameState,
-        canvas: HTMLCanvasElement,
+        container: HTMLElement,
         gameController: GameController
     ) {
         this.gameController = gameController;
 
-        // Initialize game-inputs with the canvas
-        this.inputs = new GameInputs(canvas, {
+        // Initialize game-inputs with the container element
+        this.inputs = new GameInputs(container, {
             preventDefaults: true,
             allowContextMenu: false,
             stopPropagation: false,

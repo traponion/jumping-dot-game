@@ -26,58 +26,109 @@ export class PixiRenderSystem implements IRenderSystem {
     private app: PIXI.Application;
     private stage: PIXI.Container;
     private initialized = false;
+    private initializationPromise: Promise<void> | null = null;
 
     // Landing prediction state
     private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Position[] = [];
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(container: HTMLElement) {
         this.app = new PIXI.Application();
         this.stage = new PIXI.Container();
 
-        // Initialize app asynchronously
-        this.initializeApp(canvas);
+        // Initialize app asynchronously and store the promise
+        this.initializationPromise = this.initializeApp(container);
     }
 
-    private async initializeApp(canvas: HTMLCanvasElement): Promise<void> {
+    private async initializeApp(container: HTMLElement): Promise<void> {
         try {
+            console.log('PixiRenderSystem: Starting initialization...');
+
+            // More aggressive canvas cleanup - clear from both container and document
+            const existingCanvases = container.querySelectorAll('canvas');
+            console.log('Found existing canvases in container:', existingCanvases.length);
+            existingCanvases.forEach((canvas, index) => {
+                console.log(`Removing existing canvas ${index + 1} from container`);
+                canvas.remove();
+            });
+
+            // Also clear any orphaned canvases that might be floating in the DOM
+            const allCanvases = document.querySelectorAll('#gameCanvas canvas');
+            console.log('Found all canvases in gameCanvas:', allCanvases.length);
+            allCanvases.forEach((canvas, index) => {
+                console.log(`Removing orphaned canvas ${index + 1}`);
+                canvas.remove();
+            });
+
+            // Wait a tick to ensure DOM cleanup is complete
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
             // Modern Pixi.JS v8 initialization
             await this.app.init({
-                width: canvas.width || 800,
-                height: canvas.height || 600,
+                width: 800,
+                height: 600,
                 backgroundColor: '#000000',
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
                 autoDensity: true
             });
 
-            // Replace original canvas with Pixi.JS canvas
-            const parentContainer = canvas.parentElement;
-            if (parentContainer) {
-                // Set Pixi canvas to match original canvas attributes
-                this.app.canvas.id = canvas.id;
-                this.app.canvas.className = canvas.className;
-                this.app.canvas.style.cssText = canvas.style.cssText;
+            console.log('PixiRenderSystem: App initialized, adding canvas to container...');
 
-                // Replace original canvas with Pixi canvas
-                parentContainer.replaceChild(this.app.canvas, canvas);
-            } else {
-                // Fallback: attach to document body
-                document.body.appendChild(this.app.canvas);
-            }
+            // Enhanced debugging as per handover document
+            console.log('Container element:', container);
+            console.log('Container tagName:', container.tagName);
+            console.log('Container id:', container.id);
+            console.log('App canvas:', this.app.canvas);
+            console.log(
+                'Canvas dimensions before append:',
+                this.app.canvas.width,
+                'x',
+                this.app.canvas.height
+            );
+
+            // Apply CSS styling to match production appearance
+            this.app.canvas.style.border = '2px solid white';
+            this.app.canvas.style.backgroundColor = '#000000';
+            this.app.canvas.style.display = 'block';
+
+            // Add Pixi.JS canvas to the container
+            container.appendChild(this.app.canvas);
+
+            console.log('Canvas parentNode after append:', this.app.canvas.parentNode);
+            console.log('Container children after append:', Array.from(container.children));
+            console.log('Container children count:', container.children.length);
+            console.log('Canvas element in DOM:', document.contains(this.app.canvas));
+
+            // Check canvas style properties
+            console.log('Canvas style after append:', this.app.canvas.style.cssText);
+            console.log(
+                'Canvas computed style display:',
+                window.getComputedStyle(this.app.canvas).display
+            );
+            console.log(
+                'Canvas computed style visibility:',
+                window.getComputedStyle(this.app.canvas).visibility
+            );
+            console.log(
+                'Canvas computed style border:',
+                window.getComputedStyle(this.app.canvas).border
+            );
 
             // Set up main stage
             this.app.stage.addChild(this.stage);
+
+            console.log('PixiRenderSystem: Stage setup complete');
             console.log(
-                'PixiRenderSystem initialized: app.stage children count:',
-                this.app.stage.children.length
+                'Canvas dimensions after stage setup:',
+                this.app.canvas.width,
+                'x',
+                this.app.canvas.height
             );
-            console.log(
-                'PixiRenderSystem initialized: our stage added to app.stage:',
-                this.app.stage.children.includes(this.stage)
-            );
+            console.log('Canvas style after stage setup:', this.app.canvas.style.cssText);
 
             this.initialized = true;
+            console.log('PixiRenderSystem: Initialization complete!');
         } catch (error) {
             console.error('Failed to initialize Pixi.JS application:', error);
             throw error;
@@ -87,53 +138,29 @@ export class PixiRenderSystem implements IRenderSystem {
     // ===== Canvas Management =====
 
     clearCanvas(): void {
-        this.ensureInitialized();
+        if (!this.initialized) {
+            console.warn('PixiRenderSystem not yet initialized, skipping clearCanvas');
+            return;
+        }
 
-        console.log(
-            'PixiRenderSystem.clearCanvas called, stage children before:',
-            this.stage.children.length
-        );
+        // clearCanvas called, stage children before (log removed to reduce spam)
 
         // Clear all children from stage
         this.stage.removeChildren();
 
-        console.log(
-            'PixiRenderSystem.clearCanvas called, stage children after:',
-            this.stage.children.length
-        );
+        // clearCanvas called, stage children after (log removed to reduce spam)
     }
 
     private ensureInitialized(): void {
         if (!this.initialized) {
-            // For synchronous methods, we need to handle initialization differently
-            // In a real implementation, you might want to queue operations or throw an error
-            console.warn('PixiRenderSystem not yet initialized, operation may not work correctly');
-
-            // Try to wait a bit for initialization (not ideal but necessary for sync interface)
-            // This is a workaround for the async initialization issue
-            this.waitForInitialization();
+            console.warn('PixiRenderSystem not yet initialized, skipping render operation');
+            return;
         }
     }
 
-    private waitForInitialization(): void {
-        // Block execution until initialization completes (synchronous waiting)
-        // This is a workaround for the async initialization vs sync interface issue
-        const maxWaitTime = 5000; // 5 seconds max wait
-        const checkInterval = 10; // Check every 10ms
-        const startTime = Date.now();
-
-        while (!this.initialized && Date.now() - startTime < maxWaitTime) {
-            // Synchronous busy wait - not ideal but necessary for sync interface
-            // Use synchronous delay to avoid blocking the event loop completely
-            const now = Date.now();
-            while (Date.now() - now < checkInterval) {
-                // Busy wait for short interval
-            }
-        }
-
-        if (!this.initialized) {
-            console.error('PixiRenderSystem initialization timeout after', maxWaitTime, 'ms');
-            throw new Error('PixiRenderSystem initialization timeout');
+    async waitForInitialization(): Promise<void> {
+        if (this.initializationPromise) {
+            await this.initializationPromise;
         }
     }
 
@@ -146,12 +173,20 @@ export class PixiRenderSystem implements IRenderSystem {
     }
 
     applyCameraTransform(camera: Camera): void {
-        this.ensureInitialized();
+        if (!this.initialized) {
+            console.warn('PixiRenderSystem not yet initialized, skipping applyCameraTransform');
+            return;
+        }
 
-        // Apply camera transformation to the main stage
+        // Apply camera transformation to the main stage for viewport scrolling
+        // Camera x/y represents world position to center on screen
+        // To show camera.x at screen center, stage needs to move left by camera.x
         this.stage.position.set(-camera.x, -camera.y);
+
         // Note: Camera type doesn't have zoom property, using default scale
         this.stage.scale.set(1, 1);
+
+        // Camera transform applied (log removed to reduce spam)
     }
 
     restoreCameraTransform(): void {
@@ -163,9 +198,12 @@ export class PixiRenderSystem implements IRenderSystem {
     }
 
     renderAll(): void {
-        this.ensureInitialized();
+        if (!this.initialized) {
+            console.warn('PixiRenderSystem not yet initialized, skipping renderAll');
+            return;
+        }
 
-        console.log('PixiRenderSystem.renderAll called');
+        // renderAll called (log removed to reduce spam)
 
         // Force a render of the current stage
         this.app.renderer.render(this.app.stage);
@@ -176,22 +214,26 @@ export class PixiRenderSystem implements IRenderSystem {
             const gl = this.app.renderer.gl as WebGLRenderingContext;
             gl.finish();
             gl.flush();
-            console.log('WebGL flush and finish completed');
+            // WebGL flush completed (log removed to reduce spam)
         }
 
-        console.log('renderAll completed, stage children:', this.stage.children.length);
+        // renderAll completed (log removed to reduce spam)
     }
 
     // ===== Game Objects =====
 
     renderPlayer(player: Player): void {
-        this.ensureInitialized();
+        if (!this.initialized) {
+            console.warn('PixiRenderSystem not yet initialized, skipping renderPlayer');
+            return;
+        }
 
-        console.log('PixiRenderSystem.renderPlayer called:', player.x, player.y, player.radius);
+        // Player rendering (log removed to reduce spam)
 
-        // Create player graphics
+        // Create player graphics - white square dot instead of circle
         const playerGraphics = new PIXI.Graphics();
-        playerGraphics.circle(player.x, player.y, player.radius);
+        const size = player.radius * 2; // Convert radius to square size
+        playerGraphics.rect(player.x - player.radius, player.y - player.radius, size, size);
         playerGraphics.fill(0xffffff); // White player
 
         this.stage.addChild(playerGraphics);
@@ -214,10 +256,10 @@ export class PixiRenderSystem implements IRenderSystem {
             const age = currentTime - point.timestamp;
             const maxAge = 1000; // 1 second fade time
             const alpha = Math.max(0, 1 - age / maxAge);
-            const radius = playerRadius * alpha * 0.5;
+            const size = playerRadius * alpha;
 
-            if (radius > 0.1) {
-                trailGraphics.circle(point.x, point.y, radius);
+            if (size > 0.1) {
+                trailGraphics.rect(point.x - size / 2, point.y - size / 2, size, size);
                 trailGraphics.fill({ color: 0xffffff, alpha });
             }
         }
@@ -226,7 +268,10 @@ export class PixiRenderSystem implements IRenderSystem {
     }
 
     renderStage(stage: StageData): void {
-        this.ensureInitialized();
+        if (!this.initialized) {
+            console.warn('PixiRenderSystem not yet initialized, skipping renderStage');
+            return;
+        }
 
         // Render platforms
         if (stage.platforms) {
@@ -238,7 +283,7 @@ export class PixiRenderSystem implements IRenderSystem {
                 const width = Math.abs(platform.x2 - platform.x1) || 1;
                 const height = Math.abs(platform.y2 - platform.y1) || 10; // Default height for thin platforms
                 platformGraphics.rect(x, y, width, height);
-                platformGraphics.fill(0x00ff00); // Green platforms
+                platformGraphics.fill(0xffffff); // White platforms to match production
                 this.stage.addChild(platformGraphics);
             }
         }
@@ -397,7 +442,7 @@ export class PixiRenderSystem implements IRenderSystem {
         if (!this.initialized) return;
 
         const credits = new PIXI.Text({
-            text: 'Credits\n\nDeveloped with Pixi.JS\nGame Engine Implementation',
+            text: 'Credits\\n\\nDeveloped with Pixi.JS\\nGame Engine Implementation',
             style: {
                 fontSize: 20,
                 fill: '#ffffff',
@@ -522,6 +567,12 @@ export class PixiRenderSystem implements IRenderSystem {
             // Clear prediction data
             this.landingPredictions = [];
             this.landingHistory = [];
+
+            // Remove canvas from DOM to prevent multiplication
+            if (this.app.canvas?.parentNode) {
+                this.app.canvas.parentNode.removeChild(this.app.canvas);
+                console.log('Canvas removed from DOM during cleanup');
+            }
 
             console.log('PixiRenderSystem cleanup completed');
         } catch (error) {

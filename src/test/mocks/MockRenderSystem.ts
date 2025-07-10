@@ -24,15 +24,10 @@ export class MockRenderSystem implements IRenderSystem {
     private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
-    constructor(canvasElement: HTMLCanvasElement) {
-        this.canvasElement = canvasElement;
+    constructor(containerElement: HTMLElement) {
+        this.canvasElement = containerElement as HTMLCanvasElement;
 
-        // Check if canvas context is available (same as FabricRenderSystem would do)
-        const context = canvasElement.getContext('2d');
-        if (!context) {
-            throw new Error('Failed to get 2D rendering context');
-        }
-
+        // Mock implementation - no real canvas operations needed in tests
         this.mockCanvas = this.createMockCanvas();
     }
 

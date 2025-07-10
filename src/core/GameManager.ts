@@ -37,8 +37,8 @@ import { type StageData, StageLoader } from './StageLoader.js';
  * This class follows Single Responsibility Principle by handling only game logic and state management.
  */
 export class GameManager {
-    /** @private {HTMLCanvasElement} The main game canvas */
-    private canvas: HTMLCanvasElement;
+    /** @private {HTMLElement} The main game container */
+    private container: HTMLElement;
     /** @private {any} Game controller reference for system initialization */
     private gameController: GameController;
     /** @private {GameState} Game state instance */
@@ -76,8 +76,8 @@ export class GameManager {
      * @param {HTMLCanvasElement} canvas - The game canvas element
      * @param {GameController} gameController - Game controller instance for UI integration
      */
-    constructor(canvas: HTMLCanvasElement, gameController: GameController, gameState: GameState) {
-        this.canvas = canvas;
+    constructor(container: HTMLElement, gameController: GameController, gameState: GameState) {
+        this.container = container;
         this.gameController = gameController;
         this.gameState = gameState;
         this.initializeEntities();
@@ -106,16 +106,18 @@ export class GameManager {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
-        this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
-        this.collisionSystem = new CollisionSystem(this.gameState, this.canvas);
+        // Create canvas dimensions from container for camera system
+        const canvasDimensions = { width: 800, height: 600 };
+        this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
+        this.collisionSystem = new CollisionSystem(this.gameState);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
         // Environment-aware rendering system
-        this.renderSystem = createGameRenderSystem(this.canvas);
+        this.renderSystem = createGameRenderSystem(this.container);
 
         // Initialize InputManager with canvas and game controller
-        this.inputManager = new InputManager(this.gameState, this.canvas, gameController);
+        this.inputManager = new InputManager(this.gameState, this.container, gameController);
 
         // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
@@ -270,6 +272,7 @@ export class GameManager {
             renderer.renderClearAnimation(clearAnim.particles, progress, player.x, player.y);
         }
 
+        // Restore camera transform before UI rendering to ensure UI elements are in screen space
         renderer.restoreCameraTransform();
 
         // UI state-based rendering - consolidated in GameManager
@@ -287,7 +290,8 @@ export class GameManager {
             ui?.showStartScreen();
         }
 
-        renderer.renderCredits();
+        // Removed renderCredits() call - credits should not be displayed during gameplay
+        // Credits should only be shown in specific menu screens, not during game
 
         // All rendering commands completed, now render everything
         renderer.renderAll();
