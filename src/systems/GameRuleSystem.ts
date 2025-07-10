@@ -87,7 +87,7 @@ export class GameRuleSystem {
 
     /**
      * Check if player has reached the goal.
-     * Sets gameOver = true and finalScore if goal reached.
+     * Sets gameOver = true if goal reached.
      */
     private checkGoalReached(): void {
         // Check goal collision using collision results flag
@@ -97,11 +97,10 @@ export class GameRuleSystem {
     }
 
     /**
-     * Handle goal reached: set game over, calculate final score, and trigger clear animation.
+     * Handle goal reached: set game over and trigger clear animation.
      */
     private handleGoalReached(): void {
         this.gameState.gameOver = true;
-        this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
 
         // Set flag to trigger clear animation
         this.gameState.runtime.shouldStartClearAnimation = true;

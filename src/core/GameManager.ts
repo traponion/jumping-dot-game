@@ -272,16 +272,11 @@ export class GameManager {
 
         renderer.restoreCameraTransform();
 
-        // UI state-based rendering - consolidated in GameManager
+        // UI state-based rendering - HTML handles game over menu now
         if (this.gameState.gameOver) {
             if (ui) {
-                const menuData = ui.getGameOverMenuData();
-                renderer.renderGameOverMenu(
-                    menuData.options,
-                    menuData.selectedIndex,
-                    this.gameState.finalScore,
-                    this.gameState.deathCount
-                );
+                ui.showGameOverScreen();
+                ui.updateGameOverMenu();
             }
         } else if (!this.gameState.gameRunning) {
             ui?.showStartScreen();
@@ -291,18 +286,6 @@ export class GameManager {
 
         // All rendering commands completed, now render everything
         renderer.renderAll();
-    }
-
-    /**
-     * Render game over menu
-     */
-    renderGameOverMenu(
-        options: string[],
-        selectedIndex: number,
-        finalScore: number,
-        deathCount?: number
-    ): void {
-        this.renderSystem.renderGameOverMenu(options, selectedIndex, finalScore, deathCount);
     }
 
     /**

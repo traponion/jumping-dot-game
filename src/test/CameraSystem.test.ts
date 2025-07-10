@@ -44,7 +44,7 @@ describe('CameraSystem', () => {
             timeLimit: 10,
             timeRemaining: 10,
             gameStartTime: null,
-            finalScore: 0,
+
             stage: null,
             hasMovedOnce: false,
             performance: { fps: 60, deltaTime: 16.67 },
@@ -188,7 +188,7 @@ describe('CameraSystem', () => {
                 timeLimit: 10,
                 timeRemaining: 10,
                 gameStartTime: null,
-                finalScore: 0,
+
                 stage: null,
                 hasMovedOnce: false,
                 performance: { fps: 60, deltaTime: 16.67 },
@@ -229,7 +229,7 @@ describe('CameraSystem', () => {
                 timeLimit: 10,
                 timeRemaining: 10,
                 gameStartTime: null,
-                finalScore: 0,
+
                 stage: null,
                 hasMovedOnce: false,
                 performance: { fps: 60, deltaTime: 16.67 },

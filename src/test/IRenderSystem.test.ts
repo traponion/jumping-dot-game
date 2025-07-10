@@ -98,16 +98,6 @@ describe('IRenderSystem Interface Contract', () => {
             expect(() => renderSystem.renderStartInstruction()).not.toThrow();
         });
 
-        test('should have renderGameOverMenu method that accepts options, selectedIndex, and finalScore', () => {
-            const options = ['Restart', 'Main Menu'];
-            const selectedIndex = 0;
-            const finalScore = 1000;
-            expect(renderSystem.renderGameOverMenu).toBeDefined();
-            expect(() =>
-                renderSystem.renderGameOverMenu(options, selectedIndex, finalScore)
-            ).not.toThrow();
-        });
-
         test('should have renderCredits method with no parameters', () => {
             expect(renderSystem.renderCredits).toBeDefined();
             expect(() => renderSystem.renderCredits()).not.toThrow();

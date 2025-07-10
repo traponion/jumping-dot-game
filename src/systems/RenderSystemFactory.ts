@@ -2,11 +2,11 @@
  * @fileoverview Render system factory
  * @module systems/RenderSystemFactory
  * @description Infrastructure Layer - Factory pattern for creating appropriate render systems.
- * Supports both production (Fabric.js) and test (Mock) environments.
+ * Supports both production (Pixi.JS) and test (Mock) environments.
  */
 
 import { MockRenderSystem } from '../test/mocks/MockRenderSystem.js';
-import { FabricRenderAdapter } from './FabricRenderAdapter.js';
+import { PixiRenderSystem } from './PixiRenderSystem.js';
 
 /**
  * Creates appropriate render system based on environment
@@ -19,5 +19,5 @@ export function createGameRenderSystem(canvasElement: HTMLCanvasElement) {
     if (isTestEnvironment) {
         return new MockRenderSystem(canvasElement);
     }
-    return new FabricRenderAdapter(canvasElement);
+    return new PixiRenderSystem(canvasElement);
 }
