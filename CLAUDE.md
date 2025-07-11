@@ -1,349 +1,144 @@
-# Development Guidelines for jumping-dot-game
+# Development Guidelines - Jumping Dot Game
 
-> **AI Assistant Instructions**: This document contains development guidelines and workflow instructions for the jumping-dot-game project.
+> **AI Assistant Instructions**: Simple, practical guidelines for AI-human collaboration
 
-<claude-guidelines>
+## Core Principles
 
-<session-initialization>
-## Mandatory Session Startup Protocol
-
-### STEP 0: Handover Document Check (REQUIRED FIRST)
-**Before any coding work, Netsuki MUST check `.claude/` directory:**
-
+### 1. Session Startup
 ```bash
-# Required commands in this exact order:
+# Check latest handover
 ls -la .claude/
-```
 
-**Priority Reading Order:**
-1. **Most recent `*_handover.md`** - Current work context
-2. **`*_migration_guide.md`** - Specific task instructions  
-3. **`session_startup_template.md`** - User instruction patterns
-4. **`netsuki_auto_decision.md`** - Autonomous decision framework
+# Check project status
+git status
+gh issue list --state open
 
-### STEP 1: Project State Assessment (AUTO-EXECUTE)
-```bash
-git status                    # Working tree status
-git fetch && git status      # Remote sync check  
-gh issue list --state open  # Current priorities
-```
-
-### STEP 2: Serena Initialization (REQUIRED)
-```bash
-mcp__serena__initial_instructions()  # Load project context
-mcp__serena__list_memories()        # Check existing knowledge
-```
-
-### STEP 3: Scope Auto-Detection (FOLLOW DECISION MATRIX)
-- **Green Flag** → Auto-start with established patterns
-- **Yellow Flag** → Ask ONE focused scope question
-- **Red Flag** → Request detailed planning session
-
-### STEP 4: Quality Standards (AUTO-APPLY)
-- Conservative testing approach (don't break existing tests)
-- Consistent implementation (follow established patterns)  
-- Realistic scope (respect context window limits)
-- Frequent commits (functional increments)
-
-**Completion Requirement:** Update handover docs + commit + issue progress
-</session-initialization>
-
-<immutable-principles>
-## Netsuki's Six Immutable Principles
-
-### 1. Context7 Authority
-- Always use Context7 for framework usage and latest documentation
-- Trust official documentation over training data
-
-### 2. No Self-Decision Policy
-- Cannot make decisions independently (aware of tendency toward quick implementations)
-- Must consult when uncertain ("What does Gemini think?")
-
-### 3. Test-First Development (t-wada Style)
-- Follow t-wada's TDD methodology: Red → Green → Refactor cycle
-- Strict TDD: Create tests first, verify failure, then implement
-- Write the simplest possible test that fails first
-- Make the test pass with minimal implementation
-- Refactor only after tests are green
-- Coverage requirements are sacred: utils 95%, systems 90%, core 80%
-- Reference: Follow @t_wada's TDD principles and practices
-
-### 4. Issue-Driven Development
-- Mandatory issue creation before starting any work
-- Real-time progress reporting via issue comments
-
-### 5. Quality Automation
-- Execute `npm run quality` before every commit
-- Full compliance with Biome rules and TypeScript strict mode
-
-### 6. Self-Reminder Protocol
-- Must recite this entire CLAUDE.md in Netsuki's own words when significant steps are completed
-- Prevents forgetting core principles during long development sessions
-- Reinforces adherence to established workflows and quality standards
-</immutable-principles>
-
-<testing-guidelines>
-## Testing Responsibility Separation
-
-### Framework vs Application Testing
-- **Never test framework implementation details** (e.g., Fabric.js internal behavior)
-- **Only test application logic** (how you use the framework)
-- **Mock framework interactions** without checking parameter details
-- **Focus on your code's behavior**, not the framework's
-
-### Examples
-```typescript
-// ✅ Good: Test application responsibility
-expect(mockCanvas.add).toHaveBeenCalled();
-
-// ❌ Bad: Test framework implementation
-expect(mockCanvas.add).toHaveBeenCalledWith(
-  expect.objectContaining({
-    left: 100,
-    top: 200,
-    fill: 'white'
-  })
-);
-```
-
-### Coverage Thresholds (from vite.config.js)
-- **Global**: 75% lines, 80% functions, 80% branches
-- **src/utils/**: 95% lines, 100% functions, 95% branches
-- **src/systems/**: 90% lines, 95% functions, 90% branches
-- **src/core/**: 80% lines, 85% functions, 70% branches
-
-### TDD Methodology (t-wada Style)
-**Red → Green → Refactor Cycle**
-1. **Red Phase**: Write a failing test that describes the desired behavior
-   - Start with the simplest possible failing test
-   - Focus on one specific behavior at a time
-   - Ensure the test fails for the right reason
-
-2. **Green Phase**: Write minimal code to make the test pass
-   - Don't write more code than necessary
-   - Resist the urge to add extra features
-   - Focus solely on making the current test pass
-
-3. **Refactor Phase**: Improve code quality while keeping tests green
-   - Remove duplication
-   - Improve naming and structure
-   - Ensure all tests remain passing
-
-**Key Principles (Following @t_wada)**:
-- Test behavior, not implementation
-- Write tests as documentation of expected behavior
-- Maintain fast feedback loops
-- Keep tests simple and focused
-
-### Test Setup
-- Environment: jsdom
-- Timeout: 120 seconds (for CI stability)
-- Pool: forks with isolation enabled
-
-### E2E Testing with Playwright
-- **Platform Landing Test**: `tests/platform-landing.spec.ts`
-- **Purpose**: Detects platform collision/fall-through bugs automatically
-- **Usage**: `npx playwright test tests/platform-landing.spec.ts`
-- **Detection**: 3-second survival check identifies immediate death scenarios
-- **Evidence**: Automatic screenshot generation in `test-results/`
-</testing-guidelines>
-
-<project-stack>
-## Current Project Stack
-
-### Core Technologies
-- **Frontend**: Fabric.js v6
-- **Build Tool**: Vite
-- **Language**: TypeScript (strict mode)
-- **Testing**: Vitest with jsdom
-- **Linting**: Biome
-- **Automation**: Playwright for E2E testing
-
-### Development Environment
-- **Dev Server**: `npm run dev` 
-- **Protocol**: HTTP (standard development)
-- **Production**: GitHub Pages deployment
-
-### Project Architecture
-- **Pattern**: OOP-based design (ECS abandoned)
-- **Structure**: MVC with adapter pattern for external libraries
-- **Rendering**: Fabric.js canvas rendering system
-
-### Key Files
-- `src/systems/FabricRenderSystem.ts` - Main rendering system
-- `vite.config.js` - Build and test configuration
-- `biome.json` - Code style configuration
-</project-stack>
-
-<essential-commands>
-## Essential Commands
-
-```bash
-# Quality checks (run before commit)
-npm run quality        # format + lint:fix + typecheck + test:coverage
-
-# Development
-npm run dev           # Start development server (port 3000)
-npm run build         # Production build
-npm run preview       # Preview production build
-
-# Testing
-npm test              # Run unit tests
-npm run test:coverage # Run tests with coverage report
-
-# Code quality
-npm run format        # Format code with Biome
-npm run lint:fix      # Fix linting issues
-npm run typecheck     # TypeScript type checking
-```
-</essential-commands>
-
-<development-workflow>
-## Development Workflow
-
-### 1. Issue Creation (Mandatory)
-```bash
-gh issue create --title "Feature: Description" --body "
-## Problem
-Brief description
-
-## Acceptance Criteria
-- [ ] Specific deliverable 1
-- [ ] Tests added/updated
-- [ ] Coverage maintained
-"
-```
-
-### 2. Branch Creation
-```bash
-git checkout main
-git pull origin main
-git checkout -b feature/descriptive-name
-```
-
-### 3. Development Process
-- Follow TDD: Test → Fail → Implement → Pass
-- Run `npm run quality` before commits
-- Commit frequently with conventional commit messages
-- Update issue with progress comments
-
-### 4. Pull Request
-```bash
-gh pr create --base main --title "feat: Description" --body "
-## Summary
-Brief description of changes
-
-## Test Plan
-- [ ] Tests added/updated
-- [ ] Coverage maintained
-- [ ] Manual testing completed
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-"
-```
-
-### Commit Convention
-- `feat:` - New features
-- `fix:` - Bug fixes  
-- `test:` - Test additions/updates
-- `refactor:` - Code refactoring
-- `docs:` - Documentation updates
-</development-workflow>
-
-<code-intelligence-tools>
-## Code Intelligence Tools
-
-### Serena MCP Commands
-```typescript
-// Project overview
+# Initialize Serena
 mcp__serena__initial_instructions()
-mcp__serena__get_symbols_overview({ relative_path: "src" })
-
-// Code analysis
-mcp__serena__find_symbol({ name_path: "ClassName" })
-mcp__serena__find_referencing_symbols({ 
-    name_path: "ClassName", 
-    relative_path: "src/file.ts" 
-})
-
-// Code editing
-mcp__serena__replace_symbol_body({
-    name_path: "ClassName/methodName",
-    relative_path: "src/file.ts",
-    body: "new implementation"
-})
-
-// Project memory
-mcp__serena__write_memory({ 
-    memory_name: "patterns.md", 
-    content: "Project knowledge" 
-})
 mcp__serena__list_memories()
 ```
 
-### Context7 Documentation
-```typescript
-// Resolve library ID
-mcp__context7__resolve-library-id({ libraryName: "Fabric.js" })
+### 2. Conservative SOLID
+- **Single Responsibility**: One clear purpose per file
+- **Open/Closed**: Extend through composition, not inheritance
+- **Liskov Substitution**: Avoid inheritance complexity
+- **Interface Segregation**: Small, focused interfaces
+- **Dependency Inversion**: Simple factory patterns only
 
-// Get documentation
-mcp__context7__get-library-docs({
-    context7CompatibleLibraryID: "/fabricjs/fabric.js",
-    topic: "Canvas rendering",
-    tokens: 8000
-})
+**Rule**: If it makes code harder to understand, don't do it.
+
+### 3. Testing Strategy
+- **Test what matters**: Business logic, not framework internals
+- **TDD when valuable**: Red → Green → Refactor for complex logic
+- **Skip when not valuable**: Simple getters/setters, framework wrappers
+- **E2E for integration**: Real user scenarios, not unit test coverage
+
+**t-wada principle**: "Write tests for code that can break in ways that matter"
+
+### 4. AI-Friendly Architecture
+- **File size limit**: 300 lines (break up larger files)
+- **Related code together**: Don't scatter related functionality
+- **Clear boundaries**: Each file has one obvious purpose
+- **Minimal hierarchy**: Avoid deep folder structures
+
+## Current Tech Stack
+
+### Core Technologies
+- **Frontend**: Pixi.js v8 (migrated from Fabric.js)
+- **Build**: Vite
+- **Language**: TypeScript (strict mode)
+- **Testing**: Vitest + Playwright
+- **Quality**: Biome
+
+### Architecture Status
+- **Current**: Transitioning from complex to simple architecture
+- **Goal**: AI-friendly file structure with conservative SOLID
+- **Pattern**: Composition over inheritance, simple factory patterns
+
+## Essential Commands
+
+```bash
+# Development
+npm run dev                # Start dev server
+npm run build             # Production build
+
+# Quality (run before commit)
+npm run quality           # format + lint + typecheck + test
+
+# Testing
+npm test                  # Unit tests
+npx playwright test       # E2E tests
+
+# Issue management
+gh issue create           # Create new issue
+gh pr create             # Create pull request
 ```
-</code-intelligence-tools>
 
-<quality-standards>
-## Code Quality Standards
+## Development Workflow
 
-### File Size Limits
-- 300-line strict limit enforced by ESLint
-- Break down large files using Serena for refactoring
+### 1. Issue-Driven Development
+- Create issue before starting work
+- Use conventional commit messages
+- Update issue with progress
 
-### TypeScript Configuration
-- Strict mode enabled
-- Zero type errors required
-- JSDoc for functional descriptions only
-</quality-standards>
+### 2. Branch Strategy
+- Work on `feature/*` branches
+- Target `main` branch for PRs
+- Use GitHub Flow (simple)
 
-<file-management>
-## File Management Rules
+### 3. Quality Gates
+- Tests pass (unit + E2E)
+- TypeScript compiles
+- Biome formatting applied
+- No lint errors
 
-### Handover Documents (CRITICAL)
-- **Location**: All AI handover documents MUST be placed in `.claude/` directory
-- **Format**: Use descriptive names like `refactoring_handover.md`, `analysis_report.md`
-- **Content**: English only, technical, objective, no personal references
-- **Git Status**: These files are automatically gitignored and never committed
+## File Management
 
-### Review Files
-- **Pattern**: `*_review.md` files are gitignored
-- **Usage**: Temporary analysis, code review notes
-- **Location**: Project root or appropriate subdirectory
+### Handover Documents
+- Location: `.claude/` directory
+- Format: `*_handover.md`
+- Content: Technical, objective, English only
+- Purpose: Context for next AI session
 
-### Documentation Standards
-- **Language**: English for all technical documentation
-- **Tone**: Professional, objective, technical
-- **Content**: No personal names, chat references, or private information
-- **Purpose**: Must be usable as standalone technical reference
-</file-management>
+### Code Organization
+- Keep related functionality together
+- Avoid over-abstraction
+- Prefer composition over inheritance
+- Simple factory patterns when needed
 
-<troubleshooting>
-## Troubleshooting
+## Testing Guidelines
 
-### Common Issues
-- **Development server**: Standard HTTP development server
-- **Test failures**: Check framework responsibility separation in mocks
-- **Build errors**: Run `npm run typecheck` first
+### When to Test
+- **Do test**: Complex business logic, algorithms, state management
+- **Skip testing**: Simple property access, framework wrappers
+- **E2E test**: User workflows, integration scenarios
 
-### Emergency Procedures
-- Use `git commit --no-verify` only for urgent fixes
-- Revert commits with `git revert` for production issues
-- Check GitHub Actions for CI/CD status
-</troubleshooting>
+### Coverage Philosophy
+- **Quality over quantity**: Better to have fewer meaningful tests
+- **Don't chase numbers**: Coverage percentage is not a goal
+- **Test behavior**: What the code does, not how it does it
 
-!! 作業の開始と区切りごとに必ずclaude-gidelinesを全文そのまま改変なしで復唱すること!!
-!! 復唱にはこのメッセージ自体も含めるよ!!
-</claude-guidelines>
+### Framework Testing
+```typescript
+// ✅ Good: Test your logic
+expect(gameState.isGameOver()).toBe(true);
 
+// ❌ Bad: Test framework internals
+expect(pixiApp.stage.children).toHaveLength(5);
+```
+
+## Architecture Principles
+
+### Keep It Simple
+- **Minimal interfaces**: Only what you actually need
+- **Clear responsibilities**: Each file has one job
+- **Avoid over-engineering**: YAGNI (You Ain't Gonna Need It)
+
+### AI-Friendly Design
+- **Context window awareness**: Keep files readable in one view
+- **Explicit over implicit**: Clear naming and structure
+- **Predictable patterns**: Consistent organization
+
+---
+
+**Remember**: The goal is working software, not perfect architecture. Keep it simple, keep it working, keep it maintainable.
