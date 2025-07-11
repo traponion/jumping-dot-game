@@ -178,13 +178,8 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // Apply camera transformation to the main stage for viewport scrolling
-        // Camera x/y represents world position to center on screen
-        // To show camera.x at screen center, stage needs to move left by camera.x
+        // Apply camera transformation cleanly
         this.stage.position.set(-camera.x, -camera.y);
-
-        // Note: Camera type doesn't have zoom property, using default scale
-        this.stage.scale.set(1, 1);
     }
 
     restoreCameraTransform(): void {
@@ -201,8 +196,6 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // renderAll called (log removed to reduce spam)
-
         // Force a render of the current stage
         this.app.renderer.render(this.app.stage);
 
@@ -212,10 +205,7 @@ export class PixiRenderSystem implements IRenderSystem {
             const gl = this.app.renderer.gl as WebGLRenderingContext;
             gl.finish();
             gl.flush();
-            // WebGL flush completed (log removed to reduce spam)
         }
-
-        // renderAll completed (log removed to reduce spam)
     }
 
     // ===== Game Objects =====
@@ -226,12 +216,11 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // Player rendering (log removed to reduce spam)
-
-        // Create player graphics - white square dot instead of circle
+        // Create player graphics with correct Pixi.js v8 API
         const playerGraphics = new PIXI.Graphics();
-        const size = player.radius * 2; // Convert radius to square size
-        playerGraphics.rect(player.x - player.radius, player.y - player.radius, size, size);
+        const size = player.radius * 2;
+        playerGraphics.rect(0, 0, size, size);
+        playerGraphics.position.set(player.x - player.radius, player.y - player.radius);
         playerGraphics.fill(0xffffff); // White player
 
         this.stage.addChild(playerGraphics);
@@ -257,7 +246,8 @@ export class PixiRenderSystem implements IRenderSystem {
             const size = playerRadius * alpha;
 
             if (size > 0.1) {
-                trailGraphics.rect(point.x - size / 2, point.y - size / 2, size, size);
+                trailGraphics.rect(0, 0, size, size);
+                trailGraphics.position.set(point.x - size / 2, point.y - size / 2);
                 trailGraphics.fill({ color: 0xffffff, alpha });
             }
         }
@@ -271,17 +261,15 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // Render platforms
+        // Render platforms cleanly
         if (stage.platforms) {
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
-                // Convert line-based platform (x1,y1,x2,y2) to rectangle
-                const x = Math.min(platform.x1, platform.x2);
-                const y = Math.min(platform.y1, platform.y2);
-                const width = Math.abs(platform.x2 - platform.x1) || 1;
-                const height = Math.abs(platform.y2 - platform.y1) || 10; // Default height for thin platforms
-                platformGraphics.rect(x, y, width, height);
-                platformGraphics.fill(0xffffff); // White platforms to match production
+                const width = platform.x2 - platform.x1;
+                const height = platform.y2 - platform.y1;
+                platformGraphics.rect(0, 0, width, height);
+                platformGraphics.position.set(platform.x1, platform.y1);
+                platformGraphics.fill(0xffffff); // White platforms
                 this.stage.addChild(platformGraphics);
             }
         }
@@ -289,7 +277,8 @@ export class PixiRenderSystem implements IRenderSystem {
         // Render goal
         if (stage.goal) {
             const goalGraphics = new PIXI.Graphics();
-            goalGraphics.rect(stage.goal.x, stage.goal.y, stage.goal.width, stage.goal.height);
+            goalGraphics.rect(0, 0, stage.goal.width, stage.goal.height);
+            goalGraphics.position.set(stage.goal.x, stage.goal.y);
             goalGraphics.fill(0xffff00); // Yellow goal
             this.stage.addChild(goalGraphics);
         }
@@ -298,7 +287,8 @@ export class PixiRenderSystem implements IRenderSystem {
         if (stage.spikes) {
             for (const spike of stage.spikes) {
                 const spikeGraphics = new PIXI.Graphics();
-                spikeGraphics.rect(spike.x, spike.y, spike.width, spike.height);
+                spikeGraphics.rect(0, 0, spike.width, spike.height);
+                spikeGraphics.position.set(spike.x, spike.y);
                 spikeGraphics.fill(0xff0000); // Red spikes
                 this.stage.addChild(spikeGraphics);
             }

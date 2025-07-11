@@ -72,7 +72,11 @@ test.describe('Player Display and Movement', () => {
 
         // Check if canvas has active content (not blank)
         const hasCanvasContent = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
             
             console.log('Canvas element found:', !!canvas);
@@ -225,7 +229,11 @@ test.describe('Player Display and Movement', () => {
 
         // Verify canvas continues to have active content during movement
         const hasContentAfterMovement = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
 
             // Universal canvas content detection for both 2D and WebGL
@@ -350,7 +358,11 @@ test.describe('Player Display and Movement', () => {
 
             // Verify canvas still has content
             const hasContent = await page.evaluate(() => {
-                const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+                // Get the actual canvas element (child of gameCanvas DIV)
+                const container = document.getElementById('gameCanvas');
+                if (!container) return false;
+                
+                const canvas = container.querySelector('canvas') as HTMLCanvasElement;
                 if (!canvas) return false;
 
                 // Universal canvas content detection for both 2D and WebGL

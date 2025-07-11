@@ -55,12 +55,16 @@ test.describe('Trail Rendering System', () => {
 
         // Check if trail elements are present in the canvas
         // We'll check for canvas and that it's not empty/black
-        const canvas = await page.locator('canvas#gameCanvas');
-        expect(canvas).toBeVisible();
+        const canvasContainer = page.locator('#gameCanvas');
+        await expect(canvasContainer).toBeVisible();
 
         // Get canvas context and check if it has been drawn on
         const hasCanvasContent = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
 
             // Universal canvas content detection for both 2D and WebGL
@@ -192,7 +196,11 @@ test.describe('Trail Rendering System', () => {
 
         // Verify canvas still has content after extended movement
         const hasCanvasContent = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
 
             // Universal canvas content detection for both 2D and WebGL

@@ -136,7 +136,11 @@ test.describe('Production vs Development Visual Comparison', () => {
 
         // Verify canvas has content in development
         const devHasContent = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
             
             // Universal canvas content detection for both 2D and WebGL
@@ -201,7 +205,11 @@ test.describe('Production vs Development Visual Comparison', () => {
 
         // Verify canvas has content in production
         const prodHasContent = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+            // Get the actual canvas element (child of gameCanvas DIV)
+            const container = document.getElementById('gameCanvas');
+            if (!container) return false;
+            
+            const canvas = container.querySelector('canvas') as HTMLCanvasElement;
             if (!canvas) return false;
             
             // Universal canvas content detection for both 2D and WebGL
