@@ -90,7 +90,7 @@ export class GameManager {
         this.gameState.timeRemaining = 10;
         Object.assign(this.gameState.runtime.player, {
             x: 100,
-            y: 400,
+            y: 480, // Safe position above platform (platform is at y=500, radius=10)
             vx: 0,
             vy: 0,
             radius: GAME_CONFIG.player.defaultRadius,
@@ -168,8 +168,26 @@ export class GameManager {
         // Clean up all existing systems
         await this.cleanupSystems();
 
-        // Reinitialize all systems with fresh instances
-        this.initializeSystems(this.gameController);
+        // Reinitialize most systems with fresh instances, but reuse renderSystem to prevent canvas duplication
+        const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
+
+        this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
+        // Create canvas dimensions from container for camera system
+        const canvasDimensions = { width: 800, height: 600 };
+        this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
+        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.gameRuleSystem = new GameRuleSystem(this.gameState);
+        this.animationSystem = new AnimationSystem(this.gameState);
+        this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        // IMPORTANT: Do NOT recreate renderSystem to prevent canvas duplication
+        // this.renderSystem is already initialized in constructor and should be reused
+
+        // Initialize InputManager with canvas and game controller
+        this.inputManager = new InputManager(this.gameState, this.container, this.gameController);
+
+        // Initialize PlayerSystem with InputManager and inject render system
+        this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
+        this.playerSystem.setRenderSystem(this.renderSystem);
 
         // Reload stage to get clean initial data
         const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
@@ -177,7 +195,7 @@ export class GameManager {
         // Sync stage to GameState for CollisionSystem access
         this.gameState.stage = this.stage;
 
-        this.playerSystem.reset(100, 400);
+        this.playerSystem.reset(100, 480); // Match the safe initial position
         this.animationSystem.reset();
 
         this.gameState.runtime.camera.x = 0;
