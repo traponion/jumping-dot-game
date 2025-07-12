@@ -1,5 +1,5 @@
 import type { GameState } from '../stores/GameState';
-import { getCurrentTime } from '../utils/GameUtils';
+import { getCurrentTime } from './PlayerSystem.js';
 
 /**
  * GameRuleSystem handles game rule enforcement and victory/defeat conditions.

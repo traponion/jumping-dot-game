@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GAME_CONFIG } from '../../../constants/GameConstants.js';
+import { GAME_CONFIG } from '../../../stores/GameState.js';
 import { GameState } from '../../../stores/GameState.js';
 import type { InputManager } from '../../../systems/InputManager.js';
 import { PlayerSystem } from '../../../systems/PlayerSystem.js';

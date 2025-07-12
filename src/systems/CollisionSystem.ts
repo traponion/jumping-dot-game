@@ -7,7 +7,7 @@
 import type { Goal, MovingPlatform, Platform, Spike } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
-import { isCircleRectCollision } from '../utils/GameUtils.js';
+import { isCircleRectCollision } from './PlayerSystem.js';
 
 // Interface for PlayerSystem methods used by CollisionSystem
 interface IPlayerSystem {

@@ -5,7 +5,7 @@
  */
 
 import { JumpingDotGame } from './core/Game.js';
-import { HtmlStageSelect } from './core/HtmlStageSelect.js';
+import { HtmlStageSelect } from './core/GameUI.js';
 
 /**
  * Current stage select instance

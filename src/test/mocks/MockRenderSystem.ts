@@ -2,8 +2,8 @@
 // Based on Fabric.js official testing patterns
 
 import type { StageData } from '../../core/StageLoader.js';
-import type { IRenderSystem, Position } from '../../systems/IRenderSystem.js';
-import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
+import type { IRenderSystem, Position } from '../../systems/PixiRenderSystem.js';
+import type { LandingPrediction } from '../../types/GameTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../../types/GameTypes.js';
 
 export interface MockFabricCanvas {

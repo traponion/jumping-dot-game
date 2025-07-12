@@ -139,3 +139,19 @@ export interface PhysicsConstants {
     moveSpeed: number;
     gameSpeed: number;
 }
+
+/**
+ * Represents a predicted landing position for player movement analysis
+ * @interface LandingPrediction
+ * @description Analytics domain type for tracking where the player is predicted to land
+ */
+export interface LandingPrediction {
+    /** X coordinate of predicted landing position */
+    x: number;
+    /** Y coordinate of predicted landing position */
+    y: number;
+    /** Confidence level of prediction (0-1, where 1 is most confident) */
+    confidence: number;
+    /** Sequential jump number this prediction represents (1, 2, 3...) */
+    jumpNumber: number;
+}

@@ -4,21 +4,37 @@
  * @description Application Layer - Game systems coordination and state management
  */
 
-import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
+import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { GameRuleSystem } from '../systems/GameRuleSystem.js';
-import type { IRenderSystem } from '../systems/IRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
-import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
+import { MovingPlatformSystem } from '../systems/PhysicsSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
+import type { IRenderSystem } from '../systems/PixiRenderSystem.js';
+import { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
+import { CameraSystem } from '../systems/PlayerSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
-import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
+// RenderSystemFactory merged here for simplification
+import { MockRenderSystem } from '../test/mocks/MockRenderSystem.js';
+
+/**
+ * Creates appropriate render system based on environment
+ */
+function createGameRenderSystem(containerElement: HTMLElement) {
+    // Environment detection for test vs production
+    const isTestEnvironment =
+        typeof globalThis.window === 'undefined' || globalThis.process?.env?.NODE_ENV === 'test';
+
+    if (isTestEnvironment) {
+        return new MockRenderSystem(containerElement);
+    }
+    return new PixiRenderSystem(containerElement);
+}
+import { getCurrentTime } from '../systems/PlayerSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
-import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameState } from '../stores/GameState';
 import { GameRuleSystem } from '../systems/GameRuleSystem';
-import { getCurrentTime } from '../utils/GameUtils';
+import { getCurrentTime } from '../systems/PlayerSystem.js';
 
 // Mock GameUtils
 vi.mock('../utils/GameUtils', () => ({

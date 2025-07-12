@@ -5,7 +5,7 @@ import {
     isCircleRectCollision,
     isPointInRect,
     randomRange
-} from '../../../utils/GameUtils.js';
+} from '../../../systems/PlayerSystem.js';
 
 describe('GameUtils', () => {
     describe('getCurrentTime', () => {

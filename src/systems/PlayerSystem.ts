@@ -4,12 +4,72 @@
  * @description Domain Layer - Pure player logic and physics management using Zustand store
  */
 
-import { GAME_CONFIG } from '../constants/GameConstants.js';
 import type { Platform } from '../core/StageLoader.js';
+import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
-import type { LandingPrediction } from '../types/AnalyticsTypes.js';
+import type { LandingPrediction } from '../types/GameTypes.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
-import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
+// GameUtils functions merged here for consolidation
+
+/**
+ * Get current high-resolution timestamp using Performance API
+ */
+export function getCurrentTime(): number {
+    return performance.now();
+}
+
+/**
+ * Calculate delta time factor for frame-rate independent physics
+ */
+export function calculateDeltaFactor(deltaTime: number, gameSpeed: number): number {
+    return (deltaTime / (1000 / 60)) * gameSpeed;
+}
+
+/**
+ * Check if a point is within a rectangle's bounds
+ */
+export function isPointInRect(
+    pointX: number,
+    pointY: number,
+    rectX: number,
+    rectY: number,
+    rectWidth: number,
+    rectHeight: number
+): boolean {
+    return (
+        pointX >= rectX &&
+        pointX <= rectX + rectWidth &&
+        pointY >= rectY &&
+        pointY <= rectY + rectHeight
+    );
+}
+
+/**
+ * Check collision between a circle and rectangle using AABB detection
+ */
+export function isCircleRectCollision(
+    circleX: number,
+    circleY: number,
+    circleRadius: number,
+    rectX: number,
+    rectY: number,
+    rectWidth: number,
+    rectHeight: number
+): boolean {
+    return (
+        circleX + circleRadius >= rectX &&
+        circleX - circleRadius <= rectX + rectWidth &&
+        circleY + circleRadius >= rectY &&
+        circleY - circleRadius <= rectY + rectHeight
+    );
+}
+
+/**
+ * Generate random floating-point number between min and max (inclusive)
+ */
+export function randomRange(min: number, max: number): number {
+    return Math.random() * (max - min) + min;
+}
 import type { InputManager } from './InputManager.js';
 
 /**
@@ -299,5 +359,52 @@ export class PlayerSystem {
      */
     getHasMovedOnce(): boolean {
         return this.hasMovedOnce;
+    }
+}
+
+/**
+ * Canvas dimensions interface for camera calculations
+ */
+export interface CanvasDimensions {
+    width: number;
+    height: number;
+}
+
+/**
+ * CameraSystem - Autonomous camera positioning system
+ * Integrated with PlayerSystem for related player-based calculations
+ */
+export class CameraSystem {
+    private gameState: GameState;
+    private canvas: CanvasDimensions;
+
+    /**
+     * Create CameraSystem with GameState and canvas dependencies
+     * @param gameState - Game state containing player and camera data
+     * @param canvas - Canvas dimensions for camera calculations
+     */
+    constructor(gameState: GameState, canvas: CanvasDimensions) {
+        this.gameState = gameState;
+        this.canvas = canvas;
+    }
+
+    /**
+     * Update camera position to center on player
+     * Implements autonomous update pattern with direct GameState mutation
+     *
+     * Camera Positioning Logic:
+     * - Center camera horizontally on player position
+     * - Camera.x = Player.x - (canvas.width / 2)
+     * - Direct mutation of gameState.runtime.camera.x
+     */
+    public update(): void {
+        const player = this.gameState.runtime.player;
+
+        // Center camera on player position (both X and Y axes)
+        const newCameraX = player.x - this.canvas.width / 2;
+        const newCameraY = player.y - this.canvas.height / 2;
+
+        this.gameState.runtime.camera.x = newCameraX;
+        this.gameState.runtime.camera.y = newCameraY;
     }
 }

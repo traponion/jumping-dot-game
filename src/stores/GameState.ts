@@ -3,6 +3,63 @@ import type { StageData } from '../core/StageLoader.js';
 import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 
 /**
+ * @fileoverview Game constants and configuration values merged with GameState
+ * @description Centralized configuration for game physics, rendering, and behavior.
+ */
+
+/**
+ * Default physics constants for game simulation
+ */
+export const DEFAULT_PHYSICS_CONSTANTS = {
+    gravity: 0.6,
+    jumpForce: -12,
+    autoJumpInterval: 150,
+    moveSpeed: 4,
+    gameSpeed: 2.0
+} as const;
+
+/**
+ * Game configuration settings for rendering and gameplay
+ */
+export const GAME_CONFIG = {
+    canvas: {
+        defaultWidth: 800,
+        defaultHeight: 600
+    },
+    player: {
+        defaultRadius: 3,
+        maxTrailLength: 8,
+        acceleration: 0.5,
+        minVelocity: 0.2
+    },
+    animation: {
+        particleCount: 15,
+        clearAnimationDuration: 2000,
+        deathAnimationDuration: 1000
+    }
+} as const;
+
+/**
+ * Rendering constants for UI and visual elements
+ */
+export const RENDERING_CONSTANTS = {
+    MAX_TRAIL_POINTS: 50,
+    TARGET_FRAME_TIME: 16.67,
+    TYPOGRAPHY: {
+        TITLE_SIZE: 32,
+        MENU_SIZE: 24,
+        INSTRUCTION_SIZE: 16,
+        SMALL_SIZE: 14
+    },
+    ANIMATION: {
+        TRAJECTORY_OFFSET_X: -30,
+        TRAJECTORY_OFFSET_Y: -20,
+        CROSSHAIR_SIZE: 10,
+        PARTICLE_RADIUS: 2
+    }
+} as const;
+
+/**
  * Game Runtime State - Manages dynamic game entities and runtime data
  */
 interface GameRuntimeState {

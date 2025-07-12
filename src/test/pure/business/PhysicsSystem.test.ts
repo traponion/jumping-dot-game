@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_PHYSICS_CONSTANTS } from '../../../constants/GameConstants.js';
+import { DEFAULT_PHYSICS_CONSTANTS } from '../../../stores/GameState.js';
 import { GameState } from '../../../stores/GameState.js';
 import { PhysicsSystem } from '../../../systems/PhysicsSystem.js';
 

@@ -5,10 +5,10 @@
  * Handles stage clear celebrations and death effect animations with physics simulation.
  */
 
-import { GAME_CONFIG } from '../constants/GameConstants.js';
+import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import type { AnimationSystem as AnimationData, Player } from '../types/GameTypes.js';
-import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
+import { getCurrentTime, randomRange } from './PlayerSystem.js';
 
 /**
  * Animation system for particle effects and visual feedback
