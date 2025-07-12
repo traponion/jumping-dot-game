@@ -33,51 +33,30 @@ export interface Position {
 export interface IRenderSystem {
     // ===== Canvas Management =====
 
-    /**
-     * Clear the canvas for new rendering
-     */
+    /** Clear the canvas for new rendering */
     clearCanvas(): void;
 
-    /**
-     * Set drawing style for rendering context
-     */
+    /** Set drawing style for rendering context */
     setDrawingStyle(): void;
 
-    /**
-     * Apply camera transform to rendering context
-     * @param camera Camera position and properties
-     */
+    /** Apply camera transform to rendering context */
     applyCameraTransform(camera: Camera): void;
 
-    /**
-     * Restore original camera transform
-     */
+    /** Restore original camera transform */
     restoreCameraTransform(): void;
 
-    /**
-     * Render all pending objects to the canvas
-     */
+    /** Render all pending objects to the canvas */
     renderAll(): void;
 
     // ===== Game Objects =====
 
-    /**
-     * Render the player character
-     * @param player Player object to render
-     */
+    /** Render the player character */
     renderPlayer(player: Player): void;
 
-    /**
-     * Render the player's trail
-     * @param trail Array of trail points to render
-     * @param playerRadius Player radius for trail scaling
-     */
+    /** Render the player's trail */
     renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
-    /**
-     * Render complete stage (platforms, goal, spikes, texts)
-     * @param stage Stage data object
-     */
+    /** Render complete stage (platforms, goal, spikes, texts) */
     renderStage(stage: StageData): void;
 
     /**
@@ -93,13 +72,7 @@ export interface IRenderSystem {
      */
     renderStartInstruction(): void;
 
-    /**
-     * Render game over menu
-     * @param options Menu options array
-     * @param selectedIndex Currently selected option index
-     * @param finalScore Final game score
-     * @param deathCount Optional death count for this stage
-     */
+    /** Render game over menu */
     renderGameOverMenu(
         options: string[],
         selectedIndex: number,
@@ -107,32 +80,18 @@ export interface IRenderSystem {
         deathCount?: number
     ): void;
 
-    /**
-     * Render credits screen
-     */
+    /** Render credits screen */
     renderCredits(): void;
 
     // ===== Animations =====
 
-    /**
-     * Render death animation particles
-     * @param particles Array of particle objects
-     */
+    /** Render death animation particles */
     renderDeathAnimation(particles: Particle[]): void;
 
-    /**
-     * Render soul animation flying to death counter
-     * @param particles Array of soul particle objects
-     */
+    /** Render soul animation flying to death counter */
     renderSoulAnimation(particles: Particle[]): void;
 
-    /**
-     * Render stage clear animation
-     * @param particles Array of particle objects
-     * @param progress Animation progress (0-1)
-     * @param centerX Center X coordinate
-     * @param centerY Center Y coordinate
-     */
+    /** Render stage clear animation */
     renderClearAnimation(
         particles: Particle[],
         progress: number,
@@ -142,15 +101,10 @@ export interface IRenderSystem {
 
     // ===== Analytics & Predictions =====
 
-    /**
-     * Render landing prediction visualization
-     */
+    /** Render landing prediction visualization */
     renderLandingPredictions(): void;
 
-    /**
-     * Set landing predictions for visualization
-     * @param predictions Array of landing predictions
-     */
+    /** Set landing predictions for visualization */
     setLandingPredictions(predictions: LandingPrediction[]): void;
 
     /**
@@ -176,24 +130,11 @@ export interface IRenderSystem {
      */
     cleanup(): Promise<void>;
 
-    /**
-     * Dispose of rendering system and release all resources
-     */
+    /** Dispose of rendering system and release all resources */
     dispose(): void;
 }
 
-/**
- * PixiRenderSystem - Pixi.JS implementation of rendering system
- *
- * Design Philosophy:
- * - Implements IRenderSystem interface completely
- * - Uses modern Pixi.JS v8 patterns and APIs
- * - Container-based architecture (div attachment, not direct canvas)
- * - Clean Room Strategy: no Fabric.js references
- *
- * This implementation provides high-performance 2D rendering using WebGL/WebGPU
- * through Pixi.JS, optimized for game scenarios with real-time animations.
- */
+/** PixiRenderSystem - Pixi.JS implementation of IRenderSystem */
 export class PixiRenderSystem implements IRenderSystem {
     private app: PIXI.Application;
     private stage: PIXI.Container;
@@ -214,28 +155,21 @@ export class PixiRenderSystem implements IRenderSystem {
 
     private async initializeApp(container: HTMLElement): Promise<void> {
         try {
-            console.log('PixiRenderSystem: Starting initialization...');
-
-            // More aggressive canvas cleanup - clear from both container and document
+            // Clean up existing canvases
             const existingCanvases = container.querySelectorAll('canvas');
-            console.log('Found existing canvases in container:', existingCanvases.length);
-            existingCanvases.forEach((canvas, index) => {
-                console.log(`Removing existing canvas ${index + 1} from container`);
+            for (const canvas of existingCanvases) {
                 canvas.remove();
-            });
+            }
 
-            // Also clear any orphaned canvases that might be floating in the DOM
             const allCanvases = document.querySelectorAll('#gameCanvas canvas');
-            console.log('Found all canvases in gameCanvas:', allCanvases.length);
-            allCanvases.forEach((canvas, index) => {
-                console.log(`Removing orphaned canvas ${index + 1}`);
+            for (const canvas of allCanvases) {
                 canvas.remove();
-            });
+            }
 
-            // Wait a tick to ensure DOM cleanup is complete
+            // Wait for DOM cleanup
             await new Promise((resolve) => setTimeout(resolve, 0));
 
-            // Modern Pixi.JS v8 initialization
+            // Initialize Pixi.JS application
             await this.app.init({
                 width: 800,
                 height: 600,
@@ -245,62 +179,16 @@ export class PixiRenderSystem implements IRenderSystem {
                 autoDensity: true
             });
 
-            console.log('PixiRenderSystem: App initialized, adding canvas to container...');
-
-            // Enhanced debugging as per handover document
-            console.log('Container element:', container);
-            console.log('Container tagName:', container.tagName);
-            console.log('Container id:', container.id);
-            console.log('App canvas:', this.app.canvas);
-            console.log(
-                'Canvas dimensions before append:',
-                this.app.canvas.width,
-                'x',
-                this.app.canvas.height
-            );
-
-            // Apply CSS styling to match production appearance
+            // Apply canvas styling
             this.app.canvas.style.border = '2px solid white';
             this.app.canvas.style.backgroundColor = '#000000';
             this.app.canvas.style.display = 'block';
 
-            // Add Pixi.JS canvas to the container
+            // Add canvas to container and set up stage
             container.appendChild(this.app.canvas);
-
-            console.log('Canvas parentNode after append:', this.app.canvas.parentNode);
-            console.log('Container children after append:', Array.from(container.children));
-            console.log('Container children count:', container.children.length);
-            console.log('Canvas element in DOM:', document.contains(this.app.canvas));
-
-            // Check canvas style properties
-            console.log('Canvas style after append:', this.app.canvas.style.cssText);
-            console.log(
-                'Canvas computed style display:',
-                window.getComputedStyle(this.app.canvas).display
-            );
-            console.log(
-                'Canvas computed style visibility:',
-                window.getComputedStyle(this.app.canvas).visibility
-            );
-            console.log(
-                'Canvas computed style border:',
-                window.getComputedStyle(this.app.canvas).border
-            );
-
-            // Set up main stage
             this.app.stage.addChild(this.stage);
 
-            console.log('PixiRenderSystem: Stage setup complete');
-            console.log(
-                'Canvas dimensions after stage setup:',
-                this.app.canvas.width,
-                'x',
-                this.app.canvas.height
-            );
-            console.log('Canvas style after stage setup:', this.app.canvas.style.cssText);
-
             this.initialized = true;
-            console.log('PixiRenderSystem: Initialization complete!');
         } catch (error) {
             console.error('Failed to initialize Pixi.JS application:', error);
             throw error;
@@ -731,10 +619,7 @@ export class PixiRenderSystem implements IRenderSystem {
             // Remove canvas from DOM to prevent multiplication
             if (this.app.canvas?.parentNode) {
                 this.app.canvas.parentNode.removeChild(this.app.canvas);
-                console.log('Canvas removed from DOM during cleanup');
             }
-
-            console.log('PixiRenderSystem cleanup completed');
         } catch (error) {
             console.error('Error during PixiRenderSystem cleanup:', error);
             throw error;
@@ -756,8 +641,6 @@ export class PixiRenderSystem implements IRenderSystem {
             this.landingHistory = [];
 
             this.initialized = false;
-
-            console.log('PixiRenderSystem disposed successfully');
         } catch (error) {
             console.error('Error during PixiRenderSystem disposal:', error);
         }

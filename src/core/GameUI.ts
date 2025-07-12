@@ -16,7 +16,7 @@ export interface StageSelectItem {
  * Responsibilities:
  * - DOM element management and updates
  * - Game status display
- * - Timer and score display
+ * - Timer display
  * - Game over menu rendering coordination
  *
  * This class follows Single Responsibility Principle by handling only UI concerns.
@@ -24,7 +24,6 @@ export interface StageSelectItem {
 export class GameUI {
     private gameStatus: HTMLElement;
     private timerDisplay: HTMLElement;
-    private scoreDisplay: HTMLElement;
     private deathDisplay: HTMLElement;
 
     // Game over menu state
@@ -34,7 +33,6 @@ export class GameUI {
     constructor(private gameState: GameState) {
         this.gameStatus = this.getRequiredElement('gameStatus');
         this.timerDisplay = this.getRequiredElement('timer');
-        this.scoreDisplay = this.getRequiredElement('score');
         this.deathDisplay = this.getRequiredElement('deathCount');
 
         // Listen for soul animation completion to update death count display
@@ -75,7 +73,6 @@ export class GameUI {
      */
     updateInitialUI(): void {
         this.timerDisplay.textContent = `Time: ${this.gameState.timeLimit}`;
-        this.scoreDisplay.textContent = 'Score: 0';
         this.updateDeathCount();
     }
 
@@ -109,16 +106,10 @@ export class GameUI {
     }
 
     /**
-     * Show goal reached state with score
+     * Show goal reached state
      */
     showGoalReached(): void {
-        const gameStartTime = this.gameState.gameStartTime;
-        const currentTime = getCurrentTime();
-        const elapsedSeconds = gameStartTime ? (currentTime - gameStartTime) / 1000 : 0;
-        const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
-        const finalScore = Math.ceil(timeRemaining);
-        this.gameStatus.textContent = `Goal reached! Score: ${finalScore}`;
-        this.scoreDisplay.textContent = `Score: ${finalScore}`;
+        this.gameStatus.textContent = 'Goal reached!';
     }
 
     /**
@@ -135,8 +126,6 @@ export class GameUI {
                 this.gameOverMenuIndex + 1
             );
         }
-
-        console.log(`🎮 Game over menu selection: ${this.gameOverOptions[this.gameOverMenuIndex]}`);
     }
 
     /**
