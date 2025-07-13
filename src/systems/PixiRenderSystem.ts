@@ -349,12 +349,7 @@ export class PixiRenderSystem implements IRenderSystem {
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
-                let height = platform.y2 - platform.y1;
-
-                // Fix: Ensure minimum platform height for visibility
-                if (height <= 0) {
-                    height = 5; // Thin platform height for better gameplay
-                }
+                const height = 5; // Always use thin platform height for better gameplay
 
                 if (this.debugLogCount <= this.maxDebugLogs) {
                     console.log(
@@ -474,8 +469,15 @@ export class PixiRenderSystem implements IRenderSystem {
 
         for (const mark of deathMarks) {
             const markGraphics = new PIXI.Graphics();
-            markGraphics.circle(mark.x, mark.y, 5);
-            markGraphics.fill(0xff0000); // Red death marks
+
+            // Draw red X mark at death location
+            const size = 8; // X mark size
+            markGraphics.moveTo(mark.x - size, mark.y - size);
+            markGraphics.lineTo(mark.x + size, mark.y + size);
+            markGraphics.moveTo(mark.x + size, mark.y - size);
+            markGraphics.lineTo(mark.x - size, mark.y + size);
+            markGraphics.stroke({ width: 2, color: 0xff0000 }); // Red X
+
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(markGraphics);
         }
