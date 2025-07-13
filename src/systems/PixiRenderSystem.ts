@@ -321,17 +321,29 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
+        console.log('DEBUG: renderStage called, platforms count:', stage.platforms?.length || 0);
+
         // Render platforms cleanly
         if (stage.platforms) {
+            console.log('DEBUG: Rendering platforms:', stage.platforms);
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
                 const height = platform.y2 - platform.y1;
+                console.log(
+                    `DEBUG: Creating platform at (${platform.x1}, ${platform.y1}) size ${width}x${height}`
+                );
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(platform.x1, platform.y1);
                 platformGraphics.fill(0xffffff); // White platforms
                 this.stage.addChild(platformGraphics);
+                console.log(
+                    'DEBUG: Platform added to stage, total children:',
+                    this.stage.children.length
+                );
             }
+        } else {
+            console.warn('DEBUG: No platforms found in stage data');
         }
 
         // Render goal
