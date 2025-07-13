@@ -398,7 +398,7 @@ export class PixiRenderSystem implements IRenderSystem {
                 text: stage.leftEdgeMessage.text,
                 style: {
                     fontSize: 18,
-                    fill: '#ff6666',
+                    fill: '#ffffff',
                     fontFamily: 'Arial',
                     fontWeight: 'bold'
                 }
@@ -413,7 +413,7 @@ export class PixiRenderSystem implements IRenderSystem {
                 text: stage.leftEdgeSubMessage.text,
                 style: {
                     fontSize: 14,
-                    fill: '#ffaa66',
+                    fill: '#ffffff',
                     fontFamily: 'Arial'
                 }
             });
@@ -428,7 +428,7 @@ export class PixiRenderSystem implements IRenderSystem {
                     text: tutorialMessage.text,
                     style: {
                         fontSize: 16,
-                        fill: '#66ffff',
+                        fill: '#ffffff',
                         fontFamily: 'Arial',
                         fontWeight: 'bold'
                     }
