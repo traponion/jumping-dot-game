@@ -317,15 +317,8 @@ export class GameManager {
         // UI state management centralized in GameManager.render()
         if (ui) {
             if (this.gameState.gameOver) {
-                // Show game over screen and UI elements
+                // Show DOM-based game over screen only (Canvas version removed to prevent overlap)
                 ui.showGameOverScreen();
-                const menuData = ui.getGameOverMenuData();
-                renderer.renderGameOverMenu(
-                    menuData.options,
-                    menuData.selectedIndex,
-                    this.gameState.finalScore,
-                    this.gameState.deathCount
-                );
             } else if (this.gameState.gameRunning) {
                 // Show running game UI with timer and death count
                 ui.updateUIVisibility(true, false);
