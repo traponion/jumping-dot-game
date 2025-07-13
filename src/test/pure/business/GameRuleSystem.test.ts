@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GameState } from '../stores/GameState';
-import { GameRuleSystem } from '../systems/GameRuleSystem';
-import { getCurrentTime } from '../systems/PlayerSystem.js';
+import type { GameState } from '../../../stores/GameState';
+import { GameRuleSystem } from '../../../systems/GameRuleSystem';
+import { getCurrentTime } from '../../../systems/PlayerSystem.js';
 
 // Mock PlayerSystem functions
-vi.mock('../systems/PlayerSystem.js', () => ({
+vi.mock('../../../systems/PlayerSystem.js', () => ({
     getCurrentTime: vi.fn(),
     calculateDeltaFactor: vi.fn(),
     isPointInRect: vi.fn(),

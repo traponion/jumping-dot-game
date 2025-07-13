@@ -49,11 +49,7 @@
     "goalText": {
         "x": 2420,
         "y": 370,
-        "text": "GOAL",
-        "style": {
-            "fontSize": 16,
-            "color": "#ffffff"
-        }
+        "text": "GOAL"
     },
     "leftEdgeMessage": {
         "x": -400,
