@@ -65,18 +65,24 @@ export class AnimationSystem {
      * @description Creates celebratory particles around player position when stage is cleared
      */
     startClearAnimation(player: Player): void {
+        console.log('🎉 Starting clear animation at:', player.x, player.y);
         this.clearAnimation.active = true;
         this.clearAnimation.startTime = getCurrentTime();
         this.clearAnimation.particles = [];
 
         for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
+            // Create radial explosion pattern for clear animation fireworks
+            const angle = (Math.PI * 2 * i) / GAME_CONFIG.animation.particleCount;
+            const speed = randomRange(6, 15); // Faster explosion for celebration
+
             this.clearAnimation.particles.push({
-                x: player.x + randomRange(-50, 50),
-                y: player.y + randomRange(-50, 50),
-                vx: randomRange(-4, 4),
-                vy: randomRange(-6, 2),
+                x: player.x,
+                y: player.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2, // Slight upward bias
                 life: 1.0,
-                decay: randomRange(0.02, 0.04)
+                decay: randomRange(0.015, 0.025), // Longer life for better visibility
+                size: randomRange(3, 6) // Bigger particles for celebration
             });
         }
     }
@@ -124,13 +130,14 @@ export class AnimationSystem {
      * @description Creates radial explosion particles when player dies
      */
     startDeathAnimation(player: Player): void {
+        console.log('🎆 Starting death animation at:', player.x, player.y);
         this.deathAnimation.active = true;
         this.deathAnimation.startTime = getCurrentTime();
         this.deathAnimation.particles = [];
 
         for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
             const angle = (Math.PI * 2 * i) / GAME_CONFIG.animation.particleCount;
-            const speed = randomRange(3, 7);
+            const speed = randomRange(5, 12); // Faster explosion for fireworks effect
 
             this.deathAnimation.particles.push({
                 x: player.x,

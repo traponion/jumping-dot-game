@@ -604,8 +604,8 @@ export class PixiRenderSystem implements IRenderSystem {
         for (const particle of particles) {
             const particleGraphics = new PIXI.Graphics();
             particleGraphics.circle(particle.x, particle.y, particle.size || 2);
-            // Use life property to calculate alpha (higher life = more opaque)
-            const alpha = Math.min(1, particle.life / 100);
+            // Use life property directly as alpha (particle.life is already 0-1)
+            const alpha = particle.life;
             particleGraphics.fill({ color: 0xff0000, alpha });
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(particleGraphics);
@@ -618,8 +618,8 @@ export class PixiRenderSystem implements IRenderSystem {
         for (const particle of particles) {
             const soulGraphics = new PIXI.Graphics();
             soulGraphics.circle(particle.x, particle.y, particle.size || 3);
-            // Use life property to calculate alpha (higher life = more opaque)
-            const alpha = Math.min(1, particle.life / 100);
+            // Use life property directly as alpha (particle.life is already 0-1)
+            const alpha = particle.life;
             soulGraphics.fill({ color: 0x00ffff, alpha });
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(soulGraphics);
@@ -638,8 +638,8 @@ export class PixiRenderSystem implements IRenderSystem {
         for (const particle of particles) {
             const clearGraphics = new PIXI.Graphics();
             clearGraphics.circle(particle.x, particle.y, particle.size || 4);
-            // Use life property to calculate alpha (higher life = more opaque)
-            const alpha = Math.min(1, particle.life / 100);
+            // Use life property directly as alpha (particle.life is already 0-1)
+            const alpha = particle.life;
             clearGraphics.fill({ color: 0x00ff00, alpha });
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(clearGraphics);

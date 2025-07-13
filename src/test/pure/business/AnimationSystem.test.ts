@@ -92,7 +92,7 @@ describe('AnimationSystem', () => {
             animationSystem.startDeathAnimation(mockPlayer);
 
             const deathAnim = animationSystem.getDeathAnimation();
-            expect(deathAnim.particles.length).toBe(15); // Expected number of explosion particles
+            expect(deathAnim.particles.length).toBe(30); // Expected number of explosion particles
 
             // Check that particles have different velocities (circular pattern)
             const velocities = deathAnim.particles.map((p) => ({ vx: p.vx, vy: p.vy }));

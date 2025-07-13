@@ -33,9 +33,9 @@ export const GAME_CONFIG = {
         minVelocity: 0.2
     },
     animation: {
-        particleCount: 15,
+        particleCount: 30, // More particles for bigger fireworks effect
         clearAnimationDuration: 2000,
-        deathAnimationDuration: 1000
+        deathAnimationDuration: 1500 // Longer duration to see the effect
     }
 } as const;
 
