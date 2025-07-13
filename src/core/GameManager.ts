@@ -1,7 +1,5 @@
 /**
- * @fileoverview Game manager for coordinating all game systems and state
- * @module core/GameManager
- * @description Application Layer - Game systems coordination and state management
+ * Game manager for coordinating all game systems and state
  */
 
 import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../stores/GameState.js';

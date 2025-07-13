@@ -1,61 +1,36 @@
-/**
- * @fileoverview Pixi.JS implementation of IRenderSystem interface
- * @module systems/PixiRenderSystem
- * @description Clean Room Strategy implementation - no Fabric.js dependencies
- */
+// Pixi.JS rendering system implementation
 
 import * as PIXI from 'pixi.js';
 import type { StageData } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 // IRenderSystem interface and Position moved to this file for consolidation
 
-/**
- * Position interface for crosshair and history
- */
+// Position interface
 export interface Position {
     x: number;
     y: number;
 }
 
-/**
- * IRenderSystem - Complete rendering abstraction interface
- *
- * Design Philosophy:
- * - Based on FabricRenderSystem's actual public methods
- * - Matches GameManager's actual usage patterns
- * - Enables dependency inversion principle (DIP)
- * - Supports future renderer switching (Pixi.js, etc.)
- *
- * This interface provides the complete contract for game rendering,
- * allowing core logic to be completely independent of rendering implementation.
- */
+// IRenderSystem - Complete rendering abstraction interface
 export interface IRenderSystem {
     // ===== Canvas Management =====
 
-    /** Clear the canvas for new rendering */
     clearCanvas(): void;
 
-    /** Set drawing style for rendering context */
     setDrawingStyle(): void;
 
-    /** Apply camera transform to rendering context */
     applyCameraTransform(camera: Camera): void;
 
-    /** Restore original camera transform */
     restoreCameraTransform(): void;
 
-    /** Render all pending objects to the canvas */
     renderAll(): void;
 
     // ===== Game Objects =====
 
-    /** Render the player character */
     renderPlayer(player: Player): void;
 
-    /** Render the player's trail */
     renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
-    /** Render complete stage (platforms, goal, spikes, texts) */
     renderStage(stage: StageData): void;
 
     /**
@@ -71,7 +46,6 @@ export interface IRenderSystem {
      */
     renderStartInstruction(): void;
 
-    /** Render game over menu */
     renderGameOverMenu(
         options: string[],
         selectedIndex: number,
@@ -79,15 +53,12 @@ export interface IRenderSystem {
         deathCount?: number
     ): void;
 
-    /** Render credits screen */
     renderCredits(): void;
 
     // ===== Animations =====
 
-    /** Render death animation particles */
     renderDeathAnimation(particles: Particle[]): void;
 
-    /** Render soul animation flying to death counter */
     renderSoulAnimation(particles: Particle[]): void;
 
     /** Render stage clear animation */
@@ -137,10 +108,6 @@ export class PixiRenderSystem implements IRenderSystem {
     private uiContainer: PIXI.Container; // UI elements (fixed position)
     private initialized = false;
     private initializationPromise: Promise<void> | null = null;
-
-    // Debug logging state (disabled)
-    private debugLogCount = 999;
-    private maxDebugLogs = 5;
 
     constructor(container: HTMLElement) {
         this.app = new PIXI.Application();
@@ -323,46 +290,20 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // Only log first few calls to avoid spam
-        if (this.debugLogCount < this.maxDebugLogs) {
-            console.log(
-                'DEBUG: renderStage called, platforms count:',
-                stage.platforms?.length || 0
-            );
-            this.debugLogCount++;
-        }
-
         // Render platforms cleanly
         if (stage.platforms) {
-            if (this.debugLogCount <= this.maxDebugLogs) {
-                console.log('DEBUG: Rendering platforms:', stage.platforms);
-            }
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
                 const height = 2; // Ultra-thin platform height for better gameplay
 
-                if (this.debugLogCount <= this.maxDebugLogs) {
-                    console.log(
-                        `DEBUG: Creating platform at (${platform.x1}, ${platform.y1}) size ${width}x${height}`
-                    );
-                }
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(platform.x1, platform.y1);
                 platformGraphics.fill(0xffffff); // White platforms
                 // ★★ Add to worldContainer (affected by camera)
                 this.worldContainer.addChild(platformGraphics);
-                if (this.debugLogCount <= this.maxDebugLogs) {
-                    console.log(
-                        'DEBUG: Platform added to stage, total children:',
-                        this.stage.children.length
-                    );
-                }
             }
         } else {
-            if (this.debugLogCount <= this.maxDebugLogs) {
-                console.warn('DEBUG: No platforms found in stage data');
-            }
         }
 
         // Render moving platforms
