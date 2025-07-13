@@ -1,13 +1,5 @@
-/**
- * @fileoverview Player system for managing player movement, input processing, and trail management
- * @module systems/PlayerSystem
- * @description Domain Layer - Pure player logic and physics management using Zustand store
- */
-
-import type { Platform } from '../core/StageLoader.js';
 import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
-import type { LandingPrediction } from '../types/GameTypes.js';
 import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
 // GameUtils functions merged here for consolidation
 
@@ -83,10 +75,6 @@ export class PlayerSystem {
 
     /** @private {GameState} Game state instance for direct state access */
     private gameState: GameState;
-    /** @private {any} Render system for landing predictions (injected dependency) */
-    private renderSystem: {
-        setLandingPredictions: (predictions: LandingPrediction[]) => void;
-    } | null = null;
 
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
@@ -115,17 +103,6 @@ export class PlayerSystem {
     }
 
     /**
-     * Sets the render system for landing predictions
-     * @param {any} renderSystem - Render system instance to set
-     * @returns {void}
-     */
-    setRenderSystem(renderSystem: {
-        setLandingPredictions: (predictions: LandingPrediction[]) => void;
-    }): void {
-        this.renderSystem = renderSystem;
-    }
-
-    /**
      * Updates player system for the current frame
      * @param {number} deltaTime - Time elapsed since last frame in milliseconds
      * @param {PhysicsConstants} physics - Physics constants for calculations
@@ -137,8 +114,6 @@ export class PlayerSystem {
         this.handleInput(dtFactor);
         this.handleAutoJump(physics);
         this.updateTrail();
-
-        this.updateLandingPredictions();
     }
 
     /**
@@ -190,90 +165,6 @@ export class PlayerSystem {
             player.grounded = false;
             this.lastJumpTime = currentTime;
         }
-    }
-
-    /**
-     * Updates landing predictions for player movement
-     * @private
-     * @returns {void}
-     */
-    private updateLandingPredictions(): void {
-        if (!(this.renderSystem && this.gameState.stage)) return;
-
-        // Simple input-based prediction that grows from landing spot
-        const inputKeys = this.inputManager?.getMovementState() || {};
-        const futureDistance = this.calculateFutureMovement(inputKeys);
-        const predictedX = this.gameState.runtime.player.x + futureDistance;
-
-        // Find the platform closest to predicted position
-        const targetPlatform = this.findNearestPlatform(predictedX);
-
-        if (targetPlatform) {
-            const simplePrediction = [
-                {
-                    x: predictedX,
-                    y: targetPlatform.y1,
-                    confidence: 0.8,
-                    jumpNumber: 1
-                }
-            ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
-        } else {
-            this.renderSystem.setLandingPredictions([]);
-        }
-    }
-
-    /**
-     * Calculates future movement based on player input
-     * @private
-     * @param {Record<string, boolean>} keys - Current input state
-     * @returns {number} Predicted movement distance
-     */
-    private calculateFutureMovement(keys: Record<string, boolean>): number {
-        // Estimate future movement for one jump (more realistic timing)
-        const jumpDuration = 400; // Shorter, more realistic jump duration
-        const baseMovement = this.gameState.runtime.player.vx * (jumpDuration / 16.67); // Movement during jump
-
-        // Add smaller input-based movement
-        let inputMovement = 0;
-        if (keys.ArrowLeft) {
-            inputMovement = -30; // Smaller left movement
-        } else if (keys.ArrowRight) {
-            inputMovement = 30; // Smaller right movement
-        }
-
-        return baseMovement + inputMovement;
-    }
-
-    /**
-     * Finds the nearest platform to a target X position
-     * @private
-     * @param {number} targetX - Target X coordinate
-     * @returns {Platform | null} Nearest platform or null if none found
-     */
-    private findNearestPlatform(targetX: number): Platform | null {
-        if (!this.gameState.stage) return null;
-
-        // Find platform that the player would likely land on
-        let bestPlatform = null;
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const platform of this.gameState.stage.platforms) {
-            // Check if target X is within platform bounds or nearby
-            const platformCenterX = (platform.x1 + platform.x2) / 2;
-            const distance = Math.abs(targetX - platformCenterX);
-
-            if (
-                distance < bestDistance &&
-                targetX >= platform.x1 - 30 &&
-                targetX <= platform.x2 + 30
-            ) {
-                bestDistance = distance;
-                bestPlatform = platform;
-            }
-        }
-
-        return bestPlatform;
     }
 
     /**

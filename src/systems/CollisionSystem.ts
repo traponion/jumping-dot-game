@@ -14,11 +14,6 @@ interface IPlayerSystem {
     resetJumpTimer(): void;
 }
 
-// Interface for RenderSystem methods used by CollisionSystem
-interface IRenderSystem {
-    addLandingHistory(x: number, y: number): void;
-}
-
 /**
  * Extended collision result that includes platform reference for moving platforms
  */
@@ -278,7 +273,7 @@ export class CollisionSystem {
      */
     update(
         playerSystem?: IPlayerSystem,
-        renderSystem?: IRenderSystem,
+        _renderSystem?: unknown,
         deathHandler?: () => void,
         goalHandler?: () => void
     ): void {
@@ -335,14 +330,6 @@ export class CollisionSystem {
                         movingPlatform.speed * movingPlatform.direction * dtFactor;
 
                     this.gameState.runtime.player.x += platformMovement;
-
-                    // Add landing history
-                    if (renderSystem) {
-                        renderSystem.addLandingHistory(
-                            this.gameState.runtime.player.x,
-                            this.gameState.runtime.player.y + this.gameState.runtime.player.radius
-                        );
-                    }
                 }
 
                 // Skip static platform collision check
@@ -362,13 +349,6 @@ export class CollisionSystem {
 
         if (platformCollisionUpdate?.grounded && playerSystem) {
             playerSystem.resetJumpTimer();
-
-            if (renderSystem) {
-                renderSystem.addLandingHistory(
-                    this.gameState.runtime.player.x,
-                    this.gameState.runtime.player.y + this.gameState.runtime.player.radius
-                );
-            }
         }
 
         // Check spike collisions

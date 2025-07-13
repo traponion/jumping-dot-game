@@ -3,7 +3,6 @@
 
 import type { StageData } from '../../core/StageLoader.js';
 import type { IRenderSystem, Position } from '../../systems/PixiRenderSystem.js';
-import type { LandingPrediction } from '../../types/GameTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../../types/GameTypes.js';
 
 export interface MockFabricCanvas {
@@ -21,8 +20,6 @@ export interface MockFabricCanvas {
 export class MockRenderSystem implements IRenderSystem {
     private canvasElement: HTMLCanvasElement;
     private mockCanvas: MockFabricCanvas;
-    private landingPredictions: LandingPrediction[] = [];
-    private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
     constructor(containerElement: HTMLElement) {
         this.canvasElement = containerElement as HTMLCanvasElement;
@@ -127,34 +124,6 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock clear animation rendering
     }
 
-    // ===== Analytics & Predictions =====
-
-    renderLandingPredictions(): void {
-        // Mock landing predictions rendering
-    }
-
-    setLandingPredictions(predictions: LandingPrediction[]): void {
-        this.landingPredictions = [...predictions];
-    }
-
-    renderLandingHistory(): void {
-        // Mock landing history rendering
-    }
-
-    addLandingHistory(position: Position): void {
-        this.landingHistory.push({ x: position.x, y: position.y, time: Date.now() });
-    }
-
-    cleanupLandingHistory(): void {
-        // Mock cleanup - remove old entries
-        const cutoffTime = Date.now() - 30000; // Keep last 30 seconds
-        this.landingHistory = this.landingHistory.filter((entry) => entry.time > cutoffTime);
-    }
-
-    updateLandingPredictionAnimations(): void {
-        // Mock animation update
-    }
-
     async waitForInitialization(): Promise<void> {
         // Mock implementation - immediately resolves
         return Promise.resolve();
@@ -168,27 +137,15 @@ export class MockRenderSystem implements IRenderSystem {
 
     async cleanup(): Promise<void> {
         // Mock async cleanup
-        this.landingPredictions = [];
-        this.landingHistory = [];
     }
 
     dispose(): void {
         this.mockCanvas.dispose();
-        this.landingPredictions = [];
-        this.landingHistory = [];
     }
 
     // ===== Test Utilities =====
 
     getMockCanvas(): MockFabricCanvas {
         return this.mockCanvas;
-    }
-
-    getLandingPredictions(): LandingPrediction[] {
-        return [...this.landingPredictions];
-    }
-
-    getLandingHistory(): Array<{ x: number; y: number; time: number }> {
-        return [...this.landingHistory];
     }
 }

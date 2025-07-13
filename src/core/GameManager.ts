@@ -137,7 +137,6 @@ export class GameManager {
 
         // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
-        this.playerSystem.setRenderSystem(this.renderSystem);
     }
 
     /**
@@ -203,7 +202,6 @@ export class GameManager {
 
         // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
-        this.playerSystem.setRenderSystem(this.renderSystem);
 
         // Reload stage to get clean initial data
         const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
@@ -294,7 +292,6 @@ export class GameManager {
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             const player = this.gameState.runtime.player;
             renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
-            renderer.renderLandingPredictions();
             renderer.renderPlayer(player);
         }
 

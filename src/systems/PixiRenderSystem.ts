@@ -6,7 +6,6 @@
 
 import * as PIXI from 'pixi.js';
 import type { StageData } from '../core/StageLoader.js';
-import type { LandingPrediction } from '../types/GameTypes.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 // IRenderSystem interface and Position moved to this file for consolidation
 
@@ -102,21 +101,17 @@ export interface IRenderSystem {
     // ===== Analytics & Predictions =====
 
     /** Render landing prediction visualization */
-    renderLandingPredictions(): void;
 
     /** Set landing predictions for visualization */
-    setLandingPredictions(predictions: LandingPrediction[]): void;
 
     /**
      * Add a new landing position to history
      * @param position Landing position to add
      */
-    addLandingHistory(position: Position): void;
 
     /**
      * Update landing prediction animations
      */
-    updateLandingPredictionAnimations(): void;
 
     // ===== System Management =====
 
@@ -142,10 +137,6 @@ export class PixiRenderSystem implements IRenderSystem {
     private uiContainer: PIXI.Container; // UI elements (fixed position)
     private initialized = false;
     private initializationPromise: Promise<void> | null = null;
-
-    // Landing prediction state
-    private landingPredictions: LandingPrediction[] = [];
-    private landingHistory: Position[] = [];
 
     // Debug logging state (disabled)
     private debugLogCount = 999;
@@ -660,48 +651,6 @@ export class PixiRenderSystem implements IRenderSystem {
         this.worldContainer.addChild(progressText);
     }
 
-    // ===== Analytics & Predictions =====
-
-    renderLandingPredictions(): void {
-        if (!this.initialized) return;
-
-        // Render landing predictions
-        for (const prediction of this.landingPredictions) {
-            const predictionGraphics = new PIXI.Graphics();
-            predictionGraphics.circle(prediction.x, prediction.y, 8);
-            predictionGraphics.fill({ color: 0x00ffff, alpha: 0.7 });
-            // ★★ Add to worldContainer (affected by camera)
-            this.worldContainer.addChild(predictionGraphics);
-        }
-
-        // Render landing history
-        for (const position of this.landingHistory) {
-            const historyGraphics = new PIXI.Graphics();
-            historyGraphics.circle(position.x, position.y, 4);
-            historyGraphics.fill({ color: 0x0080ff, alpha: 0.5 });
-            // ★★ Add to worldContainer (affected by camera)
-            this.worldContainer.addChild(historyGraphics);
-        }
-    }
-
-    setLandingPredictions(predictions: LandingPrediction[]): void {
-        this.landingPredictions = [...predictions];
-    }
-
-    addLandingHistory(position: Position): void {
-        this.landingHistory.push({ ...position });
-
-        // Limit history size for performance
-        if (this.landingHistory.length > 100) {
-            this.landingHistory.shift();
-        }
-    }
-
-    updateLandingPredictionAnimations(): void {
-        // Update prediction animations (can be expanded with more complex animations)
-        // For now, this is a placeholder for future animation updates
-    }
-
     // ===== System Management =====
 
     async cleanup(): Promise<void> {
@@ -711,10 +660,6 @@ export class PixiRenderSystem implements IRenderSystem {
             // Clear worldContainer and uiContainer children only
             this.worldContainer.removeChildren();
             this.uiContainer.removeChildren();
-
-            // Clear prediction data
-            this.landingPredictions = [];
-            this.landingHistory = [];
 
             // Do NOT remove canvas from DOM - keep it for retry functionality
             // Canvas will be reused for subsequent game sessions
@@ -733,10 +678,6 @@ export class PixiRenderSystem implements IRenderSystem {
 
             // Destroy application and release resources
             this.app.destroy(true, { children: true, texture: true });
-
-            // Clear references
-            this.landingPredictions = [];
-            this.landingHistory = [];
 
             this.initialized = false;
         } catch (error) {
