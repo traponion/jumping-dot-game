@@ -161,6 +161,14 @@ export class JumpingDotGame {
         }
     }
 
+    public handleStageSelect(): void {
+        if (!this.gameState.gameOver) return;
+
+        // Force stage select option and return to stage select
+        this.gameUI.selectStageSelectOption();
+        this.returnToStageSelect();
+    }
+
     private async render(): Promise<void> {
         // Prevent rendering if game loop has been cleaned up
         if (this.gameLoop.isCleanedUpState()) {

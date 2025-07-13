@@ -51,6 +51,7 @@ function createMockGameController(gameState: GameState): GameController {
         returnToStageSelect: vi.fn(),
         handleGameOverNavigation: vi.fn(),
         handleGameOverSelection: vi.fn(),
+        handleStageSelect: vi.fn(),
         getGameState: vi.fn().mockReturnValue(gameState),
         getGameUI: vi.fn().mockReturnValue({
             showStartScreen: vi.fn(),

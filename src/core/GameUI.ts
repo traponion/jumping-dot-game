@@ -136,6 +136,14 @@ export class GameUI {
     }
 
     /**
+     * Select stage select option and return it
+     */
+    selectStageSelectOption(): string {
+        this.gameOverMenuIndex = 1; // Set to STAGE SELECT
+        return this.gameOverOptions[this.gameOverMenuIndex];
+    }
+
+    /**
      * Get game over menu options for rendering
      */
     getGameOverMenuData(): { options: string[]; selectedIndex: number } {
