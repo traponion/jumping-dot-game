@@ -383,7 +383,7 @@ export class PixiRenderSystem implements IRenderSystem {
 
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(movingPlatform.x1, movingPlatform.y1);
-                platformGraphics.fill(0x00ffff); // Cyan for moving platforms (different from static)
+                platformGraphics.fill(0xffff00); // Yellow for moving platforms (different from static)
                 // ★★ Add to worldContainer (affected by camera)
                 this.worldContainer.addChild(platformGraphics);
             }
