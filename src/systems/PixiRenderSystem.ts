@@ -393,9 +393,18 @@ export class PixiRenderSystem implements IRenderSystem {
         if (stage.spikes) {
             for (const spike of stage.spikes) {
                 const spikeGraphics = new PIXI.Graphics();
-                spikeGraphics.rect(0, 0, spike.width, spike.height);
+
+                // Draw spike shape (triangle pointing up)
+                const centerX = spike.width / 2;
+                const baseY = spike.height;
+
+                spikeGraphics.moveTo(0, baseY); // Bottom left
+                spikeGraphics.lineTo(centerX, 0); // Top point
+                spikeGraphics.lineTo(spike.width, baseY); // Bottom right
+                spikeGraphics.closePath();
+
                 spikeGraphics.position.set(spike.x, spike.y);
-                spikeGraphics.fill(0xff0000); // Red spikes
+                spikeGraphics.fill(0xffffff); // White spikes
                 // ★★ Add to worldContainer (affected by camera)
                 this.worldContainer.addChild(spikeGraphics);
             }

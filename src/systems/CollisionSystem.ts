@@ -373,8 +373,18 @@ export class CollisionSystem {
 
         // Check spike collisions
         if (this.checkSpikeCollisions(this.gameState.runtime.player, stage.spikes)) {
+            console.log('🌡️ Spike collision detected!', {
+                playerX: this.gameState.runtime.player.x,
+                playerY: this.gameState.runtime.player.y,
+                spikeCount: stage.spikes?.length || 0,
+                deathHandlerExists: !!deathHandler
+            });
             if (deathHandler) {
+                console.log('💀 Calling deathHandler...');
                 deathHandler();
+                console.log('💀 deathHandler called!');
+            } else {
+                console.log('❌ No deathHandler provided!');
             }
             this.updatePrevPlayerY();
             return;

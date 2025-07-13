@@ -246,7 +246,12 @@ export class GameManager {
         }
 
         this.updateSystems(deltaTime);
-        this.collisionSystem.update();
+        this.collisionSystem.update(
+            this.playerSystem,
+            undefined, // Skip renderSystem for now due to interface mismatch
+            () => this.gameRuleSystem.triggerPlayerDeath(), // Death handler
+            () => this.gameRuleSystem.triggerGoalReached() // Goal handler
+        );
         this.gameRuleSystem.update();
     }
 
