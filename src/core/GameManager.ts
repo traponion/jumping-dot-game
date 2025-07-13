@@ -314,9 +314,11 @@ export class GameManager {
         // ★★ No longer need restoreCameraTransform() - UI elements are now in separate uiContainer
         // worldContainer: affected by camera, uiContainer: fixed position
 
-        // UI state-based rendering - consolidated in GameManager
-        if (this.gameState.gameOver) {
-            if (ui) {
+        // UI state management centralized in GameManager.render()
+        if (ui) {
+            if (this.gameState.gameOver) {
+                // Show game over screen and UI elements
+                ui.showGameOverScreen();
                 const menuData = ui.getGameOverMenuData();
                 renderer.renderGameOverMenu(
                     menuData.options,
@@ -324,9 +326,14 @@ export class GameManager {
                     this.gameState.finalScore,
                     this.gameState.deathCount
                 );
+            } else if (this.gameState.gameRunning) {
+                // Show running game UI with timer and death count
+                ui.updateUIVisibility(true, false);
+            } else {
+                // Show start screen
+                ui.showStartScreen();
+                ui.updateUIVisibility(false, false); // Hide running UI elements
             }
-        } else if (!this.gameState.gameRunning) {
-            ui?.showStartScreen();
         }
 
         // Removed renderCredits() call - credits should not be displayed during gameplay

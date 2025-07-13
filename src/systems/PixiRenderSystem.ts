@@ -671,17 +671,16 @@ export class PixiRenderSystem implements IRenderSystem {
         if (!this.initialized) return;
 
         try {
-            // Clear all stage children
-            this.stage.removeChildren();
+            // Clear worldContainer and uiContainer children only
+            this.worldContainer.removeChildren();
+            this.uiContainer.removeChildren();
 
             // Clear prediction data
             this.landingPredictions = [];
             this.landingHistory = [];
 
-            // Remove canvas from DOM to prevent multiplication
-            if (this.app.canvas?.parentNode) {
-                this.app.canvas.parentNode.removeChild(this.app.canvas);
-            }
+            // Do NOT remove canvas from DOM - keep it for retry functionality
+            // Canvas will be reused for subsequent game sessions
         } catch (error) {
             console.error('Error during PixiRenderSystem cleanup:', error);
             throw error;
