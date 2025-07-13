@@ -379,12 +379,38 @@ export class PixiRenderSystem implements IRenderSystem {
             }
         }
 
+        // Render moving platforms
+        if (stage.movingPlatforms) {
+            for (const movingPlatform of stage.movingPlatforms) {
+                const platformGraphics = new PIXI.Graphics();
+                const width = movingPlatform.x2 - movingPlatform.x1;
+                const height = 5; // Consistent platform height
+
+                platformGraphics.rect(0, 0, width, height);
+                platformGraphics.position.set(movingPlatform.x1, movingPlatform.y1);
+                platformGraphics.fill(0x00ffff); // Cyan for moving platforms (different from static)
+                // ★★ Add to worldContainer (affected by camera)
+                this.worldContainer.addChild(platformGraphics);
+            }
+        }
+
         // Render goal
         if (stage.goal) {
             const goalGraphics = new PIXI.Graphics();
+
+            // Draw goal as rectangle outline with X mark inside
+            // Rectangle outline
             goalGraphics.rect(0, 0, stage.goal.width, stage.goal.height);
+            goalGraphics.stroke({ width: 2, color: 0xffff00 }); // Yellow outline
+
+            // Draw X mark inside
+            goalGraphics.moveTo(2, 2);
+            goalGraphics.lineTo(stage.goal.width - 2, stage.goal.height - 2);
+            goalGraphics.moveTo(stage.goal.width - 2, 2);
+            goalGraphics.lineTo(2, stage.goal.height - 2);
+            goalGraphics.stroke({ width: 2, color: 0xffff00 }); // Yellow X
+
             goalGraphics.position.set(stage.goal.x, stage.goal.y);
-            goalGraphics.fill(0xffff00); // Yellow goal
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(goalGraphics);
         }
