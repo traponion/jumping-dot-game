@@ -89,17 +89,15 @@ export default defineConfig({
                 '**/*.d.ts',
                 'vite.config.js',
                 'src/main.ts',
-                'src/systems/FabricRenderSystem.ts', // Excluded as it's tested in production environment, not test environment
                 'src/systems/MockRenderSystem.ts', // Test utility, not production code
                 'src/systems/RenderSystemFactory.ts', // Environment detection utility, tested through integration
                 'src/systems/IRenderSystem.ts', // Interface file - no executable code to test
-                'src/systems/FabricRenderAdapter.ts', // Thin adapter layer - tested through integration with FabricRenderSystem
                 // JSDOM instability exclusions (applied to both CI and local for consistency)
                 'src/core/GameManager.ts', // JSDOM timing issues cause inconsistent coverage
                 'src/core/GameLoop.ts', // Animation frame instability in test environment  
                 'src/systems/AnimationSystem.ts', // JSDOM DOM timing issues
                 'src/systems/InputManager.ts', // Canvas event binding issues in JSDOM
-                'src/systems/renderers/StageRenderer.ts' // Fabric.js Text rendering framework separation - measured coverage after CI fixes
+                'src/systems/renderers/StageRenderer.ts' // Text rendering framework separation - measured coverage after CI fixes
             ],
             thresholds: getCoverageThresholds()
         }

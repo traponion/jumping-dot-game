@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-// Vitest setup file for Fabric.js testing (based on official pattern)
+// Vitest setup file for game testing
 import { beforeAll, vi } from 'vitest';
 
 // Environment detection utility
@@ -9,12 +9,8 @@ export function isJSDOM(): boolean {
 }
 
 beforeAll(() => {
-    // Set up Fabric.js environment for JSDOM
+    // Set up test environment for JSDOM
     if (isJSDOM()) {
-        // Fabric.js needs these global references
-        if (typeof globalThis.fabric === 'undefined') {
-            globalThis.fabric = { env: { window, document } };
-        }
         
         // DEFENSIVE: Check JSDOM capabilities without breaking tests
         // In CI environments, JSDOM may be partially initialized
@@ -48,7 +44,6 @@ beforeAll(() => {
     if (typeof process !== 'undefined' && (process.env.CI || process.env.GITHUB_ACTIONS)) {
         console.log('Vitest setup: CI environment detected');
         console.log('JSDOM environment:', isJSDOM());
-        console.log('Global fabric setup:', typeof globalThis.fabric);
         
         // 🔍 Deep JSDOM Debug Info (as recommended in handover)
         console.log('🔍 JSDOM Debug Info (AFTER setup):');
