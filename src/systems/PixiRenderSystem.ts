@@ -346,7 +346,7 @@ export class PixiRenderSystem implements IRenderSystem {
 
                 // Fix: Ensure minimum platform height for visibility
                 if (height <= 0) {
-                    height = 20; // Default platform height
+                    height = 5; // Thin platform height for better gameplay
                 }
 
                 if (this.debugLogCount <= this.maxDebugLogs) {
