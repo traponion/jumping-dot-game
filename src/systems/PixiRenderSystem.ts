@@ -396,14 +396,14 @@ export class PixiRenderSystem implements IRenderSystem {
             // Draw goal as rectangle outline with X mark inside
             // Rectangle outline
             goalGraphics.rect(0, 0, stage.goal.width, stage.goal.height);
-            goalGraphics.stroke({ width: 2, color: 0xffff00 }); // Yellow outline
+            goalGraphics.stroke({ width: 2, color: 0xffffff }); // White outline
 
             // Draw X mark inside
             goalGraphics.moveTo(2, 2);
             goalGraphics.lineTo(stage.goal.width - 2, stage.goal.height - 2);
             goalGraphics.moveTo(stage.goal.width - 2, 2);
             goalGraphics.lineTo(2, stage.goal.height - 2);
-            goalGraphics.stroke({ width: 2, color: 0xffff00 }); // Yellow X
+            goalGraphics.stroke({ width: 2, color: 0xffffff }); // White X
 
             goalGraphics.position.set(stage.goal.x, stage.goal.y);
             // ★★ Add to worldContainer (affected by camera)
