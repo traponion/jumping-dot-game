@@ -78,7 +78,7 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock trail rendering
     }
 
-    renderStage(_stage: StageData): void {
+    renderStage(_stage: StageData, _camera?: Camera): void {
         // Mock stage rendering
     }
 

@@ -31,7 +31,7 @@ export interface IRenderSystem {
 
     renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
-    renderStage(stage: StageData): void;
+    renderStage(stage: StageData, camera?: Camera): void;
 
     /**
      * Render death marks at previous death locations
@@ -284,7 +284,7 @@ export class PixiRenderSystem implements IRenderSystem {
         this.worldContainer.addChild(trailGraphics);
     }
 
-    renderStage(stage: StageData): void {
+    renderStage(stage: StageData, _camera?: Camera): void {
         if (!this.initialized) {
             console.warn('PixiRenderSystem not yet initialized, skipping renderStage');
             return;
@@ -390,6 +390,52 @@ export class PixiRenderSystem implements IRenderSystem {
             goalText.position.set(stage.goalText.x, stage.goalText.y);
             // ★★ Add to worldContainer (affected by camera)
             this.worldContainer.addChild(goalText);
+        }
+
+        // Render leftEdgeMessage
+        if (stage.leftEdgeMessage) {
+            const leftEdgeText = new PIXI.Text({
+                text: stage.leftEdgeMessage.text,
+                style: {
+                    fontSize: 18,
+                    fill: '#ff6666',
+                    fontFamily: 'Arial',
+                    fontWeight: 'bold'
+                }
+            });
+            leftEdgeText.position.set(stage.leftEdgeMessage.x, stage.leftEdgeMessage.y);
+            this.worldContainer.addChild(leftEdgeText);
+        }
+
+        // Render leftEdgeSubMessage
+        if (stage.leftEdgeSubMessage) {
+            const leftEdgeSubText = new PIXI.Text({
+                text: stage.leftEdgeSubMessage.text,
+                style: {
+                    fontSize: 14,
+                    fill: '#ffaa66',
+                    fontFamily: 'Arial'
+                }
+            });
+            leftEdgeSubText.position.set(stage.leftEdgeSubMessage.x, stage.leftEdgeSubMessage.y);
+            this.worldContainer.addChild(leftEdgeSubText);
+        }
+
+        // Render tutorialMessages
+        if (stage.tutorialMessages) {
+            for (const tutorialMessage of stage.tutorialMessages) {
+                const tutorialText = new PIXI.Text({
+                    text: tutorialMessage.text,
+                    style: {
+                        fontSize: 16,
+                        fill: '#66ffff',
+                        fontFamily: 'Arial',
+                        fontWeight: 'bold'
+                    }
+                });
+                tutorialText.position.set(tutorialMessage.x, tutorialMessage.y);
+                this.worldContainer.addChild(tutorialText);
+            }
         }
 
         // Force render immediately

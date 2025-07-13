@@ -282,7 +282,7 @@ export class GameManager {
         renderer.applyCameraTransform(this.gameState.runtime.camera);
 
         if (this.stage) {
-            renderer.renderStage(this.stage);
+            renderer.renderStage(this.stage, this.gameState.runtime.camera);
         }
 
         renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
