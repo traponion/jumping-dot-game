@@ -138,6 +138,8 @@ export interface IRenderSystem {
 export class PixiRenderSystem implements IRenderSystem {
     private app: PIXI.Application;
     private stage: PIXI.Container;
+    private worldContainer: PIXI.Container; // Game elements (affected by camera)
+    private uiContainer: PIXI.Container; // UI elements (fixed position)
     private initialized = false;
     private initializationPromise: Promise<void> | null = null;
 
@@ -152,6 +154,8 @@ export class PixiRenderSystem implements IRenderSystem {
     constructor(container: HTMLElement) {
         this.app = new PIXI.Application();
         this.stage = new PIXI.Container();
+        this.worldContainer = new PIXI.Container(); // Game elements (affected by camera)
+        this.uiContainer = new PIXI.Container(); // UI elements (fixed position)
 
         // Initialize app asynchronously and store the promise
         this.initializationPromise = this.initializeApp(container);
@@ -192,6 +196,9 @@ export class PixiRenderSystem implements IRenderSystem {
             container.appendChild(this.app.canvas);
             this.app.stage.addChild(this.stage);
 
+            // ★★ Add worldContainer and uiContainer to stage
+            this.stage.addChild(this.worldContainer, this.uiContainer);
+
             this.initialized = true;
         } catch (error) {
             console.error('Failed to initialize Pixi.JS application:', error);
@@ -207,12 +214,9 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // clearCanvas called, stage children before (log removed to reduce spam)
-
-        // Clear all children from stage
-        this.stage.removeChildren();
-
-        // clearCanvas called, stage children after (log removed to reduce spam)
+        // ★★ Clear both containers
+        this.worldContainer.removeChildren();
+        this.uiContainer.removeChildren();
     }
 
     private ensureInitialized(): void {
@@ -242,8 +246,9 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        // Apply camera transformation cleanly
-        this.stage.position.set(-camera.x, -camera.y);
+        // ★★ Apply camera transformation only to worldContainer
+        // UI elements in uiContainer remain fixed
+        this.worldContainer.position.set(-camera.x, -camera.y);
     }
 
     restoreCameraTransform(): void {
@@ -287,7 +292,8 @@ export class PixiRenderSystem implements IRenderSystem {
         playerGraphics.position.set(player.x - player.radius, player.y - player.radius);
         playerGraphics.fill(0xffffff); // White player
 
-        this.stage.addChild(playerGraphics);
+        // ★★ Add to worldContainer (affected by camera)
+        this.worldContainer.addChild(playerGraphics);
 
         // Force render immediately to ensure content is visible
         this.app.renderer.render(this.app.stage);
@@ -316,7 +322,8 @@ export class PixiRenderSystem implements IRenderSystem {
             }
         }
 
-        this.stage.addChild(trailGraphics);
+        // ★★ Add to worldContainer (affected by camera)
+        this.worldContainer.addChild(trailGraphics);
     }
 
     renderStage(stage: StageData): void {
@@ -357,7 +364,8 @@ export class PixiRenderSystem implements IRenderSystem {
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(platform.x1, platform.y1);
                 platformGraphics.fill(0xffffff); // White platforms
-                this.stage.addChild(platformGraphics);
+                // ★★ Add to worldContainer (affected by camera)
+                this.worldContainer.addChild(platformGraphics);
                 if (this.debugLogCount <= this.maxDebugLogs) {
                     console.log(
                         'DEBUG: Platform added to stage, total children:',
@@ -377,7 +385,8 @@ export class PixiRenderSystem implements IRenderSystem {
             goalGraphics.rect(0, 0, stage.goal.width, stage.goal.height);
             goalGraphics.position.set(stage.goal.x, stage.goal.y);
             goalGraphics.fill(0xffff00); // Yellow goal
-            this.stage.addChild(goalGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(goalGraphics);
         }
 
         // Render spikes
@@ -387,7 +396,8 @@ export class PixiRenderSystem implements IRenderSystem {
                 spikeGraphics.rect(0, 0, spike.width, spike.height);
                 spikeGraphics.position.set(spike.x, spike.y);
                 spikeGraphics.fill(0xff0000); // Red spikes
-                this.stage.addChild(spikeGraphics);
+                // ★★ Add to worldContainer (affected by camera)
+                this.worldContainer.addChild(spikeGraphics);
             }
         }
 
@@ -402,7 +412,8 @@ export class PixiRenderSystem implements IRenderSystem {
                 }
             });
             startText.position.set(stage.startText.x, stage.startText.y);
-            this.stage.addChild(startText);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(startText);
         }
 
         if (stage.goalText) {
@@ -415,7 +426,8 @@ export class PixiRenderSystem implements IRenderSystem {
                 }
             });
             goalText.position.set(stage.goalText.x, stage.goalText.y);
-            this.stage.addChild(goalText);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(goalText);
         }
 
         // Force render immediately
@@ -429,7 +441,8 @@ export class PixiRenderSystem implements IRenderSystem {
             const markGraphics = new PIXI.Graphics();
             markGraphics.circle(mark.x, mark.y, 5);
             markGraphics.fill(0xff0000); // Red death marks
-            this.stage.addChild(markGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(markGraphics);
         }
     }
 
@@ -448,7 +461,8 @@ export class PixiRenderSystem implements IRenderSystem {
         });
         instruction.anchor.set(0.5);
         instruction.position.set(this.app.screen.width / 2, this.app.screen.height / 2);
-        this.stage.addChild(instruction);
+        // ★★ Add to uiContainer (fixed position)
+        this.uiContainer.addChild(instruction);
 
         // Force render immediately
         this.app.renderer.render(this.app.stage);
@@ -473,7 +487,8 @@ export class PixiRenderSystem implements IRenderSystem {
         });
         title.anchor.set(0.5);
         title.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 100);
-        this.stage.addChild(title);
+        // ★★ Add to uiContainer (fixed position)
+        this.uiContainer.addChild(title);
 
         // Render score
         const score = new PIXI.Text({
@@ -486,7 +501,8 @@ export class PixiRenderSystem implements IRenderSystem {
         });
         score.anchor.set(0.5);
         score.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 60);
-        this.stage.addChild(score);
+        // ★★ Add to uiContainer (fixed position)
+        this.uiContainer.addChild(score);
 
         // Render death count if provided
         if (deathCount !== undefined) {
@@ -500,7 +516,8 @@ export class PixiRenderSystem implements IRenderSystem {
             });
             deaths.anchor.set(0.5);
             deaths.position.set(this.app.screen.width / 2, this.app.screen.height / 2 - 30);
-            this.stage.addChild(deaths);
+            // ★★ Add to uiContainer (fixed position)
+            this.uiContainer.addChild(deaths);
         }
 
         // Render menu options
@@ -519,7 +536,8 @@ export class PixiRenderSystem implements IRenderSystem {
                 this.app.screen.width / 2,
                 this.app.screen.height / 2 + index * 30
             );
-            this.stage.addChild(optionText);
+            // ★★ Add to uiContainer (fixed position)
+            this.uiContainer.addChild(optionText);
         });
     }
 
@@ -537,7 +555,8 @@ export class PixiRenderSystem implements IRenderSystem {
         });
         credits.anchor.set(0.5);
         credits.position.set(this.app.screen.width / 2, this.app.screen.height / 2);
-        this.stage.addChild(credits);
+        // ★★ Add to uiContainer (fixed position)
+        this.uiContainer.addChild(credits);
     }
 
     // ===== Animations =====
@@ -551,7 +570,8 @@ export class PixiRenderSystem implements IRenderSystem {
             // Use life property to calculate alpha (higher life = more opaque)
             const alpha = Math.min(1, particle.life / 100);
             particleGraphics.fill({ color: 0xff0000, alpha });
-            this.stage.addChild(particleGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(particleGraphics);
         }
     }
 
@@ -564,7 +584,8 @@ export class PixiRenderSystem implements IRenderSystem {
             // Use life property to calculate alpha (higher life = more opaque)
             const alpha = Math.min(1, particle.life / 100);
             soulGraphics.fill({ color: 0x00ffff, alpha });
-            this.stage.addChild(soulGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(soulGraphics);
         }
     }
 
@@ -583,7 +604,8 @@ export class PixiRenderSystem implements IRenderSystem {
             // Use life property to calculate alpha (higher life = more opaque)
             const alpha = Math.min(1, particle.life / 100);
             clearGraphics.fill({ color: 0x00ff00, alpha });
-            this.stage.addChild(clearGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(clearGraphics);
         }
 
         // Render progress indicator
@@ -597,7 +619,8 @@ export class PixiRenderSystem implements IRenderSystem {
         });
         progressText.anchor.set(0.5);
         progressText.position.set(centerX, centerY - 50);
-        this.stage.addChild(progressText);
+        // ★★ Add to worldContainer (affected by camera)
+        this.worldContainer.addChild(progressText);
     }
 
     // ===== Analytics & Predictions =====
@@ -610,7 +633,8 @@ export class PixiRenderSystem implements IRenderSystem {
             const predictionGraphics = new PIXI.Graphics();
             predictionGraphics.circle(prediction.x, prediction.y, 8);
             predictionGraphics.fill({ color: 0x00ffff, alpha: 0.7 });
-            this.stage.addChild(predictionGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(predictionGraphics);
         }
 
         // Render landing history
@@ -618,7 +642,8 @@ export class PixiRenderSystem implements IRenderSystem {
             const historyGraphics = new PIXI.Graphics();
             historyGraphics.circle(position.x, position.y, 4);
             historyGraphics.fill({ color: 0x0080ff, alpha: 0.5 });
-            this.stage.addChild(historyGraphics);
+            // ★★ Add to worldContainer (affected by camera)
+            this.worldContainer.addChild(historyGraphics);
         }
     }
 

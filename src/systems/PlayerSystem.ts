@@ -400,11 +400,15 @@ export class CameraSystem {
     public update(): void {
         const player = this.gameState.runtime.player;
 
-        // Center camera on player position (both X and Y axes)
+        // ★★ Fixed: Only follow player horizontally to prevent motion sickness
+        // Center camera on player X position only
         const newCameraX = player.x - this.canvas.width / 2;
-        const newCameraY = player.y - this.canvas.height / 2;
+
+        // Keep Y axis fixed to prevent vertigo/motion sickness
+        // The camera Y should stay at a reasonable level for platformer gameplay
+        const fixedCameraY = 0; // Keep camera level fixed
 
         this.gameState.runtime.camera.x = newCameraX;
-        this.gameState.runtime.camera.y = newCameraY;
+        this.gameState.runtime.camera.y = fixedCameraY;
     }
 }

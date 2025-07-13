@@ -311,8 +311,8 @@ export class GameManager {
             renderer.renderClearAnimation(clearAnim.particles, progress, player.x, player.y);
         }
 
-        // Restore camera transform before UI rendering to ensure UI elements are in screen space
-        renderer.restoreCameraTransform();
+        // ★★ No longer need restoreCameraTransform() - UI elements are now in separate uiContainer
+        // worldContainer: affected by camera, uiContainer: fixed position
 
         // UI state-based rendering - consolidated in GameManager
         if (this.gameState.gameOver) {
