@@ -1,7 +1,7 @@
 // Pixi.JS rendering system implementation
 
 import * as PIXI from 'pixi.js';
-import type { StageData } from '../core/StageLoader.js';
+import type { StageData, TextElement } from '../core/StageLoader.js';
 import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
 // IRenderSystem interface and Position moved to this file for consolidation
 
@@ -105,6 +105,23 @@ export class PixiRenderSystem implements IRenderSystem {
     private app: PIXI.Application;
     private stage: PIXI.Container;
     private worldContainer: PIXI.Container; // Game elements (affected by camera)
+    // Text style constants for consistent messaging
+    private readonly TEXT_STYLES = {
+        default: {
+            fontSize: 16,
+            fill: '#ffffff',
+            fontFamily: 'Arial',
+            fontWeight: 'normal' as const
+        },
+        large: { fontSize: 18, fill: '#ffffff', fontFamily: 'Arial', fontWeight: 'bold' as const },
+        small: {
+            fontSize: 14,
+            fill: '#ffffff',
+            fontFamily: 'Arial',
+            fontWeight: 'normal' as const
+        },
+        title: { fontSize: 20, fill: '#ffffff', fontFamily: 'Arial', fontWeight: 'bold' as const }
+    };
     private uiContainer: PIXI.Container; // UI elements (fixed position)
     private initialized = false;
     private initializationPromise: Promise<void> | null = null;
@@ -284,6 +301,34 @@ export class PixiRenderSystem implements IRenderSystem {
         this.worldContainer.addChild(trailGraphics);
     }
 
+    /**
+     * Create standardized stage text with consistent styling
+     */
+    private createStageText(
+        textElement: TextElement,
+        defaultStyleKey: keyof typeof this.TEXT_STYLES = 'default'
+    ): PIXI.Text {
+        // Merge default style with optional custom style from JSON
+        const defaultStyle = this.TEXT_STYLES[defaultStyleKey];
+        const customStyle = textElement.style || {};
+
+        const finalStyle = {
+            fontSize: customStyle.fontSize || defaultStyle.fontSize,
+            fill: customStyle.color || defaultStyle.fill,
+            fontFamily: customStyle.fontFamily || defaultStyle.fontFamily,
+            fontWeight: customStyle.fontWeight || defaultStyle.fontWeight
+        };
+
+        const pixiText = new PIXI.Text({
+            text: textElement.text,
+            style: finalStyle
+        });
+
+        pixiText.position.set(textElement.x, textElement.y);
+        this.worldContainer.addChild(pixiText);
+        return pixiText;
+    }
+
     renderStage(stage: StageData, _camera?: Camera): void {
         if (!this.initialized) {
             console.warn('PixiRenderSystem not yet initialized, skipping renderStage');
@@ -365,76 +410,27 @@ export class PixiRenderSystem implements IRenderSystem {
 
         // Render text elements
         if (stage.startText) {
-            const startText = new PIXI.Text({
-                text: stage.startText.text,
-                style: {
-                    fontSize: 16,
-                    fill: '#ffffff',
-                    fontFamily: 'Arial'
-                }
-            });
-            startText.position.set(stage.startText.x, stage.startText.y);
-            // ★★ Add to worldContainer (affected by camera)
-            this.worldContainer.addChild(startText);
+            this.createStageText(stage.startText, 'default');
         }
 
         if (stage.goalText) {
-            const goalText = new PIXI.Text({
-                text: stage.goalText.text,
-                style: {
-                    fontSize: 16,
-                    fill: '#ffff00',
-                    fontFamily: 'Arial'
-                }
-            });
-            goalText.position.set(stage.goalText.x, stage.goalText.y);
-            // ★★ Add to worldContainer (affected by camera)
-            this.worldContainer.addChild(goalText);
+            this.createStageText(stage.goalText, 'default');
         }
 
         // Render leftEdgeMessage
         if (stage.leftEdgeMessage) {
-            const leftEdgeText = new PIXI.Text({
-                text: stage.leftEdgeMessage.text,
-                style: {
-                    fontSize: 18,
-                    fill: '#ffffff',
-                    fontFamily: 'Arial',
-                    fontWeight: 'bold'
-                }
-            });
-            leftEdgeText.position.set(stage.leftEdgeMessage.x, stage.leftEdgeMessage.y);
-            this.worldContainer.addChild(leftEdgeText);
+            this.createStageText(stage.leftEdgeMessage, 'large');
         }
 
         // Render leftEdgeSubMessage
         if (stage.leftEdgeSubMessage) {
-            const leftEdgeSubText = new PIXI.Text({
-                text: stage.leftEdgeSubMessage.text,
-                style: {
-                    fontSize: 14,
-                    fill: '#ffffff',
-                    fontFamily: 'Arial'
-                }
-            });
-            leftEdgeSubText.position.set(stage.leftEdgeSubMessage.x, stage.leftEdgeSubMessage.y);
-            this.worldContainer.addChild(leftEdgeSubText);
+            this.createStageText(stage.leftEdgeSubMessage, 'small');
         }
 
         // Render tutorialMessages
         if (stage.tutorialMessages) {
             for (const tutorialMessage of stage.tutorialMessages) {
-                const tutorialText = new PIXI.Text({
-                    text: tutorialMessage.text,
-                    style: {
-                        fontSize: 16,
-                        fill: '#ffffff',
-                        fontFamily: 'Arial',
-                        fontWeight: 'bold'
-                    }
-                });
-                tutorialText.position.set(tutorialMessage.x, tutorialMessage.y);
-                this.worldContainer.addChild(tutorialText);
+                this.createStageText(tutorialMessage, 'default');
             }
         }
 

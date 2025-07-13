@@ -30,12 +30,21 @@
     "startText": {
         "x": 50,
         "y": 450,
-        "text": "STAGE 2"
+        "text": "STAGE 2",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
     },
     "goalText": {
         "x": 2470,
         "y": 340,
-        "text": "GOAL"
+        "text": "GOAL",
+        "style": {
+            "fontSize": 16,
+            "color": "#ffffff"
+        }
     },
     "leftEdgeMessage": {
         "x": -400,
@@ -51,17 +60,32 @@
         {
             "x": 600,
             "y": 450,
-            "text": "HURRY! THE SHIP IS LEAVING!"
+            "text": "HURRY! THE SHIP IS LEAVING!",
+            "style": {
+                "fontSize": 16,
+                "color": "#ffffff",
+                "fontWeight": "bold"
+            }
         },
         {
             "x": 1100,
             "y": 450,
-            "text": "ENJOYING THE ENDLESS RIDE?"
+            "text": "ENJOYING THE ENDLESS RIDE?",
+            "style": {
+                "fontSize": 16,
+                "color": "#ffffff",
+                "fontWeight": "bold"
+            }
         },
         {
             "x": 1600,
             "y": 450,
-            "text": "OH, SOLID GROUND AT LAST!"
+            "text": "OH, SOLID GROUND AT LAST!",
+            "style": {
+                "fontSize": 16,
+                "color": "#ffffff",
+                "fontWeight": "bold"
+            }
         }
     ]
 }

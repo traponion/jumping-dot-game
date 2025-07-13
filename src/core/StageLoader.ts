@@ -87,6 +87,12 @@ export interface TextElement {
     x: number;
     y: number;
     text: string;
+    style?: {
+        fontSize?: number;
+        color?: string;
+        fontWeight?: 'normal' | 'bold';
+        fontFamily?: string;
+    };
 }
 
 /**
