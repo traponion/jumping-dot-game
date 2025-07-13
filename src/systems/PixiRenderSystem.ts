@@ -349,7 +349,7 @@ export class PixiRenderSystem implements IRenderSystem {
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
-                const height = 5; // Always use thin platform height for better gameplay
+                const height = 2; // Ultra-thin platform height for better gameplay
 
                 if (this.debugLogCount <= this.maxDebugLogs) {
                     console.log(
@@ -379,7 +379,7 @@ export class PixiRenderSystem implements IRenderSystem {
             for (const movingPlatform of stage.movingPlatforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = movingPlatform.x2 - movingPlatform.x1;
-                const height = 5; // Consistent platform height
+                const height = 2; // Ultra-thin platform height
 
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(movingPlatform.x1, movingPlatform.y1);
