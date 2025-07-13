@@ -145,6 +145,10 @@ export class PixiRenderSystem implements IRenderSystem {
     private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Position[] = [];
 
+    // Debug logging state
+    private debugLogCount = 0;
+    private maxDebugLogs = 5;
+
     constructor(container: HTMLElement) {
         this.app = new PIXI.Application();
         this.stage = new PIXI.Container();
@@ -321,29 +325,44 @@ export class PixiRenderSystem implements IRenderSystem {
             return;
         }
 
-        console.log('DEBUG: renderStage called, platforms count:', stage.platforms?.length || 0);
+        // Only log first few calls to avoid spam
+        if (this.debugLogCount < this.maxDebugLogs) {
+            console.log(
+                'DEBUG: renderStage called, platforms count:',
+                stage.platforms?.length || 0
+            );
+            this.debugLogCount++;
+        }
 
         // Render platforms cleanly
         if (stage.platforms) {
-            console.log('DEBUG: Rendering platforms:', stage.platforms);
+            if (this.debugLogCount <= this.maxDebugLogs) {
+                console.log('DEBUG: Rendering platforms:', stage.platforms);
+            }
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
                 const height = platform.y2 - platform.y1;
-                console.log(
-                    `DEBUG: Creating platform at (${platform.x1}, ${platform.y1}) size ${width}x${height}`
-                );
+                if (this.debugLogCount <= this.maxDebugLogs) {
+                    console.log(
+                        `DEBUG: Creating platform at (${platform.x1}, ${platform.y1}) size ${width}x${height}`
+                    );
+                }
                 platformGraphics.rect(0, 0, width, height);
                 platformGraphics.position.set(platform.x1, platform.y1);
                 platformGraphics.fill(0xffffff); // White platforms
                 this.stage.addChild(platformGraphics);
-                console.log(
-                    'DEBUG: Platform added to stage, total children:',
-                    this.stage.children.length
-                );
+                if (this.debugLogCount <= this.maxDebugLogs) {
+                    console.log(
+                        'DEBUG: Platform added to stage, total children:',
+                        this.stage.children.length
+                    );
+                }
             }
         } else {
-            console.warn('DEBUG: No platforms found in stage data');
+            if (this.debugLogCount <= this.maxDebugLogs) {
+                console.warn('DEBUG: No platforms found in stage data');
+            }
         }
 
         // Render goal
