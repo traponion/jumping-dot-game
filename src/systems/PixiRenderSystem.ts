@@ -145,8 +145,8 @@ export class PixiRenderSystem implements IRenderSystem {
     private landingPredictions: LandingPrediction[] = [];
     private landingHistory: Position[] = [];
 
-    // Debug logging state
-    private debugLogCount = 0;
+    // Debug logging state (disabled)
+    private debugLogCount = 999;
     private maxDebugLogs = 5;
 
     constructor(container: HTMLElement) {
@@ -342,7 +342,13 @@ export class PixiRenderSystem implements IRenderSystem {
             for (const platform of stage.platforms) {
                 const platformGraphics = new PIXI.Graphics();
                 const width = platform.x2 - platform.x1;
-                const height = platform.y2 - platform.y1;
+                let height = platform.y2 - platform.y1;
+
+                // Fix: Ensure minimum platform height for visibility
+                if (height <= 0) {
+                    height = 20; // Default platform height
+                }
+
                 if (this.debugLogCount <= this.maxDebugLogs) {
                     console.log(
                         `DEBUG: Creating platform at (${platform.x1}, ${platform.y1}) size ${width}x${height}`
