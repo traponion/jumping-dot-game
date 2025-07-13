@@ -65,7 +65,6 @@ export class AnimationSystem {
      * @description Creates celebratory particles around player position when stage is cleared
      */
     startClearAnimation(player: Player): void {
-        console.log('🎉 Starting clear animation at:', player.x, player.y);
         this.clearAnimation.active = true;
         this.clearAnimation.startTime = getCurrentTime();
         this.clearAnimation.particles = [];
@@ -130,7 +129,6 @@ export class AnimationSystem {
      * @description Creates radial explosion particles when player dies
      */
     startDeathAnimation(player: Player): void {
-        console.log('🎆 Starting death animation at:', player.x, player.y);
         this.deathAnimation.active = true;
         this.deathAnimation.startTime = getCurrentTime();
         this.deathAnimation.particles = [];
