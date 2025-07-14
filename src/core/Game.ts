@@ -15,8 +15,8 @@ import { GameUI } from './GameUI.js';
  * @description Entry point for the jumping dot game, coordinates UI, loop, and manager
  */
 export class JumpingDotGame {
-    /** @private {HTMLCanvasElement} Main game canvas */
-    private canvas: HTMLCanvasElement;
+    /** @private {HTMLElement} Main game container */
+    private container: HTMLElement;
     /** @private {GameState} Game state instance */
     private gameState: GameState;
 
@@ -33,7 +33,7 @@ export class JumpingDotGame {
      * @constructor
      */
     constructor() {
-        this.canvas = this.getRequiredElement('gameCanvas') as HTMLCanvasElement;
+        this.container = this.getRequiredElement('gameCanvas');
 
         // Initialize game state first
         this.gameState = new GameState();
@@ -41,7 +41,7 @@ export class JumpingDotGame {
         // Initialize component classes
         this.gameUI = new GameUI(this.gameState);
         this.gameLoop = new GameLoop();
-        this.gameManager = new GameManager(this.canvas, this, this.gameState);
+        this.gameManager = new GameManager(this.container, this, this.gameState);
 
         // Set up game loop callbacks
         this.gameLoop.setUpdateCallback((deltaTime) => this.update(deltaTime));
@@ -161,14 +161,22 @@ export class JumpingDotGame {
         }
     }
 
-    private render(): void {
+    public handleStageSelect(): void {
+        if (!this.gameState.gameOver) return;
+
+        // Force stage select option and return to stage select
+        this.gameUI.selectStageSelectOption();
+        this.returnToStageSelect();
+    }
+
+    private async render(): Promise<void> {
         // Prevent rendering if game loop has been cleaned up
         if (this.gameLoop.isCleanedUpState()) {
             return;
         }
 
         // Delegate all rendering to GameManager, including UI state management
-        this.gameManager.render(this.gameUI);
+        await this.gameManager.render(this.gameUI);
 
         // Update UI visibility during gameplay
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
@@ -194,8 +202,8 @@ export class JumpingDotGame {
         this.update(deltaTime);
     }
 
-    testRender(): void {
-        this.render();
+    async testRender(): Promise<void> {
+        await this.render();
     }
 
     async testLoadStage(stageNumber: number): Promise<void> {

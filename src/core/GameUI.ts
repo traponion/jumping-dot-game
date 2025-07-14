@@ -1,5 +1,14 @@
+import { getCurrentTime } from '../systems/PlayerSystem.js';
 import type { GameState } from '../types/GameTypes.js';
-import { getCurrentTime } from '../utils/GameUtils.js';
+
+/**
+ * Stage Select Item interface
+ */
+export interface StageSelectItem {
+    id: number;
+    name: string;
+    description: string;
+}
 
 /**
  * GameUI - Manages DOM elements and UI updates for the jumping dot game
@@ -7,7 +16,7 @@ import { getCurrentTime } from '../utils/GameUtils.js';
  * Responsibilities:
  * - DOM element management and updates
  * - Game status display
- * - Timer and score display
+ * - Timer display
  * - Game over menu rendering coordination
  *
  * This class follows Single Responsibility Principle by handling only UI concerns.
@@ -15,7 +24,6 @@ import { getCurrentTime } from '../utils/GameUtils.js';
 export class GameUI {
     private gameStatus: HTMLElement;
     private timerDisplay: HTMLElement;
-    private scoreDisplay: HTMLElement;
     private deathDisplay: HTMLElement;
 
     // Game over menu state
@@ -25,7 +33,6 @@ export class GameUI {
     constructor(private gameState: GameState) {
         this.gameStatus = this.getRequiredElement('gameStatus');
         this.timerDisplay = this.getRequiredElement('timer');
-        this.scoreDisplay = this.getRequiredElement('score');
         this.deathDisplay = this.getRequiredElement('deathCount');
 
         // Listen for soul animation completion to update death count display
@@ -66,7 +73,6 @@ export class GameUI {
      */
     updateInitialUI(): void {
         this.timerDisplay.textContent = `Time: ${this.gameState.timeLimit}`;
-        this.scoreDisplay.textContent = 'Score: 0';
         this.updateDeathCount();
     }
 
@@ -100,16 +106,10 @@ export class GameUI {
     }
 
     /**
-     * Show goal reached state with score
+     * Show goal reached state
      */
     showGoalReached(): void {
-        const gameStartTime = this.gameState.gameStartTime;
-        const currentTime = getCurrentTime();
-        const elapsedSeconds = gameStartTime ? (currentTime - gameStartTime) / 1000 : 0;
-        const timeRemaining = Math.max(0, this.gameState.timeLimit - elapsedSeconds);
-        const finalScore = Math.ceil(timeRemaining);
-        this.gameStatus.textContent = `Goal reached! Score: ${finalScore}`;
-        this.scoreDisplay.textContent = `Score: ${finalScore}`;
+        this.gameStatus.textContent = 'Goal reached!';
     }
 
     /**
@@ -126,14 +126,20 @@ export class GameUI {
                 this.gameOverMenuIndex + 1
             );
         }
-
-        console.log(`🎮 Game over menu selection: ${this.gameOverOptions[this.gameOverMenuIndex]}`);
     }
 
     /**
      * Get current game over menu selection
      */
     getGameOverSelection(): string {
+        return this.gameOverOptions[this.gameOverMenuIndex];
+    }
+
+    /**
+     * Select stage select option and return it
+     */
+    selectStageSelectOption(): string {
+        this.gameOverMenuIndex = 1; // Set to STAGE SELECT
         return this.gameOverOptions[this.gameOverMenuIndex];
     }
 
@@ -199,5 +205,240 @@ export class GameUI {
         if (typeof window.dispatchEvent === 'function') {
             window.dispatchEvent(event);
         }
+    }
+}
+
+/**
+ * HTML/CSS-based Stage Select Component
+ * Replaces the canvas-based StageSelect with semantic HTML implementation
+ */
+export class HtmlStageSelect {
+    private stages: StageSelectItem[] = [
+        { id: 1, name: 'STAGE 1', description: 'Basic tutorial stage' },
+        { id: 2, name: 'STAGE 2', description: 'Moving platforms' }
+    ];
+
+    private selectedStageIndex = 0;
+    private stageElements: HTMLElement[] = [];
+    private boundHandleKeyboard: (e: KeyboardEvent) => void;
+    private isActive = false;
+
+    constructor() {
+        this.boundHandleKeyboard = this.handleKeyboard.bind(this);
+    }
+
+    /**
+     * Initialize and show the stage select interface
+     */
+    public init(): void {
+        this.showStageSelect();
+    }
+
+    /**
+     * Show stage selection interface
+     */
+    private showStageSelect(): void {
+        this.isActive = true;
+        this.selectedStageIndex = 0;
+
+        // Get stage item elements - safe for test environment
+        if (document?.querySelectorAll) {
+            this.stageElements = Array.from(
+                document.querySelectorAll('.stage-item')
+            ) as HTMLElement[];
+        } else {
+            this.stageElements = [];
+        }
+
+        // Set up keyboard event listener - safe for test environment
+        if (document?.addEventListener) {
+            document.addEventListener('keydown', this.boundHandleKeyboard);
+        }
+
+        // Focus first stage by default
+        if (this.stageElements.length > 0) {
+            this.focusStage(0);
+        }
+
+        // Show stage select element
+        this.showStageSelectElement();
+
+        // Hide game UI elements
+        this.hideGameElements();
+    }
+
+    /**
+     * Hide stage selection interface
+     */
+    private hideStageSelect(): void {
+        this.isActive = false;
+
+        // Safe cleanup for test environment
+        if (document?.removeEventListener) {
+            document.removeEventListener('keydown', this.boundHandleKeyboard);
+        }
+
+        // Hide stage select element - safe for test environment
+        const stageSelectElement = document?.getElementById
+            ? document.getElementById('stageSelect')
+            : null;
+        if (stageSelectElement) {
+            stageSelectElement.style.display = 'none';
+        }
+    }
+
+    /**
+     * Handle keyboard input for stage navigation
+     */
+    private handleKeyboard(e: KeyboardEvent): void {
+        if (!this.isActive) return;
+
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.navigateUp();
+                break;
+
+            case 'ArrowDown':
+            case 'ArrowRight':
+                e.preventDefault();
+                this.navigateDown();
+                break;
+
+            case ' ':
+            case 'Enter':
+                e.preventDefault();
+                this.selectCurrentStage();
+                break;
+        }
+    }
+
+    /**
+     * Navigate to previous stage
+     */
+    private navigateUp(): void {
+        const newIndex = Math.max(0, this.selectedStageIndex - 1);
+        if (newIndex !== this.selectedStageIndex) {
+            this.focusStage(newIndex);
+        }
+    }
+
+    /**
+     * Navigate to next stage
+     */
+    private navigateDown(): void {
+        const newIndex = Math.min(this.stages.length - 1, this.selectedStageIndex + 1);
+        if (newIndex !== this.selectedStageIndex) {
+            this.focusStage(newIndex);
+        }
+    }
+
+    /**
+     * Focus specific stage by index
+     */
+    private focusStage(index: number): void {
+        if (index >= 0 && index < this.stageElements.length) {
+            this.selectedStageIndex = index;
+            this.stageElements[index].focus();
+        }
+    }
+
+    /**
+     * Select currently focused stage
+     */
+    private selectCurrentStage(): void {
+        const selectedStage = this.stages[this.selectedStageIndex];
+        if (selectedStage) {
+            this.startStage(selectedStage.id);
+        }
+    }
+
+    /**
+     * Start selected stage and initialize game
+     */
+    /**
+     * Start selected stage and initialize game
+     * Canvas Readiness Synchronization: Wait for Canvas initialization before switching UI elements
+     */
+    private async startStage(stageId: number): Promise<void> {
+        try {
+            // Step 1: Start game initialization (but keep current UI visible)
+            // Import and call startGame directly for Promise-based coordination
+            const { startGame } = await import('../main.js');
+
+            // Step 2: Wait for Canvas to be ready before switching UI
+            await startGame(stageId);
+
+            // Step 3: Now safely switch UI (Canvas is guaranteed ready)
+            this.hideStageSelect();
+            this.showGameElements();
+        } catch (error) {
+            console.error('Canvas initialization failed during stage start:', error);
+
+            // Error handling: Keep stage select visible for user to retry
+            // Do not switch UI if Canvas initialization failed
+            // User can try selecting stage again
+
+            // Optional: Could show error message to user here
+            // For now, just log the error and maintain current UI state
+        }
+    }
+
+    /**
+     * Return to stage selection from game
+     */
+    public async returnToStageSelect(): Promise<void> {
+        this.showStageSelect();
+    }
+
+    /**
+     * Show stage select element
+     */
+    private showStageSelectElement(): void {
+        const stageSelectElement = document?.getElementById
+            ? document.getElementById('stageSelect')
+            : null;
+        if (stageSelectElement) {
+            stageSelectElement.style.display = 'block';
+        }
+    }
+
+    /**
+     * Hide game UI elements during stage selection
+     */
+    private hideGameElements(): void {
+        const gameUI = document?.getElementById
+            ? (document.getElementById('gameUI') as HTMLElement)
+            : null;
+        const info = document?.querySelector
+            ? (document.querySelector('.info') as HTMLElement)
+            : null;
+        const controls = document?.querySelector
+            ? (document.querySelector('.controls') as HTMLElement)
+            : null;
+
+        if (gameUI) gameUI.style.display = 'none';
+        if (info) info.style.display = 'none';
+        if (controls) controls.style.display = 'none';
+    }
+
+    /**
+     * Show game UI elements when starting game
+     */
+    private showGameElements(): void {
+        const gameUI = document?.getElementById
+            ? (document.getElementById('gameUI') as HTMLElement)
+            : null;
+        const info = document?.querySelector
+            ? (document.querySelector('.info') as HTMLElement)
+            : null;
+        const controls = document?.querySelector
+            ? (document.querySelector('.controls') as HTMLElement)
+            : null;
+
+        if (gameUI) gameUI.style.display = 'block';
+        if (info) info.style.display = 'block';
+        if (controls) controls.style.display = 'block';
     }
 }

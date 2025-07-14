@@ -39,7 +39,12 @@
     "startText": {
         "x": 50,
         "y": 450,
-        "text": "STAGE 1"
+        "text": "STAGE 1",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
     },
     "goalText": {
         "x": 2420,
@@ -49,7 +54,12 @@
     "leftEdgeMessage": {
         "x": -400,
         "y": 450,
-        "text": "NOTHING HERE"
+        "text": "NOTHING HERE",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
     },
     "leftEdgeSubMessage": {
         "x": -400,

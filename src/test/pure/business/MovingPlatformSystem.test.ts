@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { MovingPlatform } from '../../../core/StageLoader.js';
 import type { GameState } from '../../../stores/GameState.js';
-import { MovingPlatformSystem } from '../../../systems/MovingPlatformSystem.js';
+import { MovingPlatformSystem } from '../../../systems/PhysicsSystem.js';
 
 describe('MovingPlatformSystem', () => {
     let movingPlatformSystem: MovingPlatformSystem;
@@ -46,7 +46,6 @@ describe('MovingPlatformSystem', () => {
                 player: { x: 100, y: 400, vx: 0, vy: 0, radius: 10, grounded: false },
                 camera: { x: 0, y: 0 },
                 particles: [],
-                trail: [],
                 deathMarks: [],
                 collisionResults: {
                     holeCollision: false,

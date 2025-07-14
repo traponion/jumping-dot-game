@@ -2,9 +2,8 @@
 // Based on Fabric.js official testing patterns
 
 import type { StageData } from '../../core/StageLoader.js';
-import type { IRenderSystem, Position } from '../../systems/IRenderSystem.js';
-import type { LandingPrediction } from '../../types/AnalyticsTypes.js';
-import type { Camera, Particle, Player, TrailPoint } from '../../types/GameTypes.js';
+import type { IRenderSystem, Position } from '../../systems/PixiRenderSystem.js';
+import type { Camera, Particle, Player } from '../../types/GameTypes.js';
 
 export interface MockFabricCanvas {
     width: number;
@@ -21,18 +20,11 @@ export interface MockFabricCanvas {
 export class MockRenderSystem implements IRenderSystem {
     private canvasElement: HTMLCanvasElement;
     private mockCanvas: MockFabricCanvas;
-    private landingPredictions: LandingPrediction[] = [];
-    private landingHistory: Array<{ x: number; y: number; time: number }> = [];
 
-    constructor(canvasElement: HTMLCanvasElement) {
-        this.canvasElement = canvasElement;
+    constructor(containerElement: HTMLElement) {
+        this.canvasElement = containerElement as HTMLCanvasElement;
 
-        // Check if canvas context is available (same as FabricRenderSystem would do)
-        const context = canvasElement.getContext('2d');
-        if (!context) {
-            throw new Error('Failed to get 2D rendering context');
-        }
-
+        // Mock implementation - no real canvas operations needed in tests
         this.mockCanvas = this.createMockCanvas();
     }
 
@@ -82,11 +74,7 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock player rendering
     }
 
-    renderTrail(_trail: TrailPoint[], _playerRadius: number): void {
-        // Mock trail rendering
-    }
-
-    renderStage(_stage: StageData): void {
+    renderStage(_stage: StageData, _camera?: Camera): void {
         // Mock stage rendering
     }
 
@@ -132,32 +120,9 @@ export class MockRenderSystem implements IRenderSystem {
         // Mock clear animation rendering
     }
 
-    // ===== Analytics & Predictions =====
-
-    renderLandingPredictions(): void {
-        // Mock landing predictions rendering
-    }
-
-    setLandingPredictions(predictions: LandingPrediction[]): void {
-        this.landingPredictions = [...predictions];
-    }
-
-    renderLandingHistory(): void {
-        // Mock landing history rendering
-    }
-
-    addLandingHistory(position: Position): void {
-        this.landingHistory.push({ x: position.x, y: position.y, time: Date.now() });
-    }
-
-    cleanupLandingHistory(): void {
-        // Mock cleanup - remove old entries
-        const cutoffTime = Date.now() - 30000; // Keep last 30 seconds
-        this.landingHistory = this.landingHistory.filter((entry) => entry.time > cutoffTime);
-    }
-
-    updateLandingPredictionAnimations(): void {
-        // Mock animation update
+    async waitForInitialization(): Promise<void> {
+        // Mock implementation - immediately resolves
+        return Promise.resolve();
     }
 
     drawCrosshair(_position: Position): void {
@@ -168,27 +133,15 @@ export class MockRenderSystem implements IRenderSystem {
 
     async cleanup(): Promise<void> {
         // Mock async cleanup
-        this.landingPredictions = [];
-        this.landingHistory = [];
     }
 
     dispose(): void {
         this.mockCanvas.dispose();
-        this.landingPredictions = [];
-        this.landingHistory = [];
     }
 
     // ===== Test Utilities =====
 
     getMockCanvas(): MockFabricCanvas {
         return this.mockCanvas;
-    }
-
-    getLandingPredictions(): LandingPrediction[] {
-        return [...this.landingPredictions];
-    }
-
-    getLandingHistory(): Array<{ x: number; y: number; time: number }> {
-        return [...this.landingHistory];
     }
 }

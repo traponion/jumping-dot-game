@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+html/
 
 # Environment variables
 .env
@@ -82,6 +83,7 @@ review.md
 
 # Claude AI working directory (temporary files, handovers, etc.)
 .claude/
+.summaryignore
 
 # Playwright test artifacts
 test-results/

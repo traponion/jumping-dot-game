@@ -5,10 +5,10 @@
  * Handles stage clear celebrations and death effect animations with physics simulation.
  */
 
-import { GAME_CONFIG } from '../constants/GameConstants.js';
+import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import type { AnimationSystem as AnimationData, Player } from '../types/GameTypes.js';
-import { getCurrentTime, randomRange } from '../utils/GameUtils.js';
+import { getCurrentTime, randomRange } from './PlayerSystem.js';
 
 /**
  * Animation system for particle effects and visual feedback
@@ -70,13 +70,18 @@ export class AnimationSystem {
         this.clearAnimation.particles = [];
 
         for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
+            // Create radial explosion pattern for clear animation fireworks
+            const angle = (Math.PI * 2 * i) / GAME_CONFIG.animation.particleCount;
+            const speed = randomRange(6, 15); // Faster explosion for celebration
+
             this.clearAnimation.particles.push({
-                x: player.x + randomRange(-50, 50),
-                y: player.y + randomRange(-50, 50),
-                vx: randomRange(-4, 4),
-                vy: randomRange(-6, 2),
+                x: player.x,
+                y: player.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2, // Slight upward bias
                 life: 1.0,
-                decay: randomRange(0.02, 0.04)
+                decay: randomRange(0.015, 0.025), // Longer life for better visibility
+                size: randomRange(3, 6) // Bigger particles for celebration
             });
         }
     }
@@ -130,7 +135,7 @@ export class AnimationSystem {
 
         for (let i = 0; i < GAME_CONFIG.animation.particleCount; i++) {
             const angle = (Math.PI * 2 * i) / GAME_CONFIG.animation.particleCount;
-            const speed = randomRange(3, 7);
+            const speed = randomRange(5, 12); // Faster explosion for fireworks effect
 
             this.deathAnimation.particles.push({
                 x: player.x,

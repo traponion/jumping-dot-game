@@ -1,15 +1,67 @@
-/**
- * @fileoverview Player system for managing player movement, input processing, and trail management
- * @module systems/PlayerSystem
- * @description Domain Layer - Pure player logic and physics management using Zustand store
- */
-
-import { GAME_CONFIG } from '../constants/GameConstants.js';
-import type { Platform } from '../core/StageLoader.js';
+import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
-import type { LandingPrediction } from '../types/AnalyticsTypes.js';
-import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
-import { calculateDeltaFactor, getCurrentTime } from '../utils/GameUtils.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
+// GameUtils functions merged here for consolidation
+
+/**
+ * Get current high-resolution timestamp using Performance API
+ */
+export function getCurrentTime(): number {
+    return performance.now();
+}
+
+/**
+ * Calculate delta time factor for frame-rate independent physics
+ */
+export function calculateDeltaFactor(deltaTime: number, gameSpeed: number): number {
+    return (deltaTime / (1000 / 60)) * gameSpeed;
+}
+
+/**
+ * Check if a point is within a rectangle's bounds
+ */
+export function isPointInRect(
+    pointX: number,
+    pointY: number,
+    rectX: number,
+    rectY: number,
+    rectWidth: number,
+    rectHeight: number
+): boolean {
+    return (
+        pointX >= rectX &&
+        pointX <= rectX + rectWidth &&
+        pointY >= rectY &&
+        pointY <= rectY + rectHeight
+    );
+}
+
+/**
+ * Check collision between a circle and rectangle using AABB detection
+ */
+export function isCircleRectCollision(
+    circleX: number,
+    circleY: number,
+    circleRadius: number,
+    rectX: number,
+    rectY: number,
+    rectWidth: number,
+    rectHeight: number
+): boolean {
+    return (
+        circleX + circleRadius >= rectX &&
+        circleX - circleRadius <= rectX + rectWidth &&
+        circleY + circleRadius >= rectY &&
+        circleY - circleRadius <= rectY + rectHeight
+    );
+}
+
+/**
+ * Generate random floating-point number between min and max (inclusive)
+ */
+export function randomRange(min: number, max: number): number {
+    return Math.random() * (max - min) + min;
+}
 import type { InputManager } from './InputManager.js';
 
 /**
@@ -23,10 +75,6 @@ export class PlayerSystem {
 
     /** @private {GameState} Game state instance for direct state access */
     private gameState: GameState;
-    /** @private {any} Render system for landing predictions (injected dependency) */
-    private renderSystem: {
-        setLandingPredictions: (predictions: LandingPrediction[]) => void;
-    } | null = null;
 
     /** @private {boolean} Flag tracking if player has moved at least once */
     private hasMovedOnce = false;
@@ -55,17 +103,6 @@ export class PlayerSystem {
     }
 
     /**
-     * Sets the render system for landing predictions
-     * @param {any} renderSystem - Render system instance to set
-     * @returns {void}
-     */
-    setRenderSystem(renderSystem: {
-        setLandingPredictions: (predictions: LandingPrediction[]) => void;
-    }): void {
-        this.renderSystem = renderSystem;
-    }
-
-    /**
      * Updates player system for the current frame
      * @param {number} deltaTime - Time elapsed since last frame in milliseconds
      * @param {PhysicsConstants} physics - Physics constants for calculations
@@ -76,9 +113,6 @@ export class PlayerSystem {
 
         this.handleInput(dtFactor);
         this.handleAutoJump(physics);
-        this.updateTrail();
-
-        this.updateLandingPredictions();
     }
 
     /**
@@ -133,90 +167,6 @@ export class PlayerSystem {
     }
 
     /**
-     * Updates landing predictions for player movement
-     * @private
-     * @returns {void}
-     */
-    private updateLandingPredictions(): void {
-        if (!(this.renderSystem && this.gameState.stage)) return;
-
-        // Simple input-based prediction that grows from landing spot
-        const inputKeys = this.inputManager?.getMovementState() || {};
-        const futureDistance = this.calculateFutureMovement(inputKeys);
-        const predictedX = this.gameState.runtime.player.x + futureDistance;
-
-        // Find the platform closest to predicted position
-        const targetPlatform = this.findNearestPlatform(predictedX);
-
-        if (targetPlatform) {
-            const simplePrediction = [
-                {
-                    x: predictedX,
-                    y: targetPlatform.y1,
-                    confidence: 0.8,
-                    jumpNumber: 1
-                }
-            ];
-            this.renderSystem.setLandingPredictions(simplePrediction);
-        } else {
-            this.renderSystem.setLandingPredictions([]);
-        }
-    }
-
-    /**
-     * Calculates future movement based on player input
-     * @private
-     * @param {Record<string, boolean>} keys - Current input state
-     * @returns {number} Predicted movement distance
-     */
-    private calculateFutureMovement(keys: Record<string, boolean>): number {
-        // Estimate future movement for one jump (more realistic timing)
-        const jumpDuration = 400; // Shorter, more realistic jump duration
-        const baseMovement = this.gameState.runtime.player.vx * (jumpDuration / 16.67); // Movement during jump
-
-        // Add smaller input-based movement
-        let inputMovement = 0;
-        if (keys.ArrowLeft) {
-            inputMovement = -30; // Smaller left movement
-        } else if (keys.ArrowRight) {
-            inputMovement = 30; // Smaller right movement
-        }
-
-        return baseMovement + inputMovement;
-    }
-
-    /**
-     * Finds the nearest platform to a target X position
-     * @private
-     * @param {number} targetX - Target X coordinate
-     * @returns {Platform | null} Nearest platform or null if none found
-     */
-    private findNearestPlatform(targetX: number): Platform | null {
-        if (!this.gameState.stage) return null;
-
-        // Find platform that the player would likely land on
-        let bestPlatform = null;
-        let bestDistance = Number.POSITIVE_INFINITY;
-
-        for (const platform of this.gameState.stage.platforms) {
-            // Check if target X is within platform bounds or nearby
-            const platformCenterX = (platform.x1 + platform.x2) / 2;
-            const distance = Math.abs(targetX - platformCenterX);
-
-            if (
-                distance < bestDistance &&
-                targetX >= platform.x1 - 30 &&
-                targetX <= platform.x2 + 30
-            ) {
-                bestDistance = distance;
-                bestPlatform = platform;
-            }
-        }
-
-        return bestPlatform;
-    }
-
-    /**
      * Clamps player speed to the specified maximum value
      * @param {number} maxSpeed - Maximum allowed speed value
      * @returns {void}
@@ -252,45 +202,6 @@ export class PlayerSystem {
 
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        this.gameState.runtime.trail.length = 0;
-    }
-
-    /**
-     * Updates the player trail by adding current position
-     * @private
-     * @returns {void}
-     */
-    private updateTrail(): void {
-        const player = this.gameState.runtime.player;
-        const currentTime = getCurrentTime();
-
-        // Add current position to trail
-        this.gameState.runtime.trail.push({
-            x: player.x,
-            y: player.y,
-            timestamp: currentTime
-        });
-
-        // Limit trail length
-        if (this.gameState.runtime.trail.length > GAME_CONFIG.player.maxTrailLength) {
-            this.gameState.runtime.trail.shift();
-        }
-    }
-
-    /**
-     * Gets the current player trail
-     * @returns {TrailPoint[]} Array of trail points
-     */
-    getTrail(): TrailPoint[] {
-        return this.gameState.runtime.trail;
-    }
-
-    /**
-     * Clears the player trail
-     * @returns {void}
-     */
-    clearTrail(): void {
-        this.gameState.runtime.trail.length = 0;
     }
 
     /**
@@ -299,5 +210,56 @@ export class PlayerSystem {
      */
     getHasMovedOnce(): boolean {
         return this.hasMovedOnce;
+    }
+}
+
+/**
+ * Canvas dimensions interface for camera calculations
+ */
+export interface CanvasDimensions {
+    width: number;
+    height: number;
+}
+
+/**
+ * CameraSystem - Autonomous camera positioning system
+ * Integrated with PlayerSystem for related player-based calculations
+ */
+export class CameraSystem {
+    private gameState: GameState;
+    private canvas: CanvasDimensions;
+
+    /**
+     * Create CameraSystem with GameState and canvas dependencies
+     * @param gameState - Game state containing player and camera data
+     * @param canvas - Canvas dimensions for camera calculations
+     */
+    constructor(gameState: GameState, canvas: CanvasDimensions) {
+        this.gameState = gameState;
+        this.canvas = canvas;
+    }
+
+    /**
+     * Update camera position to center on player
+     * Implements autonomous update pattern with direct GameState mutation
+     *
+     * Camera Positioning Logic:
+     * - Center camera horizontally on player position
+     * - Camera.x = Player.x - (canvas.width / 2)
+     * - Direct mutation of gameState.runtime.camera.x
+     */
+    public update(): void {
+        const player = this.gameState.runtime.player;
+
+        // ★★ Fixed: Only follow player horizontally to prevent motion sickness
+        // Center camera on player X position only
+        const newCameraX = player.x - this.canvas.width / 2;
+
+        // Keep Y axis fixed to prevent vertigo/motion sickness
+        // The camera Y should stay at a reasonable level for platformer gameplay
+        const fixedCameraY = 0; // Keep camera level fixed
+
+        this.gameState.runtime.camera.x = newCameraX;
+        this.gameState.runtime.camera.y = fixedCameraY;
     }
 }

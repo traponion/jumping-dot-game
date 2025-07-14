@@ -1,5 +1,5 @@
 import type { GameState } from '../stores/GameState';
-import { getCurrentTime } from '../utils/GameUtils';
+import { getCurrentTime } from './PlayerSystem.js';
 
 /**
  * GameRuleSystem handles game rule enforcement and victory/defeat conditions.
@@ -64,6 +64,13 @@ export class GameRuleSystem {
     }
 
     /**
+     * Public method to trigger player death from collision system
+     */
+    public triggerPlayerDeath(): void {
+        this.handlePlayerDeath();
+    }
+
+    /**
      * Check if time limit has been exceeded.
      * Updates timeRemaining and sets gameOver = true if time up.
      */
@@ -105,5 +112,12 @@ export class GameRuleSystem {
 
         // Set flag to trigger clear animation
         this.gameState.runtime.shouldStartClearAnimation = true;
+    }
+
+    /**
+     * Public method to trigger goal reached from collision system
+     */
+    public triggerGoalReached(): void {
+        this.handleGoalReached();
     }
 }

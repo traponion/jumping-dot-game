@@ -23,6 +23,8 @@ export interface GameController {
     handleGameOverNavigation(direction: 'up' | 'down'): void;
     /** Handle menu selection in game over state */
     handleGameOverSelection(): void;
+    /** Handle stage select from game over screen */
+    handleStageSelect(): void;
     /** Get current game state information */
     getGameState(): import('../stores/GameState.js').GameState;
 
@@ -62,13 +64,13 @@ export class InputManager {
      */
     constructor(
         private gameState: GameState,
-        canvas: HTMLCanvasElement,
+        container: HTMLElement,
         gameController: GameController
     ) {
         this.gameController = gameController;
 
-        // Initialize game-inputs with the canvas
-        this.inputs = new GameInputs(canvas, {
+        // Initialize game-inputs with the container element
+        this.inputs = new GameInputs(container, {
             preventDefaults: true,
             allowContextMenu: false,
             stopPropagation: false,
@@ -99,12 +101,14 @@ export class InputManager {
         // Game control
         this.inputs.bind('restart', 'KeyR');
 
-        // Menu navigation (handles both game over menu and game start)
+        // Menu navigation
         this.inputs.bind('menu-up', 'ArrowUp');
         this.inputs.bind('menu-down', 'ArrowDown');
         this.inputs.bind('menu-select', 'Enter');
-        this.inputs.bind('menu-select', 'KeyR');
-        this.inputs.bind('menu-select', 'Space');
+
+        // Game over menu actions
+        this.inputs.bind('restart-select', 'KeyR');
+        this.inputs.bind('stage-select', 'Space');
     }
 
     /**
@@ -157,8 +161,40 @@ export class InputManager {
             this.lastInputTime = now;
 
             if (this.gameState.gameOver) {
-                // Game over menu selection
+                // Game over menu selection (Enter key only)
                 this.gameController.handleGameOverSelection();
+            }
+        });
+
+        // Restart selection (R key)
+        this.inputs?.down.on('restart-select', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+
+            if (this.gameState.gameOver) {
+                // Restart current stage
+                this.gameController.handleGameOverSelection();
+            }
+        });
+
+        // Stage select (Space key)
+        this.inputs?.down.on('stage-select', () => {
+            if (!this.gameController) return; // Guard against cleaned up instance
+
+            const now = Date.now();
+            if (now - this.lastInputTime < this.inputCooldown) {
+                return; // Ignore rapid inputs
+            }
+            this.lastInputTime = now;
+
+            if (this.gameState.gameOver) {
+                // Go to stage select
+                this.gameController.handleStageSelect();
             } else if (!this.gameState.gameRunning) {
                 // Game start (when not running and not over)
                 this.gameController.startGame();

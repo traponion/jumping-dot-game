@@ -7,16 +7,11 @@
 import type { Goal, MovingPlatform, Platform, Spike } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
-import { isCircleRectCollision } from '../utils/GameUtils.js';
+import { isCircleRectCollision } from './PlayerSystem.js';
 
 // Interface for PlayerSystem methods used by CollisionSystem
 interface IPlayerSystem {
     resetJumpTimer(): void;
-}
-
-// Interface for RenderSystem methods used by CollisionSystem
-interface IRenderSystem {
-    addLandingHistory(x: number, y: number): void;
 }
 
 /**
@@ -278,7 +273,7 @@ export class CollisionSystem {
      */
     update(
         playerSystem?: IPlayerSystem,
-        renderSystem?: IRenderSystem,
+        _renderSystem?: unknown,
         deathHandler?: () => void,
         goalHandler?: () => void
     ): void {
@@ -335,14 +330,6 @@ export class CollisionSystem {
                         movingPlatform.speed * movingPlatform.direction * dtFactor;
 
                     this.gameState.runtime.player.x += platformMovement;
-
-                    // Add landing history
-                    if (renderSystem) {
-                        renderSystem.addLandingHistory(
-                            this.gameState.runtime.player.x,
-                            this.gameState.runtime.player.y + this.gameState.runtime.player.radius
-                        );
-                    }
                 }
 
                 // Skip static platform collision check
@@ -362,19 +349,22 @@ export class CollisionSystem {
 
         if (platformCollisionUpdate?.grounded && playerSystem) {
             playerSystem.resetJumpTimer();
-
-            if (renderSystem) {
-                renderSystem.addLandingHistory(
-                    this.gameState.runtime.player.x,
-                    this.gameState.runtime.player.y + this.gameState.runtime.player.radius
-                );
-            }
         }
 
         // Check spike collisions
         if (this.checkSpikeCollisions(this.gameState.runtime.player, stage.spikes)) {
+            console.log('🌡️ Spike collision detected!', {
+                playerX: this.gameState.runtime.player.x,
+                playerY: this.gameState.runtime.player.y,
+                spikeCount: stage.spikes?.length || 0,
+                deathHandlerExists: !!deathHandler
+            });
             if (deathHandler) {
+                console.log('💀 Calling deathHandler...');
                 deathHandler();
+                console.log('💀 deathHandler called!');
+            } else {
+                console.log('❌ No deathHandler provided!');
             }
             this.updatePrevPlayerY();
             return;

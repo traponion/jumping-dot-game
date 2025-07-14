@@ -1,24 +1,38 @@
 /**
- * @fileoverview Game manager for coordinating all game systems and state
- * @module core/GameManager
- * @description Application Layer - Game systems coordination and state management
+ * Game manager for coordinating all game systems and state
  */
 
-import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../constants/GameConstants.js';
+import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { GameRuleSystem } from '../systems/GameRuleSystem.js';
-import type { IRenderSystem } from '../systems/IRenderSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
-import { MovingPlatformSystem } from '../systems/MovingPlatformSystem.js';
+import { MovingPlatformSystem } from '../systems/PhysicsSystem.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem.js';
+import type { IRenderSystem } from '../systems/PixiRenderSystem.js';
+import { PixiRenderSystem } from '../systems/PixiRenderSystem.js';
+import { CameraSystem } from '../systems/PlayerSystem.js';
 import { PlayerSystem } from '../systems/PlayerSystem.js';
-import { createGameRenderSystem } from '../systems/RenderSystemFactory.js';
+// RenderSystemFactory merged here for simplification
+import { MockRenderSystem } from '../test/mocks/MockRenderSystem.js';
+
+/**
+ * Creates appropriate render system based on environment
+ */
+function createGameRenderSystem(containerElement: HTMLElement) {
+    // Environment detection for test vs production
+    const isTestEnvironment =
+        typeof globalThis.window === 'undefined' || globalThis.process?.env?.NODE_ENV === 'test';
+
+    if (isTestEnvironment) {
+        return new MockRenderSystem(containerElement);
+    }
+    return new PixiRenderSystem(containerElement);
+}
+import { getCurrentTime } from '../systems/PlayerSystem.js';
 import type { PhysicsConstants } from '../types/GameTypes.js';
-import { getCurrentTime } from '../utils/GameUtils.js';
 import type { GameUI } from './GameUI.js';
 import { type StageData, StageLoader } from './StageLoader.js';
 
@@ -37,8 +51,8 @@ import { type StageData, StageLoader } from './StageLoader.js';
  * This class follows Single Responsibility Principle by handling only game logic and state management.
  */
 export class GameManager {
-    /** @private {HTMLCanvasElement} The main game canvas */
-    private canvas: HTMLCanvasElement;
+    /** @private {HTMLElement} The main game container */
+    private container: HTMLElement;
     /** @private {any} Game controller reference for system initialization */
     private gameController: GameController;
     /** @private {GameState} Game state instance */
@@ -76,8 +90,8 @@ export class GameManager {
      * @param {HTMLCanvasElement} canvas - The game canvas element
      * @param {GameController} gameController - Game controller instance for UI integration
      */
-    constructor(canvas: HTMLCanvasElement, gameController: GameController, gameState: GameState) {
-        this.canvas = canvas;
+    constructor(container: HTMLElement, gameController: GameController, gameState: GameState) {
+        this.container = container;
         this.gameController = gameController;
         this.gameState = gameState;
         this.initializeEntities();
@@ -90,7 +104,7 @@ export class GameManager {
         this.gameState.timeRemaining = 10;
         Object.assign(this.gameState.runtime.player, {
             x: 100,
-            y: 400,
+            y: 480, // Safe position above platform (platform is at y=500, radius=10)
             vx: 0,
             vy: 0,
             radius: GAME_CONFIG.player.defaultRadius,
@@ -106,20 +120,21 @@ export class GameManager {
         const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
 
         this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
-        this.cameraSystem = new CameraSystem(this.gameState, this.canvas);
-        this.collisionSystem = new CollisionSystem(this.gameState, this.canvas);
+        // Create canvas dimensions from container for camera system
+        const canvasDimensions = { width: 800, height: 600 };
+        this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
+        this.collisionSystem = new CollisionSystem(this.gameState);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
         // Environment-aware rendering system
-        this.renderSystem = createGameRenderSystem(this.canvas);
+        this.renderSystem = createGameRenderSystem(this.container);
 
         // Initialize InputManager with canvas and game controller
-        this.inputManager = new InputManager(this.gameState, this.canvas, gameController);
+        this.inputManager = new InputManager(this.gameState, this.container, gameController);
 
         // Initialize PlayerSystem with InputManager and inject render system
         this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
-        this.playerSystem.setRenderSystem(this.renderSystem);
     }
 
     /**
@@ -166,8 +181,25 @@ export class GameManager {
         // Clean up all existing systems
         await this.cleanupSystems();
 
-        // Reinitialize all systems with fresh instances
-        this.initializeSystems(this.gameController);
+        // Reinitialize most systems with fresh instances, but reuse renderSystem to prevent canvas duplication
+        const physicsConstants: PhysicsConstants = { ...DEFAULT_PHYSICS_CONSTANTS };
+
+        this.physicsSystem = new PhysicsSystem(this.gameState, physicsConstants);
+        // Create canvas dimensions from container for camera system
+        const canvasDimensions = { width: 800, height: 600 };
+        this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
+        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.gameRuleSystem = new GameRuleSystem(this.gameState);
+        this.animationSystem = new AnimationSystem(this.gameState);
+        this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        // IMPORTANT: Do NOT recreate renderSystem to prevent canvas duplication
+        // this.renderSystem is already initialized in constructor and should be reused
+
+        // Initialize InputManager with canvas and game controller
+        this.inputManager = new InputManager(this.gameState, this.container, this.gameController);
+
+        // Initialize PlayerSystem with InputManager and inject render system
+        this.playerSystem = new PlayerSystem(this.gameState, this.inputManager);
 
         // Reload stage to get clean initial data
         const currentStageId = this.stage?.id || 1; // Use current stage ID or fallback to 1
@@ -175,7 +207,7 @@ export class GameManager {
         // Sync stage to GameState for CollisionSystem access
         this.gameState.stage = this.stage;
 
-        this.playerSystem.reset(100, 400);
+        this.playerSystem.reset(100, 480); // Match the safe initial position
         this.animationSystem.reset();
 
         this.gameState.runtime.camera.x = 0;
@@ -199,6 +231,9 @@ export class GameManager {
      * Update game systems and logic
      */
     update(deltaTime: number): void {
+        // Always update camera system for smooth scrolling in all game states
+        this.cameraSystem.update();
+
         if (!this.gameState.gameRunning || this.gameState.gameOver) {
             this.animationSystem.updateClearAnimation();
             this.animationSystem.updateDeathAnimation();
@@ -207,9 +242,13 @@ export class GameManager {
         }
 
         this.updateSystems(deltaTime);
-        this.collisionSystem.update();
+        this.collisionSystem.update(
+            this.playerSystem,
+            undefined, // Skip renderSystem for now due to interface mismatch
+            () => this.gameRuleSystem.triggerPlayerDeath(), // Death handler
+            () => this.gameRuleSystem.triggerGoalReached() // Goal handler
+        );
         this.gameRuleSystem.update();
-        this.cameraSystem.update();
     }
 
     private updateSystems(deltaTime: number): void {
@@ -232,23 +271,24 @@ export class GameManager {
     /**
      * Render the game
      */
-    render(ui?: GameUI): void {
+    async render(ui?: GameUI): Promise<void> {
         const renderer = this.renderSystem;
+
+        // Wait for PixiRenderSystem initialization before applying camera
+        await renderer.waitForInitialization();
 
         renderer.clearCanvas();
         renderer.setDrawingStyle();
         renderer.applyCameraTransform(this.gameState.runtime.camera);
 
         if (this.stage) {
-            renderer.renderStage(this.stage);
+            renderer.renderStage(this.stage, this.gameState.runtime.camera);
         }
 
         renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
 
         if (this.gameState.gameRunning && !this.gameState.gameOver) {
             const player = this.gameState.runtime.player;
-            renderer.renderTrail(this.playerSystem.getTrail(), player.radius);
-            renderer.renderLandingPredictions();
             renderer.renderPlayer(player);
         }
 
@@ -270,24 +310,26 @@ export class GameManager {
             renderer.renderClearAnimation(clearAnim.particles, progress, player.x, player.y);
         }
 
-        renderer.restoreCameraTransform();
+        // ★★ No longer need restoreCameraTransform() - UI elements are now in separate uiContainer
+        // worldContainer: affected by camera, uiContainer: fixed position
 
-        // UI state-based rendering - consolidated in GameManager
-        if (this.gameState.gameOver) {
-            if (ui) {
-                const menuData = ui.getGameOverMenuData();
-                renderer.renderGameOverMenu(
-                    menuData.options,
-                    menuData.selectedIndex,
-                    this.gameState.finalScore,
-                    this.gameState.deathCount
-                );
+        // UI state management centralized in GameManager.render()
+        if (ui) {
+            if (this.gameState.gameOver) {
+                // Show DOM-based game over screen only (Canvas version removed to prevent overlap)
+                ui.showGameOverScreen();
+            } else if (this.gameState.gameRunning) {
+                // Show running game UI with timer and death count
+                ui.updateUIVisibility(true, false);
+            } else {
+                // Show start screen
+                ui.showStartScreen();
+                ui.updateUIVisibility(false, false); // Hide running UI elements
             }
-        } else if (!this.gameState.gameRunning) {
-            ui?.showStartScreen();
         }
 
-        renderer.renderCredits();
+        // Removed renderCredits() call - credits should not be displayed during gameplay
+        // Credits should only be shown in specific menu screens, not during game
 
         // All rendering commands completed, now render everything
         renderer.renderAll();

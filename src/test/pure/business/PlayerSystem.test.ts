@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GAME_CONFIG } from '../../../constants/GameConstants.js';
 import { GameState } from '../../../stores/GameState.js';
 import type { InputManager } from '../../../systems/InputManager.js';
 import { PlayerSystem } from '../../../systems/PlayerSystem.js';
@@ -78,96 +77,6 @@ describe('PlayerSystem - Pure Business Logic', () => {
         });
     });
 
-    describe('trail system', () => {
-        it('should update trail with player position', () => {
-            const initialTrailLength = gameState.runtime.trail.length;
-
-            playerSystem.update(16.67, physics);
-
-            const trail = gameState.runtime.trail;
-            expect(trail.length).toBe(initialTrailLength + 1);
-            expect(trail[trail.length - 1]).toEqual(
-                expect.objectContaining({
-                    x: gameState.runtime.player.x,
-                    y: gameState.runtime.player.y,
-                    timestamp: expect.any(Number)
-                })
-            );
-        });
-
-        it('should limit trail length to maximum', () => {
-            // Update many times to exceed max trail length
-            for (let i = 0; i < 20; i++) {
-                gameState.runtime.player.x = i; // Change position each time
-                playerSystem.update(16.67, physics);
-            }
-
-            expect(gameState.runtime.trail.length).toBeLessThanOrEqual(
-                GAME_CONFIG.player.maxTrailLength
-            );
-        });
-
-        it('should clear trail', () => {
-            // Arrange: Add some trail points
-            for (let i = 0; i < 5; i++) {
-                gameState.runtime.player.x = i * 10;
-                gameState.runtime.player.y = i * 10;
-                playerSystem.update(16.67, physics);
-            }
-            expect(gameState.runtime.trail.length).toBeGreaterThan(0);
-
-            // Act
-            playerSystem.clearTrail();
-
-            // Assert
-            expect(gameState.runtime.trail.length).toBe(0);
-            expect(playerSystem.getTrail().length).toBe(0);
-        });
-
-        it('should get trail from game state', () => {
-            // Arrange: Directly add trail points to state
-            const directTrail = [
-                { x: 100, y: 200, timestamp: 1000 },
-                { x: 150, y: 250, timestamp: 2000 }
-            ];
-            gameState.runtime.trail = [...directTrail];
-
-            // Act & Assert: PlayerSystem should return the game state's trail
-            expect(playerSystem.getTrail()).toEqual(directTrail);
-        });
-
-        it('should respect GAME_CONFIG.player.maxTrailLength', () => {
-            // Arrange: Use the actual config value
-            const maxLength = GAME_CONFIG.player.maxTrailLength;
-
-            // Act: Add more points than max
-            for (let i = 0; i < maxLength + 3; i++) {
-                gameState.runtime.player.x = i;
-                gameState.runtime.player.y = i;
-                playerSystem.update(16.67, physics);
-            }
-
-            // Assert
-            expect(gameState.runtime.trail.length).toBe(maxLength);
-        });
-
-        it('should maintain trail consistency', () => {
-            // Arrange: Add trail points through PlayerSystem
-            for (let i = 0; i < 3; i++) {
-                gameState.runtime.player.x = i * 50;
-                gameState.runtime.player.y = i * 50;
-                playerSystem.update(16.67, physics);
-            }
-
-            // Assert: Both should return the same trail
-            const playerSystemTrail = playerSystem.getTrail();
-            const stateTrail = gameState.runtime.trail;
-
-            expect(playerSystemTrail).toEqual(stateTrail);
-            expect(playerSystemTrail.length).toBe(stateTrail.length);
-        });
-    });
-
     describe('speed clamping', () => {
         it('should clamp velocity to max speed', () => {
             gameState.runtime.player.vx = 10; // Exceed max speed
@@ -200,7 +109,6 @@ describe('PlayerSystem - Pure Business Logic', () => {
             expect(gameState.runtime.player.vy).toBe(0);
             expect(gameState.runtime.player.grounded).toBe(false);
             expect(playerSystem.getHasMovedOnce()).toBe(false);
-            expect(playerSystem.getTrail().length).toBe(0);
         });
 
         it('should reset jump timer', () => {
@@ -227,17 +135,6 @@ describe('PlayerSystem - Pure Business Logic', () => {
             expect(gameState.runtime.player.grounded).toBe(false);
 
             globalThis.performance.now = originalNow;
-        });
-
-        it('should clear trail', () => {
-            // Add some trail points
-            playerSystem.update(16.67, physics);
-            playerSystem.update(16.67, physics);
-            expect(playerSystem.getTrail().length).toBeGreaterThan(0);
-
-            playerSystem.clearTrail();
-
-            expect(playerSystem.getTrail().length).toBe(0);
         });
     });
 

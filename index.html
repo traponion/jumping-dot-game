@@ -25,11 +25,16 @@
             align-items: center;
         }
         
-        canvas {
+        #gameCanvas {
             border: 2px solid white;
             background-color: black;
             max-width: 100vw;
             max-height: 70vh;
+        }
+        
+        #gameCanvas canvas {
+            width: 100%;
+            height: 100%;
         }
         
         .info {
@@ -84,11 +89,13 @@
         /* Stage Select Styles */
         .stage-select {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 600px;
             background-color: black;
+            border: 2px solid white;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -146,7 +153,12 @@
         }
         
 @media (max-width: 768px) {
-            canvas {
+            #gameCanvas {
+                width: 95vw;
+                height: 60vh;
+            }
+            
+            .stage-select {
                 width: 95vw;
                 height: 60vh;
             }
@@ -161,7 +173,11 @@
         }
         
         @media (max-height: 600px) {
-            canvas {
+            #gameCanvas {
+                height: 50vh;
+            }
+            
+            .stage-select {
                 height: 50vh;
             }
         }
@@ -195,14 +211,13 @@
             <div>Jumping Dot Game</div>
             <div id="gameStatus">Ready</div>
             <div id="timer">Time: 20</div>
-            <div id="score">Score: 0</div>
         </div>
         
         <div class="death-info">
             <div id="deathCount">Deaths: 0</div>
         </div>
         
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="gameCanvas" style="width: 800px; height: 600px;"></div>
         
         <!-- ゲームUI要素 -->
         <div id="gameUI" class="game-ui">
@@ -210,7 +225,9 @@
                 Press SPACE to Start
             </div>
             <div id="gameOverScreen" class="game-over-screen hidden">
-                Game Over - Press R to restart
+                <div style="margin-bottom: 20px;">Game Over</div>
+                <div style="margin-bottom: 10px;">[R] RESTART STAGE</div>
+                <div>[SPACE] STAGE SELECT</div>
             </div>
         </div>
         

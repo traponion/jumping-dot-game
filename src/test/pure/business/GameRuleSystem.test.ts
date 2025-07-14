@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GameState } from '../stores/GameState';
-import { GameRuleSystem } from '../systems/GameRuleSystem';
-import { getCurrentTime } from '../utils/GameUtils';
+import type { GameState } from '../../../stores/GameState';
+import { GameRuleSystem } from '../../../systems/GameRuleSystem';
+import { getCurrentTime } from '../../../systems/PlayerSystem.js';
 
-// Mock GameUtils
-vi.mock('../utils/GameUtils', () => ({
-    getCurrentTime: vi.fn()
+// Mock PlayerSystem functions
+vi.mock('../../../systems/PlayerSystem.js', () => ({
+    getCurrentTime: vi.fn(),
+    calculateDeltaFactor: vi.fn(),
+    isPointInRect: vi.fn(),
+    isCircleRectCollision: vi.fn(),
+    randomRange: vi.fn(),
+    PlayerSystem: vi.fn() // Mock the class as well if needed
 }));
 
 // Mock factory function to create fresh GameState instances for each test

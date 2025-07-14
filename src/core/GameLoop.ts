@@ -16,7 +16,7 @@ export class GameLoop {
 
     // Callbacks for update and render
     private updateCallback: ((deltaTime: number) => void) | null = null;
-    private renderCallback: (() => void) | null = null;
+    private renderCallback: (() => Promise<void>) | null = null;
 
     /**
      * Set the update callback function
@@ -28,7 +28,7 @@ export class GameLoop {
     /**
      * Set the render callback function
      */
-    setRenderCallback(callback: () => void): void {
+    setRenderCallback(callback: () => Promise<void>): void {
         this.renderCallback = callback;
     }
 
@@ -45,12 +45,16 @@ export class GameLoop {
             throw new Error('Update and render callbacks must be set before starting game loop');
         }
 
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-        }
+        // More aggressive cleanup of previous loop
+        this.stop();
 
-        this.lastTime = null;
-        this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
+        // Wait a frame before starting new loop to ensure cleanup
+        setTimeout(() => {
+            if (!this.isCleanedUp) {
+                this.lastTime = null;
+                this.animationId = requestAnimationFrame((time) => this.gameLoop(time));
+            }
+        }, 0);
     }
 
     /**
@@ -74,7 +78,7 @@ export class GameLoop {
     /**
      * Main game loop function
      */
-    private gameLoop(currentTime: number): void {
+    private async gameLoop(currentTime: number): Promise<void> {
         // Prevent execution if cleaned up
         if (this.isCleanedUp) {
             return;
@@ -100,7 +104,7 @@ export class GameLoop {
         }
 
         if (this.renderCallback) {
-            this.renderCallback();
+            await this.renderCallback();
         }
 
         // Schedule next frame

@@ -5,7 +5,7 @@
  */
 
 import { JumpingDotGame } from './core/Game.js';
-import { HtmlStageSelect } from './core/HtmlStageSelect.js';
+import { HtmlStageSelect } from './core/GameUI.js';
 
 /**
  * Current stage select instance
@@ -60,7 +60,7 @@ window.addEventListener('load', async () => {
  * Start game with selected stage
  * @param {number} stageId - ID of stage to start
  */
-async function startGame(stageId: number): Promise<void> {
+export async function startGame(stageId: number): Promise<void> {
     try {
         // Clean up previous game instance if exists
         if (currentGame) {
@@ -81,8 +81,13 @@ async function startGame(stageId: number): Promise<void> {
                 stageSelect.returnToStageSelect();
             }
         };
+
+        // Canvas initialization is now complete (ensured by GameManager.render -> waitForInitialization)
+        // Return from this function indicates UI transition can safely proceed
     } catch (error) {
         console.error(`❌ Failed to start stage ${stageId}:`, error);
         currentGame = null;
+        // Re-throw error so caller can handle Canvas initialization failure
+        throw error;
     }
 }
