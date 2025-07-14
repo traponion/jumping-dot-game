@@ -2,7 +2,7 @@
 
 import * as PIXI from 'pixi.js';
 import type { StageData, TextElement } from '../core/StageLoader.js';
-import type { Camera, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../types/GameTypes.js';
 // IRenderSystem interface and Position moved to this file for consolidation
 
 // Position interface
@@ -28,8 +28,6 @@ export interface IRenderSystem {
     // ===== Game Objects =====
 
     renderPlayer(player: Player): void;
-
-    renderTrail(trail: TrailPoint[], playerRadius: number): void;
 
     renderStage(stage: StageData, camera?: Camera): void;
 
@@ -272,33 +270,6 @@ export class PixiRenderSystem implements IRenderSystem {
 
         // Force render immediately to ensure content is visible
         this.app.renderer.render(this.app.stage);
-    }
-
-    renderTrail(trail: TrailPoint[], playerRadius: number): void {
-        if (!this.initialized) return;
-
-        if (trail.length < 2) return;
-
-        // Create trail graphics
-        const trailGraphics = new PIXI.Graphics();
-
-        for (const point of trail) {
-            // Calculate alpha based on timestamp (age-based fade)
-            const currentTime = Date.now();
-            const age = currentTime - point.timestamp;
-            const maxAge = 1000; // 1 second fade time
-            const alpha = Math.max(0, 1 - age / maxAge);
-            const size = playerRadius * alpha;
-
-            if (size > 0.1) {
-                trailGraphics.rect(0, 0, size, size);
-                trailGraphics.position.set(point.x - size / 2, point.y - size / 2);
-                trailGraphics.fill({ color: 0xffffff, alpha });
-            }
-        }
-
-        // ★★ Add to worldContainer (affected by camera)
-        this.worldContainer.addChild(trailGraphics);
     }
 
     /**

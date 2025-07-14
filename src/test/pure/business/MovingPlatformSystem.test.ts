@@ -46,7 +46,6 @@ describe('MovingPlatformSystem', () => {
                 player: { x: 100, y: 400, vx: 0, vy: 0, radius: 10, grounded: false },
                 camera: { x: 0, y: 0 },
                 particles: [],
-                trail: [],
                 deathMarks: [],
                 collisionResults: {
                     holeCollision: false,

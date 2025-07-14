@@ -1,6 +1,6 @@
 import type { StageData } from '../core/StageLoader.js';
 // Plain TypeScript GameState class - Library-independent state management
-import type { Camera, DeathMark, Particle, Player, TrailPoint } from '../types/GameTypes.js';
+import type { Camera, DeathMark, Particle, Player } from '../types/GameTypes.js';
 
 /**
  * @fileoverview Game constants and configuration values merged with GameState
@@ -67,7 +67,6 @@ interface GameRuntimeState {
     camera: Camera;
     particles: Particle[];
     deathMarks: DeathMark[];
-    trail: TrailPoint[];
 
     collisionResults: {
         holeCollision: boolean;
@@ -153,7 +152,6 @@ export class GameState {
             },
             particles: [],
             deathMarks: [],
-            trail: [],
 
             collisionResults: {
                 holeCollision: false,

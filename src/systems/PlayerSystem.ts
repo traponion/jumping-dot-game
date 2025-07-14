@@ -1,6 +1,6 @@
 import { GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
-import type { PhysicsConstants, TrailPoint } from '../types/GameTypes.js';
+import type { PhysicsConstants } from '../types/GameTypes.js';
 // GameUtils functions merged here for consolidation
 
 /**
@@ -113,7 +113,6 @@ export class PlayerSystem {
 
         this.handleInput(dtFactor);
         this.handleAutoJump(physics);
-        this.updateTrail();
     }
 
     /**
@@ -203,45 +202,6 @@ export class PlayerSystem {
 
         this.hasMovedOnce = false;
         this.lastJumpTime = null;
-        this.gameState.runtime.trail.length = 0;
-    }
-
-    /**
-     * Updates the player trail by adding current position
-     * @private
-     * @returns {void}
-     */
-    private updateTrail(): void {
-        const player = this.gameState.runtime.player;
-        const currentTime = getCurrentTime();
-
-        // Add current position to trail
-        this.gameState.runtime.trail.push({
-            x: player.x,
-            y: player.y,
-            timestamp: currentTime
-        });
-
-        // Limit trail length
-        if (this.gameState.runtime.trail.length > GAME_CONFIG.player.maxTrailLength) {
-            this.gameState.runtime.trail.shift();
-        }
-    }
-
-    /**
-     * Gets the current player trail
-     * @returns {TrailPoint[]} Array of trail points
-     */
-    getTrail(): TrailPoint[] {
-        return this.gameState.runtime.trail;
-    }
-
-    /**
-     * Clears the player trail
-     * @returns {void}
-     */
-    clearTrail(): void {
-        this.gameState.runtime.trail.length = 0;
     }
 
     /**

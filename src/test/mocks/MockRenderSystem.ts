@@ -3,7 +3,7 @@
 
 import type { StageData } from '../../core/StageLoader.js';
 import type { IRenderSystem, Position } from '../../systems/PixiRenderSystem.js';
-import type { Camera, Particle, Player, TrailPoint } from '../../types/GameTypes.js';
+import type { Camera, Particle, Player } from '../../types/GameTypes.js';
 
 export interface MockFabricCanvas {
     width: number;
@@ -72,10 +72,6 @@ export class MockRenderSystem implements IRenderSystem {
 
     renderPlayer(_player: Player): void {
         // Mock player rendering
-    }
-
-    renderTrail(_trail: TrailPoint[], _playerRadius: number): void {
-        // Mock trail rendering
     }
 
     renderStage(_stage: StageData, _camera?: Camera): void {

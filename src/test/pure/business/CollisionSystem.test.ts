@@ -19,10 +19,11 @@ describe('CollisionSystem Business Logic', () => {
             grounded: false
         };
 
-        // Create mock canvas
-        const mockCanvas = document.createElement('canvas');
-        mockCanvas.width = 800;
-        mockCanvas.height = 600;
+        // Create mock canvas object (DOM-independent)
+        const mockCanvas = {
+            width: 800,
+            height: 600
+        } as HTMLCanvasElement;
 
         collisionSystem = new CollisionSystem(gameState, mockCanvas);
     });
