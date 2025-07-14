@@ -357,18 +357,32 @@ export class HtmlStageSelect {
     /**
      * Start selected stage and initialize game
      */
-    private async startStage(_stageId: number): Promise<void> {
-        // Updated for Phase 3: Use standard DOM click event instead of custom event
-        // Simulate click on the current stage element to trigger main.ts event handler
-        const currentStageElement = this.stageElements[this.selectedStageIndex];
-        if (currentStageElement) {
-            // Use the simple click() method to trigger the event
-            // This works reliably in both browser and test environments
-            currentStageElement.click();
-        }
+    /**
+     * Start selected stage and initialize game
+     * Canvas Readiness Synchronization: Wait for Canvas initialization before switching UI elements
+     */
+    private async startStage(stageId: number): Promise<void> {
+        try {
+            // Step 1: Start game initialization (but keep current UI visible)
+            // Import and call startGame directly for Promise-based coordination
+            const { startGame } = await import('../main.js');
 
-        this.hideStageSelect();
-        this.showGameElements();
+            // Step 2: Wait for Canvas to be ready before switching UI
+            await startGame(stageId);
+
+            // Step 3: Now safely switch UI (Canvas is guaranteed ready)
+            this.hideStageSelect();
+            this.showGameElements();
+        } catch (error) {
+            console.error('Canvas initialization failed during stage start:', error);
+
+            // Error handling: Keep stage select visible for user to retry
+            // Do not switch UI if Canvas initialization failed
+            // User can try selecting stage again
+
+            // Optional: Could show error message to user here
+            // For now, just log the error and maintain current UI state
+        }
     }
 
     /**
