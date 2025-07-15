@@ -92,6 +92,19 @@ export interface BreakablePlatform extends Platform {
     regenerateAfter?: number; // Optional: seconds to regenerate (0 = permanent break)
 }
 
+export interface FallingCeiling {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    triggerX: number; // X position where trigger zone starts
+    triggerWidth: number; // Width of trigger zone
+    fallSpeed: number; // Falling velocity
+    stopY: number; // Y position where ceiling stops falling
+    activated?: boolean; // Runtime activation state (managed by DynamicElementSystem)
+}
+
 /**
  * Hole interface representing a pit or gap in the stage
  * @interface Hole
@@ -171,6 +184,7 @@ export interface StageData {
     leftEdgeSubMessage?: TextElement;
     tutorialMessages?: TextElement[];
     breakablePlatforms?: BreakablePlatform[];
+    fallingCeilings?: FallingCeiling[];
 }
 
 /**

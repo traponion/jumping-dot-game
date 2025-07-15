@@ -4,7 +4,7 @@
  * @description Domain Layer - Unified management for moving spikes, falling ceilings, breakable platforms
  */
 
-import type { MovingSpike } from '../core/StageLoader.js';
+import type { FallingCeiling, MovingSpike } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 
 /**
@@ -36,8 +36,10 @@ export class DynamicElementSystem {
         // Phase 3: Update moving spikes
         this._updateMovingSpikes(deltaTime);
 
+        // Phase 5: Update falling ceilings
+        this._updateFallingCeilings(deltaTime);
+
         // Future phases will add:
-        // - this._updateFallingCeilings(deltaTime);
         // - this._updateBreakablePlatforms(); (state-based, no deltaTime needed)
     }
 
@@ -129,15 +131,80 @@ export class DynamicElementSystem {
      * @param deltaTime - Time elapsed since last update in milliseconds
      * @private
      */
-    // @ts-ignore - Method for Phase 5 implementation
-    private _updateFallingCeilings(deltaTime: number): void {
-        // Phase 5 implementation placeholder
-        // Will check player position against trigger zones
-        // Update currentY for activated ceilings based on fall speed
 
-        // Guard against unused parameter warning during Phase 1
-        if (deltaTime < 0) {
-            return;
+    private _updateFallingCeilings(deltaTime: number): void {
+        const fallingCeilings = this.gameState.stage?.fallingCeilings;
+        if (!fallingCeilings) return;
+
+        const dtFactor = deltaTime / 16.67; // Normalize to ~60fps
+        const player = this.gameState.runtime.player;
+
+        for (const ceiling of fallingCeilings) {
+            // Find runtime state for this ceiling
+            const runtimeState = this.gameState.runtime.dynamicElements.fallingCeilings.find(
+                (state) => state.id === ceiling.id
+            );
+
+            if (!runtimeState) continue;
+
+            // Check trigger activation
+            this._checkCeilingTrigger(ceiling, runtimeState, player);
+
+            // Update falling physics if activated
+            if (runtimeState.activated) {
+                this._updateCeilingFalling(ceiling, runtimeState, dtFactor);
+            }
+        }
+    }
+
+    /**
+     * Checks if player is in trigger zone and activates ceiling
+     * @param ceiling - Falling ceiling stage data
+     * @param runtimeState - Runtime state for this ceiling
+     * @param player - Player object
+     * @private
+     */
+    private _checkCeilingTrigger(
+        ceiling: FallingCeiling,
+        runtimeState: { id: string; activated: boolean; currentY: number; originalY: number },
+        player: { x: number; y: number; vx: number; vy: number; radius: number; grounded: boolean }
+    ): void {
+        // Don't reactivate already activated ceilings
+        if (runtimeState.activated) return;
+
+        // Check if player is within trigger zone
+        const playerInTriggerZone =
+            player.x >= ceiling.triggerX && player.x <= ceiling.triggerX + ceiling.triggerWidth;
+
+        if (playerInTriggerZone) {
+            runtimeState.activated = true;
+            console.log(`🪨 Falling ceiling ${ceiling.id} activated! Player in trigger zone.`);
+        }
+    }
+
+    /**
+     * Updates falling ceiling position based on fall speed
+     * @param ceiling - Falling ceiling stage data
+     * @param runtimeState - Runtime state for this ceiling
+     * @param dtFactor - Delta time factor for frame rate normalization
+     * @private
+     */
+    private _updateCeilingFalling(
+        ceiling: FallingCeiling,
+        runtimeState: { id: string; activated: boolean; currentY: number; originalY: number },
+        dtFactor: number
+    ): void {
+        // Only fall if not yet at stop position
+        if (runtimeState.currentY < ceiling.stopY) {
+            const fallAmount = ceiling.fallSpeed * dtFactor;
+            const newY = runtimeState.currentY + fallAmount;
+
+            // Don't exceed stop position
+            runtimeState.currentY = Math.min(newY, ceiling.stopY);
+
+            if (runtimeState.currentY === ceiling.stopY) {
+                console.log(`🛑 Falling ceiling ${ceiling.id} stopped at Y=${ceiling.stopY}`);
+            }
         }
     }
 

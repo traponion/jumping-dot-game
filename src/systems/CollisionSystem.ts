@@ -6,6 +6,7 @@
 
 import type {
     BreakablePlatform,
+    FallingCeiling,
     Goal,
     GravityFlipPlatform,
     MovingPlatform,
@@ -384,6 +385,16 @@ class StaticCollisionHandler {
             this.handleBreakablePlatformCollisions(stage.breakablePlatforms, prevPlayerFootY);
         }
 
+        // Check falling ceiling collisions (crush detection)
+        if (stage.fallingCeilings) {
+            const crushDetected = this.checkFallingCeilingCollisions(stage.fallingCeilings);
+            if (crushDetected && deathHandler) {
+                console.log('🪨 Falling ceiling crush detected!');
+                deathHandler();
+                return true; // Collision handled
+            }
+        }
+
         // Check gravity flip platform collisions
         if (stage.gravityFlipPlatforms) {
             this.handleGravityFlipPlatformCollisions(stage.gravityFlipPlatforms, prevPlayerFootY);
@@ -565,6 +576,48 @@ class StaticCollisionHandler {
                 break; // Only process one collision per frame
             }
         }
+    }
+
+    /**
+     * Checks collisions with falling ceilings for crush detection
+     * @param fallingCeilings - Array of falling ceilings to check
+     * @returns true if player is crushed by falling ceiling
+     */
+    private checkFallingCeilingCollisions(fallingCeilings: FallingCeiling[]): boolean {
+        const player = this.gameState.runtime.player;
+
+        for (const ceiling of fallingCeilings) {
+            // Find runtime state for this ceiling
+            const runtimeState = this.gameState.runtime.dynamicElements.fallingCeilings.find(
+                (state) => state.id === ceiling.id
+            );
+
+            if (!runtimeState?.activated) continue;
+
+            // Only check collision if ceiling is falling (not stopped)
+            if (runtimeState.currentY >= ceiling.stopY) continue;
+
+            // Check if player is under falling ceiling
+            const playerUnderCeiling =
+                player.x + player.radius >= ceiling.x &&
+                player.x - player.radius <= ceiling.x + ceiling.width &&
+                player.y + player.radius >= runtimeState.currentY &&
+                player.y - player.radius <= runtimeState.currentY + ceiling.height;
+
+            if (playerUnderCeiling) {
+                console.log(`💥 Player crushed by falling ceiling ${ceiling.id}!`, {
+                    playerX: player.x,
+                    playerY: player.y,
+                    ceilingX: ceiling.x,
+                    ceilingY: runtimeState.currentY,
+                    ceilingWidth: ceiling.width,
+                    ceilingHeight: ceiling.height
+                });
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
