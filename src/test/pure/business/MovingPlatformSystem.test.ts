@@ -35,6 +35,7 @@ describe('MovingPlatformSystem', () => {
         gameState = {
             gameRunning: false,
             gameOver: false,
+            gameCleared: false,
             currentStage: 1,
             timeLimit: 10,
             timeRemaining: 10,

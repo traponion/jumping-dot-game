@@ -107,7 +107,7 @@ export class GameRuleSystem {
      * Handle goal reached: set game over, calculate final score, and trigger clear animation.
      */
     private handleGoalReached(): void {
-        this.gameState.gameOver = true;
+        this.gameState.gameCleared = true;
         this.gameState.finalScore = Math.ceil(this.gameState.timeRemaining);
 
         // Set flag to trigger clear animation

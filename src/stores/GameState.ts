@@ -126,6 +126,7 @@ export class GameState {
     // Game state properties (flattened)
     public gameRunning = false;
     public gameOver = false;
+    public gameCleared = false;
     public currentStage = 1;
     public timeLimit = 20;
     public timeRemaining = 20;
@@ -151,6 +152,7 @@ export class GameState {
         // Reset game state
         this.gameRunning = false;
         this.gameOver = false;
+        this.gameCleared = false;
         this.currentStage = 1;
         this.timeLimit = 20;
         this.timeRemaining = 20;

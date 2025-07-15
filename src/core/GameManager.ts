@@ -263,6 +263,7 @@ export class GameManager {
         this.gameState.gameStartTime = null;
         this.gameState.timeRemaining = this.gameState.timeLimit;
         this.gameState.gameOver = false;
+        this.gameState.gameCleared = false;
 
         // Clean up all existing systems
         await this.cleanupSystems();
@@ -407,7 +408,10 @@ export class GameManager {
 
         // UI state management centralized in GameManager.render()
         if (ui) {
-            if (this.gameState.gameOver) {
+            if (this.gameState.gameCleared) {
+                // Show congratulations screen with death count
+                ui.showClearScreen(this.gameState.deathCount);
+            } else if (this.gameState.gameOver) {
                 // Show DOM-based game over screen only (Canvas version removed to prevent overlap)
                 ui.showGameOverScreen();
             } else if (this.gameState.gameRunning) {

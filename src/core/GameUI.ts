@@ -199,6 +199,55 @@ export class GameUI {
     }
 
     /**
+     * Shows the congratulations screen when player clears the stage
+     * @param deathCount - Number of deaths during the stage
+     */
+    showClearScreen(deathCount: number): void {
+        // Hide other screens
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        if (startScreen) startScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+
+        // Create or update clear screen
+        let clearScreen = document.getElementById('clearScreen');
+        if (!clearScreen) {
+            clearScreen = document.createElement('div');
+            clearScreen.id = 'clearScreen';
+            clearScreen.className = 'game-ui';
+            clearScreen.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-family: monospace;
+                text-align: center;
+                z-index: 20;
+                pointer-events: none;
+                font-size: 24px;
+            `;
+
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(clearScreen);
+            }
+        }
+
+        // Update clear screen content
+        clearScreen.innerHTML = `
+            <div style="margin-bottom: 30px; font-size: 32px; color: #4CAF50;">🎉 CONGRATULATIONS! 🎉</div>
+            <div style="margin-bottom: 20px; font-size: 20px;">STAGE CLEARED!</div>
+            <div style="margin-bottom: 30px; font-size: 16px;">Deaths: ${deathCount}</div>
+            <div style="margin-bottom: 10px; font-size: 16px;">[R] RETRY STAGE</div>
+            <div style="font-size: 16px;">[SPACE] STAGE SELECT</div>
+        `;
+
+        // Show clear screen
+        clearScreen.classList.remove('hidden');
+    }
+
+    /**
      * Dispatch custom event for returning to stage select
      */
     requestStageSelect(): void {

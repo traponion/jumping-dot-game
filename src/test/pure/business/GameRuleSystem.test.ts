@@ -176,7 +176,7 @@ describe('GameRuleSystem', () => {
             gameRuleSystem.update();
 
             // Assert: Goal completion state set
-            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.gameCleared).toBe(true);
             expect(mockGameState.finalScore).toBe(8); // Math.ceil(7.3) = 8
         });
 
@@ -299,7 +299,7 @@ describe('GameRuleSystem', () => {
 
             // Assert: Death count unchanged, game over due to goal completion
             expect(mockGameState.deathCount).toBe(0);
-            expect(mockGameState.gameOver).toBe(true);
+            expect(mockGameState.gameCleared).toBe(true);
             expect(mockGameState.finalScore).toBe(8);
         });
     });
