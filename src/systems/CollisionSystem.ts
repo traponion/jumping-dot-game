@@ -502,7 +502,17 @@ class StaticCollisionHandler {
     }
 
     checkBoundaryCollision(player: Player, canvasHeight: number): boolean {
-        return player.y > canvasHeight + 100;
+        // Check lower boundary (normal gravity fall)
+        if (player.y > canvasHeight + 100) {
+            return true;
+        }
+
+        // Check upper boundary (reversed gravity fall)
+        if (player.y < -100) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

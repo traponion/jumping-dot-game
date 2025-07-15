@@ -337,6 +337,21 @@ export class PixiRenderSystem implements IRenderSystem {
             }
         }
 
+        // Render breakable platforms
+        if (stage.breakablePlatforms) {
+            for (const breakablePlatform of stage.breakablePlatforms) {
+                const platformGraphics = new PIXI.Graphics();
+                const width = breakablePlatform.x2 - breakablePlatform.x1;
+                const height = 2; // Ultra-thin platform height
+
+                platformGraphics.rect(0, 0, width, height);
+                platformGraphics.position.set(breakablePlatform.x1, breakablePlatform.y1);
+                platformGraphics.fill(0xff8000); // Orange for breakable platforms
+                // ★★ Add to worldContainer (affected by camera)
+                this.worldContainer.addChild(platformGraphics);
+            }
+        }
+
         // Render goal
         if (stage.goal) {
             const goalGraphics = new PIXI.Graphics();
