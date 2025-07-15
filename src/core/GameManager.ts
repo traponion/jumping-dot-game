@@ -6,6 +6,7 @@ import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { DynamicElementSystem } from '../systems/DynamicElementSystem.js';
 import { GameRuleSystem } from '../systems/GameRuleSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
@@ -73,6 +74,8 @@ export class GameManager {
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
     private movingPlatformSystem!: MovingPlatformSystem;
+    /** @private {DynamicElementSystem} Dynamic element management system */
+    private dynamicElementSystem!: DynamicElementSystem;
     /** @private {IRenderSystem} Rendering system */
     private renderSystem!: IRenderSystem;
     /** @private {InputManager} Input handling system */
@@ -123,10 +126,11 @@ export class GameManager {
         // Create canvas dimensions from container for camera system
         const canvasDimensions = { width: 800, height: 600 };
         this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
-        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.collisionSystem = new CollisionSystem(this.gameState, this.physicsSystem);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        this.dynamicElementSystem = new DynamicElementSystem(this.gameState);
         // Environment-aware rendering system
         this.renderSystem = createGameRenderSystem(this.container);
 
@@ -156,6 +160,9 @@ export class GameManager {
                 this.gameState.timeLimit = defaultTimeLimit;
                 this.gameState.timeRemaining = defaultTimeLimit; // Fix: Also update timeRemaining
             }
+
+            // Initialize dynamic elements runtime state
+            this.initializeDynamicElementsState();
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
@@ -166,7 +173,86 @@ export class GameManager {
             const fallbackTimeLimit = this.stage.timeLimit || this.gameState.timeLimit;
             this.gameState.timeLimit = fallbackTimeLimit;
             this.gameState.timeRemaining = fallbackTimeLimit; // Fix: Also update timeRemaining
+
+            // Initialize dynamic elements runtime state
+            this.initializeDynamicElementsState();
         }
+    }
+
+    /**
+     * Initialize dynamic elements runtime state for the current stage
+     */
+    private initializeDynamicElementsState(): void {
+        if (!this.stage) return;
+
+        // Initialize breakable platforms runtime state
+        this.gameState.runtime.dynamicElements.breakablePlatforms = [];
+        if (this.stage.breakablePlatforms) {
+            for (const platform of this.stage.breakablePlatforms) {
+                this.gameState.runtime.dynamicElements.breakablePlatforms.push({
+                    id: platform.id,
+                    currentHits: 0,
+                    broken: false,
+                    maxHits: platform.maxHits
+                });
+            }
+        }
+
+        // Initialize falling ceilings runtime state
+        this.gameState.runtime.dynamicElements.fallingCeilings = [];
+        if (this.stage.fallingCeilings) {
+            for (const ceiling of this.stage.fallingCeilings) {
+                this.gameState.runtime.dynamicElements.fallingCeilings.push({
+                    id: ceiling.id,
+                    activated: false,
+                    currentY: ceiling.y,
+                    originalY: ceiling.y
+                });
+            }
+        }
+
+        // Initialize moving spikes runtime state
+        this.gameState.runtime.dynamicElements.movingSpikes = [];
+        if (this.stage.movingSpikes) {
+            for (const spike of this.stage.movingSpikes) {
+                this.gameState.runtime.dynamicElements.movingSpikes.push({
+                    id: `moving-spike-${spike.x}-${spike.y}`, // Generate ID from position
+                    currentX: spike.x,
+                    currentY: spike.y,
+                    direction: spike.direction
+                });
+            }
+        }
+
+        console.log('🔧 Dynamic elements initialized:', {
+            breakablePlatforms: this.gameState.runtime.dynamicElements.breakablePlatforms.length,
+            fallingCeilings: this.gameState.runtime.dynamicElements.fallingCeilings.length,
+            movingSpikes: this.gameState.runtime.dynamicElements.movingSpikes.length
+        });
+    }
+
+    /**
+     * Filters out broken platforms from stage data for rendering
+     * @param stage - Original stage data
+     * @returns Stage data with broken platforms filtered out
+     */
+    private filterBrokenPlatforms(stage: StageData): StageData {
+        if (!stage.breakablePlatforms) {
+            return stage;
+        }
+
+        // Create a copy of stage with filtered breakable platforms
+        const filteredBreakablePlatforms = stage.breakablePlatforms.filter((platform) => {
+            const runtimeState = this.gameState.runtime.dynamicElements.breakablePlatforms.find(
+                (state) => state.id === platform.id
+            );
+            return !runtimeState?.broken;
+        });
+
+        return {
+            ...stage,
+            breakablePlatforms: filteredBreakablePlatforms
+        };
     }
 
     /**
@@ -177,6 +263,7 @@ export class GameManager {
         this.gameState.gameStartTime = null;
         this.gameState.timeRemaining = this.gameState.timeLimit;
         this.gameState.gameOver = false;
+        this.gameState.gameCleared = false;
 
         // Clean up all existing systems
         await this.cleanupSystems();
@@ -188,10 +275,11 @@ export class GameManager {
         // Create canvas dimensions from container for camera system
         const canvasDimensions = { width: 800, height: 600 };
         this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
-        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.collisionSystem = new CollisionSystem(this.gameState, this.physicsSystem);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        this.dynamicElementSystem = new DynamicElementSystem(this.gameState);
         // IMPORTANT: Do NOT recreate renderSystem to prevent canvas duplication
         // this.renderSystem is already initialized in constructor and should be reused
 
@@ -263,6 +351,9 @@ export class GameManager {
         // Update moving platforms if stage has them
         this.movingPlatformSystem.update(deltaTime);
 
+        // Update dynamic elements (moving spikes, falling ceilings, breakable platforms)
+        this.dynamicElementSystem.update(deltaTime);
+
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();
         this.animationSystem.updateSoulAnimation();
@@ -282,7 +373,9 @@ export class GameManager {
         renderer.applyCameraTransform(this.gameState.runtime.camera);
 
         if (this.stage) {
-            renderer.renderStage(this.stage, this.gameState.runtime.camera);
+            // Create a copy of stage with broken platforms filtered out
+            const renderStage = this.filterBrokenPlatforms(this.stage);
+            renderer.renderStage(renderStage, this.gameState.runtime.camera);
         }
 
         renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
@@ -315,7 +408,10 @@ export class GameManager {
 
         // UI state management centralized in GameManager.render()
         if (ui) {
-            if (this.gameState.gameOver) {
+            if (this.gameState.gameCleared) {
+                // Show congratulations screen with death count
+                ui.showClearScreen(this.gameState.deathCount);
+            } else if (this.gameState.gameOver) {
                 // Show DOM-based game over screen only (Canvas version removed to prevent overlap)
                 ui.showGameOverScreen();
             } else if (this.gameState.gameRunning) {

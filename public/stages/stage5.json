@@ -1,0 +1,192 @@
+{
+    "id": 5,
+    "name": "Stage 5",
+    "description": "Moving Spikes + Falling Ceiling Tutorial - Danger Zone",
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 200, "y2": 500 },
+        { "x1": 400, "y1": 500, "x2": 600, "y2": 500 },
+        { "x1": 800, "y1": 500, "x2": 1000, "y2": 500 },
+        { "x1": 1200, "y1": 500, "x2": 1400, "y2": 500 },
+        { "x1": 1600, "y1": 500, "x2": 1800, "y2": 500 },
+        { "x1": 2000, "y1": 500, "x2": 2200, "y2": 500 },
+        { "x1": 2400, "y1": 500, "x2": 2600, "y2": 500 },
+        { "x1": 200, "y1": 400, "x2": 400, "y2": 400 },
+        { "x1": 600, "y1": 400, "x2": 800, "y2": 400 },
+        { "x1": 1000, "y1": 400, "x2": 1200, "y2": 400 },
+        { "x1": 1400, "y1": 400, "x2": 1600, "y2": 400 }
+    ],
+    "movingSpikes": [
+        {
+            "id": "horizontal-1",
+            "x": 300,
+            "y": 480,
+            "width": 15,
+            "height": 15,
+            "startX": 250,
+            "endX": 350,
+            "startY": 480,
+            "endY": 480,
+            "speed": 1,
+            "direction": 1,
+            "axis": "horizontal"
+        },
+        {
+            "id": "vertical-1",
+            "x": 700,
+            "y": 450,
+            "width": 15,
+            "height": 15,
+            "startX": 700,
+            "endX": 700,
+            "startY": 420,
+            "endY": 480,
+            "speed": 0.8,
+            "direction": 1,
+            "axis": "vertical"
+        },
+        {
+            "id": "horizontal-2",
+            "x": 1100,
+            "y": 480,
+            "width": 15,
+            "height": 15,
+            "startX": 1050,
+            "endX": 1150,
+            "startY": 480,
+            "endY": 480,
+            "speed": 1.2,
+            "direction": 1,
+            "axis": "horizontal"
+        },
+        {
+            "id": "combo-spike",
+            "x": 1900,
+            "y": 480,
+            "width": 15,
+            "height": 15,
+            "startX": 1850,
+            "endX": 1950,
+            "startY": 480,
+            "endY": 480,
+            "speed": 0.8,
+            "direction": 1,
+            "axis": "horizontal"
+        }
+    ],
+    "fallingCeilings": [
+        {
+            "id": "ceiling-tutorial",
+            "x": 1500,
+            "y": 350,
+            "width": 200,
+            "height": 20,
+            "triggerX": 1500,
+            "triggerWidth": 200,
+            "fallSpeed": 2,
+            "stopY": 480
+        },
+        {
+            "id": "ceiling-combo",
+            "x": 2100,
+            "y": 350,
+            "width": 150,
+            "height": 20,
+            "triggerX": 2050,
+            "triggerWidth": 250,
+            "fallSpeed": 2.5,
+            "stopY": 480
+        }
+    ],
+    "breakablePlatforms": [],
+    "movingPlatforms": [],
+    "holes": [
+        { "x1": 350, "x2": 400 },
+        { "x1": 750, "x2": 800 },
+        { "x1": 1150, "x2": 1200 },
+        { "x1": 1950, "x2": 2000 }
+    ],
+    "spikes": [],
+    "goal": {
+        "x": 2650,
+        "y": 450,
+        "width": 40,
+        "height": 50
+    },
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 5",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
+    },
+    "goalText": {
+        "x": 2670,
+        "y": 430,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "DANGER ZONE!"
+    },
+    "leftEdgeSubMessage": {
+        "x": -400,
+        "y": 470,
+        "text": "WATCH OUT FOR MOVING HAZARDS →"
+    },
+    "tutorialMessages": [
+        {
+            "x": 300,
+            "y": 430,
+            "text": "MOVING SPIKE - HORIZONTAL!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff4500",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 700,
+            "y": 350,
+            "text": "MOVING SPIKE - VERTICAL!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff6347",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1100,
+            "y": 430,
+            "text": "FASTER MOVING SPIKE!",
+            "style": {
+                "fontSize": 14,
+                "color": "#dc143c",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1500,
+            "y": 300,
+            "text": "FALLING CEILING - TRIGGER ZONE!",
+            "style": {
+                "fontSize": 14,
+                "color": "#8b4513",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 2100,
+            "y": 430,
+            "text": "COMBO CHALLENGE!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff0000",
+                "fontWeight": "bold"
+            }
+        }
+    ]
+}

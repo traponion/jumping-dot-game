@@ -35,6 +35,7 @@ describe('MovingPlatformSystem', () => {
         gameState = {
             gameRunning: false,
             gameOver: false,
+            gameCleared: false,
             currentStage: 1,
             timeLimit: 10,
             timeRemaining: 10,
@@ -51,6 +52,11 @@ describe('MovingPlatformSystem', () => {
                     holeCollision: false,
                     boundaryCollision: false,
                     goalCollision: false
+                },
+                dynamicElements: {
+                    fallingCeilings: [],
+                    breakablePlatforms: [],
+                    movingSpikes: []
                 },
                 shouldStartClearAnimation: false,
                 shouldStartDeathAnimation: false,

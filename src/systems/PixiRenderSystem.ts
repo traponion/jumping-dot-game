@@ -337,6 +337,21 @@ export class PixiRenderSystem implements IRenderSystem {
             }
         }
 
+        // Render breakable platforms
+        if (stage.breakablePlatforms) {
+            for (const breakablePlatform of stage.breakablePlatforms) {
+                const platformGraphics = new PIXI.Graphics();
+                const width = breakablePlatform.x2 - breakablePlatform.x1;
+                const height = 2; // Ultra-thin platform height
+
+                platformGraphics.rect(0, 0, width, height);
+                platformGraphics.position.set(breakablePlatform.x1, breakablePlatform.y1);
+                platformGraphics.fill(0xff8000); // Orange for breakable platforms
+                // ★★ Add to worldContainer (affected by camera)
+                this.worldContainer.addChild(platformGraphics);
+            }
+        }
+
         // Render goal
         if (stage.goal) {
             const goalGraphics = new PIXI.Graphics();
@@ -611,11 +626,29 @@ export class PixiRenderSystem implements IRenderSystem {
         if (!this.initialized) return;
 
         try {
-            // Clear worldContainer and uiContainer children only
+            // Stop application ticker first
+            if (this.app?.ticker) {
+                this.app.ticker.stop();
+            }
+
+            // Clear worldContainer and uiContainer children
             this.worldContainer.removeChildren();
             this.uiContainer.removeChildren();
 
-            // Do NOT remove canvas from DOM - keep it for retry functionality
+            // IMPORTANT: Smart cleanup approach - don't destroy app, just reset it for reuse
+            // This prevents memory leaks while keeping canvas alive for retry functionality
+
+            // Clear any cached textures that might be holding references
+            if (this.app?.renderer) {
+                // Clear the render texture cache to prevent memory leaks
+                this.app.renderer.textureGC.run();
+            }
+
+            // Reset containers to clean state without destroying the app
+            this.worldContainer.removeChildren();
+            this.uiContainer.removeChildren();
+
+            // Do NOT set initialized = false - keep app alive for reuse
             // Canvas will be reused for subsequent game sessions
         } catch (error) {
             console.error('Error during PixiRenderSystem cleanup:', error);

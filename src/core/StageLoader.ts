@@ -36,6 +36,18 @@ export interface MovingPlatform extends Platform {
 }
 
 /**
+ * Gravity flip platform interface extending static platform with gravity reversal properties
+ * @interface GravityFlipPlatform
+ * @extends Platform
+ * @property {1 | -1} gravityDirection - Gravity direction (1 = normal down, -1 = reversed up)
+ * @property {number} [effectDuration] - Optional effect duration in seconds (0 = permanent)
+ */
+export interface GravityFlipPlatform extends Platform {
+    gravityDirection: 1 | -1;
+    effectDuration?: number;
+}
+
+/**
  * Spike interface representing a dangerous spike obstacle
  * @interface Spike
  * @property {number} x - X coordinate of spike
@@ -48,6 +60,49 @@ export interface Spike {
     y: number;
     width: number;
     height: number;
+}
+
+/**
+ * Moving spike interface extending static spike with movement properties
+ * @interface MovingSpike
+ * @extends Spike
+ * @property {number} startX - Starting x position for movement
+ * @property {number} endX - Ending x position for movement
+ * @property {number} startY - Starting y position for movement
+ * @property {number} endY - Ending y position for movement
+ * @property {number} speed - Movement speed in pixels per frame
+ * @property {number} direction - Movement direction (1 or -1)
+ * @property {'horizontal' | 'vertical'} axis - Movement axis
+ */
+export interface MovingSpike extends Spike {
+    startX: number;
+    endX: number;
+    startY: number;
+    endY: number;
+    speed: number;
+    direction: number;
+    axis: 'horizontal' | 'vertical';
+}
+
+export interface BreakablePlatform extends Platform {
+    id: string;
+    maxHits: number; // Number of hits before breaking
+    currentHits?: number; // Runtime hit counter (managed by DynamicElementSystem)
+    broken?: boolean; // Runtime broken state
+    regenerateAfter?: number; // Optional: seconds to regenerate (0 = permanent break)
+}
+
+export interface FallingCeiling {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    triggerX: number; // X position where trigger zone starts
+    triggerWidth: number; // Width of trigger zone
+    fallSpeed: number; // Falling velocity
+    stopY: number; // Y position where ceiling stops falling
+    activated?: boolean; // Runtime activation state (managed by DynamicElementSystem)
 }
 
 /**
@@ -115,18 +170,22 @@ export interface TextElement {
 export interface StageData {
     id: number;
     name: string;
+    description?: string; // Optional stage description
     timeLimit?: number; // Optional time limit in seconds for this stage
     platforms: Platform[];
     movingPlatforms?: MovingPlatform[];
+    gravityFlipPlatforms?: GravityFlipPlatform[];
     holes?: Hole[];
     spikes: Spike[];
-    movingSpikes?: Spike[];
+    movingSpikes?: MovingSpike[];
     goal: Goal;
     startText: TextElement;
     goalText: TextElement;
     leftEdgeMessage?: TextElement;
     leftEdgeSubMessage?: TextElement;
     tutorialMessages?: TextElement[];
+    breakablePlatforms?: BreakablePlatform[];
+    fallingCeilings?: FallingCeiling[];
 }
 
 /**

@@ -1,5 +1,6 @@
 import { getCurrentTime } from '../systems/PlayerSystem.js';
 import type { GameState } from '../types/GameTypes.js';
+import { StageLoader } from './StageLoader.js';
 
 /**
  * Stage Select Item interface
@@ -198,6 +199,56 @@ export class GameUI {
     }
 
     /**
+     * Shows the congratulations screen when player clears the stage
+     * @param deathCount - Number of deaths during the stage
+     */
+    showClearScreen(deathCount: number): void {
+        // Hide other screens and game canvas
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameCanvas = document.querySelector('canvas');
+        if (startScreen) startScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        if (gameCanvas) (gameCanvas as HTMLElement).style.display = 'none';
+
+        // Create or update clear screen
+        let clearScreen = document.getElementById('clearScreen');
+        if (!clearScreen) {
+            clearScreen = document.createElement('div');
+            clearScreen.id = 'clearScreen';
+            clearScreen.className = 'game-ui';
+            clearScreen.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-family: monospace;
+                text-align: center;
+                z-index: 20;
+                pointer-events: none;
+                font-size: 24px;
+            `;
+
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(clearScreen);
+            }
+        }
+
+        // Update clear screen content
+        clearScreen.innerHTML = `
+            <div style="margin-bottom: 30px; font-size: 32px; color: #4CAF50;">🎉 CONGRATULATIONS! 🎉</div>
+            <div style="margin-bottom: 20px; font-size: 20px;">STAGE CLEARED!</div>
+            <div style="margin-bottom: 30px; font-size: 16px;">Deaths: ${deathCount}</div>
+            <div style="margin-bottom: 10px; font-size: 16px;">[SPACE] STAGE SELECT</div>
+        `;
+
+        // Show clear screen
+        clearScreen.classList.remove('hidden');
+    }
+
+    /**
      * Dispatch custom event for returning to stage select
      */
     requestStageSelect(): void {
@@ -213,25 +264,104 @@ export class GameUI {
  * Replaces the canvas-based StageSelect with semantic HTML implementation
  */
 export class HtmlStageSelect {
-    private stages: StageSelectItem[] = [
-        { id: 1, name: 'STAGE 1', description: 'Basic tutorial stage' },
-        { id: 2, name: 'STAGE 2', description: 'Moving platforms' }
-    ];
+    private stages: StageSelectItem[] = [];
 
     private selectedStageIndex = 0;
     private stageElements: HTMLElement[] = [];
     private boundHandleKeyboard: (e: KeyboardEvent) => void;
     private isActive = false;
+    private stageLoader: StageLoader;
 
     constructor() {
         this.boundHandleKeyboard = this.handleKeyboard.bind(this);
+        this.stageLoader = new StageLoader();
     }
 
     /**
      * Initialize and show the stage select interface
      */
-    public init(): void {
+    public async init(): Promise<void> {
+        await this.discoverStages();
         this.showStageSelect();
+    }
+
+    /**
+     * Dynamically discover available stages by trying to load them
+     */
+    private async discoverStages(): Promise<void> {
+        this.stages = [];
+
+        console.log('🔍 Starting stage discovery...');
+
+        // Try to load stages starting from 1 (limited to 1-3 for now)
+        for (let stageId = 1; stageId <= 3; stageId++) {
+            try {
+                console.log(`📋 Trying to load stage ${stageId}...`);
+                const stageData = await this.stageLoader.loadStage(stageId);
+                console.log(`✅ Successfully loaded stage ${stageId}:`, stageData.name);
+                this.stages.push({
+                    id: stageId,
+                    name: stageData.name || `STAGE ${stageId}`,
+                    description: stageData.description || `Stage ${stageId}`
+                });
+            } catch (error) {
+                console.log(`❌ Failed to load stage ${stageId}:`, error);
+                // Stage not found, stop searching
+                break;
+            }
+        }
+
+        console.log(`🎯 Discovery complete. Found ${this.stages.length} stages:`, this.stages);
+
+        // Fallback to ensure at least stage 1 exists
+        if (this.stages.length === 0) {
+            this.stages.push({
+                id: 1,
+                name: 'STAGE 1',
+                description: 'Basic tutorial stage'
+            });
+        }
+    }
+
+    /**
+     * Generate stage HTML elements dynamically based on discovered stages
+     */
+    private generateStageElements(): void {
+        // Find the stage list container
+        const stageListContainer = document.querySelector('.stage-list');
+        if (!stageListContainer) {
+            console.error('Stage list container not found');
+            return;
+        }
+
+        // Clear existing stage items
+        stageListContainer.innerHTML = '';
+
+        // Generate stage items for each discovered stage
+        this.stageElements = [];
+        for (const stage of this.stages) {
+            const stageItem = document.createElement('div');
+            stageItem.className = 'stage-item';
+            stageItem.setAttribute('data-stage-id', stage.id.toString());
+            stageItem.setAttribute('role', 'menuitem');
+            stageItem.setAttribute('tabindex', '0');
+
+            const stageName = document.createElement('div');
+            stageName.className = 'stage-name';
+            stageName.textContent = stage.name;
+
+            const stageDescription = document.createElement('div');
+            stageDescription.className = 'stage-description';
+            stageDescription.textContent = stage.description;
+
+            stageItem.appendChild(stageName);
+            stageItem.appendChild(stageDescription);
+            stageListContainer.appendChild(stageItem);
+
+            this.stageElements.push(stageItem);
+        }
+
+        console.log(`🎮 Generated ${this.stageElements.length} stage elements`);
     }
 
     /**
@@ -241,14 +371,8 @@ export class HtmlStageSelect {
         this.isActive = true;
         this.selectedStageIndex = 0;
 
-        // Get stage item elements - safe for test environment
-        if (document?.querySelectorAll) {
-            this.stageElements = Array.from(
-                document.querySelectorAll('.stage-item')
-            ) as HTMLElement[];
-        } else {
-            this.stageElements = [];
-        }
+        // Generate stage HTML elements dynamically
+        this.generateStageElements();
 
         // Set up keyboard event listener - safe for test environment
         if (document?.addEventListener) {

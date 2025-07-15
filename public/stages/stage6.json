@@ -1,0 +1,235 @@
+{
+    "id": 6,
+    "name": "Stage 6",
+    "description": "Combination Challenge - Master's Trial",
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 100, "y2": 500 },
+        { "x1": 300, "y1": 500, "x2": 500, "y2": 500 },
+        { "x1": 700, "y1": 500, "x2": 900, "y2": 500 },
+        { "x1": 1300, "y1": 500, "x2": 1500, "y2": 500 },
+        { "x1": 1800, "y1": 500, "x2": 2000, "y2": 500 },
+        { "x1": 2300, "y1": 500, "x2": 2500, "y2": 500 },
+        { "x1": 2800, "y1": 500, "x2": 3000, "y2": 500 },
+        { "x1": 100, "y1": 400, "x2": 300, "y2": 400 },
+        { "x1": 500, "y1": 400, "x2": 700, "y2": 400 },
+        { "x1": 900, "y1": 380, "x2": 1100, "y2": 380 },
+        { "x1": 1500, "y1": 380, "x2": 1700, "y2": 380 },
+        { "x1": 2000, "y1": 380, "x2": 2200, "y2": 380 },
+        { "x1": 1100, "y1": 360, "x2": 1300, "y2": 360 },
+        { "x1": 1700, "y1": 360, "x2": 1800, "y2": 360 }
+    ],
+    "breakablePlatforms": [
+        {
+            "id": "start-bridge",
+            "x1": 100,
+            "y1": 480,
+            "x2": 200,
+            "y2": 480,
+            "maxHits": 2,
+            "regenerateAfter": 8
+        },
+        {
+            "id": "mid-route",
+            "x1": 1200,
+            "y1": 480,
+            "x2": 1300,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 6
+        },
+        {
+            "id": "upper-path",
+            "x1": 2200,
+            "y1": 360,
+            "x2": 2300,
+            "y2": 360,
+            "maxHits": 3,
+            "regenerateAfter": 10
+        }
+    ],
+    "gravityFlipPlatforms": [
+        {
+            "id": "flip-section",
+            "x1": 900,
+            "y1": 480,
+            "x2": 1000,
+            "y2": 480,
+            "gravityDirection": -1,
+            "effectDuration": 4
+        },
+        {
+            "id": "restore-gravity",
+            "x1": 1700,
+            "y1": 380,
+            "x2": 1800,
+            "y2": 380,
+            "gravityDirection": 1,
+            "effectDuration": 0
+        }
+    ],
+    "movingPlatforms": [
+        {
+            "x1": 200,
+            "y1": 400,
+            "x2": 300,
+            "y2": 400,
+            "startX": 200,
+            "endX": 350,
+            "speed": 0.8,
+            "direction": 1
+        }
+    ],
+    "movingSpikes": [
+        {
+            "id": "guardian-1",
+            "x": 600,
+            "y": 480,
+            "width": 15,
+            "height": 15,
+            "startX": 550,
+            "endX": 650,
+            "startY": 480,
+            "endY": 480,
+            "speed": 1,
+            "direction": 1,
+            "axis": "horizontal"
+        },
+        {
+            "id": "guardian-2",
+            "x": 1400,
+            "y": 400,
+            "width": 15,
+            "height": 15,
+            "startX": 1400,
+            "endX": 1400,
+            "startY": 360,
+            "endY": 480,
+            "speed": 1.2,
+            "direction": 1,
+            "axis": "vertical"
+        },
+        {
+            "id": "final-guardian",
+            "x": 2600,
+            "y": 480,
+            "width": 15,
+            "height": 15,
+            "startX": 2550,
+            "endX": 2650,
+            "startY": 480,
+            "endY": 480,
+            "speed": 0.8,
+            "direction": 1,
+            "axis": "horizontal"
+        }
+    ],
+    "fallingCeilings": [
+        {
+            "id": "trap-ceiling",
+            "x": 1100,
+            "y": 250,
+            "width": 200,
+            "height": 25,
+            "triggerX": 1050,
+            "triggerWidth": 300,
+            "fallSpeed": 2,
+            "stopY": 380
+        },
+        {
+            "id": "final-trap",
+            "x": 2400,
+            "y": 250,
+            "width": 300,
+            "height": 25,
+            "triggerX": 2300,
+            "triggerWidth": 500,
+            "fallSpeed": 2.5,
+            "stopY": 380
+        }
+    ],
+    "holes": [
+        { "x1": 200, "x2": 300 },
+        { "x1": 650, "x2": 700 },
+        { "x1": 1000, "x2": 1100 },
+        { "x1": 1600, "x2": 1700 },
+        { "x1": 2500, "x2": 2600 }
+    ],
+    "spikes": [
+        { "x": 400, "y": 480, "width": 15, "height": 15 },
+        { "x": 800, "y": 480, "width": 15, "height": 15 },
+        { "x": 2100, "y": 330, "width": 15, "height": 15 }
+    ],
+    "goal": {
+        "x": 3050,
+        "y": 450,
+        "width": 40,
+        "height": 50
+    },
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 6",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
+    },
+    "goalText": {
+        "x": 3070,
+        "y": 430,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "MASTER'S TRIAL!"
+    },
+    "leftEdgeSubMessage": {
+        "x": -400,
+        "y": 470,
+        "text": "USE ALL YOUR SKILLS →"
+    },
+    "tutorialMessages": [
+        {
+            "x": 150,
+            "y": 430,
+            "text": "ALL GIMMICKS COMBINED!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ffd700",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 950,
+            "y": 430,
+            "text": "GRAVITY FLIP SECTION!",
+            "style": {
+                "fontSize": 14,
+                "color": "#00bfff",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1200,
+            "y": 200,
+            "text": "WATCH THE FALLING CEILING!",
+            "style": {
+                "fontSize": 14,
+                "color": "#8b4513",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 2400,
+            "y": 430,
+            "text": "FINAL CHALLENGE!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff0000",
+                "fontWeight": "bold"
+            }
+        }
+    ]
+}

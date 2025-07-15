@@ -20,6 +20,9 @@ export class PhysicsSystem {
     /** @private {GameState} Game state instance for direct state access */
     private gameState: GameState;
 
+    /** @private {number} Gravity direction multiplier (1 = down, -1 = up) */
+    private gravityDirection = 1;
+
     /**
      * Creates a new PhysicsSystem instance
      * @constructor
@@ -58,6 +61,15 @@ export class PhysicsSystem {
     }
 
     /**
+     * Sets gravity direction for gravity flip platforms
+     * @param {1 | -1} direction - Gravity direction (1 = down, -1 = up)
+     * @returns {void}
+     */
+    setGravityDirection(direction: 1 | -1): void {
+        this.gravityDirection = direction;
+    }
+
+    /**
      * Calculates gravity effect on player velocity
      * @private
      * @param {Player} player - Current player state
@@ -66,7 +78,7 @@ export class PhysicsSystem {
      */
     private calculateGravity(player: Player, dtFactor: number): number {
         if (!player.grounded) {
-            return player.vy + this.constants.gravity * dtFactor;
+            return player.vy + this.constants.gravity * this.gravityDirection * dtFactor;
         }
         return player.vy;
     }

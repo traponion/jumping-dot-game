@@ -1,0 +1,138 @@
+{
+    "id": 4,
+    "name": "Stage 4",
+    "description": "Gravity Flip Platform Tutorial - Upside Down World",
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 200, "y2": 500 },
+        { "x1": 400, "y1": 500, "x2": 600, "y2": 500 },
+        { "x1": 800, "y1": 500, "x2": 1000, "y2": 500 },
+        { "x1": 1200, "y1": 500, "x2": 1400, "y2": 500 },
+        { "x1": 1600, "y1": 500, "x2": 2000, "y2": 500 },
+        { "x1": 2200, "y1": 500, "x2": 2400, "y2": 500 },
+        { "x1": 200, "y1": 400, "x2": 400, "y2": 400 },
+        { "x1": 600, "y1": 400, "x2": 800, "y2": 400 },
+        { "x1": 1000, "y1": 400, "x2": 1200, "y2": 400 },
+        { "x1": 1400, "y1": 400, "x2": 1600, "y2": 400 }
+    ],
+    "gravityFlipPlatforms": [
+        {
+            "id": "temp-flip-1",
+            "x1": 200,
+            "y1": 480,
+            "x2": 350,
+            "y2": 480,
+            "gravityDirection": -1,
+            "effectDuration": 3
+        },
+        {
+            "id": "temp-flip-2",
+            "x1": 600,
+            "y1": 480,
+            "x2": 750,
+            "y2": 480,
+            "gravityDirection": -1,
+            "effectDuration": 5
+        },
+        {
+            "id": "permanent-flip",
+            "x1": 1000,
+            "y1": 480,
+            "x2": 1150,
+            "y2": 480,
+            "gravityDirection": -1,
+            "effectDuration": 0
+        },
+        {
+            "id": "normal-restore",
+            "x1": 1400,
+            "y1": 420,
+            "x2": 1550,
+            "y2": 420,
+            "gravityDirection": 1,
+            "effectDuration": 0
+        }
+    ],
+    "breakablePlatforms": [],
+    "movingPlatforms": [],
+    "holes": [
+        { "x1": 350, "x2": 400 },
+        { "x1": 750, "x2": 800 },
+        { "x1": 1150, "x2": 1200 },
+        { "x1": 1550, "x2": 1600 }
+    ],
+    "spikes": [],
+    "movingSpikes": [],
+    "goal": {
+        "x": 2450,
+        "y": 450,
+        "width": 40,
+        "height": 50
+    },
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 4",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
+    },
+    "goalText": {
+        "x": 2470,
+        "y": 430,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "UPSIDE DOWN WORLD!"
+    },
+    "leftEdgeSubMessage": {
+        "x": -400,
+        "y": 470,
+        "text": "GRAVITY IS JUST A SUGGESTION →"
+    },
+    "tutorialMessages": [
+        {
+            "x": 250,
+            "y": 430,
+            "text": "GRAVITY FLIP! (3 SECONDS)",
+            "style": {
+                "fontSize": 14,
+                "color": "#00bfff",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 650,
+            "y": 430,
+            "text": "LONGER FLIP! (5 SECONDS)",
+            "style": {
+                "fontSize": 14,
+                "color": "#1e90ff",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1050,
+            "y": 430,
+            "text": "PERMANENT FLIP!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff1493",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1450,
+            "y": 370,
+            "text": "BACK TO NORMAL!",
+            "style": {
+                "fontSize": 14,
+                "color": "#32cd32",
+                "fontWeight": "bold"
+            }
+        }
+    ]
+}

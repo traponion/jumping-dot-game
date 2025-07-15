@@ -25,7 +25,7 @@ describe('CollisionSystem Business Logic', () => {
             height: 600
         } as HTMLCanvasElement;
 
-        collisionSystem = new CollisionSystem(gameState, mockCanvas);
+        collisionSystem = new CollisionSystem(gameState, undefined, mockCanvas);
     });
 
     describe('platform collision', () => {

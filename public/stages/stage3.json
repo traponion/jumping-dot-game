@@ -1,0 +1,135 @@
+{
+    "id": 3,
+    "name": "Stage 3",
+    "description": "Breakable Platform Tutorial - Fragile Foundations",
+    "timeLimit": 10,
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 200, "y2": 500 },
+        { "x1": 500, "y1": 500, "x2": 700, "y2": 500 },
+        { "x1": 1000, "y1": 500, "x2": 1200, "y2": 500 }
+    ],
+    "breakablePlatforms": [
+        {
+            "id": "tutorial-1hit",
+            "x1": 200,
+            "y1": 480,
+            "x2": 350,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "tutorial-2hit",
+            "x1": 700,
+            "y1": 480,
+            "x2": 850,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "tutorial-3hit",
+            "x1": 1200,
+            "y1": 480,
+            "x2": 1350,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "final-bridge-1",
+            "x1": 1450,
+            "y1": 480,
+            "x2": 1550,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 3
+        },
+        {
+            "id": "final-bridge-2",
+            "x1": 1630,
+            "y1": 470,
+            "x2": 1730,
+            "y2": 470,
+            "maxHits": 1,
+            "regenerateAfter": 3
+        },
+        {
+            "id": "final-bridge-3",
+            "x1": 1810,
+            "y1": 480,
+            "x2": 1910,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 3
+        },
+        {
+            "id": "final-bridge-4",
+            "x1": 1990,
+            "y1": 470,
+            "x2": 2090,
+            "y2": 470,
+            "maxHits": 1,
+            "regenerateAfter": 3
+        },
+        {
+            "id": "final-bridge-5",
+            "x1": 2170,
+            "y1": 480,
+            "x2": 2270,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 3
+        }
+    ],
+    "movingPlatforms": [],
+    "holes": [
+        { "x1": 350, "x2": 500 },
+        { "x1": 850, "x2": 1000 },
+        { "x1": 1350, "x2": 1450 },
+        { "x1": 1550, "x2": 1630 },
+        { "x1": 1730, "x2": 1810 },
+        { "x1": 1910, "x2": 1990 },
+        { "x1": 2090, "x2": 2170 }
+    ],
+    "spikes": [],
+    "movingSpikes": [],
+    "goal": {
+        "x": 2300,
+        "y": 450,
+        "width": 40,
+        "height": 50
+    },
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 3",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
+    },
+    "goalText": {
+        "x": 2320,
+        "y": 430,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "FRAGILE FOUNDATIONS"
+    },
+    "tutorialMessages": [
+        {
+            "x": 750,
+            "y": 430,
+            "text": "BREAKABLE PLATFORMS",
+            "style": {
+                "fontSize": 14,
+                "color": "#ffffff",
+                "fontWeight": "bold"
+            }
+        }
+    ]
+}
