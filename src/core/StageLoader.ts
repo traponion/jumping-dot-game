@@ -84,6 +84,14 @@ export interface MovingSpike extends Spike {
     axis: 'horizontal' | 'vertical';
 }
 
+export interface BreakablePlatform extends Platform {
+    id: string;
+    maxHits: number; // Number of hits before breaking
+    currentHits?: number; // Runtime hit counter (managed by DynamicElementSystem)
+    broken?: boolean; // Runtime broken state
+    regenerateAfter?: number; // Optional: seconds to regenerate (0 = permanent break)
+}
+
 /**
  * Hole interface representing a pit or gap in the stage
  * @interface Hole
@@ -162,6 +170,7 @@ export interface StageData {
     leftEdgeMessage?: TextElement;
     leftEdgeSubMessage?: TextElement;
     tutorialMessages?: TextElement[];
+    breakablePlatforms?: BreakablePlatform[];
 }
 
 /**

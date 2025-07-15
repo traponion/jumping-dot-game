@@ -5,6 +5,7 @@
  */
 
 import type {
+    BreakablePlatform,
     Goal,
     GravityFlipPlatform,
     MovingPlatform,
@@ -378,6 +379,11 @@ class StaticCollisionHandler {
             }
         }
 
+        // Check breakable platform collisions
+        if (stage.breakablePlatforms) {
+            this.handleBreakablePlatformCollisions(stage.breakablePlatforms, prevPlayerFootY);
+        }
+
         // Check gravity flip platform collisions
         if (stage.gravityFlipPlatforms) {
             this.handleGravityFlipPlatformCollisions(stage.gravityFlipPlatforms, prevPlayerFootY);
@@ -506,6 +512,57 @@ class StaticCollisionHandler {
                 // Player landed on gravity flip platform - change gravity direction
                 this.physicsSystem.setGravityDirection(platform.gravityDirection);
                 break; // Only apply one gravity change per frame
+            }
+        }
+    }
+
+    /**
+     * Handles collisions with breakable platforms
+     * @param breakablePlatforms - Array of breakable platforms to check
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @returns void - Applies hit counting and platform breaking as side effect
+     */
+    private handleBreakablePlatformCollisions(
+        breakablePlatforms: BreakablePlatform[],
+        prevPlayerFootY: number
+    ): void {
+        const player = this.gameState.runtime.player;
+
+        for (const platform of breakablePlatforms) {
+            // Find runtime state for this platform
+            const runtimeState = this.gameState.runtime.dynamicElements.breakablePlatforms.find(
+                (state) => state.id === platform.id
+            );
+
+            // Skip collision if platform is broken
+            if (runtimeState?.broken) {
+                continue;
+            }
+
+            // Check for collision using existing platform collision logic
+            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
+            if (collisionUpdate) {
+                // Apply collision (player lands on platform)
+                Object.assign(this.gameState.runtime.player, collisionUpdate);
+
+                // Increment hit count if runtime state exists
+                if (runtimeState) {
+                    runtimeState.currentHits++;
+
+                    // Check if platform should break
+                    if (runtimeState.currentHits >= runtimeState.maxHits) {
+                        runtimeState.broken = true;
+                        console.log(
+                            `💥 Breakable platform ${platform.id} broken after ${runtimeState.currentHits} hits!`
+                        );
+                    } else {
+                        console.log(
+                            `🔨 Breakable platform ${platform.id} hit! (${runtimeState.currentHits}/${runtimeState.maxHits})`
+                        );
+                    }
+                }
+
+                break; // Only process one collision per frame
             }
         }
     }
