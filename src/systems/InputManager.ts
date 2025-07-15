@@ -139,14 +139,16 @@ export class InputManager {
         // Game over menu navigation
         this.inputs?.down.on('menu-up', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameState.gameOver) {
+            // Only allow menu navigation when game is over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 this.gameController.handleGameOverNavigation('up');
             }
         });
 
         this.inputs?.down.on('menu-down', () => {
             if (!this.gameController) return; // Guard against cleaned up instance
-            if (this.gameState.gameOver) {
+            // Only allow menu navigation when game is over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 this.gameController.handleGameOverNavigation('down');
             }
         });
@@ -160,7 +162,8 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (this.gameState.gameOver) {
+            // Only allow game over menu selection when game is over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 // Game over menu selection (Enter key only)
                 this.gameController.handleGameOverSelection();
             }
@@ -176,7 +179,8 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (this.gameState.gameOver) {
+            // Only allow restart when game is over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 // Restart current stage
                 this.gameController.handleGameOverSelection();
             }
@@ -192,7 +196,8 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            if (this.gameState.gameOver) {
+            // Only allow stage select when game is over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 // Go to stage select
                 this.gameController.handleStageSelect();
             } else if (!this.gameState.gameRunning) {

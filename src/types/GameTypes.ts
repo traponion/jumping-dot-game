@@ -101,6 +101,7 @@ export interface DeathMark {
 export interface GameState {
     gameRunning: boolean;
     gameOver: boolean;
+    gameCleared: boolean;
     currentStage: number;
     timeLimit: number;
     timeRemaining: number;
