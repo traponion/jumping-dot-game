@@ -1,5 +1,6 @@
 import { getCurrentTime } from '../systems/PlayerSystem.js';
 import type { GameState } from '../types/GameTypes.js';
+import { StageLoader } from './StageLoader.js';
 
 /**
  * Stage Select Item interface
@@ -213,25 +214,56 @@ export class GameUI {
  * Replaces the canvas-based StageSelect with semantic HTML implementation
  */
 export class HtmlStageSelect {
-    private stages: StageSelectItem[] = [
-        { id: 1, name: 'STAGE 1', description: 'Basic tutorial stage' },
-        { id: 2, name: 'STAGE 2', description: 'Moving platforms' }
-    ];
+    private stages: StageSelectItem[] = [];
 
     private selectedStageIndex = 0;
     private stageElements: HTMLElement[] = [];
     private boundHandleKeyboard: (e: KeyboardEvent) => void;
     private isActive = false;
+    private stageLoader: StageLoader;
 
     constructor() {
         this.boundHandleKeyboard = this.handleKeyboard.bind(this);
+        this.stageLoader = new StageLoader();
     }
 
     /**
      * Initialize and show the stage select interface
      */
-    public init(): void {
+    public async init(): Promise<void> {
+        await this.discoverStages();
         this.showStageSelect();
+    }
+
+    /**
+     * Dynamically discover available stages by trying to load them
+     */
+    private async discoverStages(): Promise<void> {
+        this.stages = [];
+
+        // Try to load stages starting from 1
+        for (let stageId = 1; stageId <= 20; stageId++) {
+            try {
+                const stageData = await this.stageLoader.loadStage(stageId);
+                this.stages.push({
+                    id: stageId,
+                    name: stageData.name || `STAGE ${stageId}`,
+                    description: stageData.description || `Stage ${stageId}`
+                });
+            } catch (_error) {
+                // Stage not found, stop searching
+                break;
+            }
+        }
+
+        // Fallback to ensure at least stage 1 exists
+        if (this.stages.length === 0) {
+            this.stages.push({
+                id: 1,
+                name: 'STAGE 1',
+                description: 'Basic tutorial stage'
+            });
+        }
     }
 
     /**

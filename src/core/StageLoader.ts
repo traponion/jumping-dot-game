@@ -170,6 +170,7 @@ export interface TextElement {
 export interface StageData {
     id: number;
     name: string;
+    description?: string; // Optional stage description
     timeLimit?: number; // Optional time limit in seconds for this stage
     platforms: Platform[];
     movingPlatforms?: MovingPlatform[];
