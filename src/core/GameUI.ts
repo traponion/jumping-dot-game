@@ -160,12 +160,14 @@ export class GameUI {
     updateUIVisibility(gameRunning: boolean, gameOver: boolean): void {
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const clearScreen = document.getElementById('clearScreen');
         const deathInfo = this.deathDisplay.parentElement;
 
         if (gameRunning && !gameOver) {
             // Hide UI elements during gameplay
             if (startScreen) startScreen.classList.add('hidden');
             if (gameOverScreen) gameOverScreen.classList.add('hidden');
+            if (clearScreen) clearScreen.classList.add('hidden');
             // Show death count during gameplay
             if (deathInfo) deathInfo.style.display = 'block';
         } else if (gameOver) {
@@ -184,8 +186,10 @@ export class GameUI {
     showStartScreen(): void {
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const clearScreen = document.getElementById('clearScreen');
         if (startScreen) startScreen.classList.remove('hidden');
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        if (clearScreen) clearScreen.classList.add('hidden');
     }
 
     /**
@@ -194,8 +198,10 @@ export class GameUI {
     showGameOverScreen(): void {
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const clearScreen = document.getElementById('clearScreen');
         if (startScreen) startScreen.classList.add('hidden');
         if (gameOverScreen) gameOverScreen.classList.remove('hidden');
+        if (clearScreen) clearScreen.classList.add('hidden');
     }
 
     /**
