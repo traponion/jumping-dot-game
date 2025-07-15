@@ -241,20 +241,27 @@ export class HtmlStageSelect {
     private async discoverStages(): Promise<void> {
         this.stages = [];
 
+        console.log('🔍 Starting stage discovery...');
+
         // Try to load stages starting from 1
         for (let stageId = 1; stageId <= 20; stageId++) {
             try {
+                console.log(`📋 Trying to load stage ${stageId}...`);
                 const stageData = await this.stageLoader.loadStage(stageId);
+                console.log(`✅ Successfully loaded stage ${stageId}:`, stageData.name);
                 this.stages.push({
                     id: stageId,
                     name: stageData.name || `STAGE ${stageId}`,
                     description: stageData.description || `Stage ${stageId}`
                 });
-            } catch (_error) {
+            } catch (error) {
+                console.log(`❌ Failed to load stage ${stageId}:`, error);
                 // Stage not found, stop searching
                 break;
             }
         }
+
+        console.log(`🎯 Discovery complete. Found ${this.stages.length} stages:`, this.stages);
 
         // Fallback to ensure at least stage 1 exists
         if (this.stages.length === 0) {
@@ -267,20 +274,55 @@ export class HtmlStageSelect {
     }
 
     /**
+     * Generate stage HTML elements dynamically based on discovered stages
+     */
+    private generateStageElements(): void {
+        // Find the stage list container
+        const stageListContainer = document.querySelector('.stage-list');
+        if (!stageListContainer) {
+            console.error('Stage list container not found');
+            return;
+        }
+
+        // Clear existing stage items
+        stageListContainer.innerHTML = '';
+
+        // Generate stage items for each discovered stage
+        this.stageElements = [];
+        for (const stage of this.stages) {
+            const stageItem = document.createElement('div');
+            stageItem.className = 'stage-item';
+            stageItem.setAttribute('data-stage-id', stage.id.toString());
+            stageItem.setAttribute('role', 'menuitem');
+            stageItem.setAttribute('tabindex', '0');
+
+            const stageName = document.createElement('div');
+            stageName.className = 'stage-name';
+            stageName.textContent = stage.name;
+
+            const stageDescription = document.createElement('div');
+            stageDescription.className = 'stage-description';
+            stageDescription.textContent = stage.description;
+
+            stageItem.appendChild(stageName);
+            stageItem.appendChild(stageDescription);
+            stageListContainer.appendChild(stageItem);
+
+            this.stageElements.push(stageItem);
+        }
+
+        console.log(`🎮 Generated ${this.stageElements.length} stage elements`);
+    }
+
+    /**
      * Show stage selection interface
      */
     private showStageSelect(): void {
         this.isActive = true;
         this.selectedStageIndex = 0;
 
-        // Get stage item elements - safe for test environment
-        if (document?.querySelectorAll) {
-            this.stageElements = Array.from(
-                document.querySelectorAll('.stage-item')
-            ) as HTMLElement[];
-        } else {
-            this.stageElements = [];
-        }
+        // Generate stage HTML elements dynamically
+        this.generateStageElements();
 
         // Set up keyboard event listener - safe for test environment
         if (document?.addEventListener) {
