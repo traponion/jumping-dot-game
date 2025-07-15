@@ -4,7 +4,7 @@
  * @description Domain Layer - Pure collision detection calculations
  */
 
-import type { Goal, MovingPlatform, Platform, Spike } from '../core/StageLoader.js';
+import type { Goal, MovingPlatform, Platform, Spike, StageData } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
 import { isCircleRectCollision } from './PlayerSystem.js';
@@ -28,14 +28,21 @@ export interface MovingPlatformCollisionResult extends Partial<Player> {
  */
 export class CollisionSystem {
     private gameState: GameState;
+    // @ts-ignore - canvas used by StaticCollisionHandler during Phase 1
     private canvas: HTMLCanvasElement | undefined;
     private prevPlayerY = 0;
+    private staticCollisionHandler: StaticCollisionHandler;
+    private dynamicCollisionHandler: DynamicCollisionHandler;
 
     constructor(gameState: GameState, canvas?: HTMLCanvasElement) {
         this.gameState = gameState;
         this.canvas = canvas;
         // FIXED: Initialize with current player position instead of 0
         this.prevPlayerY = this.gameState.runtime.player.y;
+
+        // Initialize collision handlers
+        this.staticCollisionHandler = new StaticCollisionHandler(gameState, canvas);
+        this.dynamicCollisionHandler = new DynamicCollisionHandler(gameState);
     }
 
     /**
@@ -50,32 +57,11 @@ export class CollisionSystem {
         platform: Platform,
         prevPlayerFootY: number
     ): Partial<Player> | null {
-        const currentPlayerFootY = player.y + player.radius;
-
-        // Basic horizontal overlap check
-        if (
-            player.x + player.radius <= platform.x1 ||
-            player.x - player.radius >= platform.x2 ||
-            player.vy < 0 // Don't collide when moving upward
-        ) {
-            return null;
-        }
-
-        // Enhanced collision detection for high-speed movement
-        // Check if player crossed the platform during this frame
-        const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
-        const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
-
-        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
-            // Return collision update object instead of directly modifying player
-            return {
-                y: platform.y1 - player.radius,
-                vy: 0,
-                grounded: true
-            };
-        }
-
-        return null;
+        return this.staticCollisionHandler.checkPlatformCollision(
+            player,
+            platform,
+            prevPlayerFootY
+        );
     }
 
     /**
@@ -88,20 +74,7 @@ export class CollisionSystem {
         platforms: Platform[],
         prevPlayerFootY: number
     ): Partial<Player> | null {
-        const player = this.gameState.runtime.player;
-        let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
-
-        for (const platform of platforms) {
-            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
-            if (collisionUpdate) {
-                // Merge the collision update with the grounded reset
-                collisionResult = { ...collisionResult, ...collisionUpdate };
-                return collisionResult; // Return the first collision found
-            }
-        }
-
-        // If no collision found, return just the grounded reset
-        return collisionResult;
+        return this.staticCollisionHandler.handlePlatformCollisions(platforms, prevPlayerFootY);
     }
 
     /**
@@ -111,15 +84,7 @@ export class CollisionSystem {
      * @returns {boolean} True if collision detected
      */
     checkSpikeCollision(player: Player, spike: Spike): boolean {
-        return isCircleRectCollision(
-            player.x,
-            player.y,
-            player.radius,
-            spike.x,
-            spike.y,
-            spike.width,
-            spike.height
-        );
+        return this.staticCollisionHandler.checkSpikeCollision(player, spike);
     }
 
     /**
@@ -129,12 +94,7 @@ export class CollisionSystem {
      * @returns {boolean} True if any spike collision detected
      */
     checkSpikeCollisions(player: Player, spikes: Spike[]): boolean {
-        for (const spike of spikes) {
-            if (this.checkSpikeCollision(player, spike)) {
-                return true;
-            }
-        }
-        return false;
+        return this.staticCollisionHandler.checkSpikeCollisions(player, spikes);
     }
 
     /**
@@ -144,15 +104,7 @@ export class CollisionSystem {
      * @returns {boolean} True if player reached the goal
      */
     checkGoalCollision(player: Player, goal: Goal): boolean {
-        return isCircleRectCollision(
-            player.x,
-            player.y,
-            player.radius,
-            goal.x,
-            goal.y,
-            goal.width,
-            goal.height
-        );
+        return this.staticCollisionHandler.checkGoalCollision(player, goal);
     }
 
     /**
@@ -162,7 +114,7 @@ export class CollisionSystem {
      * @returns {boolean} True if player fell into hole
      */
     checkHoleCollision(player: Player, holeThreshold: number): boolean {
-        return player.y > holeThreshold;
+        return this.staticCollisionHandler.checkHoleCollision(player, holeThreshold);
     }
 
     /**
@@ -172,7 +124,7 @@ export class CollisionSystem {
      * @returns {boolean} True if player is beyond boundaries
      */
     checkBoundaryCollision(player: Player, canvasHeight: number): boolean {
-        return player.y > canvasHeight + 100;
+        return this.staticCollisionHandler.checkBoundaryCollision(player, canvasHeight);
     }
 
     /**
@@ -189,33 +141,11 @@ export class CollisionSystem {
         movingPlatform: MovingPlatform,
         prevPlayerFootY: number
     ): MovingPlatformCollisionResult | null {
-        const currentPlayerFootY = player.y + player.radius;
-
-        // Basic horizontal overlap check (same as static platform)
-        if (
-            player.x + player.radius <= movingPlatform.x1 ||
-            player.x - player.radius >= movingPlatform.x2 ||
-            player.vy < 0 // Don't collide when moving upward
-        ) {
-            return null;
-        }
-
-        // Enhanced collision detection for high-speed movement
-        // Check if player crossed the platform during this frame
-        const wasPreviouslyAbove = prevPlayerFootY <= movingPlatform.y1;
-        const isCurrentlyBelowOrOn = currentPlayerFootY >= movingPlatform.y1;
-
-        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
-            // Return collision update object with platform reference
-            return {
-                y: movingPlatform.y1 - player.radius,
-                vy: 0,
-                grounded: true,
-                platform: movingPlatform
-            };
-        }
-
-        return null;
+        return this.dynamicCollisionHandler.checkMovingPlatformCollision(
+            player,
+            movingPlatform,
+            prevPlayerFootY
+        );
     }
 
     /**
@@ -230,22 +160,10 @@ export class CollisionSystem {
         movingPlatforms: MovingPlatform[],
         prevPlayerFootY: number
     ): MovingPlatformCollisionResult | null {
-        const player = this.gameState.runtime.player;
-
-        for (const movingPlatform of movingPlatforms) {
-            const collisionUpdate = this.checkMovingPlatformCollision(
-                player,
-                movingPlatform,
-                prevPlayerFootY
-            );
-            if (collisionUpdate) {
-                // Return the first collision found
-                return collisionUpdate;
-            }
-        }
-
-        // If no collision found, return null (don't interfere with other collision systems)
-        return null;
+        return this.dynamicCollisionHandler.handleMovingPlatformCollisions(
+            movingPlatforms,
+            prevPlayerFootY
+        );
     }
 
     /**
@@ -284,11 +202,74 @@ export class CollisionSystem {
         const prevPlayerFootY = this.prevPlayerY + player.radius;
 
         // Reset collision results at the start of each frame
+        this.staticCollisionHandler.resetCollisionFlags();
+
+        // Check boundary conditions and set flags
+        this.staticCollisionHandler.checkBoundaryConditions(player);
+
+        // Check goal collision and set flag
+        this.staticCollisionHandler.checkGoalCondition(player, stage.goal);
+
+        // Handle dynamic platform collisions first (higher priority)
+        const dynamicCollisionResult = this.dynamicCollisionHandler.handleDynamicCollisions(
+            stage,
+            prevPlayerFootY,
+            playerSystem
+        );
+
+        if (dynamicCollisionResult) {
+            // Dynamic collision handled, skip static collision check
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Handle static collisions
+        const staticCollisionResult = this.staticCollisionHandler.handleStaticCollisions(
+            stage,
+            prevPlayerFootY,
+            playerSystem,
+            deathHandler,
+            goalHandler
+        );
+
+        if (staticCollisionResult) {
+            // Static collision handled (death or goal)
+            this.updatePrevPlayerY();
+            return;
+        }
+
+        // Update previous player Y for next frame
+        this.updatePrevPlayerY();
+    }
+}
+
+/**
+ * Handles all static collision detection and response
+ * Manages platforms, spikes, goal, boundaries, and holes
+ */
+class StaticCollisionHandler {
+    private gameState: GameState;
+    private canvas: HTMLCanvasElement | undefined;
+
+    constructor(gameState: GameState, canvas?: HTMLCanvasElement) {
+        this.gameState = gameState;
+        this.canvas = canvas;
+    }
+
+    /**
+     * Resets collision result flags at the start of each frame
+     */
+    resetCollisionFlags(): void {
         this.gameState.runtime.collisionResults.holeCollision = false;
         this.gameState.runtime.collisionResults.boundaryCollision = false;
         this.gameState.runtime.collisionResults.goalCollision = false;
+    }
 
-        // Check boundary conditions and set flags
+    /**
+     * Checks boundary conditions and updates collision flags
+     * @param player - Current player state
+     */
+    checkBoundaryConditions(player: Player): void {
         const canvasHeight = this.canvas?.height ?? 600; // Fallback to 600 for backwards compatibility
         this.gameState.runtime.collisionResults.holeCollision = this.checkHoleCollision(
             player,
@@ -298,46 +279,36 @@ export class CollisionSystem {
             player,
             canvasHeight
         );
+    }
 
-        // Check goal collision and set flag
+    /**
+     * Checks goal condition and updates collision flag
+     * @param player - Current player state
+     * @param goal - Goal area
+     */
+    checkGoalCondition(player: Player, goal: Goal): void {
         this.gameState.runtime.collisionResults.goalCollision = this.checkGoalCollision(
             player,
-            stage.goal
+            goal
         );
+    }
 
-        // Handle moving platform collisions first (higher priority)
-        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
-            const movingPlatformCollisionUpdate = this.handleMovingPlatformCollisions(
-                stage.movingPlatforms,
-                prevPlayerFootY
-            );
-
-            if (movingPlatformCollisionUpdate) {
-                // FIXED: Use Object.assign to ensure all properties are set properly
-                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
-
-                if (
-                    movingPlatformCollisionUpdate.grounded &&
-                    movingPlatformCollisionUpdate.platform &&
-                    playerSystem
-                ) {
-                    playerSystem.resetJumpTimer();
-
-                    // Move player with the platform
-                    const movingPlatform = movingPlatformCollisionUpdate.platform;
-                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime
-                    const platformMovement =
-                        movingPlatform.speed * movingPlatform.direction * dtFactor;
-
-                    this.gameState.runtime.player.x += platformMovement;
-                }
-
-                // Skip static platform collision check
-                this.updatePrevPlayerY();
-                return;
-            }
-        }
-
+    /**
+     * Handles all static collisions (platforms, spikes, goal)
+     * @param stage - Current stage data
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @param playerSystem - Player system for jump timer reset
+     * @param deathHandler - Death handler callback
+     * @param goalHandler - Goal handler callback
+     * @returns true if collision handled (death/goal), false to continue processing
+     */
+    handleStaticCollisions(
+        stage: StageData,
+        prevPlayerFootY: number,
+        playerSystem?: IPlayerSystem,
+        deathHandler?: () => void,
+        goalHandler?: () => void
+    ): boolean {
         // Handle static platform collisions
         const platformCollisionUpdate = this.handlePlatformCollisions(
             stage.platforms,
@@ -366,8 +337,7 @@ export class CollisionSystem {
             } else {
                 console.log('❌ No deathHandler provided!');
             }
-            this.updatePrevPlayerY();
-            return;
+            return true; // Collision handled
         }
 
         // Check goal collision (legacy callback support)
@@ -375,11 +345,222 @@ export class CollisionSystem {
             if (goalHandler) {
                 goalHandler();
             }
-            this.updatePrevPlayerY();
-            return;
+            return true; // Collision handled
         }
 
-        // Update previous player Y for next frame
-        this.updatePrevPlayerY();
+        return false; // No collision handled
+    }
+
+    checkPlatformCollision(
+        player: Player,
+        platform: Platform,
+        prevPlayerFootY: number
+    ): Partial<Player> | null {
+        const currentPlayerFootY = player.y + player.radius;
+
+        // Basic horizontal overlap check
+        if (
+            player.x + player.radius <= platform.x1 ||
+            player.x - player.radius >= platform.x2 ||
+            player.vy < 0 // Don't collide when moving upward
+        ) {
+            return null;
+        }
+
+        // Enhanced collision detection for high-speed movement
+        // Check if player crossed the platform during this frame
+        const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
+        const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
+
+        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
+            // Return collision update object instead of directly modifying player
+            return {
+                y: platform.y1 - player.radius,
+                vy: 0,
+                grounded: true
+            };
+        }
+
+        return null;
+    }
+
+    handlePlatformCollisions(
+        platforms: Platform[],
+        prevPlayerFootY: number
+    ): Partial<Player> | null {
+        const player = this.gameState.runtime.player;
+        let collisionResult: Partial<Player> | null = { grounded: false }; // Start with grounded reset
+
+        for (const platform of platforms) {
+            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
+            if (collisionUpdate) {
+                // Merge the collision update with the grounded reset
+                collisionResult = { ...collisionResult, ...collisionUpdate };
+                return collisionResult; // Return the first collision found
+            }
+        }
+
+        // If no collision found, return just the grounded reset
+        return collisionResult;
+    }
+
+    checkSpikeCollision(player: Player, spike: Spike): boolean {
+        return isCircleRectCollision(
+            player.x,
+            player.y,
+            player.radius,
+            spike.x,
+            spike.y,
+            spike.width,
+            spike.height
+        );
+    }
+
+    checkSpikeCollisions(player: Player, spikes: Spike[]): boolean {
+        for (const spike of spikes) {
+            if (this.checkSpikeCollision(player, spike)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    checkGoalCollision(player: Player, goal: Goal): boolean {
+        return isCircleRectCollision(
+            player.x,
+            player.y,
+            player.radius,
+            goal.x,
+            goal.y,
+            goal.width,
+            goal.height
+        );
+    }
+
+    checkHoleCollision(player: Player, holeThreshold: number): boolean {
+        return player.y > holeThreshold;
+    }
+
+    checkBoundaryCollision(player: Player, canvasHeight: number): boolean {
+        return player.y > canvasHeight + 100;
+    }
+}
+
+/**
+ * Handles all dynamic collision detection and response
+ * Manages moving platforms and future dynamic elements
+ */
+class DynamicCollisionHandler {
+    private gameState: GameState;
+
+    constructor(gameState: GameState) {
+        this.gameState = gameState;
+    }
+
+    /**
+     * Handles all dynamic collisions (moving platforms, future dynamic elements)
+     * @param stage - Current stage data
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @param playerSystem - Player system for jump timer reset
+     * @returns true if dynamic collision handled, false to continue with static collisions
+     */
+    handleDynamicCollisions(
+        stage: StageData,
+        prevPlayerFootY: number,
+        playerSystem?: IPlayerSystem
+    ): boolean {
+        // Handle moving platform collisions first (higher priority)
+        if (stage.movingPlatforms && stage.movingPlatforms.length > 0) {
+            const movingPlatformCollisionUpdate = this.handleMovingPlatformCollisions(
+                stage.movingPlatforms,
+                prevPlayerFootY
+            );
+
+            if (movingPlatformCollisionUpdate) {
+                // FIXED: Use Object.assign to ensure all properties are set properly
+                Object.assign(this.gameState.runtime.player, movingPlatformCollisionUpdate);
+
+                if (
+                    movingPlatformCollisionUpdate.grounded &&
+                    movingPlatformCollisionUpdate.platform &&
+                    playerSystem
+                ) {
+                    playerSystem.resetJumpTimer();
+
+                    // Move player with the platform
+                    const movingPlatform = movingPlatformCollisionUpdate.platform;
+                    const dtFactor = 16.67 / 16.67; // Normalize deltaTime
+                    const platformMovement =
+                        movingPlatform.speed * movingPlatform.direction * dtFactor;
+
+                    this.gameState.runtime.player.x += platformMovement;
+                }
+
+                return true; // Dynamic collision handled
+            }
+        }
+
+        // Future dynamic elements will be added here
+        // - Moving spikes
+        // - Falling ceilings
+        // - Breakable platforms
+
+        return false; // No dynamic collision handled
+    }
+
+    checkMovingPlatformCollision(
+        player: Player,
+        movingPlatform: MovingPlatform,
+        prevPlayerFootY: number
+    ): MovingPlatformCollisionResult | null {
+        const currentPlayerFootY = player.y + player.radius;
+
+        // Basic horizontal overlap check (same as static platform)
+        if (
+            player.x + player.radius <= movingPlatform.x1 ||
+            player.x - player.radius >= movingPlatform.x2 ||
+            player.vy < 0 // Don't collide when moving upward
+        ) {
+            return null;
+        }
+
+        // Enhanced collision detection for high-speed movement
+        // Check if player crossed the platform during this frame
+        const wasPreviouslyAbove = prevPlayerFootY <= movingPlatform.y1;
+        const isCurrentlyBelowOrOn = currentPlayerFootY >= movingPlatform.y1;
+
+        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
+            // Return collision update object with platform reference
+            return {
+                y: movingPlatform.y1 - player.radius,
+                vy: 0,
+                grounded: true,
+                platform: movingPlatform
+            };
+        }
+
+        return null;
+    }
+
+    handleMovingPlatformCollisions(
+        movingPlatforms: MovingPlatform[],
+        prevPlayerFootY: number
+    ): MovingPlatformCollisionResult | null {
+        const player = this.gameState.runtime.player;
+
+        for (const movingPlatform of movingPlatforms) {
+            const collisionUpdate = this.checkMovingPlatformCollision(
+                player,
+                movingPlatform,
+                prevPlayerFootY
+            );
+            if (collisionUpdate) {
+                // Return the first collision found
+                return collisionUpdate;
+            }
+        }
+
+        // If no collision found, return null (don't interfere with other collision systems)
+        return null;
     }
 }

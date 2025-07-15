@@ -6,6 +6,7 @@ import { DEFAULT_PHYSICS_CONSTANTS, GAME_CONFIG } from '../stores/GameState.js';
 import type { GameState } from '../stores/GameState.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { DynamicElementSystem } from '../systems/DynamicElementSystem.js';
 import { GameRuleSystem } from '../systems/GameRuleSystem.js';
 import { InputManager } from '../systems/InputManager.js';
 import type { GameController } from '../systems/InputManager.js';
@@ -73,6 +74,8 @@ export class GameManager {
     private animationSystem!: AnimationSystem;
     /** @private {MovingPlatformSystem} Moving platform management system */
     private movingPlatformSystem!: MovingPlatformSystem;
+    /** @private {DynamicElementSystem} Dynamic element management system */
+    private dynamicElementSystem!: DynamicElementSystem;
     /** @private {IRenderSystem} Rendering system */
     private renderSystem!: IRenderSystem;
     /** @private {InputManager} Input handling system */
@@ -127,6 +130,7 @@ export class GameManager {
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        this.dynamicElementSystem = new DynamicElementSystem(this.gameState);
         // Environment-aware rendering system
         this.renderSystem = createGameRenderSystem(this.container);
 
@@ -192,6 +196,7 @@ export class GameManager {
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
+        this.dynamicElementSystem = new DynamicElementSystem(this.gameState);
         // IMPORTANT: Do NOT recreate renderSystem to prevent canvas duplication
         // this.renderSystem is already initialized in constructor and should be reused
 
@@ -262,6 +267,9 @@ export class GameManager {
 
         // Update moving platforms if stage has them
         this.movingPlatformSystem.update(deltaTime);
+
+        // Update dynamic elements (moving spikes, falling ceilings, breakable platforms)
+        this.dynamicElementSystem.update(deltaTime);
 
         this.animationSystem.updateClearAnimation();
         this.animationSystem.updateDeathAnimation();

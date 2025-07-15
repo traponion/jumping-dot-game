@@ -52,6 +52,11 @@ describe('MovingPlatformSystem', () => {
                     boundaryCollision: false,
                     goalCollision: false
                 },
+                dynamicElements: {
+                    fallingCeilings: [],
+                    breakablePlatforms: [],
+                    movingSpikes: []
+                },
                 shouldStartClearAnimation: false,
                 shouldStartDeathAnimation: false,
                 isInitialized: false,

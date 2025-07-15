@@ -73,6 +73,29 @@ interface GameRuntimeState {
         boundaryCollision: boolean;
         goalCollision: boolean;
     };
+
+    // Dynamic element runtime state for new gimmicks
+    dynamicElements: {
+        fallingCeilings: Array<{
+            id: string;
+            activated: boolean;
+            currentY: number;
+            originalY: number;
+        }>;
+        breakablePlatforms: Array<{
+            id: string;
+            currentHits: number;
+            broken: boolean;
+            maxHits: number;
+        }>;
+        movingSpikes: Array<{
+            id: string;
+            currentX: number;
+            currentY: number;
+            direction: number;
+        }>;
+    };
+
     // Animation trigger flags for autonomous system behavior
     shouldStartDeathAnimation: boolean;
     shouldStartClearAnimation: boolean;
@@ -158,6 +181,14 @@ export class GameState {
                 boundaryCollision: false,
                 goalCollision: false
             },
+
+            // Initialize dynamic elements with empty arrays
+            dynamicElements: {
+                fallingCeilings: [],
+                breakablePlatforms: [],
+                movingSpikes: []
+            },
+
             shouldStartDeathAnimation: false,
             shouldStartClearAnimation: false,
             isInitialized: false,
