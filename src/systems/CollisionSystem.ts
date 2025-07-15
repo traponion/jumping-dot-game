@@ -8,6 +8,7 @@ import type {
     Goal,
     GravityFlipPlatform,
     MovingPlatform,
+    MovingSpike,
     Platform,
     Spike,
     StageData
@@ -332,9 +333,9 @@ class StaticCollisionHandler {
             playerSystem.resetJumpTimer();
         }
 
-        // Check spike collisions
+        // Check static spike collisions
         if (this.checkSpikeCollisions(this.gameState.runtime.player, stage.spikes)) {
-            console.log('🌡️ Spike collision detected!', {
+            console.log('🌡️ Static spike collision detected!', {
                 playerX: this.gameState.runtime.player.x,
                 playerY: this.gameState.runtime.player.y,
                 spikeCount: stage.spikes?.length || 0,
@@ -348,6 +349,33 @@ class StaticCollisionHandler {
                 console.log('❌ No deathHandler provided!');
             }
             return true; // Collision handled
+        }
+
+        // Check moving spike collisions (death on contact)
+        if (stage.movingSpikes && stage.movingSpikes.length > 0) {
+            // Use DynamicCollisionHandler for moving spike detection
+            const dynamicHandler = new DynamicCollisionHandler(this.gameState);
+            if (
+                dynamicHandler.checkMovingSpikeCollisions(
+                    this.gameState.runtime.player,
+                    stage.movingSpikes
+                )
+            ) {
+                console.log('⚡ Moving spike collision detected!', {
+                    playerX: this.gameState.runtime.player.x,
+                    playerY: this.gameState.runtime.player.y,
+                    movingSpikeCount: stage.movingSpikes?.length || 0,
+                    deathHandlerExists: !!deathHandler
+                });
+                if (deathHandler) {
+                    console.log('💀 Calling deathHandler...');
+                    deathHandler();
+                    console.log('💀 deathHandler called!');
+                } else {
+                    console.log('❌ No deathHandler provided!');
+                }
+                return true; // Collision handled
+            }
         }
 
         // Check gravity flip platform collisions
@@ -538,7 +566,7 @@ class DynamicCollisionHandler {
         }
 
         // Future dynamic elements will be added here
-        // - Moving spikes
+        // - Moving spikes (handled by StaticCollisionHandler for death detection)
         // - Falling ceilings
         // - Breakable platforms
 
@@ -599,5 +627,38 @@ class DynamicCollisionHandler {
 
         // If no collision found, return null (don't interfere with other collision systems)
         return null;
+    }
+
+    /**
+     * Checks collisions with multiple moving spikes
+     * @param player - Current player state
+     * @param movingSpikes - Array of moving spikes to check
+     * @returns true if any moving spike collision detected
+     */
+    checkMovingSpikeCollisions(player: Player, movingSpikes: MovingSpike[]): boolean {
+        for (const spike of movingSpikes) {
+            if (this.checkMovingSpikeCollision(player, spike)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks collision between player and a single moving spike
+     * @param player - Current player state
+     * @param spike - Moving spike to check collision against
+     * @returns true if collision detected
+     */
+    private checkMovingSpikeCollision(player: Player, spike: MovingSpike): boolean {
+        return isCircleRectCollision(
+            player.x,
+            player.y,
+            player.radius,
+            spike.x,
+            spike.y,
+            spike.width,
+            spike.height
+        );
     }
 }

@@ -63,6 +63,28 @@ export interface Spike {
 }
 
 /**
+ * Moving spike interface extending static spike with movement properties
+ * @interface MovingSpike
+ * @extends Spike
+ * @property {number} startX - Starting x position for movement
+ * @property {number} endX - Ending x position for movement
+ * @property {number} startY - Starting y position for movement
+ * @property {number} endY - Ending y position for movement
+ * @property {number} speed - Movement speed in pixels per frame
+ * @property {number} direction - Movement direction (1 or -1)
+ * @property {'horizontal' | 'vertical'} axis - Movement axis
+ */
+export interface MovingSpike extends Spike {
+    startX: number;
+    endX: number;
+    startY: number;
+    endY: number;
+    speed: number;
+    direction: number;
+    axis: 'horizontal' | 'vertical';
+}
+
+/**
  * Hole interface representing a pit or gap in the stage
  * @interface Hole
  * @property {number} x1 - Starting x coordinate of hole
@@ -133,7 +155,7 @@ export interface StageData {
     gravityFlipPlatforms?: GravityFlipPlatform[];
     holes?: Hole[];
     spikes: Spike[];
-    movingSpikes?: Spike[];
+    movingSpikes?: MovingSpike[];
     goal: Goal;
     startText: TextElement;
     goalText: TextElement;

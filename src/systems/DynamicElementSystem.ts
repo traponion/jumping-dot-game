@@ -4,6 +4,7 @@
  * @description Domain Layer - Unified management for moving spikes, falling ceilings, breakable platforms
  */
 
+import type { MovingSpike } from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 
 /**
@@ -27,35 +28,98 @@ export class DynamicElementSystem {
      * @param deltaTime - Time elapsed since last update in milliseconds
      */
     update(deltaTime: number): void {
-        // Phase 1 implementation: Empty skeleton for foundation
-        // Future phases will add:
-        // - this._updateMovingSpikes(deltaTime);
-        // - this._updateFallingCeilings(deltaTime);
-        // - this._updateBreakablePlatforms(); (state-based, no deltaTime needed)
-
         // Ensure gameState access is established for future phases
         if (deltaTime < 0 || !this.gameState.stage) {
             return; // Invalid deltaTime or no stage loaded
         }
+
+        // Phase 3: Update moving spikes
+        this._updateMovingSpikes(deltaTime);
+
+        // Future phases will add:
+        // - this._updateFallingCeilings(deltaTime);
+        // - this._updateBreakablePlatforms(); (state-based, no deltaTime needed)
     }
 
     /**
      * Updates moving spikes position and direction
      * Implements boundary collision detection similar to MovingPlatformSystem
+     * Supports both horizontal and vertical movement based on axis property
      *
      * @param deltaTime - Time elapsed since last update in milliseconds
      * @private
      */
-    // @ts-ignore - Method for Phase 3 implementation
     private _updateMovingSpikes(deltaTime: number): void {
-        // Phase 3 implementation placeholder
-        // Will iterate through gameState.runtime.dynamicElements.movingSpikes
-        // and update currentX, currentY, direction based on movement bounds
+        const movingSpikes = this.gameState.stage?.movingSpikes;
+        if (!movingSpikes) return;
 
-        // Guard against unused parameter warning during Phase 1
-        if (deltaTime < 0) {
-            return;
+        const dtFactor = deltaTime / 16.67; // Normalize to ~60fps
+
+        for (const spike of movingSpikes) {
+            const movement = spike.speed * spike.direction * dtFactor;
+
+            if (spike.axis === 'horizontal') {
+                this._updateHorizontalSpike(spike, movement);
+            } else if (spike.axis === 'vertical') {
+                this._updateVerticalSpike(spike, movement);
+            }
         }
+    }
+
+    /**
+     * Updates horizontal moving spike position with boundary collision
+     * @param spike - Moving spike to update
+     * @param movement - Movement delta for this frame
+     * @private
+     */
+    private _updateHorizontalSpike(spike: MovingSpike, movement: number): void {
+        let newX = spike.x + movement;
+        let newDirection = spike.direction;
+
+        // Check boundaries and reverse direction if needed
+        if (newDirection > 0 && newX >= spike.endX) {
+            newDirection = -1;
+            // Correct position to not exceed boundary
+            const overshoot = newX - spike.endX;
+            newX = spike.endX - overshoot;
+        } else if (newDirection < 0 && newX <= spike.startX) {
+            newDirection = 1;
+            // Correct position to not exceed boundary
+            const overshoot = spike.startX - newX;
+            newX = spike.startX + overshoot;
+        }
+
+        // Direct mutation of GameState (following MovingPlatformSystem pattern)
+        spike.x = newX;
+        spike.direction = newDirection;
+    }
+
+    /**
+     * Updates vertical moving spike position with boundary collision
+     * @param spike - Moving spike to update
+     * @param movement - Movement delta for this frame
+     * @private
+     */
+    private _updateVerticalSpike(spike: MovingSpike, movement: number): void {
+        let newY = spike.y + movement;
+        let newDirection = spike.direction;
+
+        // Check boundaries and reverse direction if needed
+        if (newDirection > 0 && newY >= spike.endY) {
+            newDirection = -1;
+            // Correct position to not exceed boundary
+            const overshoot = newY - spike.endY;
+            newY = spike.endY - overshoot;
+        } else if (newDirection < 0 && newY <= spike.startY) {
+            newDirection = 1;
+            // Correct position to not exceed boundary
+            const overshoot = spike.startY - newY;
+            newY = spike.startY + overshoot;
+        }
+
+        // Direct mutation of GameState (following MovingPlatformSystem pattern)
+        spike.y = newY;
+        spike.direction = newDirection;
     }
 
     /**
