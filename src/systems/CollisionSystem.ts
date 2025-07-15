@@ -380,11 +380,6 @@ class StaticCollisionHandler {
             }
         }
 
-        // Check breakable platform collisions
-        if (stage.breakablePlatforms) {
-            this.handleBreakablePlatformCollisions(stage.breakablePlatforms, prevPlayerFootY);
-        }
-
         // Check falling ceiling collisions (crush detection)
         if (stage.fallingCeilings) {
             const crushDetected = this.checkFallingCeilingCollisions(stage.fallingCeilings);
@@ -538,57 +533,6 @@ class StaticCollisionHandler {
     }
 
     /**
-     * Handles collisions with breakable platforms
-     * @param breakablePlatforms - Array of breakable platforms to check
-     * @param prevPlayerFootY - Previous player foot Y position
-     * @returns void - Applies hit counting and platform breaking as side effect
-     */
-    private handleBreakablePlatformCollisions(
-        breakablePlatforms: BreakablePlatform[],
-        prevPlayerFootY: number
-    ): void {
-        const player = this.gameState.runtime.player;
-
-        for (const platform of breakablePlatforms) {
-            // Find runtime state for this platform
-            const runtimeState = this.gameState.runtime.dynamicElements.breakablePlatforms.find(
-                (state) => state.id === platform.id
-            );
-
-            // Skip collision if platform is broken
-            if (runtimeState?.broken) {
-                continue;
-            }
-
-            // Check for collision using existing platform collision logic
-            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
-            if (collisionUpdate) {
-                // Apply collision (player lands on platform)
-                Object.assign(this.gameState.runtime.player, collisionUpdate);
-
-                // Increment hit count if runtime state exists
-                if (runtimeState) {
-                    runtimeState.currentHits++;
-
-                    // Check if platform should break
-                    if (runtimeState.currentHits >= runtimeState.maxHits) {
-                        runtimeState.broken = true;
-                        console.log(
-                            `💥 Breakable platform ${platform.id} broken after ${runtimeState.currentHits} hits!`
-                        );
-                    } else {
-                        console.log(
-                            `🔨 Breakable platform ${platform.id} hit! (${runtimeState.currentHits}/${runtimeState.maxHits})`
-                        );
-                    }
-                }
-
-                break; // Only process one collision per frame
-            }
-        }
-    }
-
-    /**
      * Checks collisions with falling ceilings for crush detection
      * @param fallingCeilings - Array of falling ceilings to check
      * @returns true if player is crushed by falling ceiling
@@ -685,10 +629,22 @@ class DynamicCollisionHandler {
             }
         }
 
+        // Handle breakable platform collisions
+        if (stage.breakablePlatforms && stage.breakablePlatforms.length > 0) {
+            const breakableCollisionHandled = this.handleBreakablePlatformCollisions(
+                stage.breakablePlatforms,
+                prevPlayerFootY
+            );
+
+            if (breakableCollisionHandled && playerSystem) {
+                playerSystem.resetJumpTimer();
+                return true; // Dynamic collision handled
+            }
+        }
+
         // Future dynamic elements will be added here
         // - Moving spikes (handled by StaticCollisionHandler for death detection)
         // - Falling ceilings
-        // - Breakable platforms
 
         return false; // No dynamic collision handled
     }
@@ -780,5 +736,98 @@ class DynamicCollisionHandler {
             spike.width,
             spike.height
         );
+    }
+
+    /**
+     * Handles collisions with breakable platforms
+     * @param breakablePlatforms - Array of breakable platforms to check
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @returns boolean - true if collision detected and handled, false otherwise
+     */
+    private handleBreakablePlatformCollisions(
+        breakablePlatforms: BreakablePlatform[],
+        prevPlayerFootY: number
+    ): boolean {
+        const player = this.gameState.runtime.player;
+
+        for (const platform of breakablePlatforms) {
+            // Find runtime state for this platform
+            const runtimeState = this.gameState.runtime.dynamicElements.breakablePlatforms.find(
+                (state) => state.id === platform.id
+            );
+
+            // Skip collision if platform is broken
+            if (runtimeState?.broken) {
+                continue;
+            }
+
+            // Check for collision using existing platform collision logic
+            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
+            if (collisionUpdate) {
+                // Apply collision (player lands on platform)
+                Object.assign(this.gameState.runtime.player, collisionUpdate);
+
+                // Increment hit count if runtime state exists
+                if (runtimeState) {
+                    runtimeState.currentHits++;
+
+                    // Check if platform should break
+                    if (runtimeState.currentHits >= runtimeState.maxHits) {
+                        runtimeState.broken = true;
+                        console.log(
+                            `💥 Breakable platform ${platform.id} broken after ${runtimeState.currentHits} hits!`
+                        );
+                    } else {
+                        console.log(
+                            `🔨 Breakable platform ${platform.id} hit! (${runtimeState.currentHits}/${runtimeState.maxHits})`
+                        );
+                    }
+                }
+
+                return true; // Collision handled successfully
+            }
+        }
+
+        return false; // No collision handled
+    }
+
+    /**
+     * Checks platform collision (reused from StaticCollisionHandler logic)
+     * @param player - Current player state
+     * @param platform - Platform to check collision against
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @returns Collision update object or null
+     */
+    private checkPlatformCollision(
+        player: Player,
+        platform: Platform,
+        prevPlayerFootY: number
+    ): Partial<Player> | null {
+        const currentPlayerFootY = player.y + player.radius;
+
+        // Basic horizontal overlap check
+        if (
+            player.x + player.radius <= platform.x1 ||
+            player.x - player.radius >= platform.x2 ||
+            player.vy < 0 // Don't collide when moving upward
+        ) {
+            return null;
+        }
+
+        // Enhanced collision detection for high-speed movement
+        // Check if player crossed the platform during this frame
+        const wasPreviouslyAbove = prevPlayerFootY <= platform.y1;
+        const isCurrentlyBelowOrOn = currentPlayerFootY >= platform.y1;
+
+        if (wasPreviouslyAbove && isCurrentlyBelowOrOn) {
+            // Return collision update object instead of directly modifying player
+            return {
+                y: platform.y1 - player.radius,
+                vy: 0,
+                grounded: true
+            };
+        }
+
+        return null;
     }
 }

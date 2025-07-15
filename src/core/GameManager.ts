@@ -232,6 +232,30 @@ export class GameManager {
     }
 
     /**
+     * Filters out broken platforms from stage data for rendering
+     * @param stage - Original stage data
+     * @returns Stage data with broken platforms filtered out
+     */
+    private filterBrokenPlatforms(stage: StageData): StageData {
+        if (!stage.breakablePlatforms) {
+            return stage;
+        }
+
+        // Create a copy of stage with filtered breakable platforms
+        const filteredBreakablePlatforms = stage.breakablePlatforms.filter((platform) => {
+            const runtimeState = this.gameState.runtime.dynamicElements.breakablePlatforms.find(
+                (state) => state.id === platform.id
+            );
+            return !runtimeState?.broken;
+        });
+
+        return {
+            ...stage,
+            breakablePlatforms: filteredBreakablePlatforms
+        };
+    }
+
+    /**
      * Reset game state to initial values
      */
     async resetGameState(): Promise<void> {
@@ -348,7 +372,9 @@ export class GameManager {
         renderer.applyCameraTransform(this.gameState.runtime.camera);
 
         if (this.stage) {
-            renderer.renderStage(this.stage, this.gameState.runtime.camera);
+            // Create a copy of stage with broken platforms filtered out
+            const renderStage = this.filterBrokenPlatforms(this.stage);
+            renderer.renderStage(renderStage, this.gameState.runtime.camera);
         }
 
         renderer.renderDeathMarks(this.gameState.runtime.deathMarks);
