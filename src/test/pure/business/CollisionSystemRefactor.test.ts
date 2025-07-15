@@ -56,7 +56,7 @@ describe('CollisionSystem Refactoring Validation', () => {
             height: 600
         } as HTMLCanvasElement;
 
-        collisionSystem = new CollisionSystem(gameState, mockCanvas);
+        collisionSystem = new CollisionSystem(gameState, undefined, mockCanvas);
     });
 
     describe('Static Collision Handler Behavior', () => {

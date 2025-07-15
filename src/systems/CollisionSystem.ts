@@ -4,9 +4,17 @@
  * @description Domain Layer - Pure collision detection calculations
  */
 
-import type { Goal, MovingPlatform, Platform, Spike, StageData } from '../core/StageLoader.js';
+import type {
+    Goal,
+    GravityFlipPlatform,
+    MovingPlatform,
+    Platform,
+    Spike,
+    StageData
+} from '../core/StageLoader.js';
 import type { GameState } from '../stores/GameState.js';
 import type { Player } from '../types/GameTypes.js';
+import type { PhysicsSystem } from './PhysicsSystem.js';
 import { isCircleRectCollision } from './PlayerSystem.js';
 
 // Interface for PlayerSystem methods used by CollisionSystem
@@ -34,14 +42,14 @@ export class CollisionSystem {
     private staticCollisionHandler: StaticCollisionHandler;
     private dynamicCollisionHandler: DynamicCollisionHandler;
 
-    constructor(gameState: GameState, canvas?: HTMLCanvasElement) {
+    constructor(gameState: GameState, physicsSystem?: PhysicsSystem, canvas?: HTMLCanvasElement) {
         this.gameState = gameState;
         this.canvas = canvas;
         // FIXED: Initialize with current player position instead of 0
         this.prevPlayerY = this.gameState.runtime.player.y;
 
         // Initialize collision handlers
-        this.staticCollisionHandler = new StaticCollisionHandler(gameState, canvas);
+        this.staticCollisionHandler = new StaticCollisionHandler(gameState, physicsSystem, canvas);
         this.dynamicCollisionHandler = new DynamicCollisionHandler(gameState);
     }
 
@@ -250,9 +258,11 @@ export class CollisionSystem {
 class StaticCollisionHandler {
     private gameState: GameState;
     private canvas: HTMLCanvasElement | undefined;
+    private physicsSystem: PhysicsSystem | undefined;
 
-    constructor(gameState: GameState, canvas?: HTMLCanvasElement) {
+    constructor(gameState: GameState, physicsSystem?: PhysicsSystem, canvas?: HTMLCanvasElement) {
         this.gameState = gameState;
+        this.physicsSystem = physicsSystem;
         this.canvas = canvas;
     }
 
@@ -338,6 +348,11 @@ class StaticCollisionHandler {
                 console.log('❌ No deathHandler provided!');
             }
             return true; // Collision handled
+        }
+
+        // Check gravity flip platform collisions
+        if (stage.gravityFlipPlatforms) {
+            this.handleGravityFlipPlatformCollisions(stage.gravityFlipPlatforms, prevPlayerFootY);
         }
 
         // Check goal collision (legacy callback support)
@@ -443,6 +458,28 @@ class StaticCollisionHandler {
 
     checkBoundaryCollision(player: Player, canvasHeight: number): boolean {
         return player.y > canvasHeight + 100;
+    }
+
+    /**
+     * Handles collisions with gravity flip platforms
+     * @param gravityFlipPlatforms - Array of gravity flip platforms to check
+     * @param prevPlayerFootY - Previous player foot Y position
+     * @returns void - Applies gravity direction changes as side effect
+     */
+    private handleGravityFlipPlatformCollisions(
+        gravityFlipPlatforms: GravityFlipPlatform[],
+        prevPlayerFootY: number
+    ): void {
+        const player = this.gameState.runtime.player;
+
+        for (const platform of gravityFlipPlatforms) {
+            const collisionUpdate = this.checkPlatformCollision(player, platform, prevPlayerFootY);
+            if (collisionUpdate && this.physicsSystem) {
+                // Player landed on gravity flip platform - change gravity direction
+                this.physicsSystem.setGravityDirection(platform.gravityDirection);
+                break; // Only apply one gravity change per frame
+            }
+        }
     }
 }
 

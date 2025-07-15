@@ -126,7 +126,7 @@ export class GameManager {
         // Create canvas dimensions from container for camera system
         const canvasDimensions = { width: 800, height: 600 };
         this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
-        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.collisionSystem = new CollisionSystem(this.gameState, this.physicsSystem);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);
@@ -192,7 +192,7 @@ export class GameManager {
         // Create canvas dimensions from container for camera system
         const canvasDimensions = { width: 800, height: 600 };
         this.cameraSystem = new CameraSystem(this.gameState, canvasDimensions);
-        this.collisionSystem = new CollisionSystem(this.gameState);
+        this.collisionSystem = new CollisionSystem(this.gameState, this.physicsSystem);
         this.gameRuleSystem = new GameRuleSystem(this.gameState);
         this.animationSystem = new AnimationSystem(this.gameState);
         this.movingPlatformSystem = new MovingPlatformSystem(this.gameState);

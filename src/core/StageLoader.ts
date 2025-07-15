@@ -36,6 +36,18 @@ export interface MovingPlatform extends Platform {
 }
 
 /**
+ * Gravity flip platform interface extending static platform with gravity reversal properties
+ * @interface GravityFlipPlatform
+ * @extends Platform
+ * @property {1 | -1} gravityDirection - Gravity direction (1 = normal down, -1 = reversed up)
+ * @property {number} [effectDuration] - Optional effect duration in seconds (0 = permanent)
+ */
+export interface GravityFlipPlatform extends Platform {
+    gravityDirection: 1 | -1;
+    effectDuration?: number;
+}
+
+/**
  * Spike interface representing a dangerous spike obstacle
  * @interface Spike
  * @property {number} x - X coordinate of spike
@@ -118,6 +130,7 @@ export interface StageData {
     timeLimit?: number; // Optional time limit in seconds for this stage
     platforms: Platform[];
     movingPlatforms?: MovingPlatform[];
+    gravityFlipPlatforms?: GravityFlipPlatform[];
     holes?: Hole[];
     spikes: Spike[];
     movingSpikes?: Spike[];
