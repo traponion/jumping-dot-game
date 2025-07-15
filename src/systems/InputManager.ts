@@ -130,8 +130,8 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            // Only allow restart when game is actually over
-            if (this.gameState.gameOver) {
+            // Only allow restart when game is actually over (NOT when game is cleared)
+            if (this.gameState.gameOver && !this.gameState.gameCleared) {
                 this.gameController.init();
             }
         });
