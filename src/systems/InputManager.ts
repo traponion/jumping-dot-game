@@ -196,9 +196,8 @@ export class InputManager {
             }
             this.lastInputTime = now;
 
-            // Only allow stage select when game is over (NOT when game is cleared)
-            if (this.gameState.gameOver && !this.gameState.gameCleared) {
-                // Go to stage select
+            if (this.gameState.gameOver) {
+                // Both game over and clear screen: allow stage select
                 this.gameController.handleStageSelect();
             } else if (!this.gameState.gameRunning) {
                 // Game start (when not running and not over)
