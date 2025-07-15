@@ -203,11 +203,13 @@ export class GameUI {
      * @param deathCount - Number of deaths during the stage
      */
     showClearScreen(deathCount: number): void {
-        // Hide other screens
+        // Hide other screens and Stage display
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const stageDisplay = document.querySelector('.stage-info');
         if (startScreen) startScreen.classList.add('hidden');
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        if (stageDisplay) (stageDisplay as HTMLElement).style.display = 'none';
 
         // Create or update clear screen
         let clearScreen = document.getElementById('clearScreen');
