@@ -160,6 +160,9 @@ export class GameManager {
                 this.gameState.timeLimit = defaultTimeLimit;
                 this.gameState.timeRemaining = defaultTimeLimit; // Fix: Also update timeRemaining
             }
+
+            // Initialize dynamic elements runtime state
+            this.initializeDynamicElementsState();
         } catch (error) {
             console.error('Failed to load stage:', error);
             this.stage = this.stageLoader.getHardcodedStage(stageNumber);
@@ -170,7 +173,62 @@ export class GameManager {
             const fallbackTimeLimit = this.stage.timeLimit || this.gameState.timeLimit;
             this.gameState.timeLimit = fallbackTimeLimit;
             this.gameState.timeRemaining = fallbackTimeLimit; // Fix: Also update timeRemaining
+
+            // Initialize dynamic elements runtime state
+            this.initializeDynamicElementsState();
         }
+    }
+
+    /**
+     * Initialize dynamic elements runtime state for the current stage
+     */
+    private initializeDynamicElementsState(): void {
+        if (!this.stage) return;
+
+        // Initialize breakable platforms runtime state
+        this.gameState.runtime.dynamicElements.breakablePlatforms = [];
+        if (this.stage.breakablePlatforms) {
+            for (const platform of this.stage.breakablePlatforms) {
+                this.gameState.runtime.dynamicElements.breakablePlatforms.push({
+                    id: platform.id,
+                    currentHits: 0,
+                    broken: false,
+                    maxHits: platform.maxHits
+                });
+            }
+        }
+
+        // Initialize falling ceilings runtime state
+        this.gameState.runtime.dynamicElements.fallingCeilings = [];
+        if (this.stage.fallingCeilings) {
+            for (const ceiling of this.stage.fallingCeilings) {
+                this.gameState.runtime.dynamicElements.fallingCeilings.push({
+                    id: ceiling.id,
+                    activated: false,
+                    currentY: ceiling.y,
+                    originalY: ceiling.y
+                });
+            }
+        }
+
+        // Initialize moving spikes runtime state
+        this.gameState.runtime.dynamicElements.movingSpikes = [];
+        if (this.stage.movingSpikes) {
+            for (const spike of this.stage.movingSpikes) {
+                this.gameState.runtime.dynamicElements.movingSpikes.push({
+                    id: `moving-spike-${spike.x}-${spike.y}`, // Generate ID from position
+                    currentX: spike.x,
+                    currentY: spike.y,
+                    direction: spike.direction
+                });
+            }
+        }
+
+        console.log('🔧 Dynamic elements initialized:', {
+            breakablePlatforms: this.gameState.runtime.dynamicElements.breakablePlatforms.length,
+            fallingCeilings: this.gameState.runtime.dynamicElements.fallingCeilings.length,
+            movingSpikes: this.gameState.runtime.dynamicElements.movingSpikes.length
+        });
     }
 
     /**
