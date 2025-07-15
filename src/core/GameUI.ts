@@ -203,13 +203,13 @@ export class GameUI {
      * @param deathCount - Number of deaths during the stage
      */
     showClearScreen(deathCount: number): void {
-        // Hide other screens and Stage display
+        // Hide other screens and game canvas
         const startScreen = document.getElementById('startScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
-        const stageDisplay = document.querySelector('.stage-info');
+        const gameCanvas = document.querySelector('canvas');
         if (startScreen) startScreen.classList.add('hidden');
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
-        if (stageDisplay) (stageDisplay as HTMLElement).style.display = 'none';
+        if (gameCanvas) (gameCanvas as HTMLElement).style.display = 'none';
 
         // Create or update clear screen
         let clearScreen = document.getElementById('clearScreen');
@@ -241,8 +241,7 @@ export class GameUI {
             <div style="margin-bottom: 30px; font-size: 32px; color: #4CAF50;">🎉 CONGRATULATIONS! 🎉</div>
             <div style="margin-bottom: 20px; font-size: 20px;">STAGE CLEARED!</div>
             <div style="margin-bottom: 30px; font-size: 16px;">Deaths: ${deathCount}</div>
-            <div style="margin-bottom: 10px; font-size: 16px;">[R] RETRY STAGE</div>
-            <div style="font-size: 16px;">[SPACE] STAGE SELECT</div>
+            <div style="margin-bottom: 10px; font-size: 16px;">[SPACE] STAGE SELECT</div>
         `;
 
         // Show clear screen
