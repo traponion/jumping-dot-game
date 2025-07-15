@@ -1,0 +1,140 @@
+{
+    "id": 3,
+    "name": "Stage 3",
+    "description": "Breakable Platform Tutorial - Fragile Foundations",
+    "platforms": [
+        { "x1": -500, "y1": 500, "x2": 200, "y2": 500 },
+        { "x1": 500, "y1": 500, "x2": 700, "y2": 500 },
+        { "x1": 1000, "y1": 500, "x2": 1200, "y2": 500 },
+        { "x1": 1500, "y1": 500, "x2": 1700, "y2": 500 },
+        { "x1": 2000, "y1": 500, "x2": 2400, "y2": 500 }
+    ],
+    "breakablePlatforms": [
+        {
+            "id": "tutorial-1hit",
+            "x1": 200,
+            "y1": 480,
+            "x2": 350,
+            "y2": 480,
+            "maxHits": 1,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "tutorial-2hit",
+            "x1": 700,
+            "y1": 480,
+            "x2": 850,
+            "y2": 480,
+            "maxHits": 2,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "tutorial-3hit",
+            "x1": 1200,
+            "y1": 480,
+            "x2": 1350,
+            "y2": 480,
+            "maxHits": 3,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "choice-left",
+            "x1": 1700,
+            "y1": 460,
+            "x2": 1800,
+            "y2": 460,
+            "maxHits": 1,
+            "regenerateAfter": 5
+        },
+        {
+            "id": "choice-right",
+            "x1": 1900,
+            "y1": 460,
+            "x2": 2000,
+            "y2": 460,
+            "maxHits": 2,
+            "regenerateAfter": 5
+        }
+    ],
+    "movingPlatforms": [],
+    "holes": [
+        { "x1": 350, "x2": 500 },
+        { "x1": 850, "x2": 1000 },
+        { "x1": 1350, "x2": 1500 }
+    ],
+    "spikes": [],
+    "movingSpikes": [],
+    "goal": {
+        "x": 2450,
+        "y": 450,
+        "width": 40,
+        "height": 50
+    },
+    "startText": {
+        "x": 50,
+        "y": 450,
+        "text": "STAGE 3",
+        "style": {
+            "fontSize": 18,
+            "color": "#ffffff",
+            "fontWeight": "bold"
+        }
+    },
+    "goalText": {
+        "x": 2470,
+        "y": 430,
+        "text": "GOAL"
+    },
+    "leftEdgeMessage": {
+        "x": -400,
+        "y": 450,
+        "text": "FRAGILE FOUNDATIONS!"
+    },
+    "leftEdgeSubMessage": {
+        "x": -400,
+        "y": 470,
+        "text": "BE CAREFUL WHERE YOU STEP →"
+    },
+    "tutorialMessages": [
+        {
+            "x": 250,
+            "y": 430,
+            "text": "THIS PLATFORM BREAKS AFTER 1 HIT!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ff6b6b",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 750,
+            "y": 430,
+            "text": "2 HITS TO BREAK - TRY BOUNCING!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ffa500",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1250,
+            "y": 430,
+            "text": "3 HITS - EVEN MORE DURABLE!",
+            "style": {
+                "fontSize": 14,
+                "color": "#90ee90",
+                "fontWeight": "bold"
+            }
+        },
+        {
+            "x": 1850,
+            "y": 410,
+            "text": "CHOOSE YOUR PATH WISELY!",
+            "style": {
+                "fontSize": 14,
+                "color": "#ffffff",
+                "fontWeight": "bold"
+            }
+        }
+    ]
+}
