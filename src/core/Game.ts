@@ -31,17 +31,20 @@ export class JumpingDotGame {
     /**
      * Creates a new JumpingDotGame instance
      * @constructor
+     * @param {GameManager} [gameManagerInstance] - Optional GameManager instance for testing
+     * @param {GameUI} [gameUIInstance] - Optional GameUI instance for testing
      */
-    constructor() {
+    constructor(gameManagerInstance?: GameManager, gameUIInstance?: GameUI) {
         this.container = this.getRequiredElement('gameCanvas');
 
         // Initialize game state first
         this.gameState = new GameState();
 
         // Initialize component classes
-        this.gameUI = new GameUI(this.gameState);
+        this.gameUI = gameUIInstance || new GameUI(this.gameState);
         this.gameLoop = new GameLoop();
-        this.gameManager = new GameManager(this.container, this, this.gameState);
+        this.gameManager =
+            gameManagerInstance || new GameManager(this.container, this, this.gameState);
 
         // Set up game loop callbacks
         this.gameLoop.setUpdateCallback((deltaTime) => this.update(deltaTime));

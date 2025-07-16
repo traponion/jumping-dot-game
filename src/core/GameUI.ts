@@ -299,8 +299,8 @@ export class HtmlStageSelect {
 
         console.log('🔍 Starting stage discovery...');
 
-        // Try to load stages starting from 1 (limited to 1-3 for now)
-        for (let stageId = 1; stageId <= 3; stageId++) {
+        // Try to load stages starting from 1 (extended to support stage 1-6)
+        for (let stageId = 1; stageId <= 6; stageId++) {
             try {
                 console.log(`📋 Trying to load stage ${stageId}...`);
                 const stageData = await this.stageLoader.loadStage(stageId);

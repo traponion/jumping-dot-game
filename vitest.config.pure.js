@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    environment: 'node',        // ✅ No JSDOM needed
+    environment: 'jsdom',       // ✅ JSDOM needed for Game.ts DOM tests
     globals: true,
     include: ['src/test/pure/**/*.test.ts'],
     coverage: {

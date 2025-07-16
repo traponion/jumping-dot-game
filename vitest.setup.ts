@@ -198,6 +198,18 @@ beforeAll(() => {
     const stage2Data = JSON.parse(
         fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage2.json'), 'utf-8')
     );
+    const stage3Data = JSON.parse(
+        fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage3.json'), 'utf-8')
+    );
+    const stage4Data = JSON.parse(
+        fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage4.json'), 'utf-8')
+    );
+    const stage5Data = JSON.parse(
+        fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage5.json'), 'utf-8')
+    );
+    const stage6Data = JSON.parse(
+        fs.readFileSync(path.resolve(process.cwd(), 'public/stages/stage6.json'), 'utf-8')
+    );
 
     globalThis.fetch = vi.fn((url: string) => {
         const urlStr = url.toString();
@@ -226,6 +238,58 @@ beforeAll(() => {
                 status: 200,
                 statusText: 'OK',
                 json: () => Promise.resolve(stage2Data)
+            } as Response);
+        }
+
+        if (
+            urlStr.includes('stage3.json') ||
+            urlStr.includes('/stages/stage3.json') ||
+            urlStr.endsWith('stages/stage3.json')
+        ) {
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                statusText: 'OK',
+                json: () => Promise.resolve(stage3Data)
+            } as Response);
+        }
+
+        if (
+            urlStr.includes('stage4.json') ||
+            urlStr.includes('/stages/stage4.json') ||
+            urlStr.endsWith('stages/stage4.json')
+        ) {
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                statusText: 'OK',
+                json: () => Promise.resolve(stage4Data)
+            } as Response);
+        }
+
+        if (
+            urlStr.includes('stage5.json') ||
+            urlStr.includes('/stages/stage5.json') ||
+            urlStr.endsWith('stages/stage5.json')
+        ) {
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                statusText: 'OK',
+                json: () => Promise.resolve(stage5Data)
+            } as Response);
+        }
+
+        if (
+            urlStr.includes('stage6.json') ||
+            urlStr.includes('/stages/stage6.json') ||
+            urlStr.endsWith('stages/stage6.json')
+        ) {
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                statusText: 'OK',
+                json: () => Promise.resolve(stage6Data)
             } as Response);
         }
 
